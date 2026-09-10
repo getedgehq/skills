@@ -1,7 +1,11 @@
 # Third-party notices
 
-The OpenPaper workflow in this bundle is derived from OpenDraft:
+The workflow in this bundle is derived from OpenDraft:
 https://github.com/federicodeponte/opendraft
+
+`DERIVATION.json` maps it file by file: which upstream prompt or module each
+agent and script came from, which upstream prompts were deliberately not
+ported and why, and the six corrections made to the original engine.
 
 OpenDraft is licensed under the MIT License:
 

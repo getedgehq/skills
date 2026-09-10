@@ -19,7 +19,9 @@ cp -r skills/workplan ~/.claude/skills/workplan
 
 ## Every one of these is a derived copy, and each says how it was derived
 
-All ten started in Federico's own working set. The original was read, never modified. What is published is a copy, edited so that it is useful to a stranger rather than only to the person who wrote it.
+Nine of them started in Federico's own working set. The original was read, never modified. What is published is a copy, edited so that it is useful to a stranger rather than only to the person who wrote it.
+
+The tenth, `opendraft`, is a port rather than a copy. Nothing in it was taken byte for byte: every file was written for this bundle against the OpenDraft engine (MIT) at a named commit, and its record maps each agent prompt and script back to the upstream file it came from, along with the upstream material deliberately left unported and why.
 
 Each folder carries a `DERIVATION.json` recording that edit in full: the source location, every file copied, every file left behind, the SHA-256 of each, and the licence that was added. A record cannot contain its own hash, so `DERIVATION.json` is excluded from the file list it describes.
 
@@ -29,7 +31,7 @@ The point of publishing the record alongside the copy is that you do not have to
 
 These copies are Apache-2.0. The root `LICENSE` carries the full terms, and each bundle carries its own copy.
 
-The copyright holder named in those licence appendices is **Floom**, which is where these copies were first published and licensed: nine on 2026-09-07, `openpaper` on 2026-09-09. GetEdge publishes this repository; it did not relicense the bundles, and rewriting a dated copyright line would both misstate who granted the licence and invalidate the SHA-256 records in each `DERIVATION.json`. The licence text is upstream Apache-2.0 unmodified except for that appendix copyright line, which is what the Apache appendix instructs a licensor to fill in. `openpaper` also retains the MIT licence and copyright notice for the OpenDraft-derived material in `THIRD_PARTY_NOTICES.md`.
+The copyright holder named in those licence appendices is **Floom**, which is where these copies were first published and licensed: nine on 2026-09-07, and the paper bundle on 2026-09-09, republished in full as `opendraft` on 2026-09-10. GetEdge publishes this repository; it did not relicense the bundles, and rewriting a dated copyright line would both misstate who granted the licence and invalidate the SHA-256 records in each `DERIVATION.json`. The licence text is upstream Apache-2.0 unmodified except for that appendix copyright line, which is what the Apache appendix instructs a licensor to fill in. `opendraft` also retains the MIT licence and copyright notice for the OpenDraft-derived material in `THIRD_PARTY_NOTICES.md`.
 
 You may use, modify and redistribute these, subject to the licence's attribution requirement. The grant applies from the version it appears on and cannot be withdrawn from a version already fetched.
 
@@ -49,7 +51,7 @@ Several call out to tools that must already be on your machine: `generate-image`
 | `generate-image` | Generates images through the Codex CLI, billed to a ChatGPT subscription rather than a per-image API key. |
 | `http-error-triage` | Separates a real credential problem from a CDN block, a wrong endpoint or a signature ban, before anyone concludes "the key is dead". |
 | `linkedin-media-prep` | Converts, crops and compresses images and video to what LinkedIn actually accepts. |
-| `openpaper` | Turns one topic into a research-paper draft with DOI-backed source lookup and an explicit citation-integrity gate. |
+| `opendraft` | Turns one topic line into a research-paper draft: eighteen agent prompts, keyless Crossref and OpenAlex lookup, and a citation-integrity gate that fails the run instead of shipping a broken bibliography. |
 | `security-audit-checklist` | Audits app code, cloud config, containers, CI and IaC, with three bundled scanners. |
 | `shadcn-first` | Builds UI from shadcn blocks and components instead of hand-written markup. |
 | `strip-image-ai-metadata` | Strips C2PA and AI-generation metadata so platforms stop labelling an image. |
