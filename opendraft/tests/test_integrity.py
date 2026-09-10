@@ -313,6 +313,137 @@ class UnicodeSurnameTests(unittest.TestCase):
         self.assertEqual(INTEGRITY.check_markers_and_bibliography(text), [])
 
 
+class ParticleSurnameTests(unittest.TestCase):
+    """A surname carrying a nobiliary/prepositional particle (German "von",
+    Dutch "van der", Spanish/Portuguese/Italian "de"/"della"/"dos", Arabic
+    "al-", ...) must match on the particle-plus-name as one unit, not fail
+    and push a drafter toward dropping the particle to pass the gate. Real
+    incident: "Birte von Haaren" got corrupted to "Haaren, B. (2015)" in a
+    shipped draft because the old single-token regex could never match
+    "(von Haaren et al., 2015)" against the correctly written bibliography
+    entry.
+    """
+
+    def test_particle_surname_cited_and_present_passes(self):
+        text = (
+            "The literature notes a strong effect (von Haaren et al., 2015).\n"
+            "\n"
+            "## References\n"
+            "\n"
+            "Von Haaren, B., Meyer, C., & Klein, D. (2015). A Study. *Venue*. "
+            "https://doi.org/10.1/x\n"
+        )
+        self.assertEqual(INTEGRITY.check_markers_and_bibliography(text), [])
+
+    def test_particle_surname_present_but_genuinely_never_cited_still_fails(self):
+        # No mention of the author anywhere in the body -- this must still be
+        # caught. A regex that matches particle surnames too eagerly (turning
+        # this check into a rubber stamp) would be a worse bug than the one
+        # it fixes.
+        text = (
+            "This body discusses something else entirely and cites no one.\n"
+            "\n"
+            "## References\n"
+            "\n"
+            "Von Haaren, B. (2015). A Study. *Venue*. https://doi.org/10.1/x\n"
+        )
+        failures = INTEGRITY.check_markers_and_bibliography(text)
+        self.assertTrue(
+            any("never cited" in f and "Von Haaren" in f for f in failures),
+            f"expected the uncited 'Von Haaren' entry to be reported, got: {failures}",
+        )
+
+    def test_multi_word_particle_van_der_round_trips(self):
+        text = (
+            "The effect replicates across cohorts (van der Berg, 2020).\n"
+            "\n"
+            "## References\n"
+            "\n"
+            "Van der Berg, T. (2020). A Study. *Venue*. https://doi.org/10.1/z\n"
+        )
+        self.assertEqual(INTEGRITY.check_markers_and_bibliography(text), [])
+
+    def test_hyphen_attached_al_particle_round_trips(self):
+        text = (
+            "A claim needing a source (al-Rashid, 2020).\n"
+            "\n"
+            "## References\n"
+            "\n"
+            "Al-Rashid, S. (2020). A Study. *Venue*. https://doi.org/10.1/y\n"
+        )
+        self.assertEqual(INTEGRITY.check_markers_and_bibliography(text), [])
+
+    def test_particle_surname_with_wrong_year_is_still_a_mismatch(self):
+        # The particle fix must not loosen year matching: a particle surname
+        # citing the wrong year is still a genuine error.
+        text = (
+            "A claim needing a source (von Haaren, 2019).\n"
+            "\n"
+            "## References\n"
+            "\n"
+            "Von Haaren, B. (2015). A Study. *Venue*. https://doi.org/10.1/x\n"
+        )
+        failures = INTEGRITY.check_markers_and_bibliography(text)
+        self.assertTrue(
+            any("von Haaren" in f and "no matching bibliography entry" in f for f in failures),
+            f"expected a surname+year mismatch failure, got: {failures}",
+        )
+
+
+class HyphenatedAndApostropheSurnameTests(unittest.TestCase):
+    """Non-particle edge cases the fix must not regress: a hyphenated
+    surname and a surname with an apostrophe, both of which already worked
+    under the old single-token regex and must keep working unchanged."""
+
+    def test_hyphenated_surname_round_trips(self):
+        text = (
+            "The novel remains a landmark work (Garcia-Marquez, 1967).\n"
+            "\n"
+            "## References\n"
+            "\n"
+            "Garcia-Marquez, G. (1967). One Hundred Years of Solitude. *Venue*. "
+            "https://doi.org/10.1/w\n"
+        )
+        self.assertEqual(INTEGRITY.check_markers_and_bibliography(text), [])
+
+    def test_apostrophe_surname_round_trips(self):
+        text = (
+            "The account is a formative example of the genre (O'Brien, 1990).\n"
+            "\n"
+            "## References\n"
+            "\n"
+            "O'Brien, T. (1990). The Things They Carried. *Venue*. "
+            "https://doi.org/10.1/v\n"
+        )
+        self.assertEqual(INTEGRITY.check_markers_and_bibliography(text), [])
+
+
+class ExistingSingleTokenSurnameUnchangedTests(unittest.TestCase):
+    """The pre-existing single-token case (no particle at all) must be
+    completely unaffected by the particle addition."""
+
+    def test_single_token_surname_still_round_trips(self):
+        text = (
+            "RAG systems combine retrieval with generation (Bose, 2025).\n"
+            "\n"
+            "## References\n"
+            "\n"
+            "Bose, R. (2025). Introduction to RAG. *Venue*. https://doi.org/10.1/x\n"
+        )
+        self.assertEqual(INTEGRITY.check_markers_and_bibliography(text), [])
+
+    def test_single_token_surname_genuinely_uncited_still_fails(self):
+        text = (
+            "Body text with no citations at all.\n"
+            "\n"
+            "## References\n"
+            "\n"
+            "Bose, R. (2025). Introduction to RAG. *Venue*. https://doi.org/10.1/x\n"
+        )
+        failures = INTEGRITY.check_markers_and_bibliography(text)
+        self.assertTrue(any("never cited" in f for f in failures))
+
+
 class WordCountTests(unittest.TestCase):
     def test_no_target_means_no_check(self):
         self.assertEqual(INTEGRITY.check_word_count("one two three", None, 0.1), [])

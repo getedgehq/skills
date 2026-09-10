@@ -72,13 +72,36 @@ _NAME = r"[^\W\d_][\w'\-]*"
 # read as citation markers.
 _NAME_UPPER = r"(?![a-zà-öø-ÿ])" + _NAME
 
+# Nobiliary/prepositional surname particles: German ("von", "van der"), Dutch
+# ("van", "van den"), Spanish/Portuguese ("de", "del", "dos", "da"), Italian
+# ("della", "di", "da"), French ("de", "du", "la", "le"), and Arabic ("al-").
+# Listed as single words -- "van der" / "van den" / "von der" are just two of
+# these back to back, which the one-or-more repetition below covers without
+# hardcoding every two-word combination. Matched case-insensitively: APA
+# capitalises the leading particle only when it opens a sentence or a
+# reference-list entry (bibliography "Von Haaren, B. (2015)."), and leaves it
+# lower case everywhere else, including in-text "(von Haaren, 2015)".
+_PARTICLE = r"(?:al|bin|da|de|del|della|den|der|di|dos|du|la|le|ten|ter|van|von|zu)"
+# One or more particles, each glued to what follows by whitespace, or by a
+# hyphen for the Arabic "al-" form ("al-Rashid"), then the surname itself.
+# The surname still has to pass _NAME_UPPER, so a bare lower-case word that
+# happens to be a particle ("(de facto standard, 2020)") still fails to
+# match: "facto" is lower case and the whole thing is rejected, same as
+# before this addition existed.
+_SURNAME = r"(?:(?i:" + _PARTICLE + r")[-\s]+)*" + _NAME_UPPER
+# Same, but for the second author in "(Smith & von Neumann, 2024)": the
+# original code let that slot be any case (bare _NAME, not _NAME_UPPER)
+# because it is never mistaken for prose the way the marker's opening word
+# is, and this keeps that looseness while adding particle support.
+_SURNAME_LOOSE = r"(?:(?i:" + _PARTICLE + r")[-\s]+)*" + _NAME
+
 # Author-year marker: (Family, 2024) / (Family & Family, 2024) / (Family et al., 2024)
 # The year is OPTIONAL because MLA in-text markers carry no year at all: they
 # are just "(Family)". A marker whose year group is None is matched on surname
 # alone, and only against a surname that is actually in the bibliography (see
 # check_markers_and_bibliography), so "(RAG)" in prose stays prose.
 AUTHOR_YEAR_MARKER = re.compile(
-    r"\((" + _NAME_UPPER + r"(?:\s(?:&|and|et al\.)(?:\s" + _NAME + r")?)?)"
+    r"\((" + _SURNAME + r"(?:\s(?:&|and|et al\.)(?:\s" + _SURNAME_LOOSE + r")?)?)"
     r"\.?(?:(?:,\s*|\s+)(\d{4}|n\.d\.))?\)"
 )
 # Numeric marker: [12] or [1, 2] or [1-3] -- capture the raw bracket contents.
@@ -87,8 +110,9 @@ NUMERIC_MARKER = re.compile(r"\[(\d+(?:\s*[,\-]\s*\d+)*)\]")
 # A numeric bibliography line starts with "N." or "[N]".
 NUMERIC_BIB_LINE = re.compile(r"^\s*(?:\[(\d+)\]|(\d+)\.)\s+\S")
 
-# The leading name token of a bibliography entry, unicode-aware to match _NAME.
-BIB_SURNAME = re.compile(r"^\s*(" + _NAME + r")")
+# The leading name of a bibliography entry, particle included (see _SURNAME
+# above), unicode-aware to match _NAME.
+BIB_SURNAME = re.compile(r"^\s*(" + _SURNAME + r")")
 
 # A four-digit year in a bibliography entry, restricted to 19xx/20xx and to
 # positions not inside a longer digit run, so DOI fragments are not read as
