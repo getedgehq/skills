@@ -1,6 +1,6 @@
 # skills
 
-Ten Skills for coding agents, published by GetEdge. All ten are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set.
+Eleven Skills for agents, published by GetEdge. All eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set.
 
 A Skill is a folder with a `SKILL.md` at its root: a short front matter block naming the Skill and saying when to invoke it, then the instructions themselves. Agents that support Skills read the front matter to decide when a Skill applies, and the body once it does. Some of these carry scripts the instructions call.
 
@@ -21,7 +21,7 @@ cp -r skills/workplan ~/.claude/skills/workplan
 
 Nine of them started in Federico's own working set. The original was read, never modified. What is published is a copy, edited so that it is useful to a stranger rather than only to the person who wrote it.
 
-The tenth, `opendraft`, is a port rather than a copy. Nothing in it was taken byte for byte: every file was written for this bundle against the OpenDraft engine (MIT) at a named commit, and its record maps each agent prompt and script back to the upstream file it came from, along with the upstream material deliberately left unported and why.
+`opendraft` is a port rather than a copy. Nothing in it was taken byte for byte: every file was written for this bundle against the OpenDraft engine (MIT) at a named commit, and its record maps each agent prompt and script back to the upstream file it came from, along with the upstream material deliberately left unported and why.
 
 Each folder carries a `DERIVATION.json` recording that edit in full: the source location, every file copied, every file left behind, the SHA-256 of each, and the licence that was added. A record cannot contain its own hash, so `DERIVATION.json` is excluded from the file list it describes.
 
@@ -39,11 +39,11 @@ Before their recorded licence dates these copies carried no licence file at all,
 
 ## What is not claimed
 
-No evaluation has been run against any of these, and no quality or safety state is asserted. These are working instructions, published because they were useful in practice, not because they passed a general quality bar.
+No comparative model evaluation has been run against any of these, and no general quality or safety state is asserted. These are working instructions, published because they were useful in practice, not because they passed a universal quality bar. Package-level tests and gates are documented separately from evaluations.
 
 Several call out to tools that must already be on your machine: `generate-image` drives the Codex CLI, `linkedin-media-prep` and `strip-image-ai-metadata` use ffmpeg and Python imaging libraries, and `security-audit-checklist` bundles three Python scanners. Read a Skill's instructions and its scripts before you run it, the same as any other code you install.
 
-## The ten
+## The eleven
 
 | Skill | What it does |
 | --- | --- |
@@ -52,6 +52,7 @@ Several call out to tools that must already be on your machine: `generate-image`
 | `http-error-triage` | Separates a real credential problem from a CDN block, a wrong endpoint or a signature ban, before anyone concludes "the key is dead". |
 | `linkedin-media-prep` | Converts, crops and compresses images and video to what LinkedIn actually accepts. |
 | `opendraft` | Turns one topic line into a research-paper draft: eighteen agent prompts, keyless Crossref and OpenAlex lookup, and a citation-integrity gate that fails the run instead of shipping a broken bibliography. |
+| `product-launch-video` | Turns a product URL or launch brief into an editable, reviewed launch film using HyperFrames or Remotion with remocn primitives. |
 | `security-audit-checklist` | Audits app code, cloud config, containers, CI and IaC, with three bundled scanners. |
 | `shadcn-first` | Builds UI from shadcn blocks and components instead of hand-written markup. |
 | `strip-image-ai-metadata` | Strips C2PA and AI-generation metadata so platforms stop labelling an image. |
