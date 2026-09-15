@@ -1,6 +1,6 @@
 # skills
 
-Twelve Skills for agents, published by GetEdge. Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; one, `people-search`, was written directly for this repository.
+Thirteen Skills for agents, published by GetEdge. Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; two, `people-search` and `agent-evals`, were written directly for this repository.
 
 A Skill is a folder with a `SKILL.md` at its root: a short front matter block naming the Skill and saying when to invoke it, then the instructions themselves. Agents that support Skills read the front matter to decide when a Skill applies, and the body once it does. Some of these carry scripts the instructions call.
 
@@ -25,7 +25,9 @@ Nine of them started in Federico's own working set. The original was read, never
 
 `people-search` is neither a copy nor a port. It was written directly for this repository as part of GetEdge's September install-growth sprint, so its `DERIVATION.json` records licensing provenance only, not a source it was edited down from.
 
-Each folder carries a `DERIVATION.json` recording that origin in full: for a working-set copy or port, the source location, every file copied, every file left behind, and the SHA-256 of each; for `people-search`, the files it ships and their SHA-256. Every folder's record also carries the licence that was added. A record cannot contain its own hash, so `DERIVATION.json` is excluded from the file list it describes.
+`agent-evals` was also written directly for this repository. Its structure follows a public evals masterclass by Alex Lieberman with Viv of LangChain, credited in the Skill and in its `DERIVATION.json`; no transcript or video material is included.
+
+Each folder carries a `DERIVATION.json` recording that origin in full: for a working-set copy or port, the source location, every file copied, every file left behind, and the SHA-256 of each; for `people-search` and `agent-evals`, the files they ship and their SHA-256. Every folder's record also carries the licence that was added. A record cannot contain its own hash, so `DERIVATION.json` is excluded from the file list it describes.
 
 The point of publishing the record alongside the copy is that you do not have to take the word "derived" on trust. You can read exactly what changed.
 
@@ -45,10 +47,11 @@ No comparative model evaluation has been run against any of these, and no genera
 
 Several call out to tools that must already be on your machine: `generate-image` drives the Codex CLI, `linkedin-media-prep` and `strip-image-ai-metadata` use ffmpeg and Python imaging libraries, and `security-audit-checklist` bundles three Python scanners. Read a Skill's instructions and its scripts before you run it, the same as any other code you install.
 
-## The twelve
+## The thirteen
 
 | Skill | What it does |
 | --- | --- |
+| `agent-evals` | Builds evals for a working agent: yes/no tasks and verifiers, resettable environments, then a loop that turns production traces into new tasks. |
 | `cli-ux-review` | Scores a command-line tool against a fixed rubric and writes the before/after fix for each failure. |
 | `generate-image` | Generates images through the Codex CLI, billed to a ChatGPT subscription rather than a per-image API key. |
 | `http-error-triage` | Separates a real credential problem from a CDN block, a wrong endpoint or a signature ban, before anyone concludes "the key is dead". |
