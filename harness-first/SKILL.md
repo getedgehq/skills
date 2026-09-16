@@ -58,4 +58,4 @@ Write real files, not a description of files. Run what can run and report the re
 
 ## Credit
 
-The method this Skill follows comes from a public post by Mark Ajzenstadt (@mardehaym): https://x.com/mardehaym/status/2099562230647804152. He wrote the argument; the procedure, the wording and the evaluation here are not his and he did not review them.
+The method this Skill follows comes from a public post by Mark Ajzenstadt (@mardehaym): https://x.com/mardehaym/status/2099562230647804152. The argument is theirs; the procedure, the wording and the evaluation here are Edge's own, and the author did not review them.
