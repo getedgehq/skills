@@ -1,6 +1,6 @@
 # skills
 
-Fifteen Skills for agents, published by GetEdge. Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; four, `people-search`, `agent-evals`, `rocketlist` and `harness-first`, were written directly for this repository. `harness-first` is the only one measured so far: it ships an evaluation of itself in [`harness-first/EVALS.md`](harness-first/EVALS.md).
+Sixteen Skills for agents, published by GetEdge. Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; one, `monid`, is Monid's own Skill, published unchanged; four, `people-search`, `agent-evals`, `rocketlist` and `harness-first`, were written directly for this repository. `harness-first` is the only one measured so far: it ships an evaluation of itself in [`harness-first/EVALS.md`](harness-first/EVALS.md).
 
 A Skill is a folder with a `SKILL.md` at its root: a short front matter block naming the Skill and saying when to invoke it, then the instructions themselves. Agents that support Skills read the front matter to decide when a Skill applies, and the body once it does. Some of these carry scripts the instructions call.
 
@@ -39,6 +39,8 @@ The point of publishing the record alongside the copy is that you do not have to
 
 These copies are Apache-2.0. The root `LICENSE` carries the full terms, and each bundle carries its own copy.
 
+`monid` is the exception. It is Monid's work, not a GetEdge copy, so the Apache-2.0 grant does not cover it: it is redistributed unmodified, in partnership with Monid, under Monid's own terms. The canonical copy is [monid.ai/SKILL.md](https://monid.ai/SKILL.md), and the Skill itself tells your agent to update from there when the Monid CLI and the Skill disagree on version. Its `DERIVATION.json` records the fetch date and SHA-256.
+
 The copyright holder named in those licence appendices is **Floom**, which is where these copies were first published and licensed: nine on 2026-09-07, and the paper bundle on 2026-09-09, republished in full as `opendraft` on 2026-09-10. GetEdge publishes this repository; it did not relicense the bundles, and rewriting a dated copyright line would both misstate who granted the licence and invalidate the SHA-256 records in each `DERIVATION.json`. The licence text is upstream Apache-2.0 unmodified except for that appendix copyright line, which is what the Apache appendix instructs a licensor to fill in. `opendraft` also retains the MIT licence and copyright notice for the OpenDraft-derived material in `THIRD_PARTY_NOTICES.md`.
 
 You may use, modify and redistribute these, subject to the licence's attribution requirement. The grant applies from the version it appears on and cannot be withdrawn from a version already fetched.
@@ -51,7 +53,7 @@ With one exception, no comparative model evaluation has been run against any of 
 
 Several call out to tools that must already be on your machine: `generate-image` drives the Codex CLI, `linkedin-media-prep` and `strip-image-ai-metadata` use ffmpeg and Python imaging libraries, and `security-audit-checklist` bundles three Python scanners. Read a Skill's instructions and its scripts before you run it, the same as any other code you install.
 
-## The fifteen
+## The sixteen
 
 | Skill | What it does |
 | --- | --- |
@@ -61,6 +63,7 @@ Several call out to tools that must already be on your machine: `generate-image`
 | `harness-first` | Diagnoses an unreliable or expensive agent by auditing its harness, traces, tools and context first, and refuses to recommend a model swap without evidence. Measured in [`harness-first/EVALS.md`](harness-first/EVALS.md). |
 | `http-error-triage` | Separates a real credential problem from a CDN block, a wrong endpoint or a signature ban, before anyone concludes "the key is dead". |
 | `linkedin-media-prep` | Converts, crops and compresses images and video to what LinkedIn actually accepts. |
+| `monid` | Gives an agent one install for hundreds of data and scraping tools: discover an endpoint, inspect its schema, run it, and report the per-call cost against a Monid balance. Monid's own Skill, not Apache-2.0. |
 | `opendraft` | Turns one topic line into a research-paper draft: eighteen agent prompts, keyless Crossref and OpenAlex lookup, and a citation-integrity gate that fails the run instead of shipping a broken bibliography. |
 | `people-search` | Plans a people search, ranks supplied or public-source candidates against a brief, and discloses exactly which filters a connected provider can and can't support — without implying built-in LinkedIn access it doesn't have. |
 | `product-launch-video` | Turns a product URL or launch brief into an editable, reviewed launch film using HyperFrames or Remotion with remocn primitives. |
