@@ -5,6 +5,13 @@ grader; the only difference between the two arms is whether `SKILL.md` was loade
 
 Run date: 2026-09-15. Everything below is one run. It has not been repeated.
 
+The bundle measured on that date is not byte-identical to the one published here.
+After the run, one sentence in the `## Credit` section of `SKILL.md` was rewritten
+to stop assuming the pronouns of the person credited, and the matching sentence in
+`DERIVATION.json` was changed the same way. Nothing in the procedure, the
+frontmatter or the reporting format was touched, and no other file changed. The
+numbers below were not re-measured against the corrected text.
+
 ## Headline
 
 | | With the Skill | Without it |
