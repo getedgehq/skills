@@ -1,6 +1,6 @@
 # skills
 
-Thirteen Skills for agents, published by GetEdge. Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; two, `people-search` and `agent-evals`, were written directly for this repository.
+Fifteen Skills for agents, published by GetEdge. Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; four, `people-search`, `agent-evals`, `rocketlist` and `harness-first`, were written directly for this repository. `harness-first` is the only one measured so far: it ships an evaluation of itself in [`harness-first/EVALS.md`](harness-first/EVALS.md).
 
 A Skill is a folder with a `SKILL.md` at its root: a short front matter block naming the Skill and saying when to invoke it, then the instructions themselves. Agents that support Skills read the front matter to decide when a Skill applies, and the body once it does. Some of these carry scripts the instructions call.
 
@@ -27,7 +27,11 @@ Nine of them started in Federico's own working set. The original was read, never
 
 `agent-evals` was also written directly for this repository. Its structure follows a public evals masterclass by Alex Lieberman with Viv of LangChain, credited in the Skill and in its `DERIVATION.json`; no transcript or video material is included.
 
-Each folder carries a `DERIVATION.json` recording that origin in full: for a working-set copy or port, the source location, every file copied, every file left behind, and the SHA-256 of each; for `people-search` and `agent-evals`, the files they ship and their SHA-256. Every folder's record also carries the licence that was added. A record cannot contain its own hash, so `DERIVATION.json` is excluded from the file list it describes.
+`rocketlist` was written for this repository too, against the live public rocketlist.ai job board; its `DERIVATION.json` records when each URL pattern and field name was checked.
+
+`harness-first` was written for this repository too. Its method comes from a public post by Mark Ajzenstadt (@mardehaym), credited in the Skill and in its `DERIVATION.json`; the post is linked, not quoted at length, and he did not review the Skill or its evaluation.
+
+Each folder carries a `DERIVATION.json` recording that origin in full: for a working-set copy or port, the source location, every file copied, every file left behind, and the SHA-256 of each; for `people-search`, `agent-evals`, `rocketlist` and `harness-first`, the files they ship and their SHA-256. Every folder's record also carries the licence that was added. A record cannot contain its own hash, so `DERIVATION.json` is excluded from the file list it describes.
 
 The point of publishing the record alongside the copy is that you do not have to take the word "derived" on trust. You can read exactly what changed.
 
@@ -43,22 +47,24 @@ Before their recorded licence dates these copies carried no licence file at all,
 
 ## What is not claimed
 
-No comparative model evaluation has been run against any of these, and no general quality or safety state is asserted. These are working instructions, published because they were useful in practice, not because they passed a universal quality bar. Package-level tests and gates are documented separately from evaluations.
+With one exception, no comparative model evaluation has been run against any of these, and no general quality or safety state is asserted. The exception is `harness-first`: [`harness-first/EVALS.md`](harness-first/EVALS.md) reports a single run comparing the same agent with and without that Skill loaded, on three tasks, with the confidence interval and the one task where it did not help stated there. That is evidence about those three tasks, not a general quality bar. These are working instructions, published because they were useful in practice. Package-level tests and gates are documented separately from evaluations.
 
 Several call out to tools that must already be on your machine: `generate-image` drives the Codex CLI, `linkedin-media-prep` and `strip-image-ai-metadata` use ffmpeg and Python imaging libraries, and `security-audit-checklist` bundles three Python scanners. Read a Skill's instructions and its scripts before you run it, the same as any other code you install.
 
-## The thirteen
+## The fifteen
 
 | Skill | What it does |
 | --- | --- |
 | `agent-evals` | Builds evals for a working agent: yes/no tasks and verifiers, resettable environments, then a loop that turns production traces into new tasks. |
 | `cli-ux-review` | Scores a command-line tool against a fixed rubric and writes the before/after fix for each failure. |
 | `generate-image` | Generates images through the Codex CLI, billed to a ChatGPT subscription rather than a per-image API key. |
+| `harness-first` | Diagnoses an unreliable or expensive agent by auditing its harness, traces, tools and context first, and refuses to recommend a model swap without evidence. Measured in [`harness-first/EVALS.md`](harness-first/EVALS.md). |
 | `http-error-triage` | Separates a real credential problem from a CDN block, a wrong endpoint or a signature ban, before anyone concludes "the key is dead". |
 | `linkedin-media-prep` | Converts, crops and compresses images and video to what LinkedIn actually accepts. |
 | `opendraft` | Turns one topic line into a research-paper draft: eighteen agent prompts, keyless Crossref and OpenAlex lookup, and a citation-integrity gate that fails the run instead of shipping a broken bibliography. |
 | `people-search` | Plans a people search, ranks supplied or public-source candidates against a brief, and discloses exactly which filters a connected provider can and can't support — without implying built-in LinkedIn access it doesn't have. |
 | `product-launch-video` | Turns a product URL or launch brief into an editable, reviewed launch film using HyperFrames or Remotion with remocn primitives. |
+| `rocketlist` | Reads a CV, works out what the person can actually do, and returns live startup roles from Rocketlist's public board with published salary, the evidence for the fit and an apply link. |
 | `security-audit-checklist` | Audits app code, cloud config, containers, CI and IaC, with three bundled scanners. |
 | `shadcn-first` | Builds UI from shadcn blocks and components instead of hand-written markup. |
 | `strip-image-ai-metadata` | Strips C2PA and AI-generation metadata so platforms stop labelling an image. |
