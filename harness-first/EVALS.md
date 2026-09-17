@@ -61,9 +61,14 @@ checks.
 sentence in the `## Credit` section of `SKILL.md` was rewritten to stop assuming the pronouns
 of the person credited, and the matching sentence in `DERIVATION.json` was changed the same
 way. Nothing in the procedure, the frontmatter or the reporting format was touched, and no
-other file changed. The bundle measured on 2026-09-15 hashed to `31d14eb4...`; the bundle
-published here hashes to `318343b0...`. The numbers below were not re-measured against the
-corrected text.
+other file changed. The bundle measured on 2026-09-15 hashed to `31d14eb4...`. The bundle
+published here hashes to something else, and always will: this page is a file inside the
+bundle, so every edit to it, including this correction, changes the digest. The current
+digest is whatever `npx skills add getedgehq/skills --skill harness-first` writes into
+`skills-lock.json`, and it is the value pinned on the skill's catalog page. What has not
+moved since the run is the rest of the bundle: `SKILL.md` apart from that one sentence, and
+`LICENSE` and `agents/openai.yaml` not at all. The numbers below were not re-measured
+against the corrected text.
 
 ## The three tasks
 
