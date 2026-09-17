@@ -91,6 +91,41 @@ produce SKIP. The first version read "no signature" as a 0% failure rate and wou
 confirmed three skills that had never been measured; the inverse bug would have
 uninstalled six working skills because a rate of zero cannot drop by 30%.
 
+Three more refusals come from watching the correction metric behave on real logs:
+
+- **Less than five days of sessions since adoption -> SKIP.** A skill adopted this
+  morning has no production record, and half a day of work cannot show a rate change.
+- **Theme words that are common across all corrections are dropped before matching**,
+  and a signature left with fewer than two distinct words is refused. Ordinary words
+  ("post", "reply", "status") match nearly every correction, which returns noise
+  wearing the costume of a measurement.
+- **A signature matching on more than 20 distinct words is refused as too broad.**
+  Whatever rate that produces is about vocabulary, not about one theme. On real data
+  a signature lifted from a whole skill body matched 33-43% of all sessions; the three
+  signatures mined as themes matched 5-18%.
+
+A single theme word is enough to count an episode when that word is rare in the corpus
+(under an eighth of episodes); otherwise two must match.
+
+`tests/test_recheck.py` pins all of it down on fixtures - stdlib only, no model calls,
+no network - including the symlinked uninstall, both zero-evidence skips, the recency
+guard and a real drop. Every case in it is a bug that reached real data first.
+
+## backfill.py and deploy.sh
+
+`backfill.py` gives already-adopted skills something to be measured by: skills forged
+from hand-written briefs carry no failure record, so the recheck would skip them
+forever. It lifts the theme back out of the installed SKILL.md - the front-matter
+description plus the user's own quoted corrections - and writes it onto the ledger row
+tagged `derived_from: skill_md:<path>`. That is a matcher, never a measurement, and the
+recheck's guards still decide whether it is good enough to use. `--apply` backs the
+ledger up first; `--redo` re-derives signatures it wrote before.
+
+`deploy.sh [--to host]` copies these skills from a checkout to an install root and
+verifies each tree by digest. The loop forges skills for other tasks and had no way to
+ship itself: a laptop running a three-day-old `mine.py` failed only when the timer
+fired, with `unrecognized arguments: --sources`.
+
 ## Hard rules (all learned from real eval failures)
 
 - **Blind judging is non-negotiable.** Arm identity lives in
