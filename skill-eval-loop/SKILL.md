@@ -352,11 +352,12 @@ fired, with `unrecognized arguments: --sources`.
   `mapping.private.json`; the judge sees only slot A/B.
 - **Both arms failing verify means the brief is broken** - judge marks the eval
   `invalid`, never picks a winner over two broken runs. Fix the eval, not the loop.
-  It also stops there: an unpassable gate is a property of the brief, so samples 2
-  and 3 are decided before they run and only cost an hour each to say the same
-  thing. The first real one did exactly that. `invalid_code` separates the two
-  invalid verdicts, because the other one is chance and the next sample may be
-  blind, so it must not stop anything.
+  Twice in a row also stops the brief, because a gate nothing passes costs half an
+  hour per arm to keep saying so. Not on the first: one such sample cannot tell an
+  unpassable gate from a strict but passable one that this pair missed, and the
+  next sample under the second is a verdict that stopping would have thrown away.
+  `invalid_code` separates the two invalid verdicts, because the other one is
+  chance and the next pair may well be blind, so it never stops anything.
 - **Evals need headroom and pressure.** Toy tasks don't reproduce real failures.
   But note the one-shot ceiling: recoverable single-turn errors never show skill
   value - only silent-wrong-output and knowledge-gap failures discriminate.

@@ -160,62 +160,89 @@ class Aggregation(unittest.TestCase):
 
 
 class UnpassableBrief(unittest.TestCase):
-    """A brief whose own gate nothing can pass should cost one sample, not three.
+    """A brief that keeps failing its own gate should not cost the full three samples.
 
-    The first real one cost three hours of queue time: a design brief whose verify
-    demanded a perfect final message failed both arms on sample 1, and the loop went on
-    to spend the same half hour per arm twice more to reach the same verdict. Both arms
-    failing verify is a property of the brief, so the remaining samples are already
-    decided before they run.
+    The first real one was a design brief whose verify demanded a flawless final
+    message: both arms failed it, and the loop went on spending half an hour per arm
+    twice more. But one such sample does not prove the gate is unpassable, only that
+    this pair did not pass it, and stopping on the first would throw away the verdict a
+    second sample might have produced under a strict but passable gate. Two in a row is
+    what stops the run.
     """
 
     FORGE = os.path.join(SCRIPTS, "forge.sh")
 
-    def build(self, tmp, invalid_code):
-        """A copy of forge.sh next to stubs, so the real loop body runs on fake spend."""
+    def build(self, tmp, codes):
+        """A copy of forge.sh next to stubs, so the real loop body runs on fake spend.
+
+        `codes` is one entry per sample: an invalid_code, or None for a clean verdict.
+        """
         here = os.path.join(tmp, "scripts")
         os.makedirs(here)
         shutil.copy(self.FORGE, os.path.join(here, "forge.sh"))
         counter = os.path.join(tmp, "runs.txt")
-        open(os.path.join(here, "run_eval.sh"), "w").write(
-            f'#!/usr/bin/env bash\necho "$2" >> {counter}\n')
-        body = json.dumps({"brief": "b1", "winner_arm": "invalid", "verify": {"with": 1},
-                           "invalid_code": invalid_code} if invalid_code else
-                          {"brief": "b1", "winner_arm": "with", "verify": {"with": 0}})
-        open(os.path.join(here, "judge.py"), "w").write(
-            "#!/usr/bin/env python3\nprint(%r)\n" % body)
+        with open(os.path.join(here, "run_eval.sh"), "w") as fh:
+            fh.write('#!/usr/bin/env bash\necho "$2" >> %s\n' % counter)
+        bodies = [json.dumps({"brief": "b1", "winner_arm": "invalid",
+                              "verify": {"with": 1}, "invalid_code": c} if c else
+                             {"brief": "b1", "winner_arm": "with", "verify": {"with": 0}})
+                  for c in codes]
+        with open(os.path.join(here, "judge.py"), "w") as fh:
+            fh.write("#!/usr/bin/env python3\nimport sys\n"
+                     "n = int(sys.argv[sys.argv.index('--sample') + 1])\n"
+                     "print(%r[n - 1])\n" % (bodies,))
         for stub in ("aggregate.py", "gate.py"):
-            open(os.path.join(here, stub), "w").write("#!/usr/bin/env python3\n")
+            with open(os.path.join(here, stub), "w") as fh:
+                fh.write("#!/usr/bin/env python3\n")
         brief = os.path.join(tmp, "brief.json")
-        json.dump({"id": "b1", "prompt": "p", "verify": "true"}, open(brief, "w"))
+        with open(brief, "w") as fh:
+            json.dump({"id": "b1", "prompt": "p", "verify": "true"}, fh)
         skill = os.path.join(tmp, "skill")
         os.makedirs(skill)
         return here, brief, skill, counter
 
-    def samples_run(self, invalid_code):
+    def samples_run(self, *codes):
         with tempfile.TemporaryDirectory() as tmp:
-            here, brief, skill, counter = self.build(tmp, invalid_code)
+            here, brief, skill, counter = self.build(tmp, codes)
             env = dict(os.environ, FORGE_ROOT=os.path.join(tmp, "forge"),
                        FORGE_SKIP_SCORE="1", PYTHONDONTWRITEBYTECODE="1")
             out = subprocess.run(["bash", os.path.join(here, "forge.sh"), "--brief", brief,
-                                  "--skill-dir", skill], env=env, capture_output=True, text=True)
+                                  "--skill-dir", skill, "--samples", str(len(codes))],
+                                 env=env, capture_output=True, text=True)
             self.assertEqual(out.returncode, 0, out.stderr)
-            arms = open(counter).read().split() if os.path.exists(counter) else []
+            with open(counter) as fh:
+                arms = fh.read().split() if os.path.exists(counter) else []
             return len(arms) // 2, out.stderr
 
-    def test_an_unpassable_verify_stops_after_the_first_sample(self):
-        n, err = self.samples_run("both_arms_failed_verify")
-        self.assertEqual(n, 1, "samples 2 and 3 were already decided by the brief")
-        self.assertIn("unpassable verify", err)
+    BOTH = "both_arms_failed_verify"
+
+    def test_two_failed_gates_running_stop_the_brief(self):
+        n, err = self.samples_run(self.BOTH, self.BOTH, self.BOTH)
+        self.assertEqual(n, 2, "the third sample was going to repeat the other two")
+        self.assertIn("twice running", err)
+
+    def test_one_failed_gate_does_not_stop_the_brief(self):
+        # A strict gate can fail one pair and pass the next, and that next sample is a
+        # verdict. Stopping on the first would have thrown it away to save an hour.
+        n, err = self.samples_run(self.BOTH, None, None)
+        self.assertEqual(n, 3)
+        self.assertNotIn("twice running", err)
+
+    def test_the_count_is_consecutive_not_cumulative(self):
+        # Needs a fourth sample to be able to fail: over three, a running count and a
+        # cumulative one both reach two only on the last one, which has already run.
+        n, _ = self.samples_run(self.BOTH, None, self.BOTH, None)
+        self.assertEqual(n, 4, "a clean sample in between clears the count")
 
     def test_a_pair_that_was_not_blind_does_not_stop_the_run(self):
         # Chance, not a property of the brief: the next sample may well be blind.
-        n, _ = self.samples_run("skill_named_in_final")
+        n, _ = self.samples_run(*(["skill_named_in_final"] * 3))
         self.assertEqual(n, 3)
 
     def test_a_normal_verdict_runs_every_sample(self):
-        n, _ = self.samples_run(None)
+        n, _ = self.samples_run(None, None, None)
         self.assertEqual(n, 3)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
