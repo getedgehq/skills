@@ -1,0 +1,4 @@
+# Key Findings
+
+The UK Soft Drinks Industry Levy reduced household purchasing across all income groups {cite_10.1136/bmjnph-2024-000981}, drove industry reformulation {cite_10.1371/journal.pmed.1003025}, and achieved an 8% childhood obesity reduction with largest effects in deprived areas {cite_10.1371/journal.pmed.1004160}. International evidence confirms purchasing reductions translate to sustained intake reductions {cite_10.2105/ajph.2019.304971}{cite_10.1017/s1368980020005078}. Reformulation was the primary mechanism. Extension to milk-based drinks is supported by this logic but evidence is extrapolated not observed. Threshold reduction to 4g/100ml would likely drive further reformulation based on manufacturer behavior at 5g, though inferred. Financial regressivity is offset by greater health gains in disadvantaged groups {cite_10.1371/journal.pmed.1002326}. Dental benefits are modeled not empirically demonstrated.
+

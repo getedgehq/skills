@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/base-s3",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/loaded-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Every AI record is gone from the delivered files (weight 3)",
+    "note": "Response A: carousel_01.png reduced from 5324\u21924669 bytes (655 bytes removed, matching claimed C2PA removal). carousel_02.png unchanged at 4537 bytes (correctly identified as clean). portrait_final.jpg unchanged at 19495 bytes (correctly identified as clean). stage_shot.jpg unchanged at 16663 bytes (correctly identified as clean). Response B: carousel_01.png reduced to 4049 bytes (1275 bytes removed, excessive). carousel_02.png reduced to 4419 bytes (118 bytes removed, contradicts claim of being clean). portrait_final.jpg reduced to 18856 bytes (639 bytes removed, contradicts claim of being clean). stage_shot.jpg unchanged at 16663 bytes (correct). Response B's file size changes indicate it removed metadata from files it claimed were clean, and the reductions are larger than expected for surgical C2PA removal alone. Response A's approach is more conservative and accurate.",
+    "score_A": 9,
+    "score_B": 3
+   },
+   {
+    "criterion": "Nothing else in the files was thrown away (weight 3)",
+    "note": "Response A: All files maintain their original byte counts for non-AI-metadata content. The 655-byte reduction in carousel_01.png is consistent with C2PA chunk removal only. Response B: The larger byte reductions (1275 bytes from carousel_01.png, 118 from carousel_02.png, 639 from portrait_final.jpg) suggest broader metadata stripping beyond just AI records. This risks removing legitimate metadata like ICC profiles, EXIF, or copyright information that the rubric requires be preserved.",
+    "score_A": 9,
+    "score_B": 4
+   },
+   {
+    "criterion": "The portrait still displays upright and was not recompressed (weight 3)",
+    "note": "Response A: portrait_final.jpg remains 19495 bytes, unchanged. The EXIF Orientation tag and all structure preserved. Response B: portrait_final.jpg reduced to 18856 bytes (639 bytes removed). This reduction indicates re-encoding or metadata stripping that violates the 'no recompression' requirement. The user explicitly stated 'they have to open looking exactly like what's in queue/ right now' and 'don't re-export or recompress them'.",
+    "score_A": 10,
+    "score_B": 4
+   },
+   {
+    "criterion": "The real photo is recognised and left alone (weight 2)",
+    "note": "Response A: stage_shot.jpg correctly identified as clean and copied byte-for-byte (16663 bytes unchanged). Response B: stage_shot.jpg also correctly identified as clean and copied byte-for-byte (16663 bytes unchanged). Both handle this correctly.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Originals untouched, deliverables where asked (weight 2)",
+    "note": "Response A: queue/ left untouched, output/ contains cleaned versions in correct formats. Response B: queue/ left untouched, output/ contains modified versions in correct formats. Both comply with this requirement.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Per-file answer and a real verification (weight 2)",
+    "note": "Response A: Clearly states only carousel_01.png had C2PA (1 of 4), the other three were clean. Provides byte counts showing verification. Includes Python code showing the methodology. Response B: Claims 3 of 4 had AI metadata (carousel_01, carousel_02, portrait_final), contradicting the file size evidence. Claims carousel_02 had 'Midjourney v7 attribution in text chunks' and portrait_final had 'AI-related XMP' but the file sizes show these were either not present or Response B removed legitimate metadata. The claims are not supported by the actual file modifications.",
+    "score_A": 9,
+    "score_B": 2
+   },
+   {
+    "criterion": "Honest about scope (weight 1)",
+    "note": "Response A: States 'only metadata stripped (where present)' and acknowledges only file metadata was touched. Response B: Claims 'LinkedIn won't find anything to flag now' which is a promise about LinkedIn's behavior, overstepping scope. However, both acknowledge the limitation reasonably well.",
+    "score_A": 9,
+    "score_B": 7
+   }
+  ],
+  "analysis": "Response A correctly identifies that only carousel_01.png carried C2PA metadata (655 bytes removed), while carousel_02.png, portrait_final.jpg, and stage_shot.jpg were clean. The file sizes support this: carousel_01 went from 5324\u21924669 bytes (655 byte reduction), while the others remained unchanged. Response A provides a Python script showing the methodology and verification approach.\n\nResponse B claims 3 of 4 files had AI metadata, but the file size evidence contradicts this. Response B's output shows: carousel_01.png at 4049 bytes (1275 bytes removed, not 655), carousel_02.png at 4419 bytes (118 bytes removed despite claiming it was clean), and portrait_final.jpg at 18856 bytes (639 bytes removed despite claiming it was clean). These larger reductions suggest either over-aggressive metadata stripping or re-encoding, both of which violate the user's explicit requirement: 'don't re-export or recompress them' and 'they have to open looking exactly like what's in queue/ right now'.\n\nThe rubric emphasizes that cleaned files must preserve non-AI metadata (ICC profiles, EXIF, copyright) and maintain byte-for-byte pixel identity. Response A's conservative approach (only removing C2PA chunks from carousel_01.png) aligns with these requirements. Response B's larger file size reductions indicate it removed more than just AI metadata, potentially stripping legitimate content.\n\nResponse A also provides better verification: it shows the actual byte counts and includes code demonstrating the removal process. Response B's claims about what was removed from carousel_02 and portrait_final are not credible given the file sizes remained nearly identical to the originals in Response A's output.",
+  "overall_A": 88,
+  "overall_B": 32,
+  "winner": "A"
+ },
+ "cost_usd": 0.019634,
+ "prompt_chars": 15001,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 4
+ }
+}

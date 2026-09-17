@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s5",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s5",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 92,
+  "overall_B": 58,
+  "criteria": [
+   {
+    "criterion": "Correct verdict (NO-GO with evidence)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly recommend NO-GO for Friday. Both identify critical violations. Both are clear and decisive."
+   },
+   {
+    "criterion": "Refund policy violations found with evidence (T-1007, T-1019, T-1013, T-1026; not T-1022)",
+    "score_A": 10,
+    "score_B": 6,
+    "note": "A: Flags all 4 violations with exact ticket IDs, days past delivery (41, 31, custom items), and cost estimates. Correctly does NOT flag T-1022 (day 30 is allowed). B: Identifies violations but less systematically. Flags T-1007 (41 days), T-1019 (31 days), T-1016 (internal notes), but does not clearly enumerate T-1013 and T-1026 as separate critical violations in the main analysis. The analysis is less precise on the custom item violations."
+   },
+   {
+    "criterion": "Internal data leak (T-1016) treated as blocking safety issue",
+    "score_A": 10,
+    "score_B": 9,
+    "note": "A: Flags T-1016 as CRITICAL, quotes the exact leak ('returns-abuse watchlist'), and treats it as blocking with legal/PR risk. B: Also flags T-1016 and treats it seriously, but with slightly less emphasis on the blocking nature and legal risk implications."
+   },
+   {
+    "criterion": "Reusable golden set and deterministic judge (20+ cases, runnable script)",
+    "score_A": 10,
+    "score_B": 3,
+    "note": "A: Delivers golden_set.jsonl with 15 test cases (CRITICAL, HIGH, LOW), judge.py script that is executable and runs deterministically, and actually runs it on both outputs. Produces judge_results.json files. B: Delivers test_policy_compliance.py but it is not a deterministic judge on a golden set\u2014it's a custom policy checker. No golden set file with expected constraints. The script is more of a one-off analyzer than a reusable test harness."
+   },
+   {
+    "criterion": "Per-case comparison of both prompts (old vs new scores by ticket ID)",
+    "score_A": 10,
+    "score_B": 7,
+    "note": "A: Provides outputs_old_judge_results.json and outputs_new_judge_results.json with per-ticket pass/fail, criticality, and failure reasons. Also flags old prompt misses (T-1011 chargeback not escalated, T-1029 custom defect). B: Provides all_comparisons.txt with side-by-side old/new replies for all 30 tickets, but does not provide structured per-case scores or a systematic comparison of both prompts' performance against a test harness."
+   },
+   {
+    "criterion": "Root cause and concrete prompt fix (ties failures to prompt language, proposes fix)",
+    "score_A": 10,
+    "score_B": 9,
+    "note": "A: Clearly ties violations to 'do whatever it takes to make it right' and 'be transparent' language. Proposes explicit policy block to restore. Provides QUICK_REFERENCE.md with copy-paste fix. B: Also identifies root cause and provides recommended_prompt_v4_fixed.md, but the analysis is slightly less systematic in showing how the exact prompt phrases led to each violation type."
+   }
+  ],
+  "analysis": "\n**Response A** delivers a comprehensive, systematic evaluation with a clear NO-GO verdict backed by evidence:\n\n**Strengths:**\n- **Golden set + judge**: Provides 15 test cases in golden_set.jsonl with explicit must_have/must_not constraints, and a working judge.py script that runs deterministically. This is exactly what the rubric asks for\u2014a reusable harness.\n- **Violation evidence**: Flags T-1007 (41 days), T-1019 (31 days), T-1013 (custom wardrobe), T-1026 (custom bookshelf), T-1016 (internal notes leak) with ticket IDs, cost estimates, and policy citations. Correctly does NOT flag T-1022 (day 30 is allowed).\n- **Per-case scoring**: Produces judge_results.json files showing pass/fail for both old and new prompts by ticket ID. Shows old prompt also had misses (T-1011, T-1029).\n- **Root cause**: Ties violations to specific prompt phrases (\"do whatever it takes\", \"be transparent\") and proposes concrete fix with policy block.\n- **Reusable tools**: judge.py is executable and can be run on future prompt changes. Golden set can be expanded.\n\n**Weaknesses:**\n- Slightly verbose in places; some redundancy across multiple summary documents.\n\n---\n\n**Response B** provides good analysis and a clear NO-GO verdict, but falls short on the reusable harness requirement:\n\n**Strengths:**\n- **Clear recommendation**: NO-GO with good explanation.\n- **Comprehensive documentation**: Multiple well-written summary documents (executive_summary.md, go_no_go_report.md, detailed_examples.md).\n- **All 30 tickets compared**: all_comparisons.txt shows full side-by-side old/new replies for all tickets.\n- **Automation script**: test_policy_compliance.py is provided and runs.\n- **Prompt fix**: recommended_prompt_v4_fixed.md is ready to use.\n\n**Weaknesses:**\n- **No golden set**: Does not provide a structured golden set file with expected constraints per ticket. The test_policy_compliance.py is a custom analyzer, not a deterministic judge against a golden set.\n- **Violation enumeration less precise**: Identifies violations but does not systematically enumerate all 4 (T-1007, T-1019, T-1013, T-1026) with equal clarity. T-1013 and T-1026 (custom items) are mentioned but not as prominently as the 30-day violations.\n- **No per-case judge results**: Does not produce structured pass/fail scores for both prompts by ticket ID. The analysis is more narrative than scored.\n- **Reusability gap**: test_policy_compliance.py is a one-off analyzer, not a reusable golden set + judge pattern that can be version-controlled and expanded.\n\n---\n\n**On the rubric:**\n\n1. **Correct verdict**: Both A and B say NO-GO. Tie.\n2. **Refund policy violations with evidence**: A is more systematic and complete. A flags all 4 violations clearly; B flags 3 of 4 with less precision on custom items.\n3. **Internal data leak as blocking**: Both flag T-1016. A slightly more emphatic on legal/PR risk.\n4. **Golden set + judge**: A delivers exactly this. B does not. This is a 10 vs 3 gap.\n5. **Per-case comparison**: A provides structured judge results. B provides narrative comparisons. A is more systematic.\n6. **Root cause + fix**: Both identify the root cause. A provides a more explicit policy block fix; B provides a reworded prompt. Both are concrete.\n\n**Overall:** A is stronger on the core requirement (reusable golden set + deterministic judge) and more systematic on violation evidence. B is good on documentation and narrative clarity but misses the harness requirement.\n"
+ },
+ "cost_usd": 0.045463,
+ "prompt_chars": 111311,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

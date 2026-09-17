@@ -1,0 +1,48 @@
+{
+ "id": "harness-first.sales-agent-token-burn",
+ "skill": "harness-first",
+ "kind": "direct",
+ "prompt": "hey, finance just pinged me about the anthropic bill for the outreach agent. we're halfway through september and it's already ~4x what all of august cost, and nobody changed the volume. i honestly think sonnet is overkill for writing cold emails, priya put a price sheet in docs/. should we just switch to a cheaper model? pick one for us and tell me roughly what we'd save, i'd like to flip it before month end. the agent code is in agent/, trace export + crm client log for sept 1-15 are in logs/. put anything you make in output/ (or just fix stuff in the code if you need to, it's our repo)",
+ "setup": "",
+ "rubric": [
+  {
+   "criterion": "Root cause found with numbers",
+   "weight": 3,
+   "description": "Explains the mechanism: the 2026-09-03 prompt change writes lead_score_v2 (not in crm_schema.json) so PATCH returns 422 every time; the loop has no max iterations and the prompt says retry until the CRM write succeeds, so 4 hot-lead conversations (cv_24a92f, cv_488aab, cv_a99bb9, cv_15f5fe) loop until the 200k context overflows. Quantifies them: ~70% of tokens/cost (~1.46-1.57M tokens and ~$4.4-4.7 each, ~$18.4 of ~$26.7). Does not blame cv_6f895a, which has the most calls but only ~0.1M tokens."
+  },
+  {
+   "criterion": "No blind model swap",
+   "weight": 3,
+   "description": "Answers the actual question: don't switch models on this evidence. Fixing the loop and the per-turn export alone removes most of the spend; any model change should come after a golden-set comparison of quality and cost on the fixed agent. Does not simply pick haiku/gpt-5-mini/etc. from the price sheet."
+  },
+  {
+   "criterion": "Stops the bleeding in code",
+   "weight": 3,
+   "description": "Actually changes agent code (or gives a concrete patch): max iterations and/or a per-conversation token/cost cap with a graceful stop; with_retries no longer retries non-transient 4xx like 422 (keeps backoff for 429/5xx); stops re-fetching the full account export every turn (fetch once / trim)."
+  },
+  {
+   "criterion": "Unprompted safety gap flagged",
+   "weight": 2,
+   "description": "Notices send_email fires real email from reps' mailboxes with no approval/draft step and no max-emails guard, and flags or gates it, even though nobody asked."
+  },
+  {
+   "criterion": "Harness artifacts",
+   "weight": 2,
+   "description": "Creates a golden set (>=10 cases with expected behaviour, including the hot-lead 422 case, the merged/404 account case, low-score no-email case) and ideally a runnable check/judge, plus a short harness scorecard (golden set, judge, cost caps, data layer, action approvals, tracing)."
+  },
+  {
+   "criterion": "Clear answer for the CFO",
+   "weight": 1,
+   "description": "Leads with a one-line answer, then evidence, what was changed, and a short prioritized next-steps list. Numbers are consistent with the logs."
+  }
+ ],
+ "why_skill_should_matter": "SKILL.md says to reproduce the symptom by aggregating traces per conversation before touching the model, lists 'loop with no max-iterations, retry on a deterministic error, huge tool result resent every turn' as the token-burn mechanisms, forbids recommending a model swap without eval evidence, treats ungated side effects as blocking even when unasked, and says to write real cap/golden-set files. A generic agent tends to answer the question as asked (pick the cheapest model from the price sheet) or stop at a diagnosis.",
+ "expected_baseline_failure_modes": [
+  "Recommends claude-haiku-4-5 or gpt-5-mini from the price sheet with a savings estimate, treating it as a model cost problem",
+  "Counts calls instead of tokens and points at cv_6f895a (26 calls, but cheap)",
+  "Mentions the 422 errors but not that they drive ~70% of spend, or gives no per-conversation numbers",
+  "Diagnoses but changes no code: no max-iterations / cost cap",
+  "Never mentions that send_email sends real email with no approval",
+  "No golden set or eval plan before a model change"
+ ]
+}

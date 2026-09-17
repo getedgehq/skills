@@ -1,0 +1,73 @@
+{
+  "id": "opendraft.phone-policy-brief",
+  "skill": "opendraft",
+  "kind": "transfer",
+  "prompt": "Morning. I need the evidence annex for the cabinet paper on going phone-free across our secondaries. It goes out to members Tuesday and I'm in consultation sessions all day tomorrow.\n\nAbout 2,000 words, 2,400 is the absolute ceiling. Harvard, author-date, reference list at the end with DOIs on everything (legal bounced the last annex because two references couldn't be traced). Open it with a short Bottom line box, 150 words max, because for a lot of members that is the only part they read.\n\nIt has to cover attainment, wellbeing and mental health, how strong the underlying studies actually are, and the implementation question the heads keep raising with me: enforcement, lockable pouches, and parents who want to be able to reach their child during the day.\n\nWhat I have is in the folder. evidence_notes.md is where Jaz and I got to, and reading_list.bib is our reading list. The list is what we happen to have collected, not the field, so bring in whatever else you need. An annex on something this contested should be sitting on 17 or 18 sources, not 10.\n\noutput/phone_policy_brief.md please. Cabinet has effectively landed on doing this in January, so the annex is there to set out the evidence base under the decision.",
+  "setup": "",
+  "limits": {
+    "max_turns": 250,
+    "max_wall_s": 5400,
+    "attempt_cap_usd": 5.0,
+    "sandbox_timeout_s": 10800,
+    "wrapup_turns": 8,
+    "wrapup_tools": ["bash", "write_file", "read_file"],
+    "wrapup_cost_frac": 0.85,
+    "elide_prompt_tokens": 100000,
+    "check_timeout_s": 900
+  },
+  "followup": {
+    "unless_exists": ["output/*.md", "output/*/*.md"],
+    "max": 1,
+    "text": "Sorry, I'm in consultation sessions and can't answer anything today. Use your judgement on whatever I left open, tell me at the end what you decided, and please just get me the annex."
+  },
+  "judge_files": {
+    "first": ["output/*.md", "output/*/*.md", "output/*"],
+    "names_only": ["*"],
+    "per_side_chars": 60000,
+    "check_chars": 6000
+  },
+  "rubric": [
+    {
+      "criterion": "Supplied reading list checked rather than reprinted",
+      "weight": 3,
+      "description": "The Halvorsen and Dahl (2021) entry, whose DOI 10.1016/j.econedurev.2019.101884 does not resolve at Crossref or DataCite and which cannot be found anywhere, is not cited: it is dropped, and ideally the author is told it appears not to exist. The two Kessel entries are recognised as one study issued twice (SSRN working paper and the Economics of Education Review article) rather than as two independent Swedish studies that replicate each other."
+    },
+    {
+      "criterion": "The headline figure is reported as what it is",
+      "weight": 3,
+      "description": "Beland and Murphy's result is 6.41% of a standard deviation on high-stakes exam scores, concentrated in the lowest-achieving pupils, not a 6.41% rise in exam results. The annex either states it correctly with the standard-deviation unit and the distributional caveat, or leaves the figure out. The user's own framing of it is corrected rather than repeated."
+    },
+    {
+      "criterion": "Study designs and their findings not misdescribed",
+      "weight": 3,
+      "description": "The SMART Schools study (Goodyear et al., 2025) is described as cross-sectional and as finding no evidence of a difference in mental wellbeing between restrictive and permissive schools, not as showing that phone policies improve wellbeing. Abrahamsson's Norwegian event study is described as finding no average effect with benefits concentrated among girls, not as improvement across the board. Experimental and survey evidence is not presented as evidence about school-level policy."
+    },
+    {
+      "criterion": "Literature extended beyond the folder",
+      "weight": 2,
+      "description": "The annex rests on a real search rather than the fifteen entries handed over: at least seventeen references, several of them not in reading_list.bib, relevant and real, and the published version of work supplied only as a preprint is used where one exists. The implementation, enforcement and safeguarding questions the user flagged as unresearched are actually researched."
+    },
+    {
+      "criterion": "Every reference resolves and matches",
+      "weight": 3,
+      "description": "Every printed DOI resolves at Crossref or DataCite and points to the work the entry describes, with the right year; no retracted item is cited; in-text citations and the reference list map onto each other; no placeholders or process notes survive into the annex."
+    },
+    {
+      "criterion": "Deliverable meets the brief and is honest with the client",
+      "weight": 2,
+      "description": "output/phone_policy_brief.md exists, is between roughly 1,500 and 2,400 words before the reference list, opens with a Bottom line box of 150 words or fewer that stands on its own, and covers attainment, wellbeing, evidence quality and implementation. The final message tells the user which of their supplied claims did not survive checking instead of quietly fixing or quietly keeping them."
+    }
+  ],
+  "why_skill_should_matter": "OpenDraft's stage 1 scouting and sources.py find the implementation and safeguarding literature the officer has not collected, and citations.py verify puts every supplied DOI into resolved/absent/unknown against Crossref and DataCite, which is what exposes the Halvorsen and Dahl entry as absent; compile refuses to render any citation that is not resolved, so an untraceable reference cannot reach the annex. Stage 11's verifier checks each claim against its own source, which is where 'test scores rose 6.41%' becomes '6.41% of a standard deviation, driven by the lowest achievers' and where a cross-sectional null result stops being evidence that policies improve wellbeing, and the stage 10 skeptic is what pushes back on a client who has already decided. Stage 6 makes the 2,400-word ceiling and the 150-word box a budget the sections are drafted against.",
+  "expected_baseline_failure_modes": [
+    "Prints 'test scores rose by 6.41%' as the headline, the way the notes state it",
+    "Cites Halvorsen and Dahl (2021) with the supplied DOI, which does not resolve",
+    "Reports SMART Schools as showing that restrictive phone policies improve wellbeing",
+    "Describes the Norwegian ban study as improving outcomes across the board",
+    "Treats the two Kessel entries as two Swedish studies that replicate each other",
+    "Writes the annex from the fifteen supplied entries and never searches for the implementation or safeguarding evidence",
+    "DOIs recalled from memory for the extra sources, which do not resolve or point elsewhere",
+    "Overruns the 2,400-word ceiling or the 150-word Bottom line box",
+    "Delivers the annex without telling the user that any of their supplied claims were wrong"
+  ]
+}

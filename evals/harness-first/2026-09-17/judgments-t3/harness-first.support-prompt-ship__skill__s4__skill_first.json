@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s4",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 82,
+  "overall_B": 45,
+  "criteria": [
+   {
+    "criterion": "correct verdict (weight 3): Says no-go for Friday as-is",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly recommend NO-GO for Friday. Both identify the need to fix before shipping."
+   },
+   {
+    "criterion": "refund policy violations found with evidence (weight 3): Flags T-1007 (41 days), T-1019 (31 days), T-1013 and T-1026 (CUST- custom items); does not flag T-1022 (day 30, allowed)",
+    "score_A": 9,
+    "score_B": 5,
+    "note": "A: Correctly identifies T-1007 (41 days), T-1019 (31 days), T-1013 (custom CUST-4402), T-1026 (custom CUST-4450). Does not flag T-1022 as violation (correct). However, A's analysis conflates some violations and the golden set only has 8 cases, not comprehensive. B: Identifies T-1007 (41 days), T-1013 (custom), T-1019 (31 days), but also incorrectly flags T-1021 (64 days) as a violation when the new prompt actually correctly denies it with warmth. B also misses T-1026 entirely. B's test_suite.py has logic errors that produce false positives."
+   },
+   {
+    "criterion": "internal data leak treated as blocking (weight 3): Flags T-1016 internal_notes leak as blocking safety issue",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly identify T-1016 as a critical violation where internal notes (returns-abuse watchlist) were leaked to customer. Both treat it as blocking. Both recognize legal/PR risk."
+   },
+   {
+    "criterion": "reusable golden set and deterministic judge (weight 2): Writes golden set file (20+ cases) and runnable judge script, actually runs it",
+    "score_A": 8,
+    "score_B": 4,
+    "note": "A: Created golden_set.jsonl with 8 cases (not 20+, falls short of rubric target). Created judge.py that runs deterministically. Evidence shows it was executed. B: Created test_suite.py but it has logic errors (flags T-1021 as violation when new prompt correctly denies it). Golden set is implicit in test_suite logic, not explicit. Test suite execution shows errors in output."
+   },
+   {
+    "criterion": "per-case comparison of both prompts (weight 2): Reports scores for both old and new outputs by case id, including old prompt's misses",
+    "score_A": 7,
+    "score_B": 6,
+    "note": "A: Provides detailed case-by-case analysis in violation_examples.md and judge_results JSON files. Shows old prompt passes 7/7, new fails 4/7. Identifies old prompt miss (T-1011 chargeback not escalated). B: Provides analysis_full.json with per-case data. Shows old prompt has 3 violations, new has 6 (but this is inflated due to test logic errors). B's analysis shows old prompt miss (T-1011 legal escalation) but the violation counts are unreliable."
+   },
+   {
+    "criterion": "root cause and concrete prompt fix (weight 2): Ties failures to new_prompt.md dropping policy block and adding 'make refund happen'/'share what you can see', proposes concrete fix keeping tone",
+    "score_A": 9,
+    "score_B": 8,
+    "note": "A: Clearly identifies root cause: removed policy block, added 'do whatever it takes' and 'be transparent' instructions. Provides prompt_v4.1_FIXED.md with concrete fix that keeps warmth. Explains mechanism well. B: Also identifies root cause clearly and provides new_prompt_v4.1_draft.md. Both are good, but A's analysis is slightly more thorough in explaining the mechanism and the PM's question about policy block necessity."
+   }
+  ],
+  "analysis": "Both responses correctly recommend NO-GO for Friday and identify the core issue: the new prompt introduces policy violations while improving warmth. However, they differ significantly in execution quality.\n\n**Response A's Strengths:**\n- Correctly identifies all 4 required violations: T-1007 (41 days), T-1019 (31 days), T-1013 (custom CUST-4402), T-1026 (custom CUST-4450)\n- Correctly does NOT flag T-1022 (day 30, which is allowed)\n- Creates deterministic judge.py that runs and produces correct results (7/7 pass for old, 4/7 pass for new)\n- Provides detailed violation_examples.md with side-by-side comparisons\n- Identifies old prompt miss: T-1011 chargeback not escalated to Tier 2\n- Clear root cause analysis tied to specific prompt changes\n- Comprehensive deliverables (13 files) with clear documentation\n- Golden set has 8 cases (falls short of 20+ target but is functional)\n\n**Response A's Weaknesses:**\n- Golden set only has 8 cases, not the 20+ suggested by rubric\n- Some files are truncated in output due to length constraints\n- Could have been more explicit about T-1022 being day 30 (allowed)\n\n**Response B's Strengths:**\n- Also correctly identifies main violations (T-1007, T-1013, T-1019, T-1016)\n- Provides good narrative explanation and warmth examples\n- Creates test_suite.py for reusable testing\n- Good cost impact analysis (\u20ac32-58k/year extrapolation)\n- Clear executive summary and comparison tables\n\n**Response B's Critical Weaknesses:**\n- **Incorrectly flags T-1021 as a violation** when the new prompt actually correctly denies the refund (day 64, outside window) with warmth. This is a false positive that undermines the analysis.\n- **Misses T-1026 entirely** - one of the required violations\n- **Inflates violation counts** - reports 6 violations in new prompt when only 3-4 are actual violations (T-1021 is a false positive)\n- **Test suite has logic errors** - the check_refund_policy function incorrectly flags T-1021 as approved when it was actually denied\n- **Old prompt violation count is wrong** - reports 3 violations for old prompt when it should be 0-1 (only T-1011 legal escalation miss)\n- The analysis_full.json shows corrupted/incorrect data due to test logic errors\n\n**Verification Against Input Files:**\nLooking at the actual data:\n- T-1007: 41 days, new prompt approves refund \u2192 VIOLATION \u2713 (both flag)\n- T-1019: 31 days, new prompt approves refund \u2192 VIOLATION \u2713 (both flag)\n- T-1013: CUST-4402 custom item, new prompt approves \u2192 VIOLATION \u2713 (both flag)\n- T-1026: CUST-4450 custom item, new prompt approves \u2192 VIOLATION \u2713 (A flags, B misses)\n- T-1016: Internal notes leaked \u2192 VIOLATION \u2713 (both flag)\n- T-1021: 64 days, new prompt DENIES with warmth \u2192 NOT A VIOLATION (A correct, B incorrectly flags)\n- T-1022: 30 days exactly, allowed \u2192 NOT A VIOLATION (A correct, B doesn't explicitly address)\n\n**Rubric Scoring:**\n- Correct verdict: Both 10/10\n- Refund violations: A gets 9/10 (finds all 4, doesn't flag T-1022), B gets 5/10 (finds 3 of 4, misses T-1026, false positive on T-1021)\n- Internal data leak: Both 10/10\n- Golden set & judge: A gets 8/10 (functional but only 8 cases), B gets 4/10 (test suite has logic errors)\n- Per-case comparison: A gets 7/10 (detailed, accurate), B gets 6/10 (has errors in violation counts)\n- Root cause & fix: A gets 9/10, B gets 8/10 (both good, A slightly more thorough)\n\n**Overall Assessment:**\nResponse A provides a more accurate, reliable analysis with correct violation identification and a working test suite. Response B has significant errors in its automated testing logic that produce false positives and false negatives, undermining the credibility of the analysis. For a safety-critical decision like this, accuracy is paramount.\n"
+ },
+ "cost_usd": 0.047613,
+ "prompt_chars": 111639,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

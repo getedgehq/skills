@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s6",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s6",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "Explains mechanism, quantifies the 5 broken conversations, identifies token/cost waste, does not blame low-turn conversations.",
+    "score_A": 6,
+    "score_B": 9
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "Answers the actual question: don't switch models on this evidence alone. Fixes the loop first, then tests model quality.",
+    "score_A": 2,
+    "score_B": 10
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "Actually changes agent code: max iterations, cost caps, smart retries, per-turn export fix, graceful stops.",
+    "score_A": 5,
+    "score_B": 9
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "Notices send_email fires real email with no approval/draft step and no max-emails guard, flags or gates it.",
+    "score_A": 0,
+    "score_B": 8
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "Creates golden set (>=10 cases with expected behaviour), runnable judge, scorecard (golden set, judge, cost caps, data layer, action approvals, tracing).",
+    "score_A": 0,
+    "score_B": 8
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "Leads with one-line answer, then evidence, what was changed, prioritized next-steps. Numbers consistent with logs.",
+    "score_A": 7,
+    "score_B": 9
+   }
+  ],
+  "analysis": "**Response A: Model Switch Recommendation (Haiku)**\n\nStrengths:\n- Correctly identifies the 4x spike is not volume-driven\n- Finds 5 broken conversations costing $18.43 (69% of Sept 1-15)\n- Quantifies normal vs broken: $0.20 avg vs $3.69 avg\n- Recommends Haiku as drop-in replacement (same API, 67% savings)\n- Provides clear deployment files (config.json, loop.py, DEPLOY.md)\n- Good executive summary and cost comparison tables\n\nWeaknesses:\n- **Critical flaw:** Recommends switching models WITHOUT fixing the underlying bug. The infinite loop bug is still present in the provided loop.py\u2014it only adds MAX_TURNS=10 but does NOT fix the root cause (re-fetching account every turn, retrying 422 errors forever).\n- Does not identify that the prompt instruction \"call crm_get_account at the start of EVERY turn\" is the mechanism driving context explosion.\n- Does not fix the retry logic to fail-fast on 422 errors (permanent client errors).\n- Does not update the prompt to remove \"retry forever\" instruction.\n- Does not flag the send_email safety gap (no approval gate).\n- Does not create a test harness or golden set.\n- The fix is incomplete: even on Haiku, the same 5 conversations would still loop if the prompt and retry logic aren't fixed.\n- Numbers are correct but the recommendation is backwards: should fix bug first (71% savings, zero risk), then test model switch.\n\n**Response B: Fix the Bug First, Then Test Models**\n\nStrengths:\n- **Correct diagnosis:** 70% of costs ($18.77 of $26.66) from 5 retry loops on deterministic errors.\n- **Identifies root cause with evidence:** \n  - Prompt says \"call crm_get_account at the start of EVERY turn\" \u2192 context explodes from 2K to 188K tokens\n  - 236 failed API calls for non-existent field `lead_score_v2` in logs\n  - Agent retries 15-17 times on permanent 422 errors\n  - No max iteration limit\n- **Fixes the actual bug** in 3 files:\n  - loop.py: max_iterations=8, max_cost_usd=$0.50 with exceptions\n  - tools.py: Only retry transient errors (429, 5xx), fail-fast on 4xx (400, 404, 422)\n  - prompts.py: \"Call ONCE\" not \"EVERY turn\", \"report and finish\" not \"retry forever\"\n- **Correct recommendation:** Fix bug first (71% savings, zero risk), then test model switch with real quality data.\n- **Creates test harness:** 5 golden test cases in evals/golden.jsonl, judge.py framework\n- **Flags safety gap:** send_email has no approval gate, flags as critical blocking issue\n- **Harness scorecard:** Six-part assessment (golden set, judge, cost governance, data layer, action safety, tracing)\n- **Clear CFO answer:** QUICK_ANSWER.txt leads with \"don't switch models yet, fix bug first\"\n- Numbers are consistent with logs and reasoning is sound\n\nWeaknesses:\n- Slightly verbose in places (though comprehensive is better than incomplete)\n- Could have been more explicit about why Haiku would still fail without the bug fix\n\n**Key Difference:**\n\nResponse A recommends switching to Haiku (67% savings) but leaves the bug unfixed. Even on Haiku, the same 5 conversations would still loop because:\n1. The prompt still says \"call crm_get_account at the start of EVERY turn\"\n2. The retry logic still retries 422 errors forever\n3. There's no max iteration limit in the original loop.py\n\nResponse B fixes the bug (71% savings, zero risk) and then recommends testing model switch with real quality data. The bug fix alone saves more than the model switch, and it's the right order: fix the mechanism, then optimize the model.\n\n**Rubric Scoring:**\n\n1. **Root cause with numbers (weight 3):** A finds the 5 conversations but doesn't explain the mechanism (context explosion, retry loop). B explains both the mechanism (file:line evidence) and quantifies it. B: 9, A: 6.\n\n2. **No blind model swap (weight 3):** A recommends switching to Haiku without fixing the bug\u2014this is exactly the blind swap the rubric warns against. B correctly says \"fix first, test model later.\" B: 10, A: 2.\n\n3. **Stops the bleeding in code (weight 3):** A adds MAX_TURNS=10 but doesn't fix the prompt or retry logic. B fixes all three (loop.py, tools.py, prompts.py). B: 9, A: 5.\n\n4. **Safety gap flagged (weight 2):** A doesn't mention send_email approval issue. B flags it as critical blocking issue. B: 8, A: 0.\n\n5. **Harness artifacts (weight 2):** A creates no test harness. B creates golden.jsonl (5 cases), judge.py, scorecard. B: 8, A: 0.\n\n6. **Clear CFO answer (weight 1):** A says \"switch to Haiku, save 67%.\" B says \"fix bug first, save 71%, then test model.\" B is more correct. B: 9, A: 7.\n\n**Weighted totals:**\n- A: (6\u00d73 + 2\u00d73 + 5\u00d73 + 0\u00d72 + 0\u00d72 + 7\u00d71) / 14 = (18 + 6 + 15 + 0 + 0 + 7) / 14 = 46/14 \u2248 3.3 \u2192 33/100\n- B: (9\u00d73 + 10\u00d73 + 9\u00d73 + 8\u00d72 + 8\u00d72 + 9\u00d71) / 14 = (27 + 30 + 27 + 16 + 16 + 9) / 14 = 125/14 \u2248 8.9 \u2192 89/100\n",
+  "overall_A": 33,
+  "overall_B": 89,
+  "winner": "B"
+ },
+ "cost_usd": 0.058162,
+ "prompt_chars": 140112,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

@@ -1,0 +1,67 @@
+{
+ "attempt_id": "harness-first.sales-agent-token-burn:skill:s5",
+ "task_id": "harness-first.sales-agent-token-burn",
+ "skill": "harness-first",
+ "arm": "skill",
+ "sample": 5,
+ "status": "done",
+ "turns": 29,
+ "cost_usd": 1.0485095999999998,
+ "usage": {
+  "inputTokens": 179,
+  "outputTokens": 30876,
+  "cacheReadInputTokens": 583667,
+  "cacheWriteInputTokens": 109262
+ },
+ "skill_read": true,
+ "skill_file_reads": [
+  {
+   "tool": "read_file",
+   "args": "{\"path\": \"/home/user/.skills/harness-first/SKILL.md\"}"
+  }
+ ],
+ "tool_calls": 36,
+ "tool_errors": 3,
+ "system_prompt": "You are an AI assistant with access to a Linux computer through tools. The user's files are in /home/user/work, which is your current working directory.\n\nComplete the user's request end to end: do the actual work with the tools, save deliverables as files when a file is the natural output, and finish with a reply to the user in chat. The user is not available for follow-up questions during the task; if something is ambiguous or missing, make a sensible call and say so, or explain clearly what blocks you.\n\nEnvironment: Debian Linux, Python 3.11, Node 20, git, jq, curl, ImageMagick. Internet access is available (pip/npm/apt installs work). Today's date is 2026-09-16.\n\n<available_skills>\n<skill>\n<name>harness-first</name>\n<description>Diagnose and fix an unreliable, expensive, or unsafe LLM agent by auditing its harness (golden set, judge, cost caps, data layer, action approvals, tracing) before blaming or swapping the model. Use when someone says an agent is \"burning tokens\", \"hallucinating\", \"brittle\", gives inconsistent answers, asks whether to switch to a cheaper/better model, or wants to ship an agent or prompt change to customers.</description>\n<location>/home/user/.skills/harness-first/SKILL.md</location>\n</skill>\n</available_skills>\n\nSkills are folders of expert instructions, scripts, and resources. When a user's request matches a skill's description, read that skill's SKILL.md with read_file before starting, then follow it, using any bundled files it references.",
+ "sandbox_id": "[SANDBOX]",
+ "setup_s": 7.7,
+ "followups": [],
+ "max_prompt_tokens": 49282,
+ "stop": "end_turn",
+ "final_message": "Perfect! Now let me create a final summary for you:\n\n---\n\n## Summary for You\n\n**Don't switch models yet.** Three harness bugs caused your 4x cost spike, not Sonnet being \"overkill.\"\n\n### The Three Bugs (I Fixed Them)\n\n1. **Prompt bug** (`agent/prompts.py`): \"Call crm_get_account at the start of EVERY turn\" \u2192 re-fetched 30-40KB account data on every turn, wasting 6.4M tokens\n2. **No iteration limit** (`agent/loop.py`): `while True:` with no max \u2192 5 conversations (11% of volume) looped 16-26 turns and burned $18.77 of your $26.66 (70% of cost)\n3. **Retry on permanent errors** (`agent/tools.py`): Retried ALL errors 4x including 404 \"account_merged\" and 422 \"unknown field: lead_score_v2\"\n\n### Cost Comparison\n\n| Option | Monthly Cost | Savings |\n|--------|--------------|---------|\n| Current (Sonnet, bugs) | **$53.32** | baseline |\n| Switch to Haiku (no fixes) | $17.78 | 67% |\n| **Fix harness (keep Sonnet)** | **$14.82** | **72%** \u2190 DO THIS |\n| Fix harness + Haiku | $4.94 | 91% \u2190 THEN THIS |\n\n**Key insight:** Harness fixes save MORE than switching to Haiku without fixes ($14.82 vs $17.78/month).\n\n### What I Delivered\n\n**Code fixes (ready to deploy):**\n- \u2705 `agent/prompts.py` - Changed \"EVERY turn\" to \"ONCE at the start\"\n- \u2705 `agent/loop.py` - Added `max_iterations=10`\n- \u2705 `agent/tools.py` - Only retry transient errors (429, 502-504)\n\n**Harness components:**\n- \u2705 `output/golden_set.jsonl` - 5 test cases from incidents\n- \u2705 `output/judge.py` - Automated quality validator\n- \u2705 `output/cost_calculator.py` - Cost comparison tool\n- \u2705 `output/HARNESS_AUDIT_REPORT.md` - Full analysis with file:line evidence\n- \u2705 `output/EXECUTIVE_SUMMARY.md` - One-page overview\n- \u2705 `output/ANSWER.txt` - Complete answer\n\n### Recommendation\n\n1. **This week:** Deploy the 3 fixed files from `agent/`, test on 2-3 leads\n2. **Check with CRM admin:** Does `lead_score_v2` field exist? (It's causing 422 errors that triggered 4 of the 5 expensive loops)\n3. **Next week:** Run `judge.py` on new traces to validate fixes worked\n4. **After validation:** Consider Haiku for additional 67% savings, but validate quality first with the golden set\n\n**About Haiku:** Yes, it makes sense for cold emails (not reasoning-heavy), but only AFTER fixing the bugs. Otherwise you're paying Haiku prices for infinite loops.\n\n### Files to Read\n\nStart with `output/EXECUTIVE_SUMMARY.md` (5 min read), then run `python3 output/cost_calculator.py` to see the numbers.",
+ "agent_wall_s": 639.5,
+ "model_wait_s": 630.3,
+ "tool_s": 9.2,
+ "changed_files": [
+  "agent/loop.py",
+  "agent/prompts.py",
+  "agent/tools.py",
+  "output/ANSWER.txt",
+  "output/EXECUTIVE_SUMMARY.md",
+  "output/HARNESS_AUDIT_REPORT.md",
+  "output/README.md",
+  "output/cost_calculator.py",
+  "output/golden_set.jsonl",
+  "output/judge.py"
+ ],
+ "deleted_files": [],
+ "total_wall_s": 649.5,
+ "check": {
+  "pass": false,
+  "score": 0.818,
+  "details": [
+   "PASS retry-loop mechanism on the 422 / lead_score_v2 write identified",
+   "PASS dominating conversations named (>=3 of 4 ids) or their ~70% share quantified",
+   "PASS noisy cv_6f895a not blamed as the main cost driver",
+   "FAIL does not recommend an unconditional model switch (fix/eval first)",
+   "PASS flags send_email firing without approval",
+   "PASS max-iterations / cost cap enforced (behavioral={'calls': 10, 'terminated': True, 'inconclusive': False, 'exc': 'MaxIterationsError: Lead L-1 exceeded 10 iterations without completing'})",
+   "PASS root field named: lead_score_v2 not in CRM schema",
+   "PASS per-conversation numbers for the loop conversations (>=3)",
+   "PASS full account export re-sent every turn identified",
+   "PASS stops retrying non-transient errors (retry only 429/5xx)",
+   "FAIL golden set with >=10 cases written",
+   "unconditional switch: ['| Switch to Haiku (no fixes) | $17.78 | 67% |', '**Key insight:** Harness fixes save MORE than switching to Haiku without fixes ($14.82 vs $17.78/month).']"
+  ]
+ }
+}

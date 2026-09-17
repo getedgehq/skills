@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s5",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s5",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify that FinBot queried orders.amount ($4,138,212) instead of revenue_recognized.net_amount ($3,638,336). Both verify the $500K gap and break it down. Response A shows the breakdown clearly but doesn't fully reconcile all components. Response B provides more detailed reconciliation including cancelled orders ($360K) and refund adjustments (~$140K), with explicit evidence from the database.",
+    "score_A": 8,
+    "score_B": 9
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state this is NOT hallucination and a smarter model is NOT the fix. Response A says 'any model would make the same mistake' and defers model comparison. Response B goes further, explicitly stating 'Upgrading to a better model would NOT fix this bug' and provides cost comparison ($0 fix vs 2-3x cost for model upgrade). Both correctly frame it as a harness/data engineering issue.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A mentions cancelled orders (~$368K) and refunds (~$329K) but the math doesn't quite add up cleanly. Response B provides clearer reconciliation: cancelled orders $360K + refund adjustments ~$140K = ~$500K difference. Response B's harness_scorecard.md provides more systematic breakdown. Both identify the core issue but Response B is more precise.",
+    "score_A": 7,
+    "score_B": 8
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A does NOT mention the write-access safety issue. Response B explicitly identifies and fixes it: 'FinBot currently has write access to the warehouse. Any query could accidentally UPDATE or DELETE data.' Response B's fixes/agent.py includes read-only mode (mode=ro URI) and removes conn.commit(). This is a critical blocking risk that Response A completely missed.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A provides prompt_UPDATED.md with clear definitions of revenue_recognized vs orders tables. Response B provides fixes/prompt.md with similar content. Both define the correct table for revenue. Response A's version is slightly more concise; Response B's is slightly more detailed. Both are adequate.",
+    "score_A": 8,
+    "score_B": 8
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A provides validation_tests.py with test cases but the file is truncated in the output. Response B provides fixes/evals/golden.jsonl with 6 explicit test cases (Q2 revenue, Q1 revenue, cancelled orders, etc.) and run_evals.py to execute them. Response B's approach is more structured and production-ready with explicit expected values in JSON format.",
+    "score_A": 6,
+    "score_B": 9
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A provides executive_summary.md with clear one-liner and prioritized next steps. Response B provides EXEC_BRIEF.md and SUMMARY_FOR_DANIEL.txt with similar clarity. Both are exec-ready. Response B's START_HERE.txt is particularly well-formatted for quick scanning. Roughly equivalent.",
+    "score_A": 9,
+    "score_B": 9
+   }
+  ],
+  "analysis": "Both responses correctly identify the root cause: FinBot queried the wrong table (orders instead of revenue_recognized), resulting in $4.1M instead of $3.6M. Both correctly answer that this is NOT hallucination and a smarter model is NOT the fix.\n\n**Critical Difference - Safety Issue:**\nResponse B identifies and fixes a blocking security vulnerability that Response A completely misses: FinBot has write access to the production warehouse. The agent.py code calls conn.commit() on all queries, meaning a user could accidentally (or maliciously) execute UPDATE, DELETE, or DROP TABLE commands. Response B's fixes/agent.py explicitly addresses this with read-only mode (mode=ro URI) and removes the commit. This is a critical production safety issue that should have been caught.\n\n**Root Cause Analysis:**\nBoth identify the $500K gap correctly. Response B provides more detailed reconciliation (cancelled orders $360K + refund adjustments ~$140K) with explicit evidence. Response A's breakdown is less precise.\n\n**Deliverables:**\n- Response A: 13 files including comprehensive documentation and validation_tests.py (truncated)\n- Response B: 15+ files including structured golden.jsonl test cases, run_evals.py, and explicit harness scorecard\n\n**Golden Set Quality:**\nResponse A's validation_tests.py is truncated in the output. Response B's fixes/evals/golden.jsonl is complete with 6 test cases in structured JSON format, plus run_evals.py to execute them. Response B's approach is more production-ready.\n\n**Data Dictionary:**\nBoth provide adequate data dictionaries. Response A's prompt_UPDATED.md and Response B's fixes/prompt.md are comparable in quality.\n\n**Executive Communication:**\nBoth provide exec-ready summaries. Response B's START_HERE.txt with ASCII formatting is slightly more scannable, but both are adequate.\n\n**Harness Audit:**\nResponse B explicitly scores the harness (6/60 before, 40/60 after) and provides a detailed scorecard. Response A doesn't provide this systematic audit.\n\n**Cost Analysis:**\nResponse B explicitly compares cost of model upgrade ($X/month more) vs. fix ($0). Response A doesn't provide this comparison.\n\nThe most significant difference is the safety issue: Response B catches and fixes a critical vulnerability (write access to production warehouse) that Response A completely misses. This alone is a major quality difference, as it's a blocking risk that should be deployed immediately.\n",
+  "overall_A": 72,
+  "overall_B": 88,
+  "winner": "B"
+ },
+ "cost_usd": 0.043275,
+ "prompt_chars": 113554,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

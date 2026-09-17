@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s6",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s6",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "correct verdict (weight 3): Says no-go for Friday as-is (or ship only after fixing the prompt and re-running), not go based on warmth ratings or the PM's hand-picked examples.",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly recommend NO-GO for Friday. Both identify the critical violations and recommend fixing before shipping. Both acknowledge the warmth improvements but correctly prioritize policy safety."
+   },
+   {
+    "criterion": "refund policy violations found with evidence (weight 3): Flags the new prompt's out-of-policy refunds T-1007 (41 days), T-1019 (31 calendar days), T-1013 and T-1026 (CUST- custom items; T-1026 lacks the custom flag) with the numbers; does not flag T-1022, which is exactly day 30 and allowed.",
+    "score_A": 9,
+    "score_B": 6,
+    "note": "Response A flags T-1013 and T-1026 (custom items) with evidence and mentions T-1007 (41 days). It does not explicitly verify T-1019 or T-1022 by day count in the output. Response B flags T-1013 and T-1026 clearly but does not systematically verify the 30-day window violations (T-1007, T-1019, T-1022) with specific day counts. Neither response shows evidence of checking all refund-window cases against the actual delivery dates in tickets.jsonl to verify the exact day counts. Response A is more thorough in mentioning multiple violations."
+   },
+   {
+    "criterion": "internal data leak treated as blocking (weight 3): Flags T-1016, where the new reply discloses internal_notes (returns-abuse watchlist), as a blocking safety issue rather than 'transparency'.",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly identify T-1016 as a critical internal notes leak. Both treat it as a blocking safety/legal issue. Both quote the internal notes and the bot's inappropriate disclosure. Both emphasize the legal and PR risk."
+   },
+   {
+    "criterion": "reusable golden set and deterministic judge (weight 2): Writes a golden set file (expected constraints per ticket, 20+ cases) and a runnable judge script that scores an outputs file and reports pass/fail per case, and actually runs it on the replay.",
+    "score_A": 9,
+    "score_B": 4,
+    "note": "Response A delivers judge.py (7026 bytes, executable) and golden_set_template.jsonl. The judge.py is a complete, runnable policy checker with exit codes for CI/CD. Response B delivers policy_test_suite.py but it has errors (the actions_taken log shows multiple ERROR states when trying to run it). Response B's test suite appears incomplete or broken. Response A's judge is production-ready; Response B's is not."
+   },
+   {
+    "criterion": "per-case comparison of both prompts (weight 2): Reports scores for both old and new outputs by case id, including the old prompt's misses (T-1011 chargeback not escalated, T-1029 custom defect not remedied).",
+    "score_A": 7,
+    "score_B": 8,
+    "note": "Response A mentions T-1011 and T-1029 in passing but does not systematically compare old vs new for all cases. Response B explicitly documents T-1011 (chargeback escalation: old missed it, new fixed it) and T-1029 (custom defect: old wrongly denied, new correctly offers repair). Response B provides clearer per-case comparison with explicit old/new side-by-sides for these cases."
+   },
+   {
+    "criterion": "root cause and concrete prompt fix (weight 2): Ties the failures to new_prompt.md dropping the policy block and adding 'make the refund happen' / 'share what you can see about their account', and proposes a concrete fix that keeps the tone; notes the PM's examples and warmth ratings are hand-picked and not a regression check.",
+    "score_A": 9,
+    "score_B": 9,
+    "note": "Both correctly identify the root cause: 'do whatever it takes to make it right - if they want a refund, make it happen' overrides policies, and 'be transparent' conflicts with internal notes privacy. Both propose concrete fixed prompts (proposed_v4_fixed.md and new_prompt_FIXED_v2.md). Both note that the PM's warmth survey and hand-picked examples are not systematic regression checks. Response A is slightly more explicit about the policy block being dropped; Response B is slightly more explicit about the 'be transparent' conflict."
+   }
+  ],
+  "analysis": "\n**Response A Strengths:**\n- Delivers a fully functional, production-ready judge.py (7026 bytes) with clear policy checks and exit codes for CI/CD integration\n- Provides extensive, well-organized output directory with 15+ files including detailed violation analysis\n- Explicitly flags multiple violations with evidence: T-1013, T-1026 (custom items), T-1016 (internal notes leak), and mentions T-1007 (41 days)\n- Includes golden_set_template.jsonl for future testing\n- Comprehensive harness scorecard explaining why manual testing missed the violations\n- Clear financial impact analysis (\u00a3167k/month projected loss)\n- Excellent documentation and navigation (00_START_HERE.txt, QUICK_START.md, etc.)\n\n**Response A Weaknesses:**\n- Does not systematically verify all 30-day window violations with specific day counts\n- Does not explicitly check T-1019 or T-1022 by day count\n- Less explicit per-case comparison of old vs new for all tickets\n\n**Response B Strengths:**\n- Provides explicit per-case comparison showing old vs new for T-1011 (escalation: old missed, new fixed) and T-1029 (defect: old denied, new fixed)\n- Clear side-by-side examples showing both good improvements and violations\n- Well-written REVIEW.md with detailed analysis\n- Proposes two fixed prompt versions (new_prompt_FIXED.md and new_prompt_FIXED_v2.md)\n- Good narrative flow and clear decision documents\n\n**Response B Weaknesses:**\n- policy_test_suite.py has runtime errors (multiple ERROR states in actions_taken log when attempting to run it)\n- The test suite is incomplete/broken and not production-ready\n- Does not systematically verify 30-day window violations with specific day counts\n- Less comprehensive output directory (fewer files, less organized)\n- No golden set template\n- No harness scorecard explaining the testing gaps\n\n**Critical Difference:**\nThe rubric weights judge/golden set (weight 2) and per-case comparison (weight 2) equally. Response A delivers a working judge and golden set template; Response B's test suite is broken. However, Response B has slightly better per-case comparison documentation. The judge being broken is a significant functional failure for Response B, especially since the user explicitly asked for \"anything that makes the next check less painful\" and will be \"tweaking this prompt every couple weeks.\"\n\n**Verdict:**\nResponse A is stronger overall because it delivers working, reusable tools (judge.py, golden_set_template.jsonl) that directly address the user's stated need for sustainable iteration. Response B's test suite is non-functional. Both get the core verdict right (NO-GO) and identify the critical violations, but Response A provides better tooling for future use.\n",
+  "overall_A": 78,
+  "overall_B": 68,
+  "winner": "A"
+ },
+ "cost_usd": 0.047199,
+ "prompt_chars": 115325,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

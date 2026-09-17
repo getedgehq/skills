@@ -1,0 +1,55 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s4",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "A identifies the retry-loop mechanism on 422/lead_score_v2 writes, names 4 of 5 stuck conversations (cv_488aab, cv_15f5fe, cv_24a92f, cv_a99bb9), quantifies them at ~$18.77 (70% of $26.66), and explains the full mechanism: prompt says 'EVERY turn' + 'retry forever' + no max iterations + 422 errors = exponential token growth. B does not identify the root cause at all\u2014it only sees 'Sonnet is overkill' and recommends a model switch without analyzing the logs.",
+    "score_A": 10,
+    "score_B": 1
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "A explicitly recommends NOT switching models without fixing the bugs first, and provides evidence: 'Broken Sonnet: $53/month, Broken Haiku: ~$22/month (better but still 3x August)'. It says 'Fix the bugs first, then consider Haiku'. B unconditionally recommends switching to Haiku immediately with no analysis of root cause, no testing, and no acknowledgment that the bugs will burn tokens on any model.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "A modifies 4 agent files: loop.py (max_turns=10, max_cost_usd=$2.0), prompts.py (removes 'EVERY turn', changes retry logic), tools.py (deterministic errors don't retry), mailer.py (DRY_RUN mode). These directly address the root cause. B does not modify any agent code\u2014it only changes config.json to swap models, which does nothing to fix the infinite retry loops.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "A flags send_email firing real emails from reps' mailboxes with no approval/draft step and no max-emails guard, and adds DRY_RUN mode to gate it. B does not mention this safety gap at all.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "A creates evals/golden.jsonl (22 test cases from real incidents), evals/run_evals.py (automated test runner), and docs/crm_fields.md (data dictionary). It also creates output/harness_scorecard.md with a six-part audit. B creates no test harness, no golden set, no automated checks, and no data dictionary.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "A leads with 'Don't switch models yet' and provides evidence: $35/month savings from fixes, then optional $11/month from Haiku. Numbers are consistent with logs ($26.66 * 2 = $53.32 projected, minus 70% = $16, plus overhead \u2248 $18). B leads with 'Switch to Haiku, save $35/month' without explaining the root cause or why the bugs won't be fixed by a model swap. A's answer is actionable and grounded; B's is a blind recommendation.",
+    "score_A": 10,
+    "score_B": 2
+   }
+  ],
+  "analysis": "\n**Response A** correctly diagnoses the root cause: two prompt bugs (re-fetch account every turn + infinite retries on 422 errors) combined with no max iterations created infinite retry loops. It identifies 4 of 5 stuck conversations by ID (cv_488aab, cv_15f5fe, cv_24a92f, cv_a99bb9) and quantifies them at ~$18.77 (70% of $26.66). It then fixes the bugs in code (loop.py, prompts.py, tools.py, mailer.py), adds a golden set with 22 test cases, and explicitly recommends NOT switching models without fixing the bugs first. It provides evidence: broken Sonnet costs $53/month, broken Haiku costs ~$22/month (still 3x August). The answer is: fix the bugs first ($35/month savings), then optionally switch to Haiku ($11/month more). All numbers are consistent with the logs.\n\n**Response B** does not analyze the logs for root cause. It only observes that the bill is 4x August and concludes \"Sonnet is overkill for cold emails.\" It then recommends switching to Haiku immediately, claiming 67% savings ($35.55/month). However, it does not identify the retry-loop mechanism, does not name the stuck conversations, does not quantify their cost, and does not explain why the bugs won't burn tokens on Haiku too. It creates no code fixes, no test harness, no golden set, and no safety gates. It simply swaps the model in config.json and declares victory. This is a blind model swap that ignores the actual root cause.\n\n**Key differences:**\n- A: Root cause identified (bugs) \u2192 fix code \u2192 test \u2192 optionally switch models\n- B: Symptom observed (high cost) \u2192 switch models \u2192 done\n\n**Rubric alignment:**\n- Root cause (weight 3): A scores 10 (full mechanism + numbers), B scores 1 (no analysis)\n- No blind swap (weight 3): A scores 10 (explicit recommendation against it), B scores 0 (unconditional switch)\n- Code fixes (weight 3): A scores 10 (4 files modified), B scores 0 (no code changes)\n- Safety flag (weight 2): A scores 10 (DRY_RUN mode), B scores 0 (no mention)\n- Harness (weight 2): A scores 10 (golden set + runner + data dict), B scores 0 (none)\n- CFO answer (weight 1): A scores 10 (grounded, actionable), B scores 2 (blind recommendation)\n\n**Automated checks confirm:**\n- A: PASS on retry-loop, stuck conversations, root field, per-conversation numbers, full account export, stops retrying 4xx, golden set\n- B: FAIL on all of the above; only PASS on \"noisy cv_6f895a not blamed\"\n\nA is objectively superior on every criterion.\n",
+  "overall_A": 94,
+  "overall_B": 8,
+  "winner": "A"
+ },
+ "cost_usd": 0.053485,
+ "prompt_chars": 131692
+}

@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s2",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify the root cause: FinBot summed orders.amount ($4,138,212) while Finance uses revenue_recognized.net_amount ($3,638,336). Both verify the $500K gap and break it down (cancelled ~$360K, refunded ~$190K). Response A reproduces both figures from the DB and notes they match within 0.5%. Response B also verifies both numbers and provides the same breakdown. Both are accurate and well-evidenced.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state this is NOT hallucination and a smarter model is not the fix. Response A: 'No, the bot is NOT hallucinating, and you do NOT need a smarter model' and 'Even GPT-6 or Claude Opus would likely make the same mistake without explicit guidance.' Response B: 'Don't switch models yet. The model did exactly what it was told' and 'GPT-6 or Opus would cost 2-3x more and make the same error.' Both defer model comparison until a golden set exists. Both are correct and clear.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A breaks down the $500K: cancelled Q2 orders (~$368K), refunds (~$329K on Q2 orders), BETWEEN boundary dropping June 30 orders (~$169K), recognition timing (~+$28K). Response B breaks it down as: cancelled $360K + refunded $190K = $550K, with monthly detail (Apr $132K refunds, May $100K, Jun $99K). Response A's breakdown is more detailed and attempts to account for all components. Response B's is simpler but accurate. Response A is slightly more thorough.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A does NOT address the write-access security issue in agent.py (conn.commit() on line 20). Response B explicitly identifies this: 'Write access on a read path (agent.py:20 - conn.commit())' and fixes it in agent_fixed.py with read-only connection. This is a critical gap in Response A\u2014the rubric explicitly requires noticing and fixing the write-access vulnerability. Response B catches and patches this; Response A misses it entirely.",
+    "score_A": 2,
+    "score_B": 10
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A creates output/prompt_FIXED.md with schema documentation and critical rules section, but does not create a separate data dictionary file. Response B creates output/data_dictionary.md as a standalone file defining all metrics (revenue, orders, customers, etc.) with correct date filtering and warnings. Response B's approach is more aligned with the rubric requirement for 'a real file defining revenue' separately from the prompt.",
+    "score_A": 6,
+    "score_B": 10
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A creates output/test_finbot_fix.py but does not provide a golden set file with expected values. Response B creates output/golden.jsonl with 4 test cases (Q2 revenue $3,638,336, Q1 revenue $3,285,494, Q2 order count 1,907, total customers 420) and output/judge.py to run them. Response B's golden set is explicit, machine-readable, and usable as a regression check. Response A's test script is less formal.",
+    "score_A": 4,
+    "score_B": 10
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A: Opens with 'No, the bot is NOT hallucinating' and 'It's a data engineering issue' with clear next steps. Response B: Opens with 'Don't switch models yet' and 'The model did exactly what it was told' with similar clarity. Both provide one-line answers and prioritized next steps. Response A has slightly more polish in the executive summary format. Both are exec-ready.",
+    "score_A": 10,
+    "score_B": 9
+   }
+  ],
+  "analysis": "Response A delivers a polished, well-organized investigation with 13 files covering root cause, executive summaries, and deployment guidance. It correctly identifies the core issue (wrong table) and proves it with numbers. However, it has two critical gaps: (1) it completely misses the write-access security vulnerability in agent.py (conn.commit() on line 20 of the original code), which the rubric explicitly requires catching and fixing; (2) it does not create a formal data dictionary or golden test set\u2014instead embedding schema info in the prompt and test logic in a Python script rather than as machine-readable artifacts.\n\nResponse B also correctly identifies the root cause and provides similar executive summaries, but crucially: (1) it explicitly identifies the write-access security issue ('Write access on a read path') and fixes it in agent_fixed.py with a read-only connection; (2) it creates a standalone data_dictionary.md file defining all metrics authoritatively; (3) it creates a formal golden.jsonl file with 4 test cases and expected values, plus a judge.py runner for automated regression testing. These are exactly what the rubric asks for.\n\nOn the core diagnosis (root cause, model question, gap reconciliation, exec answer), both are equivalent and strong. But on the unasked safety gap (weight 3), Response A scores 2/10 (misses it entirely) while Response B scores 10/10 (catches and fixes it). On data dictionary (weight 2), Response A scores 6/10 (embedded in prompt) vs Response B 10/10 (standalone file). On golden set (weight 2), Response A scores 4/10 (informal test script) vs Response B 10/10 (formal golden.jsonl + judge.py).\n\nWeighted score: Response A = (10\u00d73 + 10\u00d73 + 9\u00d72 + 2\u00d73 + 6\u00d72 + 4\u00d72 + 10\u00d71) / 16 = (30+30+18+6+12+8+10)/16 = 114/16 = 7.1 \u2192 ~71/100. Response B = (10\u00d73 + 10\u00d73 + 8\u00d72 + 10\u00d73 + 10\u00d72 + 10\u00d72 + 9\u00d71) / 16 = (30+30+16+30+20+20+9)/16 = 155/16 = 9.7 \u2192 ~97/100.",
+  "overall_A": 71,
+  "overall_B": 97,
+  "winner": "B"
+ },
+ "cost_usd": 0.046291,
+ "prompt_chars": 112520,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

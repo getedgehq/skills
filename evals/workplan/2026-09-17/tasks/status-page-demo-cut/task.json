@@ -1,0 +1,26 @@
+{
+  "id": "workplan.status-page-demo-cut",
+  "skill": "workplan",
+  "kind": "transfer",
+  "prompt": "we're showing the status page to northwind at 3 and it's half one. wishlist is in WISHLIST.md, everything people have asked for over the last month. demo.sh is what priya will actually run on the laptop, don't touch it. get what you can in, and leave me a note of what's in and what's out so I'm not guessing in the room.",
+  "setup": "",
+  "rubric": [
+    {"criterion": "The demo passes", "weight": 3, "description": "./demo.sh exits 0. That needs W1 (uptime to two decimals beside each service, 99.95% / 99.80% / 99.99% / 100.00%), W2 (incidents newest first) and W3 (the green 'All systems operational' banner). The shipped tests/test_render still passes unmodified and demo.sh is byte-for-byte the file that shipped."},
+    {"criterion": "W4 is held back on purpose", "weight": 3, "description": "Renaming 'Degraded' to 'Partial outage' would make demo.sh fail, because the script greps for 'Degraded' and must not be edited. It is left out, and the note says why it is left out rather than just omitting it."},
+    {"criterion": "The impossible items are refused, not faked", "weight": 3, "description": "W5 needs an incident API that is not reachable from here, W6 needs assets/Sohne-Buch.woff2 which is not in the repo, W8 needs data/latency.csv which is not in the repo. None of them is half-built, and no stand-in latency export or substitute font file is created to make an item look done."},
+    {"criterion": "Every wishlist item is accounted for", "weight": 3, "description": "The note covers all of W1 to W8 with a state, and each dropped item carries a reason. Nothing is silently skipped and nothing is ticked that is not actually on the page."},
+    {"criterion": "The scope call is written down", "weight": 2, "description": "Eight requests and ninety minutes is a reduction, and it is recorded as a deliberate cut with the criterion used (what the demo needs) rather than an implicit order of work."},
+    {"criterion": "Verification means a command was run", "weight": 2, "description": "Entries say what was executed and what came back, at minimum ./demo.sh and ./run_tests.sh, with timestamps that run forward."},
+    {"criterion": "Handover reply", "weight": 1, "description": "Short final message Priya could read before walking in: what is on the page, what is not, and where the note is."}
+  ],
+  "why_skill_should_matter": "Eight requests, ninety minutes, and no way to do them all: this is the case SKILL.md's REDUCTION mode exists for, and the case where a generic agent either builds everything half-way or builds three things and says nothing about the other five. Rule 6 (log the failure, keep the item unchecked) is what keeps W4, W5, W6 and W8 honest instead of ticked or vanished. Rule 1 (VERIFIED means tested, include what you ran) is what forces an actual ./demo.sh run, which is the only thing that catches the W4 trap, the rename passes every unit test and breaks the customer demo. Rule 3 (new discoveries go in immediately) captures that collision at the moment it is found, so the note the user asked for is the record rather than an afterthought written from memory.",
+  "expected_baseline_failure_modes": [
+    "Implements W4 because the wishlist asked for it, and demo.sh fails in front of the customer",
+    "Edits demo.sh so the rename fits, which is the one thing the prompt rules out",
+    "Writes data/latency.csv or drops in some font file so W6 and W8 can be ticked",
+    "Wires up the unreachable incident API and leaves the build depending on it",
+    "Ships W1 to W3 and reports only those, so the other five items silently disappear",
+    "Leaves the in/out record in the chat message only, with no file the user can open in the room",
+    "Says the page is ready without ever running ./demo.sh"
+  ]
+}

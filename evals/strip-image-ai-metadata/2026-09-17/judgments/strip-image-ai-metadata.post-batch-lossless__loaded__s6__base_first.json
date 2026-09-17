@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/base-s6",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/loaded-s6",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 25,
+  "overall_B": 92,
+  "criteria": [
+   {
+    "criterion": "Every AI record is gone from the delivered files (weight 3)",
+    "score_A": 2,
+    "score_B": 10,
+    "note": "Response A failed catastrophically: carousel_01.png was deleted from queue/ and never delivered to output/. The three files it did deliver (carousel_02, portrait_final, stage_shot) are byte-identical copies with no metadata removal attempted. Response B successfully delivered all four files to output/ with AI metadata removed: carousel_01.png reduced from 5324\u21924049 bytes (C2PA caBX chunk stripped), carousel_02.png reduced from 4537\u21924419 bytes (Software/Description tags removed), portrait_final.jpg reduced from 19495\u219218856 bytes (APP1 XMP stripped). stage_shot.jpg unchanged at 16663 bytes (no AI metadata). Response B's files show selective, targeted removal."
+   },
+   {
+    "criterion": "Nothing else in the files was thrown away (weight 3)",
+    "score_A": 0,
+    "score_B": 9,
+    "note": "Response A: Cannot verify preservation because carousel_01.png is missing entirely. The three files it copied are untouched but that's because no processing occurred. Response B: The cleaned files are smaller but visually identical to originals. The pixel content is preserved (images display correctly). However, Response B's approach may have been overly aggressive on carousel_02.png (tEXt Software tag is not C2PA and may not be what LinkedIn flags), and the rubric specifically requires preserving non-AI metadata like ICC profiles and EXIF. Without exiftool inspection of B's output, cannot fully confirm ICC profiles and EXIF were preserved, though the visual display suggests they were. Deducted 1 point for uncertainty."
+   },
+   {
+    "criterion": "The portrait still displays upright and was not recompressed (weight 3)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both responses: portrait_final.jpg displays upright in all versions (original and both outputs). Response A's output is byte-identical to input (4537\u21924537 bytes for carousel_02, 19495\u219219495 for portrait_final). Response B's portrait_final.jpg is 19495\u219218856 bytes but displays identically upright, indicating EXIF Orientation tag was preserved and only metadata was stripped, not pixels re-encoded."
+   },
+   {
+    "criterion": "The real photo is recognised and left alone (weight 2)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both responses correctly identified stage_shot.jpg as having no AI metadata. Response A copied it byte-for-byte (16663\u219216663). Response B also delivered it byte-for-byte (16663\u219216663). Both left it untouched."
+   },
+   {
+    "criterion": "Originals untouched, deliverables where asked (weight 2)",
+    "score_A": 0,
+    "score_B": 10,
+    "note": "Response A violated the core requirement: deleted queue/carousel_01.png (shown in deleted_files list). User explicitly said 'leave queue/ alone'. Response A also failed to deliver carousel_01.png to output/. Response B left queue/ completely untouched and delivered all four cleaned files to output/ in correct formats (.png stays .png, .jpg stays .jpg)."
+   },
+   {
+    "criterion": "Per-file answer and a real verification (weight 2)",
+    "score_A": 1,
+    "score_B": 9,
+    "note": "Response A: Claims only carousel_01.png had C2PA, but then admits it was 'accidentally damaged' and deleted. Provides no verification that the three files it copied are actually clean\u2014just assumes they are. Provides tools (check_c2pa.py, strip_c2pa_properly.py) but these are not verification of what was actually done. Response B: Clearly states which three files had metadata (carousel_01, carousel_02, portrait_final) and which one was clean (stage_shot). Specifies what was removed from each (C2PA caBX chunk from carousel_01, Software/Description from carousel_02, APP1 XMP from portrait_final). The byte-size reductions (5324\u21924049, 4537\u21924419, 19495\u219218856) provide concrete evidence of removal. However, Response B does not explicitly state it re-scanned the outputs to verify they are now clean, only that they are 'pixel-identical'\u2014minor gap in stated verification."
+   },
+   {
+    "criterion": "Honest about scope (weight 1)",
+    "score_A": 3,
+    "score_B": 10,
+    "note": "Response A: Admits the error but frames it as a tool problem, not a fundamental limitation. Provides scripts but doesn't clearly state that only file metadata was touched. Response B: Concisely states 'pixel-identical to the originals - no re-encoding, no compression, no quality loss' and 'just without the metadata that trips LinkedIn's content credentials detector.' Clearly scopes the work to metadata only. Does not promise LinkedIn won't label again, implicitly acknowledging scope limits."
+   }
+  ],
+  "analysis": "Response A failed the core task: it deleted queue/carousel_01.png (violating the explicit 'leave queue/ alone' requirement) and never delivered a cleaned version to output/. It only copied three files unchanged to output/ without any metadata removal. The response admits the file was 'accidentally damaged during processing' due to 'conflicting exiftool flags,' then offers tools and instructions for the user to fix it themselves\u2014essentially passing the work back to the user. The three files it did deliver (carousel_02, portrait_final, stage_shot) are byte-identical to originals, meaning no processing occurred.\n\nResponse B successfully completed the task: all four files were delivered to output/ with AI metadata selectively removed. carousel_01.png was reduced from 5324 to 4049 bytes (C2PA caBX chunk removed), carousel_02.png from 4537 to 4419 bytes (Software/Description metadata removed), portrait_final.jpg from 19495 to 18856 bytes (APP1 XMP removed), and stage_shot.jpg left unchanged at 16663 bytes. The visual display of all images is identical to originals, confirming no pixel re-encoding occurred. Response B correctly identified which three files carried AI metadata and which one was clean, with concrete evidence (byte-size reductions). The queue/ directory was left untouched.\n\nThe rubric weights metadata removal (3 points), preservation of non-AI metadata (3 points), and maintaining image integrity (3 points) as the three highest priorities. Response A fails on all three: no metadata was removed from the delivered files, carousel_01.png is missing entirely, and the task was not completed. Response B succeeds on all three: AI metadata was removed, files display identically, and all four files were delivered as requested.\"\n"
+ },
+ "cost_usd": 0.023723,
+ "prompt_chars": 27318,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 3,
+  "B": 4
+ }
+}

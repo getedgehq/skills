@@ -1,0 +1,74 @@
+{
+ "attempt_id": "harness-first.sales-agent-token-burn:skill:s1",
+ "task_id": "harness-first.sales-agent-token-burn",
+ "skill": "harness-first",
+ "arm": "skill",
+ "sample": 1,
+ "status": "done",
+ "turns": 41,
+ "cost_usd": 0.9889080000000001,
+ "usage": {
+  "inputTokens": 241,
+  "outputTokens": 27670,
+  "cacheReadInputTokens": 794800,
+  "cacheWriteInputTokens": 89252
+ },
+ "skill_read": true,
+ "skill_file_reads": [
+  {
+   "tool": "read_file",
+   "args": "{\"path\": \"/home/user/.skills/harness-first/SKILL.md\"}"
+  }
+ ],
+ "tool_calls": 40,
+ "tool_errors": 1,
+ "system_prompt": "You are an AI assistant with access to a Linux computer through tools. The user's files are in /home/user/work, which is your current working directory.\n\nComplete the user's request end to end: do the actual work with the tools, save deliverables as files when a file is the natural output, and finish with a reply to the user in chat. The user is not available for follow-up questions during the task; if something is ambiguous or missing, make a sensible call and say so, or explain clearly what blocks you.\n\nEnvironment: Debian Linux, Python 3.11, Node 20, git, jq, curl, ImageMagick. Internet access is available (pip/npm/apt installs work). Today's date is 2026-09-15.\n\n<available_skills>\n<skill>\n<name>harness-first</name>\n<description>Diagnose and fix an unreliable, expensive, or unsafe LLM agent by auditing its harness (golden set, judge, cost caps, data layer, action approvals, tracing) before blaming or swapping the model. Use when someone says an agent is \"burning tokens\", \"hallucinating\", \"brittle\", gives inconsistent answers, asks whether to switch to a cheaper/better model, or wants to ship an agent or prompt change to customers.</description>\n<location>/home/user/.skills/harness-first/SKILL.md</location>\n</skill>\n</available_skills>\n\nSkills are folders of expert instructions, scripts, and resources. When a user's request matches a skill's description, read that skill's SKILL.md with read_file before starting, then follow it, using any bundled files it references.",
+ "sandbox_id": "[SANDBOX]",
+ "setup_s": 11.1,
+ "followups": [],
+ "max_prompt_tokens": 45930,
+ "wrapup": "turn_cap",
+ "wrapup_turn": 40,
+ "stop": "turn_cap",
+ "final_message": "Perfect! Let me create one final comprehensive summary for the user:\n\n---\n\n## Summary for You\n\n**DON'T switch models yet.** I found the problem: **70% of your Sept costs ($18.77 of $26.66) came from just 5 conversations stuck in infinite retry loops**. This is a harness problem, not a model problem.\n\n### Root Cause (with evidence)\n\nThree bugs working together:\n1. **agent/loop.py:19** - `while True` with no max iterations\n2. **agent/prompts.py:8** - Prompt says *\"If a tool call fails, try it again\"*\n3. **agent/tools.py:29** - Retries deterministic 422 validation errors\n\n**Result:** When the CRM returns 422 \"unknown field: lead_score_v2\" (because that field doesn't exist in your schema), the agent retries forever. Lead L-3419 made the same failing API call 16 times, burning $4.73 vs $0.19 normal.\n\nBy turn 16, each call was sending 145,000 input tokens (full conversation history + 30KB CRM export repeated every turn).\n\n### The Numbers\n\n- **Current:** $53/month trajectory (4x August)\n- **After fixes:** $16/month (70% reduction) = **$450/year saved**\n- **After fixes + Haiku:** $5/month (90% reduction) = **$577/year saved**\n\n### Model Recommendation\n\n**After fixing the harness, switch to Haiku (not gpt-5-mini):**\n- Haiku is 1/3 the price of Sonnet ($1 vs $3 input)\n- Same API, just change config.json\n- Cold emails are exactly what Haiku is designed for\n- gpt-5-mini would require SDK changes and you have no eval to validate quality\n\nBut you **MUST fix the loops first** or you'll still burn tokens.\n\n### Files Created in output/\n\n**\ud83d\udcc4 Read these:**\n- `INDEX.md` - Navigation guide (start here)\n- `EXECUTIVE_SUMMARY.md` - Full story for finance/management\n- `CHECKLIST.md` - Step-by-step action items\n- `README.md` - Quick start for engineering\n- `cost_analysis.md` - Detailed technical analysis\n- `trace_example.md` - Turn-by-turn walkthrough of one failure\n\n**\ud83d\udd27 Apply these fixes:**\n- `fixed_agent_code/loop.py` - Added MAX_TURNS circuit breaker\n- `fixed_agent_code/prompts.py` - Fixed instructions & field name\n- `fixed_agent_code/tools.py` - Stop retrying 4xx errors\n\n**\ud83e\uddea Use these tools:**\n- `run_eval.py` - Golden set evaluator\n- `golden_starter.jsonl` - 3 starter test cases (expand to 20+)\n- `cost_comparison.py` - Visual cost breakdown\n- `config_haiku.json` - Ready for Haiku switch (phase 3)\n\n**\ud83d\ude80 Run this:**\n- `QUICK_START.sh` - Guided setup script\n\n### Next Step\n\n```bash\ncp output/fixed_agent_code/*.py agent/\n# Test on 2-3 leads\n# Deploy before month end\n```\n\nThis stops the bleeding immediately and saves **$37/month**. See `CHECKLIST.md` for the full phased approach.",
+ "agent_wall_s": 1392.4,
+ "model_wait_s": 1381.6,
+ "tool_s": 10.8,
+ "changed_files": [
+  "output/CHECKLIST.md",
+  "output/EXECUTIVE_SUMMARY.md",
+  "output/INDEX.md",
+  "output/QUICK_START.sh",
+  "output/README.md",
+  "output/SUMMARY.txt",
+  "output/config_haiku.json",
+  "output/cost_analysis.md",
+  "output/cost_comparison.py",
+  "output/fixed_agent_code/loop.py",
+  "output/fixed_agent_code/prompts.py",
+  "output/fixed_agent_code/tools.py",
+  "output/golden_starter.jsonl",
+  "output/run_eval.py",
+  "output/trace_example.md"
+ ],
+ "deleted_files": [],
+ "total_wall_s": 1406.7,
+ "check": {
+  "pass": false,
+  "score": 0.818,
+  "details": [
+   "PASS retry-loop mechanism on the 422 / lead_score_v2 write identified",
+   "PASS dominating conversations named (>=3 of 4 ids) or their ~70% share quantified",
+   "PASS noisy cv_6f895a not blamed as the main cost driver",
+   "FAIL does not recommend an unconditional model switch (fix/eval first)",
+   "PASS flags send_email firing without approval",
+   "PASS max-iterations / cost cap enforced (behavioral={'inconclusive': True, 'skipped': True})",
+   "PASS root field named: lead_score_v2 not in CRM schema",
+   "PASS per-conversation numbers for the loop conversations (>=3)",
+   "PASS full account export re-sent every turn identified",
+   "PASS stops retrying non-transient errors (retry only 429/5xx)",
+   "FAIL golden set with >=10 cases written",
+   "unconditional switch: [\"\u274c WRONG: 'Switch to gpt-5-mini to save money'\", '## Phase 3: Switch to Haiku (Week of Sept 23)']"
+  ]
+ }
+}

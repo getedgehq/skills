@@ -1,0 +1,130 @@
+════════════════════════════════════════════════════════════════════════
+  OUTREACH AGENT COST SPIKE - EXECUTIVE BRIEF
+  Date: 2026-09-16 | Period: Sept 1-15 | Cost: $26.66 (4x August)
+════════════════════════════════════════════════════════════════════════
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  ANSWER: Don't switch models—fix the harness first               ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+THE PROBLEM IS NOT THE MODEL
+  • 4 conversations (9% of volume) = 69% of costs ($18.44 of $26.66)
+  • These 4 conversations hit infinite retry loops
+  • Normal conversations cost $0.08-0.27 each (working fine)
+
+ROOT CAUSE (3 harness bugs, not model quality):
+  1. No iteration cap → `while True` loop with no stop condition
+  2. Retry logic broken → retries permanent errors (422, 404) forever
+  3. Bad prompt → references CRM field that doesn't exist ("lead_score_v2")
+
+WHAT HAPPENED:
+  • Agent tries to write field "lead_score_v2" to CRM
+  • CRM returns 422 "unknown field" (permanent error)
+  • Retry decorator tries 4x anyway
+  • Prompt says "try again" → model retries
+  • Each turn re-sends 30-40KB CRM export in history
+  • Tokens grow: 2K → 193K over 16 turns
+  • No cost cap or iteration limit stops it
+  • Result: $4.60 per failed lead vs $0.18 for normal lead
+
+FILES WITH EVIDENCE:
+  • agent/loop.py:16 - while True (no max iterations)
+  • agent/tools.py:22-31 - @with_retries on ALL errors
+  • agent/prompts.py:9 - "try again" + references lead_score_v2
+  • logs/calls-2026-09-01_15.jsonl - 245 API calls traced
+  • logs/crm_client.log - 64+ failed PATCH attempts for L-2012
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  SOLUTION: Fix harness, THEN consider model change               ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+PHASE 1 (URGENT - Deploy Today):
+  ✓ Code fixes ready in output/fixes/
+  ✓ Max 10 iterations per conversation
+  ✓ $1 cost cap per conversation
+  ✓ Only retry transient errors (429, 5xx, timeouts)
+  ✓ Remove lead_score_v2 from prompt
+  ✓ Remove "try again" instruction
+  → SAVES: $36-44/month (71% reduction)
+  
+PHASE 2 (This Week):
+  • Fix lead_score_v2 data issue (create field OR revert to lead_score)
+  • Expand golden set to 20-30 test cases
+  • Build judge script for regression testing
+  → PREVENTS: Future prompt/model changes from burning money
+
+PHASE 3 (Next Week):
+  • Run golden set on Sonnet (baseline)
+  • Run golden set on Haiku
+  • Compare quality + cost
+  • IF quality passes → switch to Haiku
+  → SAVES: Additional $10-11/month (66% cheaper on input)
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  COST IMPACT                                                      ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  Current (broken):        $53-60/month
+  After harness fixes:     $16-18/month  (-71%)
+  After Haiku switch:       $5-6/month   (-90% total)
+  
+  Total savings: $48-54/month if both phases succeed
+
+  But: A cheaper model in a broken loop still burns money.
+       Fix the loop first, THEN test model quality.
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  MODEL RECOMMENDATION (after fixes)                               ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  Recommended: claude-haiku-4-5
+  • Same API as Sonnet (drop-in replacement)
+  • Input: $1/MTok (67% cheaper), Output: $5/MTok (67% cheaper)
+  • Cold emails ≠ complex reasoning, Haiku likely fine
+  
+  BUT: Never switch without eval evidence
+  • Build golden set with expected outputs
+  • Run both models, compare quality
+  • Only switch if Haiku emails are professional, not spammy
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  DELIVERABLES (All in output/ directory)                          ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  ANALYSIS:
+  • SUMMARY.md - Full writeup with root cause
+  • cost_analysis.md - Detailed breakdown with evidence
+  • harness_scorecard.md - Six-part audit
+  • token_burn_evidence.json - Raw data on 46 conversations
+  
+  FIXES (ready to deploy):
+  • fixes/loop.py - Iteration cap, cost cap
+  • fixes/tools.py - Smart error classification
+  • fixes/prompts.py - Remove lead_score_v2, fix instructions
+  • fixes/tracing.py - Log errors properly
+  • fixes/README.md - Installation guide
+  
+  TESTING:
+  • evals/golden_set_starter.jsonl - 10 test cases to expand
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  KEY INSIGHT                                                      ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  "The model is expensive" usually means "the harness is missing."
+  
+  Audit the harness first:
+  • Golden set (test cases) - MISSING
+  • Judge (regression tests) - MISSING
+  • Cost governance (caps) - MISSING ← caused 69% of costs
+  • Data layer (field definitions) - PARTIAL ← caused the bug
+  • Action safety (approvals) - PARTIAL
+  • Tracing (logs) - PRESENT ← enabled this diagnosis!
+  
+  Score: 1/6 present, 2/6 partial, 3/6 missing
+  
+  This wasn't a model problem. It was a harness problem.
+
+════════════════════════════════════════════════════════════════════════
+  Questions? See output/SUMMARY.md for next steps and contact info
+════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,7 @@
+# Section 5: Dental Outcomes
+
+Free sugars from sugar-sweetened beverages are an established cause of dental caries. The population-level sugar reduction documented by Bandy et al. (2020)—a 29.5g per household per week reduction from the SDIL—is theoretically sufficient to reduce caries risk at population level {cite_10.1186/s12916-019-1477-4}. However, Watt (2024) observes that no empirical studies have directly measured dental caries outcomes following the UK SDIL {cite_10.1038/s41432-024-01025-3}.
+
+Simulation modelling studies provide quantitative estimates of plausible gains. Urwannachotima et al. (2020) predicted 157,236 caries cases averted and $26.9 million in healthcare cost savings from a 20% SSB tax in Thailand {cite_10.1186/s12903-020-1061-5}. Shahid et al. (2026) predicted 188,598 caries cases, 18,428 periodontitis cases, and 3,015 edentulism cases averted over population lifetimes from a 20% volumetric tax in Australia, with net healthcare cost savings of $342 million {cite_10.1136/bmjph-2024-002110}.
+
+The biological mechanism linking sugar reduction to caries prevention is well-established, and the SDIL has demonstrably reduced population sugar intake. However, measurement lag creates an empirical gap because caries develops over years and dental surveys are infrequent. Dental health benefits are therefore anticipated based on mechanism and population sugar reduction, but not yet empirically demonstrated in the UK context.

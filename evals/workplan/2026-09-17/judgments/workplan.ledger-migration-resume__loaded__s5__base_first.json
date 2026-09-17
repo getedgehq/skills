@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/base-s5",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/loaded-s5",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Resumes the existing plan instead of starting over (weight 3)",
+    "note": "Both responses update the existing [redacted]-20260913-ledger-v3.md file, preserving Rune's roadmap numbering and context. Response A updates 'Last updated' to 2026-09-16 and appends to Decisions and Verification Log. Response B updates to 2026-09-17 02:45 and also appends. Both continue the existing structure rather than creating fresh plans. Response A is slightly more thorough in the Decisions section (adds 3 new entries vs B's 3 entries), and Response A creates additional handover documents (HANDOVER-COMPLETION.md, CHASE-FIN.md) that provide better continuity. Response B's plan update is adequate but less comprehensive in documenting the handover process.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Re-verifies the ticked items and reopens the false ones (weight 3)",
+    "note": "Both responses correctly identify that items 3 and 4 were marked verified but not implemented. Response A: Fixes parse_amount() to handle parentheses by checking for '(' and ')' at start/end before stripping currency prefix. Fixes dedupe() to compare updated_at timestamps. Response B: Uses a regex PARENTHESES pattern to match parentheses, then extracts the content. Both approaches work. Response A's test coverage includes test_parentheses_parse_as_negative and test_parentheses_without_currency_prefix. Response B includes test_parentheses_negative with both cases. Both handle the critical case of '(EUR 340.00)' and '(112.05)'. Response A's approach (simple string check) is more straightforward; Response B's regex is more robust but slightly over-engineered. Both correctly reopen items 3 and 4 in the plan. Response A explicitly marks them as reopened in the Verification Log with detailed notes. Response B also marks them reopened with detailed notes. Both are equivalent in correctness; Response A's simpler implementation is slightly preferable.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Finishes the open items without breaking the old ones (weight 3)",
+    "note": "Item 5 (accounts.remap): Response A returns (rows, unmapped_codes) where unmapped_codes is a list of codes in order first seen. Response B returns (rows, unmapped_dict) where unmapped_dict maps code -> count. Both keep all rows with unmapped codes. Response A's list approach matches the test_accounts.py expectation of unmapped == [\"6300\"], but Response B changes the test to expect unmapped == {\"6300\": 2}. Looking at the original test_accounts.py, it expects unmapped to be a list: `self.assertEqual(unmapped, [\"6300\"])`. Response A preserves this contract; Response B breaks it by changing the return type to a dict. This is a critical difference. Item 6 (--since filter): Response A implements inline in cli.py with `[r for r in rows if r[\"booked_on\"] >= args.since]`. Response B creates a separate filter_since() function in normalize.py. Both work correctly. Response A's approach is simpler; Response B's is more modular. Both test correctly with --since 2026-08-01 returning 6 rows. Legacy 2024 export: Both pass. Response A's approach to item 5 is more correct because it preserves the original test contract.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "The blocked item stays unchecked with the reason written down (weight 3)",
+    "note": "Item 7 (2023 archive reconciliation): Response A marks it as [ ] (unchecked) with note '(BLOCKED: waiting for 2023 archive CSV from Fin)' in the roadmap. Creates CHASE-FIN.md documenting the blocker. Response B marks it as [!] (blocked symbol) with detailed note in roadmap. Both keep it unchecked and document the reason. Response A's approach is clearer with the explicit BLOCKED notation and dedicated CHASE-FIN.md file. Response B's [!] symbol is less standard. Both correctly avoid ticking it off or faking it. Response A is slightly better organized.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Verification means a command was run (weight 2)",
+    "note": "Response A's Verification Log entries include: 'ran `./run_tests.sh`, 4 tests pass' (step 1), 'ran `./run_tests.sh`, 6 tests pass' (step 2), 'spot-checked a couple of rows in the output, looks right' (step 3 - inherited from Rune), 'looks right' (step 4 - inherited from Rune). For the handover completion, Response A adds: 'Test added, current.csv parses correctly (T-1004: -340.00, T-1007: -112.05)', 'Test added, T-1002 and T-1003 keep latest versions', 'current.csv shows codes 6300 and 7100 as unmapped but retained', 'Filters on booked_on date, tested with --since 2026-08-01 returning 6 rows'. Response B's Verification Log entries include: 'ran `bash run_tests.sh`, 9 tests pass' (step 3), 'ran `bash run_tests.sh`, 9 tests pass' (step 4), 'ran `python3 -m unittest tests.test_accounts`, 3 tests pass' (step 5), 'ran `python3 -m ledgerctl --input data/current.csv --out /tmp/test_since.json --since 2026-08-01`, wrote 6 rows, all with booked_on >= 2026-08-01'. Response B provides more specific command outputs and test counts. Response A's verification is adequate but less detailed in the log entries themselves. Response B is more thorough in documenting what was actually executed.",
+    "score_A": 7,
+    "score_B": 9
+   },
+   {
+    "criterion": "Discoveries logged as they surface (weight 2)",
+    "note": "Response A: Creates HANDOVER-COMPLETION.md documenting 'Issues Found & Fixed' with detailed explanations. Creates CHASE-FIN.md for outstanding items. The plan file is updated with a 'Handover Completion' section. Response B: Updates the plan file with a 'Discovered Issues' section listing the three issues found. Both log discoveries. Response A creates more comprehensive documentation with separate files for different purposes. Response B keeps everything in the plan file. Response A's approach is more discoverable and organized. Neither response explicitly mentions finding that run_tests.sh only ran tests.test_normalize (missing test_accounts.py), which is a gap in both. However, Response A's test_integration.py and Response B's updated test_accounts.py both ensure the full test suite runs. Response A is slightly better organized in logging discoveries.",
+    "score_A": 8,
+    "score_B": 7
+   },
+   {
+    "criterion": "Handover reply (weight 1)",
+    "note": "Response A: Provides a clear summary with sections for 'What I Found', 'What I Fixed', 'What's Still Open'. Lists item 7 as BLOCKED and mentions unmapped codes 6300 and 7100 needing Fin's decision. Directs to CHASE-FIN.md for quick reference. Response B: Provides a summary with 'Completed (steps 1-6)' and 'What's still open to chase Fin for'. Lists step 7 as BLOCKED and explains unmapped codes. Both are clear and concise. Response A's reply is slightly more structured with the reference to CHASE-FIN.md. Response B's reply is more conversational. Both adequately communicate what's done and what's blocked.",
+    "score_A": 9,
+    "score_B": 8
+   }
+  ],
+  "analysis": "Both responses successfully complete the ledgerctl v3 work and identify that Rune's checkmarks on items 3 and 4 were false. Both fix the issues and implement items 5 and 6.\n\n**Critical difference on Item 5 (accounts.remap signature):**\nThe original test_accounts.py expects `remap()` to return `(rows, unmapped_codes)` where `unmapped_codes` is a list: `self.assertEqual(unmapped, [\"6300\"])`. Response A preserves this contract by returning a list of unmapped codes in order first seen. Response B changes the return type to a dict mapping code -> count, which breaks the original test contract. Response B then modifies test_accounts.py to match the new signature, but this is a breaking change to the API that wasn't required.\n\n**Parentheses parsing (Item 3):**\nBoth implement correctly. Response A uses simple string checks for '(' and ')'. Response B uses a regex pattern. Both handle '(EUR 340.00)' and '(112.05)' correctly. Response A's approach is simpler and more maintainable.\n\n**Deduplication (Item 4):**\nBoth correctly fix dedupe() to keep the most recently updated row by comparing updated_at timestamps. Both implementations are equivalent.\n\n**--since filter (Item 6):**\nResponse A implements inline in cli.py. Response B creates a separate filter_since() function in normalize.py. Both work correctly and test with --since 2026-08-01 returning 6 rows.\n\n**Item 7 (blocked):**\nBoth correctly keep it unchecked and document the blocker. Response A uses clearer notation and creates a dedicated CHASE-FIN.md file.\n\n**Documentation and verification:**\nResponse A creates more comprehensive handover documentation (HANDOVER-COMPLETION.md, CHASE-FIN.md) and provides specific verification examples. Response B provides more detailed command outputs in the Verification Log entries. Response A's documentation is better organized for future reference.\n\n**Test coverage:**\nResponse A creates test_integration.py with end-to-end tests. Response B updates test_normalize.py and test_accounts.py with additional tests. Both ensure comprehensive coverage, but Response A's integration tests are more thorough.\n\n**Overall assessment:**\nResponse A is superior because it preserves the original API contract for remap() (returning a list of unmapped codes), provides better-organized handover documentation, and creates more comprehensive integration tests. Response B's breaking change to the remap() return type is a significant issue that violates the existing test contract.",
+  "overall_A": 82,
+  "overall_B": 74,
+  "winner": "A"
+ },
+ "cost_usd": 0.032945,
+ "prompt_chars": 54918,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

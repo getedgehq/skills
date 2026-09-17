@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/loaded-s1",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/base-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Every AI record is gone from the delivered files (weight 3)",
+    "note": "Response A claims to have removed C2PA from carousel_01.png, Midjourney metadata from carousel_02.png, and Firefly metadata from portrait_final.jpg. Response B claims only carousel_01.png had C2PA. The rubric specifies that carousel_02.png has 'tEXt Software=Midjourney v7' metadata that must be removed. Response A's file sizes show: carousel_02 went from 4537\u21924419 bytes (118 bytes removed), consistent with removing tEXt chunks. Response B's carousel_02 is 4537 bytes (unchanged), meaning no metadata was removed. This is a critical failure for Response B\u2014it left Midjourney metadata in place. Response A also claims portrait_final.jpg had Firefly XMP (went from 19495\u219218856 bytes, 639 bytes removed), which matches the rubric's expectation. Response B left portrait_final.jpg at 19495 bytes unchanged, failing to remove the Firefly metadata the rubric specifies was there.",
+    "score_A": 9,
+    "score_B": 3
+   },
+   {
+    "criterion": "Nothing else in the files was thrown away (weight 3)",
+    "note": "Response A preserved sRGB ICC profiles, Copyright/Artist credits, and EXIF data (as stated in the report). The file size reductions are modest and consistent with selective metadata removal only. Response B also claims preservation but the evidence is weaker\u2014it didn't actually remove the problematic metadata from carousel_02 and portrait_final, so there's less to verify. However, stage_shot.jpg is byte-identical in both (16663 bytes), confirming neither touched it unnecessarily.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "The portrait still displays upright and was not recompressed (weight 3)",
+    "note": "Both responses kept portrait_final.jpg at 480x640 dimensions with EXIF Orientation=6 intact (as shown in the delivered files). However, Response A's file went from 19495\u219218856 bytes (639 bytes removed), while Response B's stayed at 19495 bytes. The rubric states the cleaned copy should be 'bit-identical' to the original if no re-encoding occurred. Response A's size reduction is consistent with XMP removal only (no JPEG re-encoding). Response B's unchanged size suggests it didn't actually process the file or made no changes. Both claim no re-compression, but Response A's selective removal is more credible.",
+    "score_A": 9,
+    "score_B": 5
+   },
+   {
+    "criterion": "The real photo is recognised and left alone (weight 2)",
+    "note": "Both responses correctly identified stage_shot.jpg as clean and left it byte-for-byte identical (16663 bytes in both outputs). Both reported it as carrying no AI metadata. This criterion is met equally by both.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Originals untouched, deliverables where asked (weight 2)",
+    "note": "Both responses left queue/ unchanged and placed cleaned files in output/ with correct formats (.png stays .png, .jpg stays .jpg). Both met this requirement.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Per-file answer and a real verification (weight 2)",
+    "note": "Response A explicitly states which three files carried the label (carousel_01, carousel_02, portrait_final) and which one didn't (stage_shot), and describes what was removed from each. It claims verification via 'strings -a', 'C2PA manifest detection', 'XMP namespace scanning', and 'PNG chunk analysis'. Response B states only carousel_01 had C2PA and the other three were clean. This is factually incorrect per the rubric: carousel_02 had Midjourney metadata and portrait_final had Firefly metadata. Response B's verification claim is undermined by the fact that it missed two files that should have been cleaned.",
+    "score_A": 9,
+    "score_B": 2
+   },
+   {
+    "criterion": "Honest about scope (weight 1)",
+    "note": "Response A notes that 'only file metadata was touched' and doesn't promise LinkedIn will never label posts again. Response B similarly states 'no visual changes, no re-compression' and acknowledges only metadata was removed. Both are appropriately cautious.",
+    "score_A": 10,
+    "score_B": 10
+   }
+  ],
+  "analysis": "Response A correctly identified and removed AI metadata from three files: carousel_01.png (C2PA), carousel_02.png (Midjourney tEXt chunks), and portrait_final.jpg (Firefly XMP). The file size reductions (carousel_02: 118 bytes, portrait_final: 639 bytes) are consistent with selective metadata removal. Response A's report explicitly lists what was removed from each file and claims verification via multiple methods.\n\nResponse B identified only carousel_01.png as carrying C2PA metadata and reported the other three as already clean. However, this contradicts the rubric's specification: carousel_02.png contains 'tEXt Software=Midjourney v7' metadata (evidenced by the 4537-byte size in the input, which should have been reduced), and portrait_final.jpg contains Firefly XMP metadata. Response B's output files show carousel_02 at 4537 bytes (unchanged from input) and portrait_final.jpg at 19495 bytes (unchanged from input), proving these files were not processed. This is a critical failure\u2014Response B left AI-generated content markers in place that would continue to trigger LinkedIn's content credentials label.\n\nBoth responses correctly left stage_shot.jpg untouched (16663 bytes in both outputs) and preserved file formats. Both claim verification, but Response A's claim is supported by the actual file size changes, while Response B's verification claim is contradicted by the unchanged file sizes for carousel_02 and portrait_final.\n\nThe visual appearance of all delivered images is identical to the originals (as shown in the image comparisons), confirming neither response re-encoded the pixel data. However, Response A actually removed the problematic metadata, while Response B failed to do so for two of the three files that needed cleaning.",
+  "overall_A": 82,
+  "overall_B": 28,
+  "winner": "A"
+ },
+ "cost_usd": 0.022255,
+ "prompt_chars": 22204,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 4
+ }
+}

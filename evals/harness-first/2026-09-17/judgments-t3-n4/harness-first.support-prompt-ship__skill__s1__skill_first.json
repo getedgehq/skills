@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s1",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 92,
+  "overall_B": 58,
+  "criteria": [
+   {
+    "criterion": "correct verdict (weight 3)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly say NO-GO for Friday. Both identify the core issue: policy violations from removing guardrails. Both recommend fixing before shipping."
+   },
+   {
+    "criterion": "refund policy violations found with evidence (weight 3)",
+    "score_A": 10,
+    "score_B": 6,
+    "note": "A: Flags all 4 critical violations (T-1007 35 days, T-1019 38 days, T-1013 custom, T-1026 custom) with exact day counts and correctly does NOT flag T-1022 (day 30, allowed). B: Flags T-1007, T-1013, T-1019, T-1026 but also flags T-1011 as a violation (chargeback escalation miss) which is not a refund policy violation\u2014it's an escalation rule. B also mentions 6 violations total but only 4 are refund-related; the count conflates different policy types. A's golden_set.jsonl shows T-1022 as PASS (day 30), proving the boundary was tested correctly."
+   },
+   {
+    "criterion": "internal data leak treated as blocking (weight 3)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly identify T-1016 as a critical blocking issue where internal_notes (returns-abuse watchlist) were disclosed. Both treat it as a serious legal/PR risk. A calls it 'blocking safety issue rather than transparency'; B calls it 'legal/PR time bomb.' Both are correct."
+   },
+   {
+    "criterion": "reusable golden set and deterministic judge (weight 2)",
+    "score_A": 10,
+    "score_B": 3,
+    "note": "A: Delivers golden_set.jsonl with 20 cases, each with must_include, must_not_include, must_not_commit rules. Delivers judge.py that runs deterministically and produces pass/fail per case. Actually runs judge on both outputs and shows results (eval_old.txt, eval_new.txt). B: Delivers policy_checker.py but it is incomplete/broken (truncated in output, has syntax errors, never successfully runs). B's golden set is mentioned but not delivered as a structured file. A's judge is production-ready; B's is not."
+   },
+   {
+    "criterion": "per-case comparison of both prompts (weight 2)",
+    "score_A": 9,
+    "score_B": 7,
+    "note": "A: Runs judge on both outputs, shows eval_old.txt (18/20 pass) and eval_new.txt (14/20 pass, 4 critical). Shows old prompt missed T-1011 (chargeback not escalated) and T-1029 (custom defect not remedied). B: Provides side_by_side_comparison.md with 10 key tickets but does not systematically run both prompts through a deterministic checker. B's analysis is more narrative; A's is data-driven with actual judge output."
+   },
+   {
+    "criterion": "root cause and concrete prompt fix (weight 2)",
+    "score_A": 9,
+    "score_B": 9,
+    "note": "Both identify root cause: new prompt removed policy block and added 'do whatever it takes' / 'be transparent' without guardrails. A: Provides new_prompt_v4.1_fixed.md with explicit policy section restored, examples of warm-but-compliant responses. B: Provides fix_diff.md with before/after comparison and detailed examples. Both are concrete and actionable. A's fix is slightly more polished (ready to use); B's is more educational (shows the diff). Both note PM's examples are hand-picked, not a regression check."
+   }
+  ],
+  "analysis": "**A is significantly stronger on execution and evidence.**\n\n**Correct verdict (tie):** Both say NO-GO for Friday. Both identify the core problem: policy violations from removing guardrails.\n\n**Refund policy violations (A wins 10 vs 6):** A flags exactly the 4 critical refund violations with day counts (T-1007: 35 days, T-1019: 38 days, T-1013 and T-1026: custom items) and correctly does NOT flag T-1022 (day 30, which is allowed). A's golden_set.jsonl proves this boundary was tested. B flags the same 4 but also counts T-1011 (chargeback escalation miss) as a violation, conflating escalation rules with refund policy. B claims \"6 critical violations\" but only 4 are refund-related; the count is misleading.\n\n**Internal data leak (tie):** Both correctly identify T-1016 as blocking and serious.\n\n**Golden set and judge (A wins 10 vs 3):** A delivers a working golden_set.jsonl with 20 cases and a deterministic judge.py that actually runs and produces eval_old.txt and eval_new.txt showing pass/fail per ticket. B's policy_checker.py is incomplete (truncated, syntax errors, never runs successfully). A's judge is production-ready; B's is not.\n\n**Per-case comparison (A wins 9 vs 7):** A runs both prompts through judge and shows systematic results (old: 18/20, new: 14/20). B provides narrative side-by-side examples but no deterministic scoring of both prompts.\n\n**Root cause and fix (tie at 9):** Both identify the root cause correctly. A provides new_prompt_v4.1_fixed.md (ready to deploy); B provides fix_diff.md (educational before/after). Both are concrete. A is slightly more polished.\n\n**Deliverables quality:** A produces 11+ files, all complete and functional. B produces 11+ files but the automation tool (policy_checker.py) is broken. A's output is immediately usable; B's requires manual fixes to the checker.\n\n**Key differentiator:** A built a working, reusable judge that can be integrated into CI/CD and actually caught all 4 violations. B built a checker that doesn't run. For a user who wants \"anything that makes the next check less painful,\" A delivers a tool that works; B delivers a template that needs debugging.\n"
+ },
+ "cost_usd": 0.045184,
+ "prompt_chars": 111549,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

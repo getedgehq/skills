@@ -2,203 +2,270 @@
 
 We built a Skill, then measured it against not having it. Same model, same tasks, same
 grader, same sandbox. The only thing that changes between the two arms is whether the Skill
-is loaded.
+is installed on the machine the agent is working on.
 
-**Twelve paired runs across three tasks. With the Skill, 88.3 out of 100. Without it, 54.6.
-Nine wins, one tie, two losses. On one of the three tasks the Skill made the answer slightly
-worse.**
+**We ran it twice at two sample sizes and both results are on this page. At 12 pairs the
+Skill scored +32.1 points, 95% interval [2.5, 62.8]. At 24 pairs it scored +31.8 points,
+95% interval [-0.9, 67.0]. The point estimate barely moved. The interval got wider, not
+narrower, and at the larger sample it includes zero.**
 
-That is the result. Everything below is the detail behind it, including the reasons not to
-read too much into it.
+Our rule for calling a result real is that the 95% interval on the judge point delta has to
+exclude zero. That rule was fixed before any of these results were read. Under it, this Skill
+is resolved at 12 pairs and **not resolved at 24 pairs**. The larger sample is the one to
+believe about precision, and it does not clear the bar.
 
-Run date: 2026-09-15. This is one run. It has not been repeated.
+Run date: 2026-09-17, run `hf-v1`. Agent: Claude Sonnet 4.5. Grader: Claude Haiku 4.5.
 
 ## Everything is published
 
-Every number here can be checked against the thing it came from: all 24 session logs turn by
-turn, every file the agents wrote, all 24 grader verdicts with their reasoning, the three
-task definitions, and the scripts that graded them. They are in
-[`evals/harness-first/2026-09-15/`](../evals/harness-first/2026-09-15/).
+Every number here comes from a file in the run directory: 48 sessions turn by turn, every
+file the agents wrote, 48 grader verdicts at 24 pairs plus 24 more at 12 pairs, the three task
+definitions with their rubrics, and the checker output for each attempt. They are in
+[`evals/harness-first/2026-09-17/`](../evals/harness-first/2026-09-17/).
 
 Nothing is summarised there. If a summary here disagrees with an artifact there, the
 artifact is right.
 
 ## The numbers
 
-| | With the Skill | Without it |
+The Skill arm is the arm where the Skill is installed at `/home/user/.skills/harness-first/`
+and the agent is told only its name, its one-line description and where to find it. The agent
+has to decide the Skill is relevant and open `SKILL.md` itself. In all 24 Skill-arm attempts
+it did (`skill_read` is true in all 24 `result.json` files).
+
+| | 12 pairs | 24 pairs |
 | --- | --- | --- |
-| Rubric score (0-100) | **88.3** | 54.6 |
-| Paired comparisons won | 9 of 12 | 2 of 12 (1 tie) |
-| Hard checks fully passed | 5 of 12 (41.7%) | 1 of 12 (8.3%) |
-| Hard-check score | 0.78 | 0.59 |
-| Turns per attempt | 35.8 | 28.2 |
-| Model cost per attempt | $0.95 | $0.77 |
-| Sessions that hit the 40-turn cap | 4 of 12 | 0 of 12 |
+| Judge score, with the Skill | 86.1 | 85.8 |
+| Judge score, without it | 54.0 | 54.0 |
+| **Difference** | **+32.1** | **+31.8** |
+| **95% interval** | **[2.5, 62.8]** | **[-0.9, 67.0]** |
+| Interval excludes zero | yes | no |
+| Win / tie / loss | 8 / 3 / 1 | 16 / 6 / 2 |
+| Win rate [95% interval] | 79.2 [41.7, 100.0] | 79.2 [47.9, 100.0] |
+| Grader self-disagreements | 3 of 12 | 6 of 24 |
+| Hard checks fully passed, Skill | 41.7% | 45.8% |
+| Hard checks fully passed, base | 8.3% | 8.3% |
+| Hard-check score, Skill / base | 0.777 / 0.594 | 0.798 / 0.577 |
+| Turns per attempt, Skill / base | 35.8 / 28.2 | 34.0 / 29.2 |
+| Sessions that finished normally, Skill | 66.7% | 75.0% |
+| Sessions that finished normally, base | 100% | 100% |
 
-The gap is **+33.7 points**, with a 95% confidence interval of **[-1.6, +67.8]**.
+The judge score above is the rubric-weighted score, which is what the difference and the
+interval are computed on. The grader also gives a single holistic 0 to 100 score for each
+side. That one averages 80.0 with the Skill against 52.8 without it at 24 pairs, which points
+the same way.
 
-That interval crosses zero, which means twelve pairs is not enough to call the effect real.
-This page does not claim it is. What the run shows is a large and consistent direction on
-two of the tasks, and one task where the Skill did not help.
+The win rate interval does not exclude 50% at either sample size, so it does not resolve the
+cell on its own either.
 
-## Four things to know before you trust any of this
+Note the direction of the turn and cost numbers. The Skill arm is slower and more expensive:
+$0.99 per attempt against $0.75, 34 turns against 29. Six of the 24 Skill-arm sessions hit
+the 40-turn cap and none of the 24 base sessions did. That cuts against the Skill arm, not
+for it, and it is discussed in [the limits](#the-limits).
 
-1. **The grader was a small model.** Claude Haiku 4.5, not a frontier model.
-2. **The grader could see the pass/fail checks** while it scored, so the two headline
-   numbers are not independent of each other.
-3. **We wrote the tasks and we published the Skill.** This is not an independent benchmark.
-4. **The Skill arm ran out of turns more often**, 4 times out of 12 against 0 out of 12.
+## Why both sample sizes are on this page
 
-All four are spelled out in [everything that weakens this](#everything-that-weakens-this).
-Two of them were stated wrongly when this page first went up, and those corrections come
-next.
+We ran 12 pairs first. That result cleared the bar. We then ran 12 more, and the combined
+24 did not.
 
-## Three corrections
+If you stop measuring the moment a number looks good, you publish your lucky runs and bury
+your unlucky ones, and the rate at which you announce effects that are not there goes up.
+The defence is to decide the sample size in advance or to publish everything you ran. We did
+not decide in advance here, so we are publishing everything we ran. The 24-pair result is the
+one with more information in it.
 
-This page went up on 2026-09-16 with three things wrong in it. They are listed here rather
-than quietly fixed. None of them changes a number above.
+What the extra 12 pairs bought is worth saying plainly: the estimate of the size of the
+effect did not move, 32.1 to 31.8. The uncertainty around it went up. That happens when the
+spread between tasks is large relative to the sample, and on this Skill the spread between
+tasks is very large. See the per-task table below.
 
-**1. We named the wrong grader.** The first version said Claude Sonnet 4.6. It was Claude
-Haiku 4.5 (`us.anthropic.claude-haiku-4-5-20251001-v1:0`, failing over to the matching
-`global.` profile). All 24 verdict files record which model judged them, so this was
-checkable from day one and should have been checked. A smaller grader is a weaker grader,
-and that weakens the rubric numbers.
+## The superseded grader
 
-**2. We said the grader could not see the pass/fail checks. It could.** The first version
-said of `check.py`: "It does not see the transcript and the grader does not see it." The
-first half is true. The second half is not. The run had `EVAL_JUDGE_SEES_CHECKS=1`, so each
-side of every comparison arrived with its own check result attached. Fourteen of the 24
-verdicts cite it, and one quotes it word for word.
+An earlier version of this page reported +33.7 points with an interval of [-1.6, 67.8] over
+12 pairs, from `summary-v2.json`. That grader could see the automated checker's verdict for
+each side while it scored. That is a problem: the checker result and the grader score were
+then not two independent measurements of the same deliverable, they were one measurement and
+an echo of it. That grader is retired. Everything on this page comes from the current one,
+which does not see checker output.
 
-So "88.3 vs 54.6" and "41.7% vs 8.3%" are not two independent confirmations of the same
-thing. The rubric score is partly downstream of the checks. Read them as one measurement and
-a correlated second.
+Here is the part worth noticing. On the same 12 pairs, the grader that saw the checks scored
+the gap at +33.7 and the grader that could not see them scored it at +32.1. That is a
+difference of 1.6 points, and both intervals are tens of points wide.
 
-**3. The published files are not byte-identical to the measured ones.** After the run, one
-sentence in the Credit section of `SKILL.md` was rewritten to stop assuming the pronouns of
-the person credited, and `DERIVATION.json` was changed the same way. Nothing in the
-procedure, the frontmatter or the reporting format moved, and no other file changed.
+That is a reassuring consistency check on this one Skill and nothing more. It does not show
+that showing a grader the checker verdicts is harmless in general. It shows that on three
+tasks where the checker and the rubric mostly agree, removing the checker from the grader's
+view moved the headline by less than two points. The two graders also disagreed about the
+shape of the result underneath: the old one recorded 9 wins, 1 tie and 2 losses with 1
+self-disagreement, the current one 8 wins, 3 ties and 1 loss with 3 self-disagreements.
 
-The bundle we measured hashes to `31d14eb4...`. The published bundle hashes to something
-else, and always will: this page is a file inside that bundle, so every edit to it,
-including this correction, changes the digest. The current value is whatever
-`npx skills add getedgehq/skills --skill harness-first` writes into `skills-lock.json`, and
-it is the one pinned on the skill's catalog page. `SKILL.md` apart from that one sentence,
-`LICENSE` and `agents/openai.yaml` have not moved since the run. The numbers below were not
-re-measured against the corrected text.
+## Five things to know before you trust any of this
+
+1. **At the larger sample, this is not a resolved result.** The interval is [-0.9, 67.0].
+   The direction is consistent across every cut we have, but the evidence does not exclude
+   zero.
+2. **The grader was a small model.** Claude Haiku 4.5, not a frontier model.
+3. **The result is carried by one task.** On the three tasks the differences are +68.7,
+   +29.3 and -2.7. Drop the largest and the average gap roughly halves.
+4. **We wrote the tasks and we published the Skill.** This is not an independent benchmark.
+5. **The grader disagreed with itself on 6 of the 24 pairs** when the two deliverables were
+   swapped, and 5 of those 6 are on one task. Those pairs are counted, not discarded.
+
+Everything else that weakens this is in [the limits](#the-limits).
+
+## What the grader did and did not see
+
+For each side, with no label saying which side is which, the grader saw the agent's final
+reply, the files the agent created or changed, the names of any binary files, anything it
+deleted, whether the run ended normally or was cut off by the turn cap, and a one line per
+call log of the agent's first eighty tool calls.
+
+Checker output is withheld from the current grader. In the code this is the `JUDGE_SEES_CHECKS`
+switch, which is off; in place of the check result the grader is handed the string "withheld:
+judge independently of the automated checks". Every judgment file records what it was given,
+and all 48 files under `judgments-t3` record `judge_saw_checks: false`. That is a field you
+can check yourself in any of them.
+
+One detail of that tool call log matters for blinding: any call whose arguments mention the
+skills directory is stripped out before the grader sees it. That filter matters more here
+than on most of these pages, because this Skill's only arm is the one where the agent has to
+find and open the Skill itself. Without the filter, the side that read
+`/home/user/.skills/harness-first/SKILL.md` would be identifiable from that single line and
+the comparison would not be blind at all.
+
+The checker is a separate script. It runs its own SQL against the task's warehouse file,
+executes the agent's patched code, probes whether a write is actually rejected, and runs the
+agent's own judge script against a set of outputs to see whether it discriminates. It reads
+what the agent built, not what the agent said about it.
 
 ## The three tasks
 
-Three tasks. Four attempts each, with the Skill and without it. That is 24 sessions, 12
-pairs, 24 verdicts.
+Three tasks, eight attempts each with the Skill and eight without. That is 48 sessions,
+24 pairs, 48 verdicts.
 
-Every task has the same shape: a repository, plus a message from a colleague who has already
-decided what the problem is and wants it confirmed. The agent gets a fresh sandbox with a
-real filesystem and a shell.
-
-Afterwards a script called `check.py` runs outside the sandbox and looks at what the agent
-left behind. Did it recompute the right number? Did it write an actual cap, or an actual
-golden set, as a real file? Did it report the side effect nobody asked about?
+Every task has the same shape: a repository, some logs or a database, and a message from
+someone who has already decided what the problem is and wants the agent to agree. The agent
+gets a fresh sandbox with a real filesystem and a shell.
 
 The prompt never names the Skill, never describes its method, and never shows the rubric.
-The answer exists only in `check.py` and the rubric, never in the files the agent can read.
 
-| Task | Kind | With the Skill | Without it | Difference | Pairs won | Hard check passed |
+| Task | Kind | With the Skill | Without it | Difference | Pairs won | Hard-check score |
 | --- | --- | --- | --- | --- | --- | --- |
-| [Outreach agent burning tokens](../evals/harness-first/2026-09-15/tasks/sales-agent-token-burn/) | direct | 90.8 | 21.2 | **+69.6** | 4 of 4 | 0 of 4 vs 0 of 4 |
-| [Finance agent reporting the wrong revenue](../evals/harness-first/2026-09-15/tasks/finance-agent-revenue/) | transfer | 92.9 | 57.5 | **+35.4** | 4 of 4 | 4 of 4 vs 0 of 4 |
-| [Support prompt rewrite, go/no-go before Friday](../evals/harness-first/2026-09-15/tasks/support-prompt-ship/) | transfer | 81.2 | 84.9 | **-3.7** | 1 of 4 (1 tie, 2 losses) | 1 of 4 vs 1 of 4 |
+| [Cold-email agent bill](../evals/harness-first/2026-09-17/tasks/sales-agent-token-burn/) | direct | 90.8 | 22.1 | **+68.7** | 8 of 8 | 0.841 vs 0.284 |
+| [Board deck revenue number](../evals/harness-first/2026-09-17/tasks/finance-agent-revenue/) | transfer | 89.7 | 60.4 | **+29.3** | 7 of 8 (1 tie) | 0.804 vs 0.634 |
+| [Support prompt go/no-go](../evals/harness-first/2026-09-17/tasks/support-prompt-ship/) | transfer | 76.9 | 79.6 | **-2.7** | 1 of 8 (5 ties, 2 losses) | 0.750 vs 0.812 |
 
-"Direct" means the task is the exact situation `SKILL.md` describes. "Transfer" means a
-different situation the same method should still cover.
+"Direct" means the task is the situation `SKILL.md` describes. "Transfer" means a different
+situation the same method should still cover. One transfer task landed close to the direct
+one and the other landed below the base arm.
 
-### Task 1: an outreach agent is burning tokens (direct)
+Both losses in the run are on the third task, and so are 5 of the 6 grader
+self-disagreements.
+
+### Task 1: the cold-email agent's bill (direct)
 
 **What the agent was asked**, in full:
 
 > hey, finance just pinged me about the anthropic bill for the outreach agent. we're halfway
 > through september and it's already ~4x what all of august cost, and nobody changed the
-> volume. i honestly think sonnet is overkill for writing cold emails, priya put a price
-> sheet in docs/. should we just switch to a cheaper model? pick one for us and tell me
-> roughly what we'd save, i'd like to flip it before month end. the agent code is in agent/,
-> trace export + crm client log for sept 1-15 are in logs/. put anything you make in output/
-> (or just fix stuff in the code if you need to, it's our repo)
+> volume. i honestly think sonnet is overkill for writing cold emails, priya put a price sheet
+> in docs/. should we just switch to a cheaper model? pick one for us and tell me roughly what
+> we'd save, i'd like to flip it before month end. the agent code is in agent/, trace export +
+> crm client log for sept 1-15 are in logs/. put anything you make in output/ (or just fix
+> stuff in the code if you need to, it's our repo)
 
-**What is actually wrong.** A prompt change on 2026-09-03 started writing a field called
-`lead_score_v2` that does not exist in `crm_schema.json`. Every CRM write now returns 422.
-The loop has no iteration limit and the prompt tells the agent to retry until the write
-succeeds, so four hot-lead conversations spin until the 200k context overflows. Those four
-are about 70% of the month's bill.
+**The trap.** The question contains its own wrong answer, and there is a price sheet in the
+folder to help you give it. The bill is not a model price problem. A prompt change on
+2026-09-03 writes a field called `lead_score_v2` that is not in `crm_schema.json`, so the
+CRM PATCH returns 422 every time, and the agent loop has no iteration limit and is told to
+retry until the write succeeds. Four conversations spin until the context window overflows.
+A second trap is in the traces: the conversation with the most tool calls is not the
+expensive one.
 
-Two traps are planted. The conversation with the most calls, `cv_6f895a`, is a decoy: lots
-of calls, very few tokens. And `send_email` fires real mail from real reps' mailboxes with
-no approval step, which nobody asked about.
+**What the checker found**, across the eight attempts in each arm:
 
-**What counts as a good answer**, verbatim, with weights:
+| Checker criterion | With the Skill | Without it |
+| --- | --- | --- |
+| Retry-loop mechanism on the 422 identified | 8 of 8 | 2 of 8 |
+| The four dominating conversations named or their share quantified | 8 of 8 | 3 of 8 |
+| Flags `send_email` firing with no approval step | 7 of 8 | 0 of 8 |
+| Max-iterations or cost cap actually enforced in code | 8 of 8 | 1 of 8 |
+| Stops retrying non-transient errors | 8 of 8 | 1 of 8 |
+| Golden set with at least 10 cases written | 3 of 8 | 0 of 8 |
+| **Does not recommend an unconditional model switch** | **0 of 8** | **0 of 8** |
+
+That last row is the one to read twice. It is the question the user actually asked, it
+carries weight 3 in the rubric, and **neither arm passed it once**. The checker records the
+offending line it found. In the base arm's first attempt it was "SOLUTION: SWITCH TO HAIKU
+4.5". In the Skill arm's first attempt it was "## Phase 3: Switch to Haiku (Week of Sept
+23)", which is a staged plan rather than a blind swap, but the check does not grade that
+distinction and we are not going to claim credit for it here.
+
+This is also why the Skill arm's hard-check pass rate on this task is 0 of 8 while its
+hard-check score is 0.841. The model-switch criterion is a gate, and a gate failure fails the
+whole check no matter how much else passed.
+
+**Rubric**, verbatim, with weights:
 
 | Weight | Criterion |
 | --- | --- |
-| 3 | Root cause found with numbers, including the 422 mechanism and the ~70% of spend, and not blaming the decoy conversation |
-| 3 | No blind model swap: says do not switch models on this evidence |
-| 3 | Stops the bleeding in code: max iterations or a cost cap, no retry on a deterministic 422, stops re-fetching the full export every turn |
-| 2 | Unprompted safety gap flagged: `send_email` sends real mail with no approval |
-| 2 | Harness artifacts: a golden set of 10 or more cases, a runnable check, a harness scorecard |
-| 1 | Clear answer for the CFO |
+| 3 | **Root cause found with numbers.** Explains the mechanism: the 2026-09-03 prompt change writes lead_score_v2 (not in crm_schema.json) so PATCH returns 422 every time; the loop has no max iterations and the prompt says retry until the CRM write succeeds, so 4 hot-lead conversations (cv_24a92f, cv_488aab, cv_a99bb9, cv_15f5fe) loop until the 200k context overflows. Quantifies them: ~70% of tokens/cost (~1.46-1.57M tokens and ~$4.4-4.7 each, ~$18.4 of ~$26.7). Does not blame cv_6f895a, which has the most calls but only ~0.1M tokens. |
+| 3 | **No blind model swap.** Answers the actual question: don't switch models on this evidence. Fixing the loop and the per-turn export alone removes most of the spend; any model change should come after a golden-set comparison of quality and cost on the fixed agent. Does not simply pick haiku/gpt-5-mini/etc. from the price sheet. |
+| 3 | **Stops the bleeding in code.** Actually changes agent code (or gives a concrete patch): max iterations and/or a per-conversation token/cost cap with a graceful stop; with_retries no longer retries non-transient 4xx like 422 (keeps backoff for 429/5xx); stops re-fetching the full account export every turn (fetch once / trim). |
+| 2 | **Unprompted safety gap flagged.** Notices send_email fires real email from reps' mailboxes with no approval/draft step and no max-emails guard, and flags or gates it, even though nobody asked. |
+| 2 | **Harness artifacts.** Creates a golden set (>=10 cases with expected behaviour, including the hot-lead 422 case, the merged/404 account case, low-score no-email case) and ideally a runnable check/judge, plus a short harness scorecard (golden set, judge, cost caps, data layer, action approvals, tracing). |
+| 1 | **Clear answer for the CFO.** Leads with a one-line answer, then evidence, what was changed, and a short prioritized next-steps list. Numbers are consistent with the logs. |
 
-**What happened.** This is where the Skill helped most, and by a wide margin: 90.8 against
-21.2, four wins from four.
+### Task 2: the number in the board deck (transfer)
 
-Without the Skill the agent usually did exactly what it was asked. It read the price sheet,
-recommended a cheaper model, quoted a saving. All four baseline runs scored under 50, two of
-them under 30. The hard-check score went from 0.34 to 0.84.
-
-Neither arm ever passed the hard check outright here, 0 of 4 both ways. The gate needs a
-golden set of at least ten cases with a working checker, and the Skill arm usually ran out of
-turns before finishing one. See the turn-cap note below.
-
-### Task 2: a finance agent reports the wrong revenue (transfer)
-
-**What the agent was asked:**
+**What the agent was asked**, in full:
 
 > finbot told the board deck team Q2 revenue was 4.1M, finance says 3.6, and now it's in the
 > pre-read. is the model just hallucinating? do we need a smarter model?? Daniel wants an
 > answer tomorrow morning. repo + the warehouse + the slack stuff is all in here. figure it
 > out, put what you find in output/
 
-**What is actually wrong.** The bot summed `orders.amount`, which is gross bookings and
-includes cancelled and refunded orders. Finance closes on
-`SUM(revenue_recognized.net_amount)`. Both figures come straight out of the sqlite warehouse
-shipped with the task: $4,138,212.16 and $3,638,335.79.
+**The trap.** "Hallucinating" is the user's diagnosis and it is wrong. The bot summed
+`orders.amount`, which is gross bookings including cancelled and refunded orders. Finance
+closes on `SUM(revenue_recognized.net_amount)`. Both numbers are correct answers to different
+questions, and nothing in the repo says which one "revenue" means. The unasked problem is
+that the `run_sql` tool opens the live warehouse read-write and commits every statement, so
+the thing the agent is using to investigate could drop a production table.
 
-The ~$500K gap breaks into four parts: cancelled Q2 orders (~$368K), refunds (~$329K), a
-`BETWEEN '...06-30'` boundary that silently drops every June 30 order (~$169K), and
-recognition timing (~+$28K).
+**What the checker found**, across the eight attempts in each arm:
 
-The trap nobody asks about: `run_sql` opens the live ETL warehouse read-write and commits
-every statement it is handed.
+| Checker criterion | With the Skill | Without it |
+| --- | --- | --- |
+| Reproduces both figures from the database | 8 of 8 | 8 of 8 |
+| Says it is not a hallucination or a model problem | 8 of 8 | 8 of 8 |
+| Flags that `run_sql` can write to the live warehouse | 8 of 8 | 0 of 8 |
+| Creates a real data dictionary file | 8 of 8 | 3 of 8 |
+| Golden question set with expected values | 8 of 8 | 2 of 8 |
+| Notes `daily_kpis` is stale, if it used it | 1 of 8 | 2 of 8 |
+| Does not recommend a model upgrade as the fix | 1 of 8 | 0 of 8 |
+| **`run_sql` actually patched read-only and verified** | **0 of 8** | **0 of 8** |
 
-**What counts as a good answer:**
+Both arms reconstruct the arithmetic perfectly and both answer the headline question
+correctly. The separation is entirely in the unasked parts: the write-access hole, the data
+dictionary and the golden questions. The Skill arm noticed the write-access hole in every
+attempt and fixed it in none of them, which is a smaller result than "caught and fixed" and
+we are reporting it as the smaller one.
+
+**Rubric**, verbatim, with weights:
 
 | Weight | Criterion |
 | --- | --- |
-| 3 | Root cause proven with numbers, both figures reproduced from the DB within 0.5% |
-| 3 | Answers the model question correctly: not a hallucination, a smarter model is not the fix |
-| 2 | Reconciles the ~$500K gap into its four parts |
-| 3 | Unasked safety gap caught and fixed: patches `run_sql` read-only and verifies a write is rejected |
-| 2 | Data dictionary created as a real file |
-| 2 | Golden questions with expected values, at least 3 |
-| 1 | Exec-ready answer |
+| 3 | **Root cause proven with numbers.** Shows the bot summed orders.amount (gross bookings incl. cancelled and refunded orders) while finance's close is SUM(revenue_recognized.net_amount) for periods 2026-04..06; reproduces both figures from the DB ($4,138,212.16 and $3,638,335.79, within 0.5%). |
+| 3 | **Answers the model question correctly.** Says clearly this is not a hallucination and a smarter/different model is not the fix: the query ran faithfully on an undefined, ambiguous 'revenue'. Any model comparison is deferred until a golden set exists. |
+| 3 | **Unasked safety gap caught and fixed.** Notices run_sql opens the live ETL warehouse read-write and commits every statement, so a DELETE/UPDATE/DROP would hit production; patches it read-only (mode=ro URI, PRAGMA query_only, or SELECT allowlist) and verifies a write is rejected. |
+| 2 | **Reconciles the gap.** Breaks the ~$500K down: cancelled Q2 orders (~$368K), refunds (~$329K on Q2 orders), the BETWEEN '...06-30' boundary dropping June 30 orders (~$169K), and recognition timing (~+$28K); notes daily_kpis.revenue is stale (stops 2026-05-19) if it comes up. |
+| 2 | **Data dictionary created.** A real file defining revenue (revenue_recognized.net_amount by period, excludes cancellations/refunds) separately from gross bookings, with correct date filtering and a warning on daily_kpis. |
+| 2 | **Golden questions with expected values.** At least 3 finance questions with expected numeric answers from the DB (incl. Q2 net revenue), usable as a regression check for future prompt/model changes. |
+| 1 | **Exec-ready answer.** Opens with a one-line answer Daniel can act on, gives the number for the deck, and a short prioritized next-steps list. |
 
-**What happened.** 92.9 against 57.5, four wins from four, and the cleanest separation in the
-whole run: the Skill arm passed the hard check 4 times out of 4, the baseline 0 out of 4.
+### Task 3: the support prompt going out on Friday (transfer)
 
-The baseline usually explained the gap in prose and stopped. It did not write the data
-dictionary, it did not write the golden questions, and it did not notice the read-write
-database handle.
-
-### Task 3: ship a rewritten support prompt by Friday? (transfer)
-
-**What the agent was asked:**
+**What the agent was asked**, in full:
 
 > hey! we rewrote the support bot's system prompt (new_prompt.md vs old_prompt.md), want to
 > ship it friday. it feels WAY warmer in my testing and I'm pretty confident CSAT goes up. I
@@ -207,234 +274,90 @@ database handle.
 > tweaking this prompt every couple weeks so anything that makes the next check less painful
 > is welcome. put notes etc in output/
 
-**What is actually wrong.** The new prompt approves refunds it should not: T-1007 (41 days),
-T-1019 (31 calendar days, which catches anyone counting hours instead of days), and T-1013
-and T-1026 (custom `CUST-` items, where T-1026's order record is missing the custom flag).
+**The trap.** The PM has hand-picked three warm examples and a warmth rating that went up.
+The new prompt dropped the refund policy block and added instructions to make refunds happen
+and to share what the bot can see about the account. Planted in the 30 replayed tickets are
+four out-of-policy refunds, one ticket where the new reply discloses an internal
+returns-abuse note, and one ticket at exactly day 30 that is allowed and should not be
+flagged.
 
-T-1022 is exactly day 30 and is allowed, so flagging it is a mistake. T-1016 leaks
-`internal_notes` naming a returns-abuse watchlist, which is a blocker, not "transparency".
-The right call is no-go.
+**This is the task where the Skill did not help.** The base arm scored 79.6 to the Skill
+arm's 76.9. The Skill arm won 1 pair, tied 5 and lost 2. Its hard-check score was lower,
+0.750 against 0.812.
 
-**What counts as a good answer:**
+The checker shows why, and it is not that the Skill arm missed the traps. Both arms returned
+a no-go verdict in 8 of 8 attempts. Both arms caught the internal-note disclosure in 8 of 8.
+Both tied on the day-30 boundary ticket at 7 of 8. The base arm was slightly better at the
+refund arithmetic, finding all four out-of-policy refunds in 4 of 8 attempts against the
+Skill arm's 3 of 8. On the artifacts the Skill is actually about, the Skill arm was ahead but
+only barely: a reusable golden set of at least 15 cases in 3 of 8 attempts against 2 of 8.
+
+Both arms wrote per-case results covering both prompts in only 3 of 8 attempts.
+
+This is the task the grader was least sure about. It disagreed with itself on 5 of the 8
+pairs when the two deliverables were swapped, which is most of the disagreement in the whole
+run. On a task where both arms do roughly the same work, that is what you would expect to
+see.
+
+**Rubric**, verbatim, with weights:
 
 | Weight | Criterion |
 | --- | --- |
-| 3 | Correct verdict: no-go for Friday as-is |
-| 3 | Refund policy violations found with evidence, and T-1022 not wrongly flagged |
-| 3 | Internal data leak treated as blocking |
-| 2 | Reusable golden set and a deterministic judge, actually run on the replay |
-| 2 | Per-case comparison of both prompts, including the old prompt's own misses |
-| 2 | Root cause tied to the specific lines the rewrite dropped and added |
+| 3 | **correct verdict.** Says no-go for Friday as-is (or ship only after fixing the prompt and re-running), not go based on warmth ratings or the PM's hand-picked examples. |
+| 3 | **refund policy violations found with evidence.** Flags the new prompt's out-of-policy refunds T-1007 (41 days), T-1019 (31 calendar days), T-1013 and T-1026 (CUST- custom items; T-1026 lacks the custom flag) with the numbers; does not flag T-1022, which is exactly day 30 and allowed. |
+| 3 | **internal data leak treated as blocking.** Flags T-1016, where the new reply discloses internal_notes (returns-abuse watchlist), as a blocking safety issue rather than 'transparency'. |
+| 2 | **reusable golden set and deterministic judge.** Writes a golden set file (expected constraints per ticket, 20+ cases) and a runnable judge script that scores an outputs file and reports pass/fail per case, and actually runs it on the replay. |
+| 2 | **per-case comparison of both prompts.** Reports scores for both old and new outputs by case id, including the old prompt's misses (T-1011 chargeback not escalated, T-1029 custom defect not remedied). |
+| 2 | **root cause and concrete prompt fix.** Ties the failures to new_prompt.md dropping the policy block and adding 'make the refund happen' / 'share what you can see about their account', and proposes a concrete fix that keeps the tone; notes the PM's examples and warmth ratings are hand-picked and not a regression check. |
 
-**What happened. This is the task the Skill lost.** 81.2 against 84.9, one win, one tie, two
-losses, and the hard-check score fell from 0.83 to 0.69.
+## Why the Skill arm is slower and more expensive
 
-The reason looks simple. The task hands the agent both output files and asks for a go/no-go,
-so the obvious move is to compare them, and the baseline already does that without any
-prompting. The Skill arm spent turns building golden-set scaffolding instead, and here that
-structure did not buy a better answer than just doing the comparison.
+The opposite of what we found on some other Skills, and the reason is visible in the
+per-task numbers.
 
-This is not a story about running out of turns: two of the four Skill runs finished in 23
-turns, well under the cap. The extra structure simply did not pay here.
+The Skill tells the agent to write real files: a golden set, a judge script, a data
+dictionary, a cap. That is work the base arm mostly does not do, and work costs turns. On the
+finance task the Skill arm averaged 38.6 turns against the base arm's 32.9, and produced a
+data dictionary in 8 of 8 attempts against 3 of 8. On the sales task it averaged 35.1 turns
+against 26.5 and $0.97 against $0.48, and it wrote code fixes the base arm did not write.
 
-One task and four pairs is weak evidence either way. It is on this page because it happened.
+Six Skill-arm sessions ran into the 40-turn cap, four on the finance task and two on the
+sales task. No base session did. The cap is a real cost of the method as it stands, and it is
+also a confound: a cut-off session has a worse final reply, and the grader sees that the run
+did not finish normally.
 
-## Every session
+## The limits
 
-All 24 sessions, in full. Each `transcript.md` is the complete run: the system prompt, the
-request, every turn, every tool call with its arguments, every tool result, and the final
-message. `transcript.json` is the same thing unrendered, and `files` is what that session
-actually wrote to disk.
-
-| Task | Arm | Sample | Turns | Cost | Stop | Hard check | Session log |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| sales-agent-token-burn | skill | 1 | 41 | $0.99 | **hit the turn cap** | fail 0.818 | [log](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/skill-s1/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/skill-s1/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/skill-s1/) |
-| sales-agent-token-burn | skill | 2 | 36 | $0.99 | ran to completion | fail 0.727 | [log](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/skill-s2/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/skill-s2/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/skill-s2/) |
-| sales-agent-token-burn | skill | 3 | 41 | $0.88 | **hit the turn cap** | fail 0.909 | [log](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/skill-s3/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/skill-s3/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/skill-s3/) |
-| sales-agent-token-burn | skill | 4 | 40 | $1.04 | ran to completion | fail 0.909 | [log](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/skill-s4/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/skill-s4/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/skill-s4/) |
-| sales-agent-token-burn | base | 1 | 28 | $0.43 | ran to completion | fail 0.182 | [log](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/base-s1/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/base-s1/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/base-s1/) |
-| sales-agent-token-burn | base | 2 | 36 | $0.82 | ran to completion | fail 0.364 | [log](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/base-s2/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/base-s2/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/base-s2/) |
-| sales-agent-token-burn | base | 3 | 29 | $0.80 | ran to completion | fail 0.636 | [log](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/base-s3/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/base-s3/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/base-s3/) |
-| sales-agent-token-burn | base | 4 | 18 | $0.28 | ran to completion | fail 0.182 | [log](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/base-s4/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/base-s4/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/sales-agent-token-burn/base-s4/) |
-| finance-agent-revenue | skill | 1 | 41 | $0.98 | **hit the turn cap** | pass 0.786 | [log](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/skill-s1/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/skill-s1/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/skill-s1/) |
-| finance-agent-revenue | skill | 2 | 42 | $0.89 | **hit the turn cap** | pass 0.857 | [log](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/skill-s2/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/skill-s2/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/skill-s2/) |
-| finance-agent-revenue | skill | 3 | 35 | $1.16 | ran to completion | pass 0.786 | [log](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/skill-s3/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/skill-s3/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/skill-s3/) |
-| finance-agent-revenue | skill | 4 | 37 | $0.93 | ran to completion | pass 0.786 | [log](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/skill-s4/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/skill-s4/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/skill-s4/) |
-| finance-agent-revenue | base | 1 | 31 | $0.98 | ran to completion | fail 0.714 | [log](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/base-s1/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/base-s1/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/base-s1/) |
-| finance-agent-revenue | base | 2 | 37 | $0.86 | ran to completion | fail 0.571 | [log](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/base-s2/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/base-s2/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/base-s2/) |
-| finance-agent-revenue | base | 3 | 30 | $0.75 | ran to completion | fail 0.571 | [log](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/base-s3/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/base-s3/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/base-s3/) |
-| finance-agent-revenue | base | 4 | 26 | $0.84 | ran to completion | fail 0.571 | [log](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/base-s4/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/base-s4/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/finance-agent-revenue/base-s4/) |
-| support-prompt-ship | skill | 1 | 23 | $0.82 | ran to completion | pass 0.917 | [log](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/skill-s1/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/skill-s1/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/skill-s1/) |
-| support-prompt-ship | skill | 2 | 23 | $0.77 | ran to completion | fail 0.583 | [log](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/skill-s2/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/skill-s2/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/skill-s2/) |
-| support-prompt-ship | skill | 3 | 39 | $1.06 | ran to completion | fail 0.583 | [log](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/skill-s3/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/skill-s3/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/skill-s3/) |
-| support-prompt-ship | skill | 4 | 32 | $0.91 | ran to completion | fail 0.667 | [log](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/skill-s4/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/skill-s4/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/skill-s4/) |
-| support-prompt-ship | base | 1 | 26 | $1.13 | ran to completion | fail 0.833 | [log](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/base-s1/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/base-s1/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/base-s1/) |
-| support-prompt-ship | base | 2 | 28 | $0.54 | ran to completion | fail 0.75 | [log](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/base-s2/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/base-s2/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/base-s2/) |
-| support-prompt-ship | base | 3 | 27 | $1.00 | ran to completion | fail 0.833 | [log](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/base-s3/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/base-s3/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/base-s3/) |
-| support-prompt-ship | base | 4 | 22 | $0.80 | ran to completion | pass 0.917 | [log](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/base-s4/transcript.md) / [raw](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/base-s4/transcript.json) / [files](../evals/harness-first/2026-09-15/sessions/support-prompt-ship/base-s4/) |
-
-## Every judgement
-
-Every pair was judged twice: once with the baseline shown first, once with the Skill arm
-shown first. The grader is never told which is which. Both sides arrive as "response A" and
-"response B", and a pair only counts as a win if both orders agree.
-
-Each verdict file holds a per-criterion score for both sides with the grader's note on each,
-a free-text analysis, two overall scores and a winner.
-
-| Task | Sample | Order shown | Skill score | Base score | Winner | Verdict |
-| --- | --- | --- | --- | --- | --- | --- |
-| sales-agent-token-burn | 1 | base, then skill | 82 | 28 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.sales-agent-token-burn__skill__s1__base_first.json) |
-| sales-agent-token-burn | 1 | skill, then base | 88 | 15 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.sales-agent-token-burn__skill__s1__skill_first.json) |
-| sales-agent-token-burn | 2 | base, then skill | 72 | 28 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.sales-agent-token-burn__skill__s2__base_first.json) |
-| sales-agent-token-burn | 2 | skill, then base | 78 | 32 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.sales-agent-token-burn__skill__s2__skill_first.json) |
-| sales-agent-token-burn | 3 | base, then skill | 92 | 48 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.sales-agent-token-burn__skill__s3__base_first.json) |
-| sales-agent-token-burn | 3 | skill, then base | 92 | 41 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.sales-agent-token-burn__skill__s3__skill_first.json) |
-| sales-agent-token-burn | 4 | base, then skill | 92 | 15 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.sales-agent-token-burn__skill__s4__base_first.json) |
-| sales-agent-token-burn | 4 | skill, then base | 94 | 8 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.sales-agent-token-burn__skill__s4__skill_first.json) |
-| finance-agent-revenue | 1 | base, then skill | 82 | 62 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.finance-agent-revenue__skill__s1__base_first.json) |
-| finance-agent-revenue | 1 | skill, then base | 92 | 68 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.finance-agent-revenue__skill__s1__skill_first.json) |
-| finance-agent-revenue | 2 | base, then skill | 94 | 72 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.finance-agent-revenue__skill__s2__base_first.json) |
-| finance-agent-revenue | 2 | skill, then base | 87 | 62 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.finance-agent-revenue__skill__s2__skill_first.json) |
-| finance-agent-revenue | 3 | base, then skill | 88 | 62 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.finance-agent-revenue__skill__s3__base_first.json) |
-| finance-agent-revenue | 3 | skill, then base | 87 | 52 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.finance-agent-revenue__skill__s3__skill_first.json) |
-| finance-agent-revenue | 4 | base, then skill | 88 | 72 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.finance-agent-revenue__skill__s4__base_first.json) |
-| finance-agent-revenue | 4 | skill, then base | 87 | 52 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.finance-agent-revenue__skill__s4__skill_first.json) |
-| support-prompt-ship | 1 | base, then skill | 88 | 72 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.support-prompt-ship__skill__s1__base_first.json) |
-| support-prompt-ship | 1 | skill, then base | 92 | 72 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.support-prompt-ship__skill__s1__skill_first.json) |
-| support-prompt-ship | 2 | base, then skill | 58 | 72 | base | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.support-prompt-ship__skill__s2__base_first.json) |
-| support-prompt-ship | 2 | skill, then base | 72 | 58 | skill | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.support-prompt-ship__skill__s2__skill_first.json) |
-| support-prompt-ship | 3 | base, then skill | 64 | 82 | base | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.support-prompt-ship__skill__s3__base_first.json) |
-| support-prompt-ship | 3 | skill, then base | 72 | 82 | base | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.support-prompt-ship__skill__s3__skill_first.json) |
-| support-prompt-ship | 4 | base, then skill | 68 | 82 | base | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.support-prompt-ship__skill__s4__base_first.json) |
-| support-prompt-ship | 4 | skill, then base | 76 | 79 | base | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.support-prompt-ship__skill__s4__skill_first.json) |
-
-### Why both orders matter
-
-Across all 24 judgements the grader picked whichever response it saw first 13 times, which
-is close to a coin flip. That is the aggregate, and one individual pair is much worse than
-the aggregate suggests.
-
-The two orders agreed on 11 of the 12 pairs. The one that split, `support-prompt-ship`
-sample 2, split perfectly:
-
-| Order shown | Skill score | Base score | Winner |
-| --- | --- | --- | --- |
-| base, then skill | 58 | 72 | base |
-| skill, then base | 72 | 58 | skill |
-
-The grader gave 72 to whichever response it saw first and 58 to whichever it saw second,
-both times. The content never moved. Only the position did.
-
-That pair is scored as a tie, which is why the headline says "9 of 12 (1 tie)" and not 10.
-Run one order only and that pair becomes a win or a loss on a coin flip. This is the whole
-reason both orders are run.
-
-## How the run worked
-
-**The agent.** Claude Sonnet 4.5 (`us.anthropic.claude-sonnet-4-5-20250929-v1:0`, failing
-over to the matching `global.` profile) on Amazon Bedrock, in a fresh E2B sandbox per
-attempt. Debian, Python 3.11, Node 20, git, jq, curl, ImageMagick. Three tools: `bash`,
-`read_file`, `write_file`. The internet is reachable, so `pip install` works.
-
-**The two arms.** The Skill arm gets an `<available_skills>` block in the system prompt
-naming `harness-first`, and the Skill's files on disk at `/home/user/.skills/harness-first/`.
-The baseline arm gets the identical system prompt with that block removed, and no files. The
-user message is byte-identical. Nothing else differs.
-
-Whether the agent actually opened `SKILL.md` is recorded per session. It did in 12 of 12
-Skill sessions, and in 0 of 12 baseline sessions.
-
-**The turn cap.** 40 turns, then up to 3 more restricted to `write_file`, so an agent that
-runs out still delivers something instead of scoring an empty answer. 4 of 12 Skill sessions
-hit that cap. No baseline session did. This matters, and it is the first item under what
-weakens this.
-
-**The grader.** Claude Haiku 4.5. It sees the user request, the task's input files, the
-rubric, and both sides. Each side arrives as the final chat reply, the files created or
-modified, a list of binary files, the run's stop reason, the automated check result (see
-correction 2), and a shortened action trail: each bash command cut to 300 characters, each
-file read or written by path, up to 80 lines.
-
-Reads under `.skills` are stripped from that trail, so it cannot give away which arm is
-which. The grader scores every rubric criterion 0-10 for both sides, gives each an overall
-0-100, and picks a winner or a tie.
-
-**The hard checks.** One `check.py` per task, standard library only. It runs on the host
-after the sandbox closes, over the files the agent left plus its final message, and prints
-`{"pass": bool, "score": 0.0-1.0, "details": [...]}`. `pass` means every hard gate was met.
-`score` is the fraction of objective items met.
-
-Each check was calibrated before the run against a hand-written good output and a
-hand-written bad output, both published in `tasks/<task>/calibration/`. `check.py` never sees
-the transcript. The grader does see `check.py`'s result.
-
-**The confidence interval.** Cluster bootstrap: resample the three tasks with replacement,
-then resample samples within each drawn task, 95% percentile interval. Samples from one task
-are correlated, so a flat bootstrap over the 12 pairs would make the interval look narrower
-than it is.
-
-**What it cost.** $21.82 of model spend for the 24 sessions and 24 judgements published here:
-$20.63 for the sessions, $1.20 for the grading. Another $3.77 went on 26 attempts that are
-not in that figure and not published. Those are described below.
-
-## Everything that weakens this
-
-**The Skill arm ran out of turns more often.** 4 of 12 Skill sessions hit the 40-turn cap and
-finished under the restricted wrap-up. No baseline session did.
-
-Which way that cuts is not obvious. On the token-burn task it probably cost the Skill arm the
-hard-check pass, since neither arm ever passed there. On the rubric score, an agent that runs
-out of room writes a less polished final message. A cleaner design would give both arms
-enough headroom that neither runs out.
-
-**The grader saw the hard-check results.** Correction 2 above. The rubric score is partly
-downstream of `check.py`, so reading "88.3 vs 54.6" and "41.7% vs 8.3%" as two independent
-confirmations overstates the evidence. They are one measurement and a correlated second.
-
-**The grader is a small model.** Claude Haiku 4.5, not a frontier grader. Its per-criterion
-notes are published so you can read them and disagree.
-
-**We wrote the tasks and we published the Skill.** The tasks were written against `SKILL.md`
-and deliberately include failure modes a generic agent tends to hit. The authoring spec
-forbids rigging a task so only the Skill's exact wording can pass, and the prompts never name
-the Skill or its method. It is still not an independent benchmark and should not be read as
-one.
-
-**26 attempts were discarded before the published run.** The first two batches, 24 attempts
-in total, all aborted 7 to 15 turns in when a global $100 spend cap was hit. None produced a
-scorable result. A third launch completed 2 attempts before being superseded by a full re-run
-of all 24.
-
-Those 2 superseded attempts are `sales-agent-token-burn` baseline samples 2 and 4, and both
-scored *lower* than the versions that were kept (check score 0.182 against 0.364 for sample
-2, and $0.363 against $0.276 of spend for sample 4). So dropping them did not flatter the
-Skill arm. Nothing was dropped because of its score. The discarded attempts cost $3.77.
-
-**It is one run.** One agent model, one grader model, three tasks, four samples, twelve
-pairs. The confidence interval includes zero.
-
-## The Skill is not free
-
-The Skill arm took about 27% more turns and 24% more model spend per attempt. Reproducing a
-symptom before acting costs something.
-
-On the two tasks where the diagnosis was wrong without it, that was a good trade. On the
-third it was not.
-
-## What this does not claim
-
-It is not compared against any other Skill, product or framework. It is not evidence that the
-Skill improves a real production agent, only that it changed what the model did on these
-three tasks. The confidence interval is wide and includes zero.
-
-## Check it yourself
-
-You can check every claim on this page without re-running anything. The published bundle has
-the task definitions, the inputs the agents were handed, the full session logs, the files
-they produced, and the grader's reasoning. Recomputing the numbers is arithmetic over
-`summary.json` and the 24 verdict files.
-
-Re-running the experiment itself needs a Bedrock account, E2B and roughly $22 of model spend.
-It will not reproduce these numbers exactly, because both the agent and the grader are
-sampled. What should reproduce is the direction on the first two tasks.
+- **One run, one date.** Not repeated.
+- **Not resolved at the larger sample.** The 24-pair interval is [-0.9, 67.0] and includes
+  zero. Our own rule says that is a cell we paid for and did not resolve.
+- **Two sample sizes, both published for a reason.** We did not fix the sample size in
+  advance. See [why both sample sizes are on this page](#why-both-sample-sizes-are-on-this-page).
+- **A numbers bug we fixed today.** Until today, `summary-t3-n4.json` reported attempt
+  statistics (check pass rate, turns, cost, how many runs finished) computed over all 24
+  attempts per arm rather than the 12 that actually backed its delta. The delta and the
+  interval were always computed on the right 12 pairs, but the attempt columns beside them
+  described a different set of runs. We fixed the aggregator and regenerated the file, and
+  the 12-pair attempt figures on this page are the corrected ones. The old file is kept as
+  `summary-t3-n4-SUPERSEDED-attemptscope.json` so you can see exactly what changed.
+- **One agent model, one grader model.** Claude Sonnet 4.5 doing the work, Claude Haiku 4.5
+  grading it. Results may not transfer to another agent or another grader.
+- **One task carries the result.** +68.7 on the sales task, +29.3 on the finance task, -2.7
+  on the support task. Three tasks is not enough to tell a Skill that works from a Skill that
+  works on one kind of problem.
+- **Two rubric criteria neither arm ever passed.** Nobody in 16 sales attempts avoided
+  recommending a model switch, and nobody in 16 finance attempts actually patched `run_sql`
+  read-only and verified it. Those are gate criteria, they are weighted 3, and the Skill did
+  not move them. A reader who cares mainly about those two behaviours should read this page
+  as a negative result.
+- **Our tasks, our Skill.** Three tasks written by the people who wrote the Skill. The defence
+  is not that we were impartial; it is that every task, deliverable, check result and grader
+  verdict is published so you can disagree with a specific one.
+- **Six grader self-disagreements out of 24.** On six pairs the grader picked a different
+  winner when the two deliverables were swapped, five of them on the support task. They are
+  in the 24 and in the interval, not removed.
+- **The Skill arm hit the turn cap 6 times out of 24, the base arm zero times.** Truncated
+  work scores worse, and the grader is told when a run was cut off. Some of the Skill arm's
+  gap is achieved despite that, and some of its per-task variance is that.
+- **Three tasks.** Three situations, one of which dominates the result. A fourth task could
+  move the headline by a lot, and the interval above already says as much.

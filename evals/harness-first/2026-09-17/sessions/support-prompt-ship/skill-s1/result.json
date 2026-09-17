@@ -1,0 +1,73 @@
+{
+ "attempt_id": "harness-first.support-prompt-ship:skill:s1",
+ "task_id": "harness-first.support-prompt-ship",
+ "skill": "harness-first",
+ "arm": "skill",
+ "sample": 1,
+ "status": "done",
+ "turns": 23,
+ "cost_usd": 0.81743925,
+ "usage": {
+  "inputTokens": 139,
+  "outputTokens": 22383,
+  "cacheReadInputTokens": 437445,
+  "cacheWriteInputTokens": 93345
+ },
+ "skill_read": true,
+ "skill_file_reads": [
+  {
+   "tool": "read_file",
+   "args": "{\"path\": \"/home/user/.skills/harness-first/SKILL.md\"}"
+  }
+ ],
+ "tool_calls": 29,
+ "tool_errors": 0,
+ "system_prompt": "You are an AI assistant with access to a Linux computer through tools. The user's files are in /home/user/work, which is your current working directory.\n\nComplete the user's request end to end: do the actual work with the tools, save deliverables as files when a file is the natural output, and finish with a reply to the user in chat. The user is not available for follow-up questions during the task; if something is ambiguous or missing, make a sensible call and say so, or explain clearly what blocks you.\n\nEnvironment: Debian Linux, Python 3.11, Node 20, git, jq, curl, ImageMagick. Internet access is available (pip/npm/apt installs work). Today's date is 2026-09-15.\n\n<available_skills>\n<skill>\n<name>harness-first</name>\n<description>Diagnose and fix an unreliable, expensive, or unsafe LLM agent by auditing its harness (golden set, judge, cost caps, data layer, action approvals, tracing) before blaming or swapping the model. Use when someone says an agent is \"burning tokens\", \"hallucinating\", \"brittle\", gives inconsistent answers, asks whether to switch to a cheaper/better model, or wants to ship an agent or prompt change to customers.</description>\n<location>/home/user/.skills/harness-first/SKILL.md</location>\n</skill>\n</available_skills>\n\nSkills are folders of expert instructions, scripts, and resources. When a user's request matches a skill's description, read that skill's SKILL.md with read_file before starting, then follow it, using any bundled files it references.",
+ "sandbox_id": "[SANDBOX]",
+ "setup_s": 4.0,
+ "followups": [],
+ "max_prompt_tokens": 46941,
+ "stop": "end_turn",
+ "final_message": "Perfect! Now let me create a final summary for you as the human user:\n\n## Summary\n\nHey! I've completed a comprehensive audit of your support bot prompt change. Here's what I found and what I built for you:\n\n## \ud83d\udea8 **Bottom Line: NO-GO for Friday**\n\nYour new prompt **is** warmer (2.8 \u2192 4.6 score), but I found **4 critical policy violations** in your 30-ticket sample:\n\n1. **T-1007 & T-1019:** Approved refunds **outside the 30-day window** (policy says max 30 days)\n2. **T-1013:** Refunded a **custom/made-to-measure item** (policy says these aren't refundable)\n3. **T-1016:** Told a customer they're on the **\"returns-abuse watchlist\"** (policy says never reveal internal notes)\n\n**The root cause:** Your new prompt says \"do whatever it takes to make it right - if they want a refund, make it happen quickly\" which functionally **overwrote** the old explicit rule \"follow policies/refunds.md EXACTLY.\"\n\n## \ud83d\udcb0 **The Risk**\n\n- **~10% over-refund rate** = ~$200k/month revenue leakage at 10k tickets/month\n- **+55% token cost** (not catastrophic but unmeasured)\n- **Legal/reputation risk** from exposing internal fraud detection data\n\n## \u2705 **What I Built for You (in `output/`)**\n\n1. **`judge.py`** - Automated policy checker that runs in <1 second. It caught all 4 violations.\n2. **`golden_set.jsonl`** - 20 test cases with pass/fail criteria for your policies\n3. **`new_prompt_v4.1_fixed.md`** - A fixed version that keeps the warmth BUT adds explicit policy constraints back\n4. **Complete audit documentation** - Everything explained in multiple formats\n\n## \ud83d\udccb **What To Do Now**\n\n**Immediate:**\n- Don't ship `new_prompt.md` on Friday\n- Choose: Test my fixed prompt OR keep the old one (both safe)\n\n**This week:**\n- Replay your tickets through `new_prompt_v4.1_fixed.md`\n- Run `judge.py` to verify 0 critical failures\n- Deploy when clean (next week, not Friday)\n\n**Next 2 weeks:**\n- Integrate `judge.py` into your CI/CD\n- Expand the golden set\n- See `output/next_steps.md` for full plan\n\n## \ud83d\udcc2 **Start Here**\n\nEverything is in **`output/`**. Read these in order:\n1. `START_HERE.md` - Quick orientation (2 min)\n2. `side_by_side_failures.md` - See the violations visually (8 min)\n3. `SUMMARY.md` - Full executive summary (5 min)\n\nTo run the judge yourself:\n```bash\ncd output/\npython3 judge.py ../outputs_new.jsonl golden_set.jsonl\n```\n\n## \ud83d\udca1 **The Good News**\n\n\u2705 You CAN have warmth + policy compliance (I showed how)  \n\u2705 Your instinct about warmth was RIGHT  \n\u2705 You now have tools to prevent this every time you change prompts  \n\u2705 This would have cost ~$200k/month - caught it for free  \n\nAll deliverables are in `output/` - everything is documented, automated, and ready to use!",
+ "agent_wall_s": 859.3,
+ "model_wait_s": 853.6,
+ "tool_s": 5.7,
+ "changed_files": [
+  "output/DECISION.txt",
+  "output/DEMO.txt",
+  "output/INDEX.md",
+  "output/README.md",
+  "output/START_HERE.md",
+  "output/SUMMARY.md",
+  "output/_FILE_GUIDE.txt",
+  "output/eval_new.txt",
+  "output/eval_old.txt",
+  "output/golden_set.jsonl",
+  "output/harness_scorecard.md",
+  "output/judge.py",
+  "output/new_prompt_v4.1_fixed.md",
+  "output/next_steps.md",
+  "output/policy_violations.txt",
+  "output/side_by_side_failures.md"
+ ],
+ "deleted_files": [],
+ "total_wall_s": 866.7,
+ "check": {
+  "pass": true,
+  "score": 0.917,
+  "details": [
+   "PASS verdict is no-go / ship only after fixing",
+   "PASS out-of-policy refunds identified >=3 of 4 (found ['T-1007', 'T-1013', 'T-1019'])",
+   "FAIL all 4 out-of-policy refunds identified",
+   "PASS internal-note leak T-1016 identified",
+   "PASS reusable golden set with >=15 cases (output/golden_set.jsonl)",
+   "PASS runnable judge scores outputs and discriminates (output/judge.py new: flags 4/5 planted, 1/5 on fixed outputs)",
+   "PASS day-30 boundary refund (T-1022) not flagged as a violation",
+   "PASS per-case results cover both prompts",
+   "PASS old-prompt misses noted (T-1011 escalation / T-1029 custom defect)",
+   "PASS concrete prompt fix suggested",
+   "PASS root cause tied to new prompt wording",
+   "PASS hand-picked examples / warmth rating not treated as evidence"
+  ]
+ }
+}

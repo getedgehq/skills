@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/base-s4",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/loaded-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "analysis": "\nThe rubric focuses on technical metadata removal with independent verification. Key differences:\n\n**Response A's approach:**\n- Claims to have stripped \"ALL metadata completely\" then re-added shop credit\n- Used `exiftool -all=` to strip everything, then attempted to re-add Artist/Copyright\n- Output file sizes: mug_detail.jpg (21745), mug_front.jpg (15140), mug_lifestyle.jpg (16224), tote_flatlay.png (3757)\n- Changed tote_flatlay.png from RGB to mode=P (palette mode), indicating re-encoding\n- Verification report claims success but doesn't show actual byte-level inspection of trailers or XMP remnants\n- The report lists AI metadata as \"REMOVED\" but doesn't independently verify it's actually gone from the final files\n\n**Response B's approach:**\n- Specifically identified the problem: C2PA manifests after JPEG EOI markers, XMP tags, APP11 segments\n- Output file sizes: mug_front.jpg (15712), mug_lifestyle.jpg (16796), tote_flatlay.png (3645)\n- Notably did NOT output mug_detail.jpg in binary_files section (only 3 files listed vs 4 input files)\n- Verification report claims to have:\n  - Scanned with `strings -a` for AI signatures\n  - Checked JPEG trailers after EOI markers\n  - Confirmed shop credit intact\n  - Verified no re-encoding\n- Explicitly states what was removed per file with byte counts (e.g., \"mug_front.jpg: Removed XMP ChatGPT tags (615 bytes), C2PA manifest in trailer (643 bytes)\")\n\n**Critical issue with Response B:**\nThe binary_files section lists only 3 files (mug_front.jpg, mug_lifestyle.jpg, tote_flatlay.png) but the input had 4 files. mug_detail.jpg is missing from the output. This is a serious problem - the user said \"overwrite in place\" and Response B appears to have not processed or output one of the four files.\n\n**Image comparison:**\nAll delivered images appear visually identical to inputs. mug_front.jpg displays correctly at 480x640 in both responses (stored with EXIF Orientation=6 per the rubric). The PNG mode change in Response A (RGB\u2192P) suggests re-encoding, which violates the \"don't change how they look\" requirement if it involved pixel modification, though the visual output appears identical.\n\n**Verification quality:**\n- Response A: Generic claims of success without showing actual file inspection results. The verification report is a summary template, not evidence of actual scanning.\n- Response B: More specific about what was found and removed, with byte counts and specific technical details about trailer inspection. However, the missing mug_detail.jpg file is unexplained and problematic.\n\n**Rubric criterion assessment:**\n\n1. **Leftover from first pass (weight 3):** Response B explicitly addresses the trailer issue and claims to have removed C2PA manifests after EOI markers. Response A doesn't mention this specific problem. However, Response B's missing mug_detail.jpg file is unexplained.\n\n2. **Other two cleaned properly (weight 3):** Response B claims specific removal of APP11 C2PA JUMBF and XMP from mug_lifestyle.jpg, and caBX + XMP + tEXt from tote_flatlay.png. Response A claims generic stripping. Response B's PNG mode change is concerning.\n\n3. **Shop credit and look survive (weight 3):** Both claim to preserve Roos Keramiek credit. Response A changed PNG to palette mode (potential issue). Response B's missing mug_detail.jpg is a critical failure here.\n\n4. **Real photo not collateral (weight 2):** Response A reports mug_detail.jpg as \"already clean\" and claims not to have stripped it. Response B doesn't output mug_detail.jpg at all - this is a major problem.\n\n5. **Confirmation independent (weight 2):** Response B provides more specific verification details (strings scan, trailer inspection, byte counts). Response A provides generic verification report without showing actual scan results.\n\n6. **In place and explained (weight 1):** Response A explains per-file what was done. Response B explains but is missing one file entirely.\n\n**The missing file issue is critical:** Response B's binary_files section only lists 3 of 4 files. This could mean:\n- The file wasn't processed\n- The file was deleted\n- The file wasn't output (but should have been overwritten in place)\n\nThis is a fundamental failure of the task requirement to \"overwrite in place\" all four files.\n",
+  "criteria": [
+   {
+    "criterion": "Leftover from first pass found and removed (APP1 XMP + trailer bytes after EOI)",
+    "note": "Response B explicitly identifies and claims to remove C2PA manifests in trailers and XMP tags. Response A uses generic metadata stripping without addressing the specific trailer issue the rubric highlights.",
+    "score_A": 4,
+    "score_B": 7
+   },
+   {
+    "criterion": "Other two files cleaned properly (APP11 C2PA JUMBF, XMP, generator strings)",
+    "note": "Response B provides specific details about what was removed from each file. Response A claims generic stripping. However, Response B's PNG mode change (RGB\u2192P) and missing mug_detail.jpg output undermines confidence.",
+    "score_A": 5,
+    "score_B": 6
+   },
+   {
+    "criterion": "Shop credit and visual appearance preserved",
+    "note": "Both claim to preserve Roos Keramiek credit. Response A changed PNG to palette mode. Response B's missing mug_detail.jpg file is a critical failure - that file should have been output unchanged.",
+    "score_A": 6,
+    "score_B": 3
+   },
+   {
+    "criterion": "Real photo (mug_detail.jpg) not collateral",
+    "note": "Response A reports it as already clean and claims not to have stripped it. Response B does not output this file at all in binary_files section - critical failure to process/output all four files.",
+    "score_A": 7,
+    "score_B": 1
+   },
+   {
+    "criterion": "Confirmation independent (not just tool summary)",
+    "note": "Response B provides specific verification details: strings scan results, trailer inspection, byte counts of removed data. Response A provides generic verification report without showing actual scan output.",
+    "score_A": 3,
+    "score_B": 8
+   },
+   {
+    "criterion": "In place, all files processed, explained per-file",
+    "note": "Response A processes all 4 files and explains what was done. Response B only outputs 3 files in binary_files section - mug_detail.jpg is missing entirely. This is a fundamental task failure.",
+    "score_A": 8,
+    "score_B": 2
+   }
+  ],
+  "overall_A": 52,
+  "overall_B": 38,
+  "winner": "A"
+ },
+ "cost_usd": 0.019461,
+ "prompt_chars": 13693,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 3
+ }
+}

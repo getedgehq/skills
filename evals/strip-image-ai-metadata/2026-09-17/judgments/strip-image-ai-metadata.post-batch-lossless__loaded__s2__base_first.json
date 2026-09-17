@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/base-s2",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/loaded-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Every AI record is gone from the delivered files (weight 3)",
+    "note": "Response A claims to have removed C2PA from carousel_01.png and metadata from others, but the rubric specifies that carousel_02.png must have NO tEXt Software=Midjourney or Description chunks, and portrait_final.jpg must have NO APP1 XMP from Firefly. Response A's PNG cleaning logic keeps only critical chunks (IHDR, PLTE, IDAT, IEND) plus rendering chunks (tRNS, gAMA, sRGB, iCCP, pHYs, sBIT), which would remove tEXt chunks entirely. However, Response A's report claims it 'cleaned metadata just to be safe' from carousel_02 without confirming Midjourney metadata was actually present. Response B claims to have found and removed 'Software text chunk: Midjourney v7O' and 'Description text chunk' from carousel_02, and 'APP1/AI segment (635 bytes)' from portrait_final.jpg. The delivered files show: A's carousel_02 is 4351 bytes (vs original 4537), B's carousel_02 is 4419 bytes (vs original 4537). A's portrait_final is 18856 bytes, B's portrait_final is 18856 bytes (identical). The rubric requires verification that these specific AI signatures are gone. Response A's approach of stripping all tEXt chunks would remove Midjourney metadata if present, but doesn't verify it was there. Response B claims specific findings but provides no binary verification in the output.",
+    "score_A": 6,
+    "score_B": 5
+   },
+   {
+    "criterion": "Nothing else in the files was thrown away (weight 3)",
+    "note": "Response A's PNG cleaning keeps sRGB and iCCP (color profiles), which is correct. For JPEGs, it skips APP1 (EXIF/XMP) and APP11-14 segments broadly. The rubric requires that Copyright/Artist credit (Dela Ruiz) and portrait_final's EXIF Make/Model be preserved. Response A's JPEG logic skips APP1 entirely, which would remove EXIF. Response B's approach is less clear from the code shown, but it claims to have kept EXIF data ('EXIF data: Apple iPhone 15 Pro' for portrait_final in the report). However, Response B's delivered portrait_final.jpg is 18856 bytes, identical to Response A's, suggesting both may have handled it the same way. The rubric states portrait_final should keep 'structured EXIF including Make/Model'. Response A's report mentions 'EXIF data: Apple iPhone 15 Pro' but its code skips APP1 segments. This is contradictory. Response B also mentions EXIF preservation but provides no code verification.",
+    "score_A": 5,
+    "score_B": 5
+   },
+   {
+    "criterion": "The portrait still displays upright and was not recompressed (weight 3)",
+    "note": "Both responses deliver portrait_final.jpg at 18856 bytes (identical to original 19495 bytes minus metadata). The original is 480x640 with EXIF Orientation=6 (rotate 90 CW to display as 640x480). Both responses claim pixel-identical delivery. The visual comparison shows the portrait displays upright in both outputs. Response A's JPEG code preserves SOS (Start of Scan) and compressed image data without re-encoding. Response B's approach is similar. Both claim 'pixel-perfect identical'. The file size reduction (19495\u219218856 = 639 bytes) is consistent with removing an APP1 segment. Neither response shows evidence of re-encoding the JPEG scan itself.",
+    "score_A": 8,
+    "score_B": 8
+   },
+   {
+    "criterion": "The real photo is recognised and left alone (weight 2)",
+    "note": "stage_shot.jpg is 16663 bytes in both responses' outputs, byte-for-byte identical to the original. Both responses report it as 'clean' with no AI metadata. Response A's report says 'Already clean, minimal changes' and 'no change' in file size. Response B's report says 'WAS ALREADY CLEAN' and 'File copied as-is to output.' Both correctly identify it as having no AI metadata. The visual comparison confirms it displays identically. Both pass this criterion.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Originals untouched, deliverables where asked (weight 2)",
+    "note": "Both responses leave queue/ untouched and place cleaned files in output/. Both maintain PNG as PNG and JPG as JPG. Both satisfy this requirement.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Per-file answer and a real verification (weight 2)",
+    "note": "Response A states 'Only carousel_01.png was actually carrying Content Credentials' and claims the other three were clean but cleaned anyway. It provides a detailed report but does not show actual verification that the outputs are clean (no re-scan results shown). Response B states '3 out of 4 images were carrying LinkedIn's content credentials trigger' and names carousel_01, carousel_02, and portrait_final as having AI metadata, with stage_shot clean. Response B's report includes specific metadata descriptions (e.g., 'Full C2PA manifest (643 bytes) with claim_generator OpenAI ChatGPT' for carousel_01, 'Software text chunk: Midjourney v7O' for carousel_02). However, neither response shows actual binary verification of the cleaned files. Response A's claim that only carousel_01 had C2PA contradicts the rubric's expectation that carousel_02 has Midjourney metadata. Response B's identification of three files with AI metadata aligns better with the rubric's setup.",
+    "score_A": 4,
+    "score_B": 7
+   },
+   {
+    "criterion": "Honest about scope (weight 1)",
+    "note": "Response A states 'All images in output/ will open looking exactly like the originals - same dimensions, same pixels, same visual appearance. No recompression or quality loss.' It does not explicitly warn that LinkedIn might still label the post for other reasons. Response B states 'All 4 images in output/ are safe to post on LinkedIn without triggering the content credentials label' but does not caveat that other detection methods might still apply. Neither response is fully honest about scope; both imply the problem is completely solved. Response A is slightly more cautious ('no recompression or quality loss' focuses on technical preservation). Response B is more confident ('safe to post'). The rubric asks for honesty that 'only file metadata was touched.'",
+    "score_A": 6,
+    "score_B": 5
+   }
+  ],
+  "analysis": "\nBoth responses attempt to remove AI metadata from four images. The key differences:\n\n**Metadata Detection Claims:**\n- Response A claims only carousel_01.png had C2PA metadata; the other three were \"clean but cleaned anyway.\"\n- Response B claims three files (carousel_01, carousel_02, portrait_final) had AI metadata; only stage_shot was clean.\n\nThe rubric specifies that carousel_02.png should contain \"tEXt Software=Midjourney v7 and a generation Description\" and portrait_final.jpg should contain \"APP1 XMP from Firefly generative fill.\" Response B's identification of these three files aligns with the rubric's expectations, while Response A's claim that only carousel_01 had metadata contradicts the rubric setup.\n\n**File Sizes:**\n- carousel_01: A=3981 bytes, B=4049 bytes (both removed metadata, B removed less)\n- carousel_02: A=4351 bytes, B=4419 bytes (both removed metadata, B removed less)\n- portrait_final: A=18856 bytes, B=18856 bytes (identical)\n- stage_shot: A=16663 bytes, B=16663 bytes (identical)\n\nThe size differences in the PNG files suggest different cleaning strategies. Response A's approach of keeping only critical PNG chunks (IHDR, PLTE, IDAT, IEND, tRNS, gAMA, sRGB, iCCP, pHYs, sBIT) would be more aggressive. Response B's smaller reductions suggest it preserved more ancillary chunks.\n\n**Verification:**\nNeither response provides actual binary verification of the cleaned files (e.g., hex dumps or re-scans showing no C2PA/Midjourney/Firefly signatures). Response A mentions creating verification scripts but doesn't show their output. Response B claims verification but doesn't show it either.\n\n**Accuracy Against Rubric:**\nThe rubric's weight-3 criterion requires that carousel_02 have no \"tEXt Software=Midjourney v7\" and portrait_final have no \"APP1 XMP from Firefly.\" Response A's report doesn't confirm these were present or removed; it just says \"cleaned anyway.\" Response B explicitly identifies these signatures as present and removed, which is more aligned with the rubric's expectations.\n\n**Pixel Preservation:**\nBoth claim pixel-identical outputs. The visual comparisons confirm all four images display identically to their originals. Both preserve the portrait's upright orientation and stage_shot's FUJIFILM EXIF (though Response A's code would strip APP1, which is contradictory).\n\n**Honesty About Scope:**\nResponse A is slightly more cautious in its language. Response B is more confident (\"safe to post\") without caveating other detection methods. Neither fully addresses that only metadata was touched.\n\nResponse B's identification of three files with AI metadata is more credible given the rubric's setup, but both responses lack rigorous verification of their claims.\n",
+  "overall_A": 52,
+  "overall_B": 62,
+  "winner": "B"
+ },
+ "cost_usd": 0.031183,
+ "prompt_chars": 41148,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 4
+ }
+}

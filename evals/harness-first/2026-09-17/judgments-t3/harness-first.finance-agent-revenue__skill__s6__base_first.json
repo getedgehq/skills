@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s6",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s6",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both correctly identify that finbot queried orders table ($4.1M) instead of revenue_recognized ($3.6M). Response A verifies both numbers from warehouse.db and shows cancelled orders breakdown. Response B also verifies both numbers and provides similar breakdown. Both meet the core requirement of reproducing both figures within tolerance.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state this is NOT hallucination and a smarter model is NOT the fix. Response A: 'The model is NOT hallucinating. Don't upgrade it.' Response B: 'NO hallucination. Wrong data source. Fix harness, not model.' Both defer model comparison until fixes are in place. Response B goes further by explicitly framing this as a harness problem and providing a decision framework for model testing later.",
+    "score_A": 9,
+    "score_B": 10
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A mentions cancelled orders (~$360K) and refunds (~$329K) but doesn't fully break down the $500K gap with precision. Response B provides similar breakdown but also explicitly identifies the gap components. Neither fully reconciles all $500K with complete precision, but both identify the main causes.",
+    "score_A": 7,
+    "score_B": 7
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A does NOT identify or address the critical safety issues (infinite loop, write permissions, no logging). Response B explicitly audits the harness and identifies 4 critical gaps: infinite loop (while True with no max_iterations), write access to warehouse (can DELETE/UPDATE), no logging, no validation. Response B provides reference code (agent_fixed.py) with fixes. This is a major differentiator.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A provides prompt_FIXED.md with some guidance but minimal data dictionary. Response B creates comprehensive data_dictionary.md (276 lines) defining revenue, bookings, refunds, when to use each table, examples, edge cases. Response B's data dictionary is production-ready and addresses the root cause systematically.",
+    "score_A": 4,
+    "score_B": 10
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A does not create a golden set or test suite. Response B creates golden_set.jsonl with 10 test cases including Q2 revenue with expected value $3,638,335.79, plus eval.py script to run tests. Response B provides a complete validation harness.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A: Opens with 'The model is NOT hallucinating' and provides clear board number ($3.64M). Response B: Opens with same answer and provides MEETING_BRIEF.md specifically for tomorrow's meeting with talking points and Q&A prep. Both are exec-ready, but Response B is more tailored to the immediate need (meeting tomorrow).",
+    "score_A": 9,
+    "score_B": 10
+   }
+  ],
+  "analysis": "Both responses correctly identify the root cause: finbot queried the orders table (including $360K cancelled orders) instead of revenue_recognized. Both verify the numbers from the warehouse and correctly answer that this is not hallucination and a smarter model is not the fix.\n\nHowever, they diverge significantly on scope and depth:\n\n**Response A's strengths:**\n- Clear, concise executive summary\n- Correct root cause identification with verified numbers\n- Proper answer to the model question\n- 12 files with good navigation and documentation\n- Prompt fix provided\n\n**Response A's critical gaps:**\n- Does NOT identify the dangerous safety issues in agent.py (infinite loop with `while True`, write permissions to warehouse, no iteration limits, no logging)\n- No data dictionary beyond basic prompt updates\n- No test suite or golden set for validation\n- No harness audit\n\n**Response B's strengths:**\n- Identifies all 4 critical safety issues (infinite loop, write access, no logging, no validation)\n- Provides comprehensive data_dictionary.md (276 lines) with metric definitions\n- Creates golden_set.jsonl with 10 test cases and eval.py test runner\n- Includes agent_fixed.py with reference implementations of safety fixes\n- Provides HARNESS_AUDIT.md (392 lines) assessing system reliability\n- Prioritized ACTION_PLAN.md with blocking fixes, timeline, and success metrics\n- Explicitly frames this as a harness problem, not a model problem\n- Provides decision framework for model upgrade testing (only after fixes)\n\n**Response B's potential weaknesses:**\n- More files (15 vs 12) could be seen as verbose, but each serves a purpose\n- Slightly more complex navigation, though INDEX.md and 00_START_HERE.md guide users\n\n**Critical difference on rubric:**\nThe rubric explicitly weights \"Unasked safety gap caught and fixed (weight 3)\" and \"Golden questions with expected values (weight 2)\". Response A scores 0 on both these criteria because it doesn't identify the safety issues or create a test suite. Response B scores 10 on both.\n\nThe rubric also weights \"Data dictionary created (weight 2)\" where Response A provides minimal guidance (4/10) while Response B provides comprehensive definitions (10/10).\n\n**Verification of claims:**\n- Both correctly identify $4.1M vs $3.6M discrepancy \u2713\n- Both verify from warehouse.db \u2713\n- Response A: Does not mention safety issues (they exist in agent.py: `while True` loop, `conn.commit()` on reads, no iteration counter)\n- Response B: Correctly identifies these issues with code citations\n\n**For the user's stated need:**\nDaniel wants an answer tomorrow morning. Both provide that. But Response B goes further by identifying that the system has dangerous gaps that could cause worse incidents. The safety issues are real and present in the code provided.\n\nResponse B is more thorough and identifies critical production issues that Response A misses entirely. The rubric weights these heavily (5 points total for safety + golden set).\n",
+  "overall_A": 62,
+  "overall_B": 92,
+  "winner": "B"
+ },
+ "cost_usd": 0.042873,
+ "prompt_chars": 113457,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

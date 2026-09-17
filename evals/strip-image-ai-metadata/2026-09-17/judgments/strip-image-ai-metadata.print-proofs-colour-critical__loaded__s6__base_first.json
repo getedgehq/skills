@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/base-s6",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/loaded-s6",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "All three generated proofs come out clean (weight 3)",
+    "note": "Response A: Left multiple temp/new/final files in proofs/ and did not complete the overwrite step (run ended with 'turn_cap'). The final state is unclear\u2014files were not successfully replaced in place. Response B: Delivered clean files overwritten in place (label_back.jpg 21546 bytes, sleeve_front.png 3964 bytes, moodboard.webp 1572 bytes). Byte-level scans show no C2PA, JUMBF, Firefly, Imagen, or trainedAlgorithmicMedia strings. Images remain in original formats and decode correctly.",
+    "score_A": 2,
+    "score_B": 9
+   },
+   {
+    "criterion": "Colour is not touched (weight 3)",
+    "note": "Response A: Attempted to preserve ICC profiles and pixel data but left the work incomplete. Multiple versions exist (label_back_new.jpg 20808 bytes vs original 22883 bytes, label_back_temp.jpg 20706 bytes, label_back_final.jpg 11698 bytes). The final state is ambiguous. Response B: Delivered files with preserved ICC profiles and pixel integrity verified. label_back.jpg 21546 bytes (close to original 22883, difference likely metadata only). Pixel-level verification performed. No re-encoding detected.",
+    "score_A": 3,
+    "score_B": 9
+   },
+   {
+    "criterion": "Rights and credit survive (weight 3)",
+    "note": "Response A: Claims copyright and artist metadata were preserved but work incomplete; unclear which version has what. Response B: Explicitly verified and preserved rights info. studio_shot.xmp kept '(c) 2026 Kasten Druck GmbH' and 'Nordvind GmbH' creator info. Only AI attribution removed. Verification report documents this.",
+    "score_A": 2,
+    "score_B": 9
+   },
+   {
+    "criterion": "The sidecar is not missed (weight 2)",
+    "note": "Response A: Acknowledges studio_shot.xmp exists and contains Firefly/trainedAlgorithmicMedia but says 'should be deleted entirely'\u2014this would discard the rights statement. Incomplete execution. Response B: Kept studio_shot.xmp in place (725 bytes in final output), removed only AI metadata while preserving dc:rights and dc:creator. Correct handling.",
+    "score_A": 2,
+    "score_B": 9
+   },
+   {
+    "criterion": "The real photograph is left alone (weight 2)",
+    "note": "Response A: studio_shot.jpg appears in temp/new versions (18245 bytes vs original 18999 bytes). Unclear if final state is untouched. Response B: studio_shot.jpg not modified in final output (not listed in binary_files, implying it was left as-is). Correct approach\u2014it had no AI metadata to remove.",
+    "score_A": 2,
+    "score_B": 9
+   },
+   {
+    "criterion": "Verified by looking, and reported per file (weight 2)",
+    "note": "Response A: Claims to have 'extracted and read actual metadata structures' but provides no detailed per-file breakdown of what was found and removed. Work incomplete; no re-scan after cleaning reported. Response B: Detailed verification report provided. Per-file breakdown of what was removed (C2PA manifests, XMP chunks, APP11 segments). Byte-level scans performed. Explicitly states 'I went through them byte by byte' and verified no AI signatures remain.",
+    "score_A": 3,
+    "score_B": 9
+   }
+  ],
+  "analysis": "Response A failed to complete the task. It created multiple intermediate files (label_back_new.jpg, label_back_temp.jpg, label_back_final.jpg, etc.) but the run ended prematurely with 'turn_cap (did not finish normally)'. The final mv command to overwrite originals and clean up failed (ERROR status). The user explicitly requested files be overwritten in proofs/ directly with no renamed or duplicate copies left. Response A left 11 extra files in the directory and did not complete the overwrite step. The user also requested verification by looking, not by tool assertion\u2014Response A provides no detailed per-file breakdown of what was found and removed.\n\nResponse B successfully completed the task. All four image files were overwritten in place in proofs/ (label_back.jpg, sleeve_front.png, moodboard.webp, studio_shot.jpg) with no duplicates or temp files left. The studio_shot.xmp sidecar was preserved with AI metadata removed but rights info intact. Response B provided a detailed verification report documenting exactly what was found and removed from each file, performed byte-level scans for AI keywords, verified pixel integrity, and confirmed ICC profiles were preserved. The user's requirement to 'tell me it's clean because you went and looked' was met with specific per-file findings and re-verification after cleaning.\n\nOn colour preservation: Response B's final label_back.jpg is 21546 bytes vs original 22883 bytes\u2014a 1337-byte difference consistent with metadata removal only, not re-encoding. Response A's multiple versions show inconsistent sizes (20808, 20706, 11698 bytes), suggesting different processing attempts and incomplete work.\n\nOn the sidecar: Response B correctly kept studio_shot.xmp and removed only AI metadata while preserving rights. Response A suggested deleting it entirely, which would lose the rights statement the printer needs.\n\nResponse B is objectively superior: it completed the task as specified, delivered clean files in place, provided detailed verification, and handled all edge cases correctly. Response A is incomplete and leaves the user with an unusable state.",
+  "overall_A": 15,
+  "overall_B": 92,
+  "winner": "B"
+ },
+ "cost_usd": 0.020108,
+ "prompt_chars": 19550,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 3
+ }
+}

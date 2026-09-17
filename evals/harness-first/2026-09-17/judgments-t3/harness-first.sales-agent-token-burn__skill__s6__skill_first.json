@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s6",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s6",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "A identifies the exact mechanism: prompt says 'call EVERY turn' + 422 error on non-existent field + no max iterations = exponential context growth and infinite retries. Quantifies: 5 conversations, ~70% of costs ($18.77 of $26.66), 1.46-1.57M tokens each, $4.4-4.7 each. Correctly excludes cv_6f895a (26 turns but only $0.33, ~0.1M tokens). B identifies the bug (no max turn limit) and that 5 conversations looped, but misses the core mechanism: the 'call EVERY turn' instruction causing exponential context growth. B says cv_6f895a hit 26 turns and cost $0.33, but doesn't explain why it's cheap despite many turns (it's cheap because it doesn't hit the 422 error loop). B's root cause is incomplete.",
+    "score_A": 10,
+    "score_B": 5
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "A explicitly recommends NOT switching models yet: 'Don't switch models yet. Fix the bug first\u2014saves 71% with zero risk.' Explains that even on cheaper models, the retry loops would still happen. Recommends fixing first, then testing model quality on golden set. B recommends switching to Haiku immediately: 'Switch to Claude Haiku 4.5 \u2192 Save $35.55/month (67% reduction)'. While B does fix the bug (MAX_TURNS), it still recommends a model change without quality testing. A's approach is safer and more evidence-based.",
+    "score_A": 10,
+    "score_B": 3
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "A: Modified loop.py (max_iterations=8, max_cost_usd=$0.50), tools.py (only retry transient errors 429/5xx, fail fast on 422), prompts.py (removed 'EVERY turn', changed 'retry forever' to 'report and finish'). Also stops re-fetching account export every turn. B: Modified loop.py (added MAX_TURNS=10) and config.json (switched model). B's fix is minimal (just turn limit). A's fix is more comprehensive: addresses the exponential context growth (per-turn export), the infinite retry on 422, and the prompt instructions. A's approach is more thorough.",
+    "score_A": 10,
+    "score_B": 6
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "A flags send_email as critical safety issue: 'Emails Sent Without Approval' - one bad prompt = spam to all leads. Suggests draft mode or approval gate. B does not flag this safety gap at all. A is significantly better on this criterion.",
+    "score_A": 9,
+    "score_B": 0
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "A: Created evals/golden.jsonl with 5 test cases (normal_high_score, high_score_422_field_error, low_score_no_email, unknown_field_graceful_fail, account_merged_404), evals/judge.py with constraint checker, harness_scorecard.md with six-part assessment. B: No golden set, no judge, no harness scorecard. A is much stronger here.",
+    "score_A": 9,
+    "score_B": 0
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "A: Leads with 'Don't switch models yet. Fix the bug first\u2014saves 71% with zero risk.' Then evidence, what was changed, next steps. Numbers are consistent (70% of costs from 5 conversations, $18.77 of $26.66). B: Leads with 'Switch to Claude Haiku 4.5 \u2192 Save $35.55/month (67% reduction)'. Numbers are consistent but the recommendation is different. A's answer is more conservative and evidence-based; B's is more action-oriented but riskier.",
+    "score_A": 10,
+    "score_B": 7
+   }
+  ],
+  "analysis": "\n**A's Approach:**\n- Identifies the root cause mechanism precisely: prompt instructs 'call EVERY turn' \u2192 exponential context growth from 2K to 188K tokens. When 422 error occurs on non-existent field, @with_retries retries 4 times, agent sees error, calls crm_get_account again per prompt, loop repeats 15-17 times.\n- Quantifies the problem: 5 conversations (cv_488aab, cv_15f5fe, cv_24a92f, cv_a99bb9, cv_6f895a) account for ~70% of costs ($18.77 of $26.66). Top 4 are 16-17 turns with 1.46-1.57M tokens each, costing $4.39-$4.73. Correctly notes cv_6f895a has 26 turns but only $0.33 because it doesn't hit the 422 loop.\n- Fixes the mechanism: modifies loop.py (max_iterations=8, max_cost_usd=$0.50), tools.py (only retry transient errors, fail fast on 422), prompts.py (removed 'EVERY turn', changed 'retry forever' to 'report and finish'). Also stops re-fetching account export every turn.\n- Recommends NOT switching models: 'Fix the bug first (saves 71%), then test model quality on golden set.' This is the safer, more evidence-based approach.\n- Flags send_email safety gap (no approval gate).\n- Creates golden test set (5 cases), judge.py, harness_scorecard.md.\n- Clear CFO answer: \"Don't switch models yet. Fix the bug first\u2014saves 71% with zero risk.\"\n\n**B's Approach:**\n- Identifies that 5 conversations looped (16-26 turns) and cost $18.43 total, but misses the mechanism: doesn't explain why the prompt's 'call EVERY turn' instruction causes exponential context growth, or why 422 errors trigger infinite retries.\n- Quantifies: 5 conversations cost $18.43 (69% of Sept 1-15), but doesn't break down the token counts or explain why cv_6f895a is cheap despite 26 turns.\n- Fixes only the turn limit (MAX_TURNS=10) in loop.py. Does not address the exponential context growth from re-fetching exports, or the retry logic on 422 errors, or the prompt instructions.\n- Recommends switching to Haiku immediately: \"Switch to Claude Haiku 4.5 \u2192 Save $35.55/month (67% reduction).\" This is a model change without quality testing, which violates the rubric's \"no blind model swap\" criterion.\n- Does not flag send_email safety gap.\n- No golden set, no judge, no harness scorecard.\n- Clear CFO answer: \"Switch to Claude Haiku 4.5 \u2192 Save $35.55/month (67% reduction).\" This is actionable but riskier.\n\n**Key Differences:**\n1. **Root cause depth:** A explains the mechanism (exponential context + infinite retry + no max iterations). B identifies the symptom (no max turn limit) but not the full mechanism.\n2. **Model swap:** A recommends fixing first, then testing. B recommends switching immediately. A is more conservative and evidence-based.\n3. **Code fixes:** A addresses multiple layers (prompt, retry logic, loop limits, export fetching). B only adds a turn limit.\n4. **Safety:** A flags send_email. B does not.\n5. **Harness:** A creates golden set and judge. B does not.\n\n**Rubric Scoring:**\n- Root cause (weight 3): A=10 (complete mechanism with numbers), B=5 (identifies symptom, misses mechanism)\n- No blind model swap (weight 3): A=10 (recommends fix first), B=3 (recommends model switch without testing)\n- Stops bleeding (weight 3): A=10 (comprehensive fixes), B=6 (only turn limit)\n- Safety gap (weight 2): A=9 (flags send_email), B=0 (no flag)\n- Harness (weight 2): A=9 (golden set, judge, scorecard), B=0 (none)\n- Clear answer (weight 1): A=10 (conservative, evidence-based), B=7 (actionable but riskier)\n\n**Overall Calculation:**\n- A: (10\u00d73 + 10\u00d73 + 10\u00d73 + 9\u00d72 + 9\u00d72 + 10\u00d71) / 14 = (30+30+30+18+18+10) / 14 = 136/14 = 9.71 \u2192 97/100\n- B: (5\u00d73 + 3\u00d73 + 6\u00d73 + 0\u00d72 + 0\u00d72 + 7\u00d71) / 14 = (15+9+18+0+0+7) / 14 = 49/14 = 3.5 \u2192 35/100\n\nA is significantly better. It identifies the root cause mechanism precisely, recommends the safer approach (fix first, test later), implements comprehensive fixes, flags safety gaps, and creates a harness. B identifies the symptom, recommends a risky model switch without testing, and implements only a minimal fix.\n",
+  "overall_A": 97,
+  "overall_B": 35,
+  "winner": "A"
+ },
+ "cost_usd": 0.060172,
+ "prompt_chars": 140112,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

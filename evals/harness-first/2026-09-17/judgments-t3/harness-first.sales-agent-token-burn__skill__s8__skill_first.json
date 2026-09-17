@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s8",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s8",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "A identifies the core issue: 4 conversations stuck in infinite retry loops due to (1) no iteration cap, (2) retry ALL errors including permanent 422/404, (3) prompt references nonexistent lead_score_v2 field. Quantifies: ~70% of tokens/cost from 4 conversations (~$18.44 of $26.67), with specific turn counts (16-17 turns), token growth (2K\u2192193K), and CRM error logs showing 64+ failed PATCH attempts. B identifies token bloat and suggests Haiku but misses the root cause entirely: the infinite retry loops on validation errors. B's analysis of 'token growth' is superficial\u2014it sees context accumulation but doesn't diagnose why conversations run 16-26 turns instead of 3-4.",
+    "score_A": 10,
+    "score_B": 3
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "A explicitly recommends NOT switching models yet: 'Don't switch models yet: 3 harness bugs (not the model) caused 69% of costs.' Advises fixing the loop first, then running a golden set eval on Haiku vs Sonnet before any model change. B does the opposite: directly switches config.json to Haiku and claims 'I've already updated your code' without any evaluation, testing, or evidence that Haiku quality is acceptable. B's approach violates the rubric's core requirement: 'don't simply pick haiku/gpt-5-mini/etc. from the price sheet.' B picked Haiku from the price sheet and deployed it.",
+    "score_A": 10,
+    "score_B": 1
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "A provides concrete, deployable code fixes: (1) max 10 iterations in loop.py, (2) smart error classification in tools.py (only retry 429/5xx, not 422/404), (3) per-conversation $1 cost cap with graceful degradation, (4) fixed prompt removing lead_score_v2 and 'try again' instruction. All fixes are in output/fixes/ with installation guide. B modifies config.json (model switch) and agent/prompts.py (removes 'EVERY turn' CRM fetch, adds turn limit guidance) but doesn't address the core issue: the retry loop on permanent errors. B's prompt change is incomplete\u2014it still references lead_score_v2 and doesn't fix the retry logic in tools.py.",
+    "score_A": 10,
+    "score_B": 4
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "A flags the send_email safety gap: 'Notices send_email fires real email from reps' mailboxes with no approval/draft step and no max-emails guard.' Recommends adding draft mode and approval gates in the harness scorecard. B does not mention this safety gap at all.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "A creates a comprehensive harness scorecard (6-part audit: golden set, judge, cost governance, data layer, action safety, tracing) with status for each. Provides golden_set_starter.jsonl with 10 test cases. Includes installation guide and testing checklist. B does not create a golden set, judge script, or harness scorecard. B's deliverables are analysis reports and config changes, not testing infrastructure.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "A leads with: 'Don't switch models yet: 3 harness bugs (not the model) caused 69% of costs.' Then provides evidence, what was changed, and prioritized next steps. Numbers are consistent with logs (4 conversations, $18.44 of $26.67, 69%). B leads with: 'Switch to Claude Haiku 4.5' and claims $35.55/month savings. Numbers are mathematically correct but based on a false premise (that the problem is the model, not the harness). B's answer is clear but wrong.",
+    "score_A": 10,
+    "score_B": 2
+   }
+  ],
+  "analysis": "\n**A correctly diagnoses the root cause; B misses it entirely.**\n\nA identifies that 4 conversations (9% of volume) burned 69% of costs ($18.44 of $26.67) due to infinite retry loops. The mechanism: (1) prompt references nonexistent CRM field lead_score_v2, (2) CRM returns 422 validation error (permanent), (3) retry decorator retries 4x anyway, (4) prompt says \"try again\" so model retries, (5) each turn re-sends full 30-40KB CRM export in history, (6) tokens grow from 2K to 193K over 16-17 turns, (7) no iteration cap stops it. A quantifies this with specific evidence: 64+ failed PATCH attempts for L-2012 in logs/crm_client.log, token growth data, and cost per conversation.\n\nB sees token bloat and context accumulation but attributes it to \"agent refetches CRM data every turn\" and \"conversation history accumulates.\" While these are real inefficiencies, they don't explain why 4 conversations run 16-26 turns instead of 3-4. B's fix (remove \"EVERY turn\" from prompt, add turn limit guidance) is incomplete and doesn't address the core issue: the retry loop on permanent errors.\n\n**A recommends NOT switching models; B switches without evaluation.**\n\nA explicitly states: \"Don't switch models yet\" and recommends fixing the harness first, then running a golden set eval on Haiku vs Sonnet. This is the correct approach per the rubric: \"never switch models without eval evidence.\"\n\nB directly modifies config.json to use Haiku and claims \"I've already updated your code\" and \"Just restart your agent.\" This is a blind model swap without any testing, golden set, or quality evaluation. B's reasoning is \"Haiku is overkill for cold emails\" (backwards logic\u2014Haiku is cheaper, not overkill) and \"drop-in replacement\" (true, but doesn't mean quality is acceptable).\n\n**A provides deployable code fixes; B provides incomplete changes.**\n\nA creates 5 Python files in output/fixes/:\n- loop.py: max 10 iterations, $1 cost cap, graceful degradation\n- tools.py: only retry transient errors (429, 5xx), not permanent (422, 404)\n- prompts.py: removes lead_score_v2, removes \"try again\" instruction\n- tracing.py: enhanced error logging\n- README.md: installation guide and testing checklist\n\nB modifies 2 files in the repo:\n- config.json: changes model to haiku-4-5 (but this is the wrong fix)\n- agent/prompts.py: removes \"EVERY turn\" CRM fetch, adds turn limit guidance (incomplete)\n\nB doesn't fix the retry logic in tools.py, which is the core issue.\n\n**A flags safety gaps; B doesn't.**\n\nA identifies that send_email fires real emails with no approval/draft step and no max-emails guard. Recommends adding draft mode and approval gates. B doesn't mention this.\n\n**A creates harness artifacts; B doesn't.**\n\nA provides:\n- Harness scorecard (6-part audit)\n- Golden set starter (10 test cases)\n- Testing checklist\n- Judge script foundation\n\nB provides:\n- Analysis reports\n- Cost comparison tables\n- No testing infrastructure\n\n**A's answer is correct; B's answer is wrong.**\n\nA: \"Don't switch models yet. Fix the harness first (saves $36-44/month). Then eval Haiku vs Sonnet on a golden set (could save another $10-11/month if quality passes).\"\n\nB: \"Switch to Haiku. Saves $35.55/month.\"\n\nA's numbers are consistent with the logs. B's numbers are mathematically correct but based on a false premise. If you switch to Haiku without fixing the retry loops, you'll still have 4 conversations burning $4+ each (just at Haiku prices instead of Sonnet prices). The real savings come from fixing the harness, not the model.\n\n**Verdict: A is substantially better.** A correctly diagnoses the problem, recommends the right fix, provides deployable code, and avoids a blind model swap. B misses the root cause and recommends a model change without evaluation, which violates the rubric and would likely not solve the problem.\n",
+  "overall_A": 92,
+  "overall_B": 18,
+  "winner": "A"
+ },
+ "cost_usd": 0.056416,
+ "prompt_chars": 127052,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

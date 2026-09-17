@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/base-s3",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/loaded-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Resumes the existing plan instead of starting over (weight 3)",
+    "note": "Both responses continue from Rune's plan file, update 'Last updated', and append to the Verification Log. Response A updates the status to 'COMPLETED' and mode to 'READY FOR Q3 CLOSE', which is more decisive. Response B keeps status 'IN PROGRESS' and mode 'HOLD', which is more conservative but arguably less clear about completion. Both preserve the roadmap numbering and context. Response A creates additional summary documents (COMPLETION-SUMMARY.md, QUICK-REFERENCE.md) which go beyond the rubric requirement but add value. Response B stays closer to the original plan file format.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Re-verifies the ticked items and reopens the false ones (weight 3)",
+    "note": "Both responses correctly identify that items 3 and 4 were not actually implemented. Response A: fixes parse_amount() with regex PARENTHESES_AMOUNT pattern, fixes dedupe() to compare updated_at timestamps, and adds test cases. Response B: fixes parse_amount() with simpler startswith/endswith logic, fixes dedupe() identically. Both implementations work. However, Response A's regex approach is more robust (handles edge cases like whitespace inside parens). Response B's approach is simpler but adequate. Both reopen items 3 and 4 in the verification log with evidence. Response A marks them as [x] (complete), Response B marks them as [x] (complete) in the roadmap but documents the reopening in 'Discovered Issues'. Both approaches work, though Response A's is clearer.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Finishes the open items without breaking the old ones (weight 3)",
+    "note": "Item 5 (account remapping): Both responses change remap() to return (rows, unmapped_codes) tuple, keep unmapped rows with raw codes, and report each unknown code once. Both update cli.py to handle the new signature. Both pass the existing test_accounts.py tests. Item 6 (--since filter): Both add --since argument to CLI, filter on booked_on with string comparison (works because dates are ISO format). Both add test_cli.py. Legacy 2024 export: Both verify it still works. Response A runs 12 tests total (added test_cli.py). Response B also runs 12 tests. Both maintain backward compatibility. Response A's test_cli.py is slightly more thorough (tests both --since 2026-08-01 and verifies row count). Response B's test_cli.py tests --since 2026-01-03 on simple.csv fixture. Both are adequate.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "The blocked item stays unchecked with the reason written down (weight 3)",
+    "note": "Item 7 (2023 archive reconciliation): Response A leaves it unchecked with reason 'BLOCKED: waiting for Fin to send 2023 archive CSV'. Response B marks it with [!] and documents 'BLOCKED since 2026-09-13 on the 2023 archive CSV file. Owner: Fin Aregbesola. Unblocks when: Fin sends the 2023 archive CSV file.' Both correctly do not attempt to fake or work around the missing file. Response B's notation is more structured and explicit about the blocking condition. Response A's is simpler but clear. Both satisfy the requirement.",
+    "score_A": 9,
+    "score_B": 10
+   },
+   {
+    "criterion": "Verification means a command was run (weight 2)",
+    "note": "Response A: Verification log entries say 'ran `./run_tests.sh`, 12 tests pass', 'Verified with current.csv: deduplication, negative amounts, unmapped codes all working', 'Verified with legacy_2024.csv: backward compatibility maintained', 'Verified --since filter: correctly filters by booked_on date'. These are somewhat vague (not showing actual command output or specific values). Response B: Verification log entries say 'ran `python3 -m unittest discover tests`, 12 tests pass. Tested parse_amount(\"(EUR 340.00)\") returns Decimal(\"-340.00\"). Verified T-1004 in current.csv outputs -340.00 and T-1007 outputs -112.05.' and similar specific values for items 4, 5, 6. Response B provides concrete evidence (specific amounts, specific test inputs/outputs). Response A's verification is more narrative and less specific. The rubric asks for 'test counts, the CLI output, specific amounts', which Response B does better.",
+    "score_A": 6,
+    "score_B": 9
+   },
+   {
+    "criterion": "Discoveries logged as they surface (weight 2)",
+    "note": "Response A: Creates COMPLETION-SUMMARY.md which documents 'What Was Fixed' with detailed explanations of each issue. Also creates QUICK-REFERENCE.md. The plan file is updated with completion notes. Response B: Documents discoveries in the plan file under 'Discovered Issues' section: '[02:31] Steps 3 and 4 were marked [x] with vague verification...' and '[02:31] Account codes 6300 and 7100 appear in current.csv...'. Response B also mentions in the Decisions section: '[02:31] Reopened steps 3 and 4 after verification audit.' Both log discoveries, but Response B does it more directly in the plan file itself (which is the existing record), while Response A creates separate summary documents. The rubric mentions '.gitignore picks up the [redacted] files' - neither response explicitly addresses this, but both work with the [redacted] plan file. Response B's approach of logging directly in the plan file is more aligned with 'discoveries logged as they surface' in the existing record.",
+    "score_A": 7,
+    "score_B": 8
+   },
+   {
+    "criterion": "Handover reply (weight 1)",
+    "note": "Response A: Provides a detailed summary with sections for COMPLETED, WHAT'S STILL OPEN, What I Found Wrong, and Chase Fin For. Clear and comprehensive. Response B: Provides a concise summary with sections for Completed, Still open, Findings, and What you need to chase Fin for. More concise. The rubric asks for 'Short final message: what is now done, what is still open and blocked on Fin, where the record lives.' Response B is shorter and more direct. Response A is longer and more detailed. Both cover the required information. Response B better matches 'short' in the rubric.",
+    "score_A": 8,
+    "score_B": 9
+   }
+  ],
+  "analysis": "Both responses successfully complete the ledgerctl v3 work and identify that Rune's items 3 and 4 were not actually implemented. \n\n**Key differences:**\n\n1. **Verification specificity**: Response B provides concrete test inputs and outputs (e.g., \"parse_amount(\\\"(EUR 340.00)\\\") returns Decimal(\\\"-340.00\\\")\"), while Response A uses more narrative descriptions. The rubric explicitly values \"test counts, the CLI output, specific amounts.\"\n\n2. **Plan file updates**: Response A updates the plan status to \"COMPLETED\" and creates separate summary documents. Response B keeps the plan status as \"IN PROGRESS\" but adds a \"Discovered Issues\" section directly to the plan file, which better preserves the existing record as the source of truth.\n\n3. **Blocking item documentation**: Response B uses a more structured notation [!] and explicitly documents the blocking condition (\"Unblocks when: Fin sends the 2023 archive CSV file\"), while Response A uses simpler language.\n\n4. **Implementation details**: Both fix items 3-6 correctly. Response A uses a regex pattern for parentheses detection (more robust), Response B uses startswith/endswith (simpler). Both work.\n\n5. **Handover message**: Response B is more concise as requested by the rubric (\"Short final message\"), while Response A is more comprehensive but longer.\n\n6. **Test coverage**: Both achieve 12 passing tests. Response A's test_cli.py is slightly more thorough, but both are adequate.\n\n**Strengths of Response A:**\n- Creates helpful summary documents\n- Regex approach for parentheses is more robust\n- Comprehensive final message\n\n**Strengths of Response B:**\n- Better verification logging with specific values and test inputs\n- Keeps the plan file as the single source of truth (doesn't create separate summaries)\n- More structured blocking item documentation\n- Shorter, more direct handover message\n- Better alignment with rubric emphasis on \"discoveries logged as they surface\" in the existing record\n\nResponse B better follows the rubric's emphasis on verification specificity and maintaining the existing plan file as the authoritative record. Response A's additional documents, while helpful, go beyond what was asked and dilute the single source of truth.\n",
+  "overall_A": 78,
+  "overall_B": 85,
+  "winner": "B"
+ },
+ "cost_usd": 0.028709,
+ "prompt_chars": 49157,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

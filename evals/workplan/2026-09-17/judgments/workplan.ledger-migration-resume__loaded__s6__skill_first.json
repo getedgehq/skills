@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/loaded-s6",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/base-s6",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Resumes the existing plan instead of starting over (weight 3)",
+    "note": "Both responses preserve Rune's plan file and update it. A updates 'Last updated' to 2026-09-16 15:10 and appends to Decisions and Verification Log. B also updates the plan and appends, but creates two additional summary files (COMPLETION-SUMMARY.md, QUICK-REFERENCE.md) which are helpful but not part of resuming the existing plan. Both keep the roadmap numbering and context. A is slightly more focused on the existing plan as the source of truth.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Re-verifies the ticked items and reopens the false ones (weight 3)",
+    "note": "Both correctly identify that steps 3 and 4 were ticked but not implemented. Both fix parse_amount to handle parentheses before stripping currency prefix (correct order). Both fix dedupe to compare updated_at timestamps. A's verification log explicitly records '[14:20] Steps 3 and 4 were marked verified but not correctly implemented' and reopens them with detailed evidence. B's plan file notes 'FIXED - was not actually implemented' and 'FIXED - was keeping first not most recent' but the verification log entries are less detailed about the discovery process. Both implementations are correct and tested.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Finishes the open items without breaking the old ones (weight 3)",
+    "note": "Both implement item 5 (accounts.remap returns (rows, unmapped_codes), keeps unmapped rows, reports each unknown code once) and item 6 (--since filter on booked_on). Both update cli.py to handle the new signature. Both verify legacy_2024.csv still works. A's verification log shows explicit test counts: 'all 12 tests pass' for step 3, 'all 12 tests pass' for step 4, 'all tests pass' for step 5. B shows 'All 11 CI tests passing' in final output. The discrepancy: A claims 12 tests but run_tests.sh originally only ran test_normalize (4 tests). B correctly identifies 11 tests (test_normalize + test_accounts). A's test count appears inflated or unclear about what was actually run.",
+    "score_A": 8,
+    "score_B": 9
+   },
+   {
+    "criterion": "The blocked item stays unchecked with the reason written down (weight 3)",
+    "note": "Both correctly leave item 7 unchecked. A marks it '[!] 7. Re-run the 2023 archive reconciliation. BLOCKED since 2026-09-13 on the 2023 archive CSV file. Owner: Fin Aregbesola. Unblocks when: Fin sends the 2023 archive CSV.' B marks it '[ ] 7. Re-run the 2023 archive reconciliation (BLOCKED - waiting on Fin to send 2023 archive CSV)' and adds a note in Completion Notes. Both handle this correctly. A's format is slightly more structured with explicit 'Unblocks when' field.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Verification means a command was run (weight 2)",
+    "note": "A's verification log includes specific evidence: 'ran `./run_tests.sh`, added test_parentheses_parse_as_negative, all 12 tests pass. Tested with data/current.csv T-1004 (EUR 340.00) -> -340.00, T-1007 (112.05) -> -112.05' and 'ran `python3 -m ledgerctl --input data/current.csv --out /tmp/out.json --since 2026-08-01`, wrote 6 rows'. B's verification is less detailed in the plan file itself but the actions_taken log shows comprehensive testing. A provides more explicit command-and-result pairs in the plan document itself.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "Discoveries logged as they surface (weight 2)",
+    "note": "A explicitly logs '[14:20] Steps 3 and 4 were marked verified but not correctly implemented' and '[14:45] Unmapped account codes 6300 (team lunch) and 7100 (bank charges) appear in current.csv' in a 'Discovered Issues' section. B mentions these in the completion notes but less systematically. A also creates .gitignore for [redacted] files. B does not mention .gitignore. A's discovery logging is more structured and visible in the plan document.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "Handover reply (weight 1)",
+    "note": "A provides a concise summary with clear sections: what's done (6 of 7), what's open (item 7 blocked on Fin), and items to chase Fin about (2023 archive CSV and two unmapped codes). B provides similar information but in a longer format with more ceremony (multiple summary files). A's reply is more direct and actionable for the user who asked 'tell me what's still open so I know what to chase fin for'.",
+    "score_A": 9,
+    "score_B": 8
+   }
+  ],
+  "analysis": "Both responses successfully complete the ledgerctl v3 work and identify that steps 3 and 4 were falsely marked complete. Both fix the issues correctly and implement items 5 and 6.\n\nKey differences:\n\n**Verification and Evidence:**\n- A provides more explicit command-and-result pairs in the plan document itself (e.g., 'Tested with data/current.csv T-1004 (EUR 340.00) -> -340.00'). \n- B's verification is thorough in the actions_taken log but less detailed in the deliverable plan document.\n\n**Test Count Clarity:**\n- A claims 12 tests pass but the original run_tests.sh only ran test_normalize. The discrepancy is unclear\u2014A may have added tests but the count needs verification.\n- B correctly identifies 11 tests (test_normalize + test_accounts) and updates run_tests.sh to include both, which is verifiable.\n\n**Plan Document Adherence:**\n- A focuses on updating the existing plan file with detailed Decisions and Discovered Issues sections.\n- B creates two additional summary files (COMPLETION-SUMMARY.md, QUICK-REFERENCE.md) which are helpful but dilute focus from the existing plan.\n\n**Discoveries Logged:**\n- A has an explicit \"Discovered Issues\" section in the plan that surfaces the false verifications.\n- B mentions these in completion notes but less systematically in the plan itself.\n\n**Handover Reply:**\n- A is more concise and directly answers the user's question about what's still open.\n- B is longer and creates additional documentation, which is helpful but less focused.\n\n**Blocking Item (Item 7):**\n- Both handle this correctly, but A's format is slightly more structured with explicit \"Unblocks when\" field.\n\n**Code Quality:**\n- Both implementations are correct and functionally equivalent.\n- Both update cli.py, accounts.py, and normalize.py correctly.\n- Both add tests for the fixed functionality.\n\nThe main trade-off is between A's focus on the existing plan document with detailed evidence, versus B's creation of comprehensive summary documents. The rubric weights plan resumption (3), re-verification (3), and finishing items (3), suggesting the existing plan should be the primary artifact. A better adheres to this by keeping the plan as the central record with detailed discoveries and verification logged there.\n",
+  "overall_A": 87,
+  "overall_B": 82,
+  "winner": "A"
+ },
+ "cost_usd": 0.02792,
+ "prompt_chars": 51341,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

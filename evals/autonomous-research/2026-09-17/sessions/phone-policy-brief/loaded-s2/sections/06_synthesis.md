@@ -1,0 +1,13 @@
+# Synthesis and limitations
+
+The evidence base for phone-free secondary policies is strongest on academic attainment, emerging on wellbeing outcomes, and weakest on implementation. Attainment effects rest on quasi-experimental studies with robust causal identification from England {cite_10.1016/j.labeco.2016.04.004}, Sweden {cite_10.1016/j.econedurev.2020.102009}, and Norway {cite_10.2139/ssrn.4735240}. The 6.41% improvement in English exam results replicates across education systems, demonstrating the effect is not jurisdiction-specific.
+
+Wellbeing evidence is newer and thinner. The largest UK study is cross-sectional {cite_10.1016/j.lanepe.2025.101211}, showing association rather than causation. Norwegian quasi-experimental evidence {cite_10.2139/ssrn.4735240} provides stronger causal identification but awaits peer review. Direction is consistent—restrictive policies associate with better mental health—but effect sizes are less established than for attainment. Frame wellbeing evidence as emerging rather than definitive.
+
+Implementation evidence is the weakest element. One study documents enforcement complexity {cite_10.1080/07380569.2023.2211062}, and recent work captures practitioner perspectives {cite_10.1007/s44217-026-01682-9}, {cite_10.21125/iceri.2019.1983}, but comparative studies of enforcement mechanisms, parent communication protocols, and age-specific approaches are absent.
+
+**Key limitations.** Evidence concentrates in England and Nordic countries; generalisability to other systems is plausible but unproven. Most attainment evidence is from 2016-2021; recent studies focus on wellbeing (2024-2026). Implementation gaps—enforcement, safeguarding, SEND accommodations, long-term effects—remain under-researched. No evidence examines differential impacts by socioeconomic status, ethnicity, or SEND; equalities monitoring is essential.
+
+**Overall assessment.** The evidence supports the January 2027 mandate on grounds of improved attainment and emerging wellbeing benefits. Implementation cannot assume one model fits all contexts. Policy guidance must provide principles (safeguarding protocols in place, parent communication maintained, SEND accommodations available, enforcement consistent) while allowing local adaptation.
+
+Monitoring and evaluation are essential. Track attainment, wellbeing, implementation fidelity, and stakeholder feedback during 2027-28. Include equalities monitoring to detect differential impacts. England's national implementation offers an opportunity to generate the implementation evidence the field lacks. Proceed with the decision; monitor what happens; adapt as evidence emerges.

@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/loaded-s2",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/base-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Resumes the existing plan instead of starting over (weight 3)",
+    "note": "Both responses continue from Rune's plan file. A updates the existing [redacted]-20260913-ledger-v3.md with new timestamps and appends to Decisions/Verification Log. B creates separate COMPLETION-REPORT.md, STATUS-SUMMARY.txt, and TODO-FIN.md files instead of updating the original plan. The rubric explicitly requires 'appends to the existing Decisions and Verification Log rather than writing a fresh plan'. A follows this; B does not.",
+    "score_A": 9,
+    "score_B": 5
+   },
+   {
+    "criterion": "Re-verifies the ticked items and reopens the false ones (weight 3)",
+    "note": "Both correctly identify that items 3 and 4 were falsely ticked and fix them. A's parse_amount handles parentheses by checking for them BEFORE stripping currency prefix, which correctly handles both '(EUR 340.00)' and '(112.05)'. B's implementation is identical and also correct. Both fix dedupe to compare updated_at timestamps. Both add tests. The implementations are functionally equivalent and both work correctly.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Finishes the open items without breaking the old ones (weight 3)",
+    "note": "Item 5: Both refactor accounts.remap to return (rows, unmapped_codes), keep unmapped rows with raw codes, report each unknown code once, and update cli.py. Both work correctly. Item 6: Both add --since filter on booked_on. A's filter_since is a separate function; B inlines it. Both work. Both test legacy_2024.csv and current.csv. Both maintain backward compatibility. Functionally equivalent.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "The blocked item stays unchecked with the reason written down (weight 3)",
+    "note": "A: Item 7 marked as [!] BLOCKED in the updated plan file with reason and owner. B: Item 7 marked as \u23f8\ufe0f BLOCKED in COMPLETION-REPORT.md with reason and owner. Both correctly leave it unchecked and document the blocker. A integrates this into the original plan file; B documents it separately. Both satisfy the requirement.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Verification means a command was run (weight 2)",
+    "note": "A's Verification Log entries include specific test counts ('9 tests pass', '12 tests pass'), specific amounts ('T-1004 and T-1007 parse as negative correctly', 'T-1003 keeps 2026-08-12 version (9750.00)'), and specific filter results ('filters current.csv from 9 to 6 rows'). B's COMPLETION-REPORT.md includes similar specifics but is not in the original plan file format. Both provide evidence-based verification, not 'looks right'. A integrates this into the plan file as required.",
+    "score_A": 10,
+    "score_B": 9
+   },
+   {
+    "criterion": "Discoveries logged as they surface (weight 2)",
+    "note": "A: Logs in the plan file that 'run_tests.sh was only running test_normalize, not test_accounts' and updates run_tests.sh to run all modules. B: Mentions in COMPLETION-REPORT.md that 'Total tests: 14 tests (up from 6)' and 'CI script updated: Now runs all tests'. Both discover the gap. A logs it in the plan file; B logs it in a separate report. A also mentions adding .gitignore (though the file shown is minimal). B doesn't show .gitignore handling.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "Handover reply (weight 1)",
+    "note": "A: Final chat reply is concise, lists what's done (6 of 7), what's blocked (item 7), flags unmapped codes for Fin, and explains what was fixed. B: Final chat reply is longer, lists what was fixed, test results, what's still open, and references TODO-FIN.md and COMPLETION-REPORT.md. Both provide handover information. A is more concise; B is more detailed but less concise. The rubric asks for 'short final message'.",
+    "score_A": 9,
+    "score_B": 7
+   }
+  ],
+  "analysis": "Both responses successfully complete the technical work: they fix items 3 and 4 (parentheses and deduplication), implement item 5 (account remapping with unmapped code reporting), implement item 6 (--since filter), and correctly leave item 7 blocked. The code implementations are functionally equivalent and correct.\n\nThe key difference is in how they document and present the work:\n\n**Response A:**\n- Updates the original [redacted]-20260913-ledger-v3.md plan file with new timestamps, appends to Decisions and Verification Log, marks items with [x] and [!] status markers\n- Verification log entries include specific test counts and amounts (e.g., \"9 tests pass\", \"T-1003 keeps 2026-08-12 version (9750.00)\")\n- Logs discoveries (run_tests.sh gap, unmapped codes) in the plan file\n- Provides a concise handover reply\n- Follows the rubric's explicit requirement to \"append to the existing Decisions and Verification Log rather than writing a fresh plan\"\n\n**Response B:**\n- Creates separate documentation files (COMPLETION-REPORT.md, STATUS-SUMMARY.txt, TODO-FIN.md) instead of updating the original plan\n- Provides detailed verification in COMPLETION-REPORT.md but not in the original plan file\n- Logs discoveries in separate reports rather than in the plan file\n- Provides a longer handover reply with references to new files\n- Does not update the original plan file as the rubric requires\n\nBoth responses correctly identify and fix the technical issues. However, the rubric explicitly weights \"Resumes the existing plan instead of starting over\" at 3x and specifies \"appends to the existing Decisions and Verification Log rather than writing a fresh plan or working with no record at all.\" Response A follows this requirement; Response B creates new documentation instead of updating the existing plan file.\n\nResponse A also better satisfies the \"Discoveries logged as they surface\" criterion by logging them in the plan file where they're discoverable, whereas Response B logs them in separate files.\n\nBoth responses are technically sound, but Response A better follows the rubric's structural requirements around plan continuity and documentation location.\n",
+  "overall_A": 82,
+  "overall_B": 74,
+  "winner": "A"
+ },
+ "cost_usd": 0.031405,
+ "prompt_chars": 64094,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

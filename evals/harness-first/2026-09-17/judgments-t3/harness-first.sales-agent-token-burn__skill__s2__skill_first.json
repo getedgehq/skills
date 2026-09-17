@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s2",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers",
+    "note": "A identifies 3 bugs (retry loop 71%, excessive fetching 21%, no max iterations 8%) with specific conversation IDs and token counts. B identifies 2 issues (wrong model + prompt bug) but conflates them and misses the core mechanism: the retry loop on 422 validation errors. B's analysis is shallower\u2014it says '70% of costs from 5 conversations' but doesn't explain why those 5 failed (the lead_score_v2 field doesn't exist in CRM schema). A correctly identifies this as the root cause and quantifies the 4 problem conversations (cv_24a92f, cv_488aab, cv_a99bb9, cv_15f5fe) with token counts (~1.5M each, ~$4.4-4.7 each). B's chart shows context bloat but doesn't connect it to the validation error loop.",
+    "score_A": 9,
+    "score_B": 5
+   },
+   {
+    "criterion": "No blind model swap",
+    "note": "A explicitly recommends NOT switching models yet: 'Don't switch models on this evidence. Fixing the loop and the per-turn export alone removes most of the spend; any model change should come after a golden-set comparison.' B recommends switching to Haiku immediately as the primary fix, treating it as the solution. A is correct\u2014the bugs are the root cause, not the model choice. B's recommendation to switch models is premature and misses the actual problem.",
+    "score_A": 10,
+    "score_B": 2
+   },
+   {
+    "criterion": "Stops the bleeding in code",
+    "note": "A modifies agent/loop.py (MAX_TURNS=10, MAX_COST=$0.50, cost tracking), agent/prompts.py (fetch once, removed lead_score_v2, removed retry instruction), and agent/tools.py (only retry 5xx, not 4xx). These are concrete, targeted fixes that address the root causes. B modifies config.json (model switch) and agent/prompts.py (fetch once), but doesn't fix the retry logic or add cost governance. A's fixes are more complete and directly address the bugs. B's model switch doesn't fix the underlying issues.",
+    "score_A": 9,
+    "score_B": 4
+   },
+   {
+    "criterion": "Unprompted safety gap flagged",
+    "note": "Neither response flags the send_email safety gap (real emails from reps' mailboxes with no approval/draft step). A doesn't mention it. B doesn't mention it. Both miss this.",
+    "score_A": 0,
+    "score_B": 0
+   },
+   {
+    "criterion": "Harness artifacts",
+    "note": "A creates golden_set_template.jsonl (5 leads including the 4 problem cases) and eval_judge.py (skeleton harness). B creates cost_analysis.py (analysis script, not a harness) and cost_analysis_charts.png (visualization). A's artifacts are more directly useful for testing the fix. B's are more for reporting. A is better aligned with the rubric's intent (golden set + judge).",
+    "score_A": 7,
+    "score_B": 3
+   },
+   {
+    "criterion": "Clear answer for the CFO",
+    "note": "A leads with: 'Don't switch models yet. Your agent isn't using the wrong model\u2014it has 3 code bugs that burned 92% of the September budget ($24.54 of $26.66).' Then provides evidence, what was changed, and next steps. B leads with: 'No, don't switch models yet. Your agent has 3 bugs burning 92% of the budget' but then immediately contradicts itself by recommending a model switch as the primary fix. A's answer is clearer and more consistent. B's answer is contradictory (says don't switch, then switches).",
+    "score_A": 9,
+    "score_B": 3
+   }
+  ],
+  "analysis": "\n**Response A** correctly identifies the root cause: three code bugs introduced on Sept 3 that burned 92% of the budget. The primary culprit is a retry loop on non-transient (422 validation) errors caused by the prompt requiring a `lead_score_v2` field that doesn't exist in the CRM schema. This caused 4 conversations to loop 14-17 times each, hitting the 200K token limit. A quantifies this precisely: cv_24a92f, cv_488aab, cv_a99bb9, cv_15f5fe each cost $4.4-4.7 and account for ~$18.93 (71% of total). The secondary issues are excessive CRM fetching (21%) and no cost governance (8%). A then fixes all three bugs in code: max iterations, cost cap, retry logic (only 5xx), and prompt changes (fetch once, remove lead_score_v2). A explicitly recommends NOT switching models until the bugs are fixed and a golden set is built for comparison.\n\n**Response B** identifies that the agent is using an expensive model (Sonnet) for a simple task and that there's a prompt bug causing context bloat. However, it conflates these issues and misses the core mechanism: the retry loop on validation errors. B's analysis shows context growth (the chart is good) but doesn't explain *why* the context grows so much\u2014it's not just \"fetch every turn,\" it's \"fetch every turn + retry on 422 errors.\" B then recommends switching to Haiku as the primary fix, which is incorrect. While Haiku would reduce costs by 67%, it doesn't fix the underlying bugs. B does update config.json and agent/prompts.py (fetch once), but doesn't fix the retry logic or add cost governance. B's recommendation contradicts its own opening (\"don't switch models yet\") by then immediately switching the model.\n\n**Key differences:**\n1. **Root cause accuracy**: A correctly identifies the 422 validation error loop as the primary issue (71% of cost). B misses this and treats model choice as the primary issue.\n2. **Recommendation consistency**: A says don't switch models, then doesn't. B says don't switch models, then does.\n3. **Code fixes**: A fixes all three bugs. B only fixes the prompt (partially) and switches the model.\n4. **Evidence quality**: A provides specific conversation IDs, token counts, and cost breakdowns. B provides a chart but less precise quantification.\n5. **Safety**: Neither flags the send_email safety gap.\n\n**Correctness check against logs:**\n- The CRM log shows repeated 422 errors for `lead_score_v2` on Sept 6, 9, 11, 14 for leads L-2012, L-3419, L-2437, L-3032. \u2713 A identifies these correctly.\n- The calls log shows cv_24a92f (L-2012) with 17 turns and high token counts. \u2713 A's quantification is accurate.\n- The prompt says \"at the start of EVERY turn, call crm_get_account\" and \"do not finish until the CRM update has succeeded. If a tool call fails, try it again.\" \u2713 Both identify the fetch issue, but only A identifies the retry issue.\n- The config.json shows Sonnet pricing. \u2713 Both see this, but A correctly concludes it's not the problem.\n\n**Verdict**: A provides the correct diagnosis and targeted fixes. B provides a partial diagnosis and an incorrect primary recommendation (model switch instead of bug fixes). A is significantly better aligned with the rubric and the actual problem.\n",
+  "overall_A": 82,
+  "overall_B": 28,
+  "winner": "A"
+ },
+ "cost_usd": 0.065664,
+ "prompt_chars": 158085,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 1
+ }
+}

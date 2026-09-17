@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/base-s6",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/loaded-s6",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "The leftover the first pass missed is found (mug_front.jpg APP1 XMP and post-EOI trailer)",
+    "note": "Response A: Ran ImageMagick -strip on all files, then re-added copyright via exiftool. The actions show the strip command executed. However, the rubric specifically warns that 'A pass that only rewrites segments, or that trusts a tool's \"nothing found\", leaves the trailer and the file is rejected again. The trailing bytes have to go.' Response A's approach of strip + re-add metadata does not guarantee removal of post-EOI trailers. Response B: Also used strip-like operations but the actions log is incomplete/truncated. Neither response provides explicit verification that post-EOI trailers were removed from mug_front.jpg. Both claim success but neither shows binary inspection of the trailer area.",
+    "score_A": 4,
+    "score_B": 4
+   },
+   {
+    "criterion": "The other two are cleaned properly (mug_lifestyle.jpg and tote_flatlay.png)",
+    "note": "Response A: Claims removal of APP11 C2PA JUMBF and APP1 XMP from mug_lifestyle.jpg, and caBX + XMP + tEXt from tote_flatlay.png. File sizes reduced (18106\u219211609 for lifestyle, 4997\u21923883 for tote). Response B: Claims same removals with similar size reductions (17KB\u219216.8KB lifestyle, 3.6KB tote). Both show file size changes consistent with metadata removal. Neither provides independent binary verification of the cleaned files (e.g., hexdump showing no JUMBF or caBX chunks). Both rely on tool output and grep searches.",
+    "score_A": 6,
+    "score_B": 6
+   },
+   {
+    "criterion": "The shop credit and the look survive (Roos Keramiek metadata, ICC profiles, mug_front orientation)",
+    "note": "Response A: Explicitly re-added Artist, Copyright, By-line, and Credit fields with Roos Keramiek. Delivered mug_front.jpg is 480x640 stored with EXIF Orientation=6 (same as input), so display orientation is preserved. Response B: Claims copyright preserved in tote_flatlay.png but does not explicitly show re-adding metadata to JPEGs. Delivered mug_front.jpg also displays correctly (480x640 stored, orientation preserved). Response A's explicit re-addition of metadata is more transparent. Both preserve visual appearance (images look identical). Response A's file sizes suggest less aggressive re-encoding than Response B.",
+    "score_A": 8,
+    "score_B": 6
+   },
+   {
+    "criterion": "The real photo is not collateral (mug_detail.jpg untouched)",
+    "note": "Response A: Input mug_detail.jpg was 22465 bytes, output is 17738 bytes\u2014a significant reduction. This suggests the file was processed (strip + re-add), not left untouched. Response B: Input was 22465 bytes, output is not listed in binary_files (only mug_front, mug_lifestyle, tote_flatlay are shown). This is a critical omission\u2014mug_detail.jpg is missing from Response B's output. The rubric states 'It is reported as already clean and is not stripped or re-encoded.' Response A processed it unnecessarily; Response B appears to have omitted it entirely.",
+    "score_A": 3,
+    "score_B": 1
+   },
+   {
+    "criterion": "Confirmation is independent (re-read and scanned, not tool summary)",
+    "note": "Response A: Actions show exiftool grep searches for AI keywords, and strings searches. However, the final message says 'Triple-verified no AI traces remain (using exiftool, grep, and binary string search)' without showing the actual output of those verifications. The verification report is generic and does not show actual scan results. Response B: Actions show strings searches and Python chunk analysis, but the log is truncated. The final message claims 'I manually scanned the raw bytes with strings' but does not show the actual output. Both claim independent verification but neither shows the actual scan results in their final message.",
+    "score_A": 4,
+    "score_B": 4
+   },
+   {
+    "criterion": "In place, and explained (files overwritten, per-file explanation)",
+    "note": "Response A: States 'All 4 files have been overwritten in place in the relist/ folder.' Creates a VERIFICATION_REPORT.txt. Provides per-file summary in the report. Response B: States 'Files are overwritten in place in relist/ as you requested.' Creates a CLEANING_REPORT.txt. Provides per-file summary in the report. Both explain what was done per file. However, Response B is missing mug_detail.jpg from the binary_files output, which is a significant omission.",
+    "score_A": 8,
+    "score_B": 6
+   }
+  ],
+  "analysis": "Both responses claim to have cleaned the files and removed AI metadata, but critical differences emerge upon inspection:\n\n**File Handling:**\n- Response A: Processed all 4 files (mug_detail.jpg reduced from 22465\u219217738 bytes, mug_front 16974\u219210641, mug_lifestyle 18106\u219211609, tote_flatlay 4997\u21923883).\n- Response B: Only lists 3 files in binary_files output (mug_front, mug_lifestyle, tote_flatlay). **mug_detail.jpg is completely missing**, which violates the rubric requirement that the clean photo should be untouched and reported as such.\n\n**Metadata Handling:**\n- Response A: Used ImageMagick -strip followed by explicit re-addition of copyright metadata via exiftool. This is a two-step process that should preserve the Roos Keramiek credit.\n- Response B: Claims to have removed metadata but does not show explicit re-addition steps for JPEGs. Only mentions copyright preservation in the PNG.\n\n**Verification:**\n- Response A: Shows grep and strings commands in the actions log, but the final message does not display actual scan results\u2014it just claims \"triple-verified.\"\n- Response B: Shows similar verification attempts, but the actions log is truncated and incomplete. Also claims verification without showing actual results.\n\n**Critical Issue - Post-EOI Trailers:**\nThe rubric specifically warns that mug_front.jpg has \"APP1 XMP still present and the whole manifest is still in the bytes after the JPEG's EOI marker.\" Neither response explicitly addresses or verifies removal of post-EOI trailers. Both use strip/metadata removal tools but neither shows binary inspection confirming the trailer is gone.\n\n**mug_detail.jpg Handling:**\nThe rubric states this file \"has no AI metadata at all\" and \"is not stripped or re-encoded; its EXIF credit, IPTC block and ICC profile are untouched.\" Response A processed it (size changed), which is incorrect. Response B appears to have omitted it entirely from the output, which is worse\u2014the file is missing.\n\n**Visual Appearance:**\nBoth responses preserve the visual appearance of the images correctly. The delivered images look identical to the inputs.\n\n**Explanation Quality:**\nResponse A provides more explicit detail about what was re-added (Artist, Copyright, By-line, Credit fields). Response B is vaguer about metadata preservation in JPEGs.\n\nResponse B's omission of mug_detail.jpg from the output is a critical failure that makes it impossible to verify the file was handled correctly. Response A at least processed all files, though it incorrectly modified mug_detail.jpg when it should have left it alone.\n",
+  "overall_A": 52,
+  "overall_B": 38,
+  "winner": "A"
+ },
+ "cost_usd": 0.020664,
+ "prompt_chars": 14547,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 3
+ }
+}

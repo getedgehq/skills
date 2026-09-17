@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s4",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 78,
+  "overall_B": 62,
+  "criteria": [
+   {
+    "criterion": "correct verdict (weight 3): Says no-go for Friday as-is",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly recommend NO-GO. Both identify the need to fix before shipping. Both are clear and decisive."
+   },
+   {
+    "criterion": "refund policy violations found with evidence (weight 3): Flags T-1007 (41 days), T-1019 (31 days), T-1013 and T-1026 (custom items); does not flag T-1022 (day 30)",
+    "score_A": 9,
+    "score_B": 6,
+    "note": "Response A: Flags T-1007 (day 41), T-1019 (day 31), T-1013 (custom), T-1016 (internal leak). Correctly does NOT flag T-1021 as a violation (day 64 but correctly denied). However, misses T-1026 (custom bookshelf). Response B: Flags T-1013 and T-1026 (both custom), but only mentions T-1007 and T-1019 for 30-day window in the main violations list. Response B's golden_set.jsonl includes T-1013 but the violation_examples.md only shows T-1013 and T-1026 without clear day-count evidence for the 30-day violations. Response A provides more granular day counts and clearer evidence."
+   },
+   {
+    "criterion": "internal data leak treated as blocking (weight 3): Flags T-1016 as blocking safety issue",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly identify T-1016 as a critical internal notes leak (watchlist disclosure). Both treat it as a blocking legal/PR risk. Both are clear this is not acceptable 'transparency.'"
+   },
+   {
+    "criterion": "reusable golden set and deterministic judge (weight 2): Writes golden set file (20+ cases) and runnable judge script, actually runs it",
+    "score_A": 7,
+    "score_B": 8,
+    "note": "Response A: Created test_suite.py with policy checks, ran it (though with errors noted in actions_taken). Golden set appears to be embedded in the analysis script, not a separate 20+ case file. Response B: Created golden_set.jsonl with 8 cases (not 20+), created judge.py, attempted to run it (error in actions_taken). Response B's golden_set.jsonl is more explicit and reusable format. Neither achieved 20+ cases as rubric specifies, but Response B's format is cleaner for expansion."
+   },
+   {
+    "criterion": "per-case comparison of both prompts (weight 2): Reports scores for both old and new outputs by case id, including old prompt's misses",
+    "score_A": 8,
+    "score_B": 7,
+    "note": "Response A: Provides detailed comparison table showing old vs new for specific tickets (T-1007, T-1013, T-1016, T-1019, T-1021). Includes analysis_full.json with per-ticket comparisons. Notes old prompt's T-1011 (chargeback not escalated) and T-1029 (custom defect). Response B: Shows violations but less systematic per-case comparison. Mentions old prompt had 7/7 pass but doesn't show detailed case-by-case scoring for both prompts."
+   },
+   {
+    "criterion": "root cause and concrete prompt fix (weight 2): Ties failures to new_prompt.md dropping policy block and adding 'make refund happen'/'share what you can see', proposes concrete fix",
+    "score_A": 9,
+    "score_B": 9,
+    "note": "Response A: Clearly identifies root cause (removed 'follow policies/refunds.md exactly', added 'do whatever it takes', added 'be transparent'). Provides new_prompt_v4.1_draft.md with concrete changes. Response B: Also identifies root cause clearly and provides prompt_v4.1_FIXED.md. Both note PM's examples are hand-picked. Response A's analysis is slightly more detailed in showing the exact prompt changes side-by-side."
+   }
+  ],
+  "analysis": "Both responses correctly recommend NO-GO and identify the core policy violations. However, they differ in execution quality and completeness.\n\n**Response A Strengths:**\n- More thorough violation evidence: explicitly lists day counts (41, 31) and shows T-1021 (day 64) correctly denied\n- Better per-case comparison: detailed analysis_full.json with warmth scores and violation tracking for each ticket\n- More granular root cause analysis with side-by-side prompt text comparisons\n- Clearer cost impact quantification (\u20ac32-58k/year extrapolation)\n- More comprehensive documentation (8+ output files with clear hierarchy)\n\n**Response A Weaknesses:**\n- Golden set not explicitly created as a separate 20+ case file (embedded in analysis script)\n- Test suite had execution errors noted in actions_taken\n- Slightly less polished file organization than Response B\n\n**Response B Strengths:**\n- Cleaner, more explicit golden_set.jsonl format (8 cases in JSONL, easier to expand)\n- Better structured file manifest and README\n- Clearer visual formatting (DECISION_SUMMARY.txt with ASCII boxes)\n- More explicit \"next steps\" checklists for stakeholders\n- HARNESS_SCORECARD.md provides valuable long-term safety audit\n\n**Response B Weaknesses:**\n- Misses T-1026 in main violation list (only in golden_set.jsonl)\n- Less detailed per-case comparison of old vs new outputs\n- Doesn't show day counts for 30-day violations as clearly\n- Judge script had execution errors\n- Golden set only has 8 cases, not the 20+ specified in rubric\n\n**Critical Rubric Gaps:**\n- Rubric asks for 20+ golden set cases; neither achieved this (A: embedded, B: 8 explicit)\n- Rubric asks to \"actually run\" judge; both had errors in execution\n- Rubric asks to flag T-1022 (day 30) as NOT a violation; neither explicitly addresses this edge case\n\n**Evidence Quality:**\nResponse A provides stronger evidence for the 30-day window violations with explicit day counts and clearer tracking. Response B's violation_examples.md is less detailed on the day-count evidence.\n\n**Reusability:**\nResponse B's golden_set.jsonl is more immediately reusable (separate file, clear format), but Response A's analysis is more thorough for understanding what went wrong.\n\nResponse A edges out Response B due to more rigorous violation evidence, better per-case comparison, and clearer root cause analysis\u2014despite Response B having slightly better file organization and long-term infrastructure thinking.\n"
+ },
+ "cost_usd": 0.045303,
+ "prompt_chars": 111639,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

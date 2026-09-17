@@ -1,0 +1,81 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    OUTREACH AGENT COST REDUCTION                             ║
+║                          QUICK REFERENCE                                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ THE PROBLEM ─────────────────────────────────────────────────────────────┐
+│  Sept 1-15:   $26.66  (4x August, nobody changed volume)                  │
+│  Projected:   $53.33/month                                                 │
+│  Model:       claude-sonnet-4-5 ($3/$15 per M tokens)                     │
+│  Root cause:  TWO BUGS causing retry loops (not volume!)                   │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌─ THE SOLUTION ────────────────────────────────────────────────────────────┐
+│  ✅ 1. Switch to claude-haiku-4-5                                          │
+│       • Same API, drop-in replacement                                      │
+│       • $1/$5 per M tokens (67% cheaper)                                   │
+│       • Perfect for cold emails                                            │
+│                                                                            │
+│  ✅ 2. Fix lead_score_v2 bug                                               │
+│       • Field doesn't exist in CRM                                         │
+│       • Caused 422 errors → 15-17 turn retries                            │
+│       • 3 conversations = $14 (70% of costs!)                             │
+│                                                                            │
+│  ✅ 3. Fix merged account handling                                         │
+│       • Agent couldn't handle "account_merged" errors                      │
+│       • 2 conversations with 16-26 turns                                   │
+│                                                                            │
+│  ✅ 4. Add turn limit safety (max_turns=10)                                │
+│       • Hard stop prevents runaway costs                                   │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌─ COST IMPACT ─────────────────────────────────────────────────────────────┐
+│                                                                            │
+│   Metric              Before    →    After      Savings                   │
+│   ─────────────────────────────────────────────────────────               │
+│   Model pricing       $3/$15    →    $1/$5      67%                       │
+│   Sept 1-15           $26.66    →    $4.40      $22.26                    │
+│   Full month          $53.33    →    $8.80      $44.53  (84%)            │
+│   Annual              $640      →    $106       $534/year                 │
+│                                                                            │
+│   🎯 SAVE $45/MONTH = $534/YEAR                                            │
+│                                                                            │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌─ FILES CHANGED (Already done!) ───────────────────────────────────────────┐
+│  config.json         → Model: claude-haiku-4-5                            │
+│  agent/prompts.py    → Removed lead_score_v2, added error handling        │
+│  agent/loop.py       → Added max_turns=10 limit                           │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌─ DEPLOYMENT ──────────────────────────────────────────────────────────────┐
+│  git add config.json agent/prompts.py agent/loop.py                       │
+│  git commit -m "Switch to Haiku, fix bugs, add safety limits"             │
+│  git push && redeploy                                                      │
+│                                                                            │
+│  ⏱️  Takes 5 minutes                                                       │
+│  🔙 Rollback: edit config.json (30 seconds)                               │
+│  ✅ Can deploy before month end                                            │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌─ BREAKDOWN BY CONVERSATION TYPE ──────────────────────────────────────────┐
+│                                                                            │
+│  Normal (41 convs):    $7.89  →  $2.63   (3-4 turns, working fine)       │
+│  Bug #1 (3 convs):    $14.06  →  $0.57   (was 15-17 turns, now fixed)    │
+│  Bug #2 (2 convs):     $4.71  →  $0.38   (was 16-26 turns, now fixed)    │
+│                                                                            │
+│  The 5 problem conversations were 70% of your bill!                       │
+│                                                                            │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌─ NEXT STEPS ──────────────────────────────────────────────────────────────┐
+│  1. Read EXECUTIVE_SUMMARY_FOR_BOSS.txt (2 min)                           │
+│  2. Review DEPLOYMENT_CHECKLIST.md (3 min)                                │
+│  3. Deploy the changes (5 min)                                             │
+│  4. Monitor for 24 hours                                                   │
+│  5. Watch costs drop 84%                                                   │
+└───────────────────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  TL;DR: Haiku + bug fixes = $45/month savings. Deploy today. ✅              ║
+╚══════════════════════════════════════════════════════════════════════════════╝

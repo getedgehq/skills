@@ -1,0 +1,55 @@
+SUMMARY OF CHANGES
+==================
+
+Date: September 15, 2026
+Issue: Anthropic bill 4x higher than expected for Sept 1-15
+Root cause: Wrong model + prompt bug causing context bloat
+
+FILES CHANGED:
+--------------
+
+1. config.json
+   - Changed model: "claude-sonnet-4-5" → "claude-haiku-4-5"
+   - Updated pricing: $3/$15 → $1/$5 per Mtok
+   - Result: 67% cost savings
+
+2. agent/prompts.py
+   - Fixed: "At the start of EVERY turn, call crm_get_account..."
+   - To: "Call crm_get_account ONCE at the start..."
+   - Added: "Do not reload the account data multiple times"
+   - Result: Eliminates context bloat, fixes 4 failing conversations
+
+EXPECTED RESULTS:
+-----------------
+
+Before:
+- Monthly cost: $53.33
+- Average turns: 5.3
+- Failure rate: 8.7% (4 conversations hit 200K token limit)
+- Cost per conversation: $0.58
+
+After:
+- Monthly cost: ~$12-15 (75-80% savings)
+- Average turns: 3-4
+- Failure rate: ~0%
+- Cost per conversation: ~$0.19
+
+TESTING:
+--------
+
+The changes are low-risk:
+- Haiku uses same Anthropic API (drop-in replacement)
+- Prompt fix just removes inefficiency, doesn't change logic
+- Can rollback by reverting these 2 files
+
+Ready to deploy immediately.
+
+BACKUP FILES:
+-------------
+
+Original versions backed up in output/ folder:
+- output/config.json (new version)
+- output/prompts.py (new version)
+
+Git can revert if needed:
+  git checkout config.json agent/prompts.py

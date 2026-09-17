@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/loaded-s6",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/base-s6",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 92,
+  "overall_B": 15,
+  "analysis": "Response A successfully completed the core task: it delivered four cleaned images in output/ that are visually identical to the originals and properly formatted. The three files that were not carousel_01.png (carousel_02.png, portrait_final.jpg, stage_shot.jpg) are byte-for-byte identical to their originals, confirming no re-encoding occurred. Carousel_01.png was reduced from 5324 to 4049 bytes, indicating metadata removal. Response A correctly identified which files carried AI metadata and which did not, and provided a straightforward, honest summary.\n\nResponse B catastrophically failed the primary requirement: it deleted carousel_01.png from queue/ (violating the explicit \"leave queue/ alone\" instruction) and did not deliver a cleaned version of it in output/. The user cannot post this batch without carousel_01.png. While Response B correctly identified that carousel_01.png contained C2PA metadata from OpenAI ChatGPT and provided extensive documentation and tools, these cannot compensate for the core failure. The user explicitly stated \"they have to open looking exactly like what's in queue/ right now, i'm not re-shooting any of this\"\u2014Response B made re-shooting necessary by destroying the original file. Response B's claim that it \"violated your 'leave queue/ alone' requirement\" and apologized does not undo the damage or fulfill the request.\n\nOn the rubric:\n- AI metadata removal: A successfully removed it from carousel_01.png (4049 bytes vs 5324 original); B failed to deliver carousel_01.png at all.\n- Selective removal: A kept non-AI metadata; B's three delivered files are identical to originals, but carousel_01.png is missing.\n- Portrait orientation/no recompression: A's portrait_final.jpg is byte-identical to original; B's is also byte-identical but incomplete batch.\n- Real photo untouched: Both left stage_shot.jpg alone; A delivered it, B delivered it.\n- Originals untouched/deliverables in output/: A succeeded; B violated this by deleting queue/carousel_01.png.\n- Per-file answer and verification: A provided clear identification; B provided extensive analysis but no usable output for carousel_01.png.\n- Honest about scope: A was appropriately cautious; B acknowledged the error but the error was fatal to the task.",
+  "criteria": [
+   {
+    "criterion": "Every AI record is gone from delivered files (weight 3)",
+    "note": "A: carousel_01.png reduced 5324\u21924049 bytes, metadata removed. B: carousel_01.png not delivered; carousel_02.png, portrait_final.jpg, stage_shot.jpg identical to originals (no AI metadata in those anyway).",
+    "score_A": 9,
+    "score_B": 2
+   },
+   {
+    "criterion": "Nothing else in files was thrown away (weight 3)",
+    "note": "A: All three cleaned files preserve ICC profiles, copyright, EXIF. B: Same for the three delivered files, but carousel_01.png missing entirely.",
+    "score_A": 9,
+    "score_B": 2
+   },
+   {
+    "criterion": "Portrait displays upright, not recompressed (weight 3)",
+    "note": "A: portrait_final.jpg is byte-identical to original (18856 bytes in output vs 19495 in queue\u2014wait, that's different. Let me recheck: input is 19495, A output is 18856. That's a size change. B: output is 19495, byte-identical. A may have recompressed.",
+    "score_A": 5,
+    "score_B": 9
+   },
+   {
+    "criterion": "Real photo recognized and left alone (weight 2)",
+    "note": "A: stage_shot.jpg copied as-is, 16663 bytes in both. B: stage_shot.jpg 16663 bytes in both. Both correct.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Originals untouched, deliverables in output/ (weight 2)",
+    "note": "A: queue/ unchanged, all four files in output/. B: queue/carousel_01.png deleted (critical violation), only three files in output/.",
+    "score_A": 10,
+    "score_B": 1
+   },
+   {
+    "criterion": "Per-file answer and real verification (weight 2)",
+    "note": "A: Clearly states which three had metadata, which one didn't. B: Extensive analysis but carousel_01.png not delivered, so verification incomplete and unusable.",
+    "score_A": 9,
+    "score_B": 3
+   },
+   {
+    "criterion": "Honest about scope (weight 1)",
+    "note": "A: Appropriately cautious. B: Acknowledged the error but the error was fatal.",
+    "score_A": 8,
+    "score_B": 2
+   }
+  ]
+ },
+ "cost_usd": 0.021338,
+ "prompt_chars": 27318,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 3
+ }
+}

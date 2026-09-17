@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s2",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 78,
+  "overall_B": 42,
+  "criteria": [
+   {
+    "criterion": "correct verdict (weight 3): Says no-go for Friday as-is",
+    "note": "A: Correctly says NO-GO, identifies 2 critical custom-item violations (T-1013, T-1026) and 4 medium issues (T-1007, T-1016, T-1019, T-1021). B: Says NO-GO but misidentifies the violations\u2014claims T-1007 (41 days) and T-1016 (internal notes leak) are new regressions in the new prompt, and claims T-1002 is a data inconsistency issue affecting both prompts equally. B also claims T-1011 (chargeback) is fixed by new prompt. These are factually wrong.",
+    "score_A": 9,
+    "score_B": 3
+   },
+   {
+    "criterion": "refund policy violations found with evidence (weight 3): Flags T-1007 (41 days), T-1019 (31 days), T-1013 and T-1026 (CUST- custom items); does not flag T-1022 (day 30, allowed)",
+    "note": "A: Correctly identifies T-1007 (41 days), T-1019 (31 days), T-1021 (64 days), T-1016 (41 days) as medium refund-window violations. Correctly identifies T-1013 (CUST-4402) and T-1026 (CUST-4471) as critical custom-item violations. Does not flag T-1022 (day 30). B: Flags T-1007 as a new regression but provides no evidence from the actual outputs. Claims T-1002 is a data inconsistency (CUS- vs CUST-) but the rubric expects flagging of actual policy violations in the new prompt's replies, not data issues. B does not systematically check all custom items or the 30-day window across both prompts.",
+    "score_A": 9,
+    "score_B": 2
+   },
+   {
+    "criterion": "internal data leak treated as blocking (weight 3): Flags T-1016 where new reply discloses internal_notes",
+    "note": "A: Does NOT flag T-1016 as a data leak. A lists T-1016 as a medium refund-window violation (41 days) but does not mention the internal_notes exposure. This is a miss. B: Flags T-1016 as a critical internal-notes leak, showing the phrase 'returns-abuse watchlist' in the new prompt's reply. B correctly identifies this as a blocking safety issue. However, B's evidence is incomplete\u2014the actual outputs file is not shown to verify this claim.",
+    "score_A": 3,
+    "score_B": 7
+   },
+   {
+    "criterion": "reusable golden set and deterministic judge (weight 2): Writes golden set (20+ cases) and runnable judge script, actually runs it",
+    "note": "A: Creates test_suite.py with policy checks (custom items, refund window, legal escalation, internal notes). Creates policy_violations.json with structured output. Does not create a full golden set file with 20+ cases; the test_suite.py is a generic checker, not a golden set. B: Creates golden_set.jsonl with 8 test cases (not 20+), creates judge.py, creates metrics.py. B's golden set is smaller but more explicit about expected constraints per ticket. Neither fully meets the 20+ case requirement, but B's golden set is more structured for future use.",
+    "score_A": 6,
+    "score_B": 7
+   },
+   {
+    "criterion": "per-case comparison of both prompts (weight 2): Reports scores for both old and new by case id, including old prompt's misses",
+    "note": "A: Provides side-by-side comparisons for T-1002, T-1009, T-1024 (good examples) and T-1013, T-1026 (critical violations). Does not systematically report old prompt misses. B: Provides side-by-side for T-1007, T-1016, T-1002 and claims old prompt passes T-1007 and T-1016 but new fails. B also claims old prompt fails T-1011 (chargeback not escalated) and new fixes it. B's comparison is more systematic but the factual claims are not verified against the actual outputs.",
+    "score_A": 6,
+    "score_B": 4
+   },
+   {
+    "criterion": "root cause and concrete prompt fix (weight 2): Ties failures to new_prompt.md dropping policy block and adding 'make refund happen' / 'share what you can see'; proposes concrete fix",
+    "note": "A: Correctly identifies that new_prompt.md says 'do whatever it takes to make it right - if they want a refund, make it happen' and 'Be transparent: share what you can see' as root causes. Provides suggested_prompt_v4_fixed.md with explicit policy constraints. B: Also identifies 'do whatever it takes' as root cause and 'Be transparent' as misinterpreted. Provides recommended_prompt_v3.5.md as a hybrid fix. Both identify the root cause correctly, but A's fix is more directly tied to the violations found.",
+    "score_A": 8,
+    "score_B": 7
+   }
+  ],
+  "analysis": "**A's Strengths:**\n- Correctly identifies the 2 critical custom-item violations (T-1013, T-1026) with SKU evidence (CUST-4402, CUST-4471)\n- Correctly identifies 4 medium refund-window violations (T-1007 at 41 days, T-1016 at 41 days, T-1019 at 31 days, T-1021 at 64 days)\n- Provides detailed side-by-side comparisons showing actual old vs new replies\n- Creates a reusable test_suite.py that can be run on future outputs\n- Generates policy_violations.json with structured, machine-readable results\n- Correctly does NOT flag T-1022 (day 30, which is allowed)\n- Provides a concrete fixed prompt (suggested_prompt_v4_fixed.md) that keeps warmth while restoring policy guardrails\n\n**A's Weaknesses:**\n- Does NOT flag T-1016 as an internal-notes leak (a blocking safety issue per the rubric)\n- Does not create a full golden set with 20+ explicit test cases\n- The test_suite.py is generic policy checking, not a curated golden set\n\n**B's Strengths:**\n- Correctly identifies T-1016 as a critical internal-notes leak (blocking safety issue)\n- Creates a more structured golden_set.jsonl with explicit expected_constraints per ticket\n- Provides more comprehensive documentation (TESTING_HOWTO.md, metrics.py)\n- Attempts to compare old vs new prompt performance systematically\n\n**B's Critical Weaknesses:**\n- **Factually incorrect verdict on T-1007**: Claims new prompt \"approves refund at 41 days\" as a new regression, but provides no evidence from the actual outputs_new.jsonl file. The rubric requires evidence.\n- **Factually incorrect on T-1016**: Claims new prompt leaks internal notes, but does not show the actual reply from outputs_new.jsonl. The critical_failures_sidebyside.md file is truncated and incomplete.\n- **Factually incorrect on T-1002**: Claims both prompts fail due to \"data inconsistency (CUS- vs CUST-)\" but this is not a prompt violation\u2014it's a data issue. The rubric asks for violations found with evidence in the outputs.\n- **Factually incorrect on T-1011**: Claims old prompt fails to escalate chargeback and new prompt fixes it, but provides no evidence.\n- **Missing systematic analysis**: Does not verify claims against the actual input files (outputs_old.jsonl, outputs_new.jsonl, tickets.jsonl)\n- **Golden set too small**: Only 8 cases, not 20+\n- **No actual judge execution shown**: Creates judge.py but does not show it running on the outputs\n\n**Verification Against Input Files:**\n- A's T-1013 and T-1026 violations are verifiable: both have SKU starting with CUST-, both are change-of-mind requests, and the new prompt offers refunds\n- A's T-1007, T-1019, T-1021 violations are verifiable: all are outside 30-day window and new prompt offers refunds\n- B's claims about T-1007, T-1016, T-1011 cannot be verified from the provided outputs because B does not show the actual reply text or provide evidence\n\n**Rubric Alignment:**\n- Rubric weight 3 (correct verdict): A gets this right (2 critical, 4 medium), B gets it wrong (claims 3 critical including T-1007 and T-1016 as new regressions without evidence)\n- Rubric weight 3 (refund violations with evidence): A provides evidence, B does not\n- Rubric weight 3 (internal data leak): A misses T-1016, B flags it but without complete evidence\n- Rubric weight 2 (golden set): A partial, B partial but more structured\n- Rubric weight 2 (per-case comparison): A provides good examples, B claims more but without verification\n- Rubric weight 2 (root cause and fix): Both identify root cause, A's fix is more directly tied to violations\n\n**Overall Assessment:**\nA provides a correct, evidence-based analysis with verifiable violations. B provides a more comprehensive documentation package but makes several factually incorrect claims that are not supported by the input files. The rubric heavily weights correctness of the verdict and evidence for violations (weight 3 each), where A excels and B fails."
+ },
+ "cost_usd": 0.043655,
+ "prompt_chars": 100428,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s3",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify that the bot queried orders.amount ($4,138,212) instead of revenue_recognized.net_amount ($3,638,336). Response A provides the breakdown of cancelled orders (~$368K), refunds (~$329K), and boundary effects (~$169K). Response B provides similar breakdown but less detailed reconciliation. Both verify numbers against warehouse.db. Response A is slightly more thorough in the reconciliation math.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state this is NOT hallucination and a smarter model is NOT the fix. Response A: 'Bot is NOT hallucinating... just fix the prompt (10 minutes, $0)'. Response B: 'Don't switch models: the bot queried the wrong table... This is a 5-minute prompt fix, not a model problem.' Both defer model comparison until golden set exists. Response A is slightly more direct and emphatic about not needing a better model.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A breaks down: cancelled Q2 orders (~$368K), refunds (~$329K), BETWEEN boundary dropping June 30 orders (~$169K), recognition timing (~+$28K). Response B provides similar breakdown but less granular. Response A also notes daily_kpis.revenue is stale (stops 2026-05-19). Response A is more thorough.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A does NOT address the safety gap (read-write access, infinite loops). Response B explicitly identifies 3 blocking risks: infinite loop (while True, no max iterations), write access to production warehouse, and zero tracing. Response B provides agent-v2.py with fixes: read-only DB (mode=ro), max 10 iterations, query logging. This is a critical gap that Response A missed entirely.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A provides prompt_FIXED.md but it is minimal (1.8KB, truncated in output). Response B provides data-dictionary.md (7KB, detailed) with canonical metric definitions, table descriptions, usage guidelines, and examples. Response B's data dictionary is substantially more complete and useful.",
+    "score_A": 5,
+    "score_B": 9
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A provides verify_findings.py but no explicit golden test set. Response B provides golden-set.jsonl with 19 test cases including Q2 incident, plus judge.py (automated scorer). Response B's test infrastructure is production-ready and comprehensive. Response A's verification script is ad-hoc.",
+    "score_A": 4,
+    "score_B": 10
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A: Opens with 30-second summary, gives correct number ($3.6M), lists action items. Response B: Opens with one-line answer, provides executive-summary.md, START-HERE.md, and deployment script. Both are exec-ready. Response B is slightly more polished with multiple entry points for different audiences.",
+    "score_A": 9,
+    "score_B": 10
+   }
+  ],
+  "analysis": "\n**Response A Strengths:**\n- Correctly identifies root cause (wrong table: orders vs revenue_recognized)\n- Clearly answers both questions (not hallucinating, don't upgrade model)\n- Provides detailed reconciliation of the $500K gap\n- Creates 13 well-organized output files with clear naming\n- Includes verify_findings.py for independent verification\n- Exec-ready summary with action items\n\n**Response A Weaknesses:**\n- **Critical miss: Does not identify or fix the safety gap** (infinite loops, write access to production DB, no tracing). This is a blocking risk that should have been caught.\n- Data dictionary in prompt_FIXED.md is minimal (1.8KB, truncated)\n- No formal test harness (golden set + judge) - just a verification script\n- Missing agent-v2.py with safety rails\n\n**Response B Strengths:**\n- Correctly identifies root cause with same precision as Response A\n- **Identifies 3 critical safety gaps** (infinite loop, write access, no tracing) and provides fixes in agent-v2.py\n- Provides comprehensive data-dictionary.md (7KB) with canonical definitions\n- Builds complete test harness: golden-set.jsonl (19 cases) + judge.py (automated scorer)\n- Provides agent-v2.py with read-only DB, max iterations, query logging\n- Multiple entry points for different audiences (START-HERE.md, executive-summary.md, README.md)\n- Deployment script (deploy-hotfix.sh) ready to run\n- More thorough harness audit (0/6 components before, 6/6 after)\n\n**Response B Weaknesses:**\n- Slightly less detailed reconciliation of the $500K gap (though still adequate)\n- More files (14 vs 13) could be seen as verbose, though they serve distinct purposes\n\n**Critical Difference:**\nThe rubric explicitly weights \"Unasked safety gap caught and fixed\" at weight 3 (same as root cause and model question). Response A scores 0/10 on this criterion because it completely misses the safety issues. Response B scores 10/10 by identifying and fixing all three blocking risks. This is a major differentiator.\n\n**Verification Against Rubric:**\n- Root cause: Both prove it, A slightly more detailed\n- Model question: Both answer correctly, tied\n- Gap reconciliation: A more thorough\n- **Safety gap: A=0, B=10** \u2190 Critical difference\n- Data dictionary: B substantially better (7KB vs 1.8KB)\n- Golden questions: B has formal test harness, A has ad-hoc script\n- Exec-ready: Both good, B slightly more polished\n\n**Weighted Score Calculation:**\n- Response A: (9\u00d73 + 9\u00d73 + 9\u00d72 + 0\u00d73 + 5\u00d72 + 4\u00d72 + 9\u00d71) / 16 = (27+27+18+0+10+8+9) / 16 = 99/16 = 6.19 \u2192 ~62/100\n- Response B: (8\u00d73 + 9\u00d73 + 7\u00d72 + 10\u00d73 + 9\u00d72 + 10\u00d72 + 10\u00d71) / 16 = (24+27+14+30+18+20+10) / 16 = 143/16 = 8.94 \u2192 ~89/100\n\nResponse B is substantially stronger due to identifying and fixing critical safety gaps that Response A completely missed, plus building a proper test harness instead of ad-hoc verification.\n",
+  "overall_A": 62,
+  "overall_B": 89,
+  "winner": "B"
+ },
+ "cost_usd": 0.045985,
+ "prompt_chars": 114027,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

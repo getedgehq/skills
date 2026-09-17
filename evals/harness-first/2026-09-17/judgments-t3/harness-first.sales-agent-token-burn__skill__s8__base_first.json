@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s8",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s8",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "Response A: Identifies cost driver (97% input tokens, avg 36K/call) and recommends Haiku but does NOT identify the actual root cause\u2014the infinite retry loops on 422 errors. Misses the 4 conversations (cv_24a92f, cv_488aab, cv_a99bb9, cv_15f5fe) that burned 69% of costs. Response B: Correctly identifies all 3 root causes with file:line evidence (loop.py:16 while True, tools.py:22-31 @with_retries on all errors, prompts.py:9 'try again' + lead_score_v2 reference). Quantifies the 4 expensive conversations ($4.39-4.73 each, $18.44 total = 69% of $26.66). Shows token growth mechanism (2K\u2192193K over 16 turns). Cites logs/crm_client.log showing 64+ failed PATCH attempts for L-2012.",
+    "score_A": 3,
+    "score_B": 10
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "Response A: Recommends switching to Haiku immediately and updates config.json without evidence. Says 'Haiku is the smart choice for a quick pre-month-end fix' but provides no quality eval or golden set. Violates the rubric requirement to not blindly swap models. Response B: Explicitly says 'Don't switch models yet' and recommends a 3-phase approach: (1) fix harness, (2) build golden set, (3) run eval before switching. Provides golden_set_starter.jsonl with 10 test cases and recommends expanding to 20-30 before eval. Correctly prioritizes fixing the loop first.",
+    "score_A": 1,
+    "score_B": 10
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "Response A: Changes config.json to Haiku and modifies prompts.py to remove 'EVERY turn' CRM fetch. Does NOT add iteration cap, cost cap, or smart retry logic. The loop.py still has `while True` with no max iterations. Response B: Provides complete fixes in output/fixes/: (1) loop.py with MAX_ITERATIONS=10 and MAX_COST_PER_CONVERSATION=$1.0, (2) tools.py with smart error classification (only retry 429/5xx, not 422/404), (3) prompts.py removing lead_score_v2 and 'try again', (4) tracing.py for error logging. Includes installation guide and testing checklist. These fixes would have capped Sept 1-15 at ~$10 vs $26.66.",
+    "score_A": 2,
+    "score_B": 10
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "Response A: Does not mention send_email safety, approval gates, or draft mode. No mention of the risk of sending emails without review. Response B: Flags in harness_scorecard.md that 'Emails sent directly (no draft mode)' and recommends adding approval gate for high-value leads. Notes 'no review for emails to high-value prospects' and 'once sent, cannot be unsent'. Recommends draft mode and approval gates in Phase 4.",
+    "score_A": 0,
+    "score_B": 8
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "Response A: Creates cost_analysis.json and token_usage_breakdown.json but no golden set, no judge, no harness scorecard. No testing foundation. Response B: Creates comprehensive harness_scorecard.md (6-part audit: golden set, judge, cost governance, data layer, action safety, tracing). Provides golden_set_starter.jsonl with 10 test cases (normal, failures, edge cases). Includes fixes/README.md with testing checklist. Provides cost_breakdown_visual.txt with ASCII charts. Much more complete harness foundation.",
+    "score_A": 2,
+    "score_B": 9
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "Response A: Leads with 'Switch to Claude Haiku 4.5' and '$35.55/month savings'. Numbers are consistent with logs ($26.66 for 15 days \u2192 $53.33/month). But the answer is wrong\u2014it recommends a model switch without fixing the underlying bug. Response B: Leads with 'Don't switch models yet: 3 harness bugs caused 69% of costs.' Provides clear phased answer: fix harness ($36-44/mo savings), then eval Haiku ($10-11/mo additional). Numbers are consistent and grounded in evidence. The CFO gets the right answer with clear prioritization.",
+    "score_A": 4,
+    "score_B": 10
+   }
+  ],
+  "analysis": "Response A recommends switching to Haiku immediately based on a surface-level cost analysis (97% input tokens, avg 36K/call) without identifying the actual root cause: 4 conversations stuck in infinite retry loops on 422 validation errors, burning 69% of the budget. It updates config.json and modifies the prompt to remove the \"EVERY turn\" CRM fetch, but leaves the core bugs unfixed (no iteration cap, no smart retry logic, no cost cap). The loop.py still has `while True` with no maximum iterations.\n\nResponse B correctly diagnoses all 3 root causes with file:line evidence: (1) loop.py:16 has `while True` with no cap, (2) tools.py:22-31 retries ALL errors including permanent 422/404, (3) prompts.py:9 says \"try again\" and references nonexistent field \"lead_score_v2\". It quantifies the 4 expensive conversations (cv_24a92f, cv_488aab, cv_a99bb9, cv_15f5fe) costing $4.39-4.73 each ($18.44 total = 69% of $26.66). It shows the token growth mechanism (2K\u2192193K over 16 turns) and cites logs/crm_client.log showing 64+ failed PATCH attempts for L-2012.\n\nResponse B provides complete, deployable fixes in output/fixes/: iteration cap (10), cost cap ($1.00), smart error classification (only retry transient errors), and enhanced tracing. It includes a testing checklist and installation guide. Response A does not add iteration or cost caps, leaving the agent vulnerable to runaway costs.\n\nResponse B explicitly recommends a 3-phase approach: (1) fix harness (saves $36-44/mo), (2) build golden set, (3) run eval before switching to Haiku. It provides golden_set_starter.jsonl with 10 test cases and a harness_scorecard.md auditing 6 critical areas (golden set, judge, cost governance, data layer, action safety, tracing). Response A blindly recommends switching models without any quality eval or golden set.\n\nResponse B flags the unprompted safety gap: emails sent directly with no draft mode or approval gate. Response A does not mention this risk.\n\nResponse B's answer to the CFO is correct: \"Don't switch models yet\u2014fix the harness first.\" Response A's answer is wrong: it recommends a model switch that would not solve the underlying problem (a cheaper model in a broken loop still burns money).\n\nBoth responses have consistent numbers ($26.66 for Sept 1-15, $53.33 projected monthly), but Response B's analysis is grounded in the actual root cause, while Response A's is based on a misdiagnosis.",
+  "overall_A": 22,
+  "overall_B": 94,
+  "winner": "B"
+ },
+ "cost_usd": 0.055306,
+ "prompt_chars": 127052,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

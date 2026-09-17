@@ -1,5 +1,7 @@
 # harness-first, run `hf-v1`, 2026-09-15
 
+> **Superseded on 2026-09-17.** The grader that produced the verdicts in this directory could see the automated checker's verdict for each side while it scored, so its +33.7 point result is withdrawn. Nothing here has been altered or removed; it is kept because the withdrawn number was published and the evidence for withdrawing it should be readable. The current measurement of this Skill is [`evals/harness-first/2026-09-17/`](../2026-09-17/), and the page both directories back is [`harness-first/EVALS.md`](../../../harness-first/EVALS.md), which explains the withdrawal.
+
 The complete artifacts behind [`harness-first/EVALS.md`](../../../harness-first/EVALS.md).
 Twenty-four agent sessions, twenty-four grader verdicts, three tasks, and the files every
 session produced. Nothing here is summarised. If something here disagrees with the numbers on

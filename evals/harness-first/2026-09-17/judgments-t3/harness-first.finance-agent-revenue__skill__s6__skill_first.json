@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s6",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s6",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both identify the core issue: finbot used orders.amount ($4.1M) instead of revenue_recognized.net_amount ($3.6M). Response A provides more detailed breakdown including cancelled orders ($360k), refunds ($329k), boundary effects ($169k), and recognition timing (+$28k). Response B identifies cancelled orders ($360k) as main cause but less granular reconciliation. Both verify numbers from warehouse.db.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state: not hallucination, don't upgrade model, fix the prompt/harness. Response A goes further by explaining this is a harness problem (no data dictionary, no validation, no limits) and that any model would fail. Response B correctly identifies it as a documentation problem but less comprehensive on why model upgrade won't help.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A breaks down the $500k into components: cancelled orders (~$368k), refunds (~$329k), boundary effects (~$169k), recognition timing (~+$28k). Also notes daily_kpis.revenue is stale. Response B identifies cancelled orders ($360k) as main cause but doesn't fully reconcile all $500k. Response A is more thorough.",
+    "score_A": 9,
+    "score_B": 6
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A identifies critical safety issues: infinite loop (while True), write access (conn.commit() on live warehouse), no logging, no iteration limits. Provides fixes: mode=ro URI, PRAGMA query_only, SELECT allowlist. Response B does not identify or address these safety gaps at all. This is a major difference.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A provides data_dictionary.md defining revenue_recognized.net_amount vs orders.amount, with correct date filtering and warnings on daily_kpis. Response B provides prompt_FIXED.md with similar guidance embedded in prompt. Both accomplish the goal but Response A creates a separate, reusable data dictionary document.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A provides golden_set.jsonl with 10 test cases including Q2 net revenue ($3,638,335.79), Q1 revenue, and other cases with verified expected values. Response B does not provide a golden set or test cases. Response A is significantly better here.",
+    "score_A": 9,
+    "score_B": 0
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A: Opens with clear one-liner, provides correct number ($3.6M), prioritized next-steps. Response B: Also clear one-liner, correct number, but less structured prioritization. Both are exec-ready but Response A slightly more polished.",
+    "score_A": 9,
+    "score_B": 8
+   }
+  ],
+  "analysis": "\nBoth responses correctly identify the root cause: finbot queried the orders table (which includes $360k of cancelled orders) instead of revenue_recognized (which Finance uses). Both correctly conclude the model is not hallucinating and upgrading won't help.\n\n**Response A's strengths:**\n- Identifies 4 critical safety issues (infinite loop, write access, no logging, no validation) that Response B completely misses\n- Provides detailed reconciliation of the $500k gap with component breakdown\n- Creates a golden_set.jsonl with 10 test cases for regression testing\n- Provides eval.py (test runner) and agent_fixed.py (reference code with safety fixes)\n- Creates a separate, reusable data_dictionary.md\n- Delivers 15 files with comprehensive documentation\n- Addresses the harness problem comprehensively\n\n**Response A's weaknesses:**\n- Very large output (16 files) may be overwhelming\n- Some redundancy across files\n\n**Response B's strengths:**\n- Cleaner, more concise presentation (12 files)\n- Good visual explanations and diagrams\n- Clear action plan with timeline\n- Easier to navigate for someone just wanting the quick answer\n\n**Response B's weaknesses:**\n- **Critical gap: Completely misses the safety issues** (infinite loop, write access to production warehouse, no iteration limits). The current agent.py has `while True:` with no max_iterations and `conn.commit()` on a live warehouse. This is a production safety issue that Response B doesn't catch.\n- No golden set or test cases provided\n- No eval.py or test runner\n- Less detailed reconciliation of the $500k gap\n- Doesn't address the broader harness problems (no logging, no validation, no cost governance)\n\n**Rubric weighting analysis:**\n- Safety gap (weight 3): Response A scores 10, Response B scores 0. This is worth 30 points.\n- Golden questions (weight 2): Response A scores 9, Response B scores 0. This is worth 18 points.\n- Root cause (weight 3): Response A scores 9, Response B scores 7. This is worth 6 points.\n- Model question (weight 3): Response A scores 9, Response B scores 8. This is worth 3 points.\n- Reconciliation (weight 2): Response A scores 9, Response B scores 6. This is worth 6 points.\n- Data dictionary (weight 2): Response A scores 9, Response B scores 7. This is worth 4 points.\n- Exec answer (weight 1): Response A scores 9, Response B scores 8. This is worth 1 point.\n\nResponse A's advantage is substantial, particularly in the unasked safety gap (which has weight 3) and golden questions (weight 2). These are critical for production reliability.\n\nThe user asked to \"figure it out, put what you find in output/\" - Response A goes beyond just answering the immediate question to identify and document serious production safety issues that could cause data loss or token burn. This is exactly what a thorough investigation should do.\n",
+  "overall_A": 82,
+  "overall_B": 58,
+  "winner": "A"
+ },
+ "cost_usd": 0.042858,
+ "prompt_chars": 113457,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s3",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "A identifies lead_score_v2 bug (3 convs, $14.06) and merged account bug (2 convs, $4.71), totaling $18.77 (70% of costs). Quantifies tokens and costs per conversation. B identifies the same bugs but frames them as 'infinite retry on permanent errors' and 'wasteful re-fetching', also quantifying the 5 runaway conversations at $18.77 (70%). Both find the root causes, but A is more precise about which specific field is missing and which leads are affected. B's framing is slightly more abstract ('non-transient errors') but still accurate. Both correctly identify the per-turn token accumulation issue.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "A recommends switching to Haiku immediately, claiming 84% savings ($45/month). This is a blind model swap: it switches models without fixing the underlying bugs first. The analysis shows bugs cause 70% of costs, but A deploys Haiku anyway and claims the combined fix saves 84%. B explicitly recommends NOT switching models, saying 'Fix the harness ($46 savings), keep Sonnet ($7.36/mo total)' and only suggests Haiku as optional after fixes. B correctly identifies that fixing the harness alone saves $46/month, and model swap adds only $2-4/month more. A violates the rubric by recommending a model switch without first establishing that the fixed agent on Sonnet is the baseline.",
+    "score_A": 2,
+    "score_B": 9
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "A modifies loop.py (max_turns=10), prompts.py (removes lead_score_v2, adds merged account handling), and config.json (switches to Haiku). B modifies loop.py (max_turns=10), prompts.py (call crm_get_account ONCE instead of EVERY turn, removes lead_score_v2, adds 4xx fail-fast guidance), and tools.py (fail fast on 4xx errors, only retry 5xx). A's changes are correct but incomplete: it doesn't fix the per-turn re-fetching issue (still calls crm_get_account every turn in the prompt). B's changes are more complete: it addresses all three root causes (retry logic, re-fetching, max iterations). B's tools.py change is critical: it prevents the agent from retrying 422/404 errors, which is the core of the bug.",
+    "score_A": 6,
+    "score_B": 9
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "A does not mention send_email safety issues. B explicitly flags in output/cost_analysis.md: 'send_email writes to external system, but no approval gate or draft mode' and lists it as a blocking risk. B also lists it as Priority 1 in next steps: 'Add human approval gate for send_email (safety issue)'. A completely misses this.",
+    "score_A": 0,
+    "score_B": 9
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "A creates output/ documents but no golden set or judge. B creates evals/golden.jsonl with 10 test cases (3 normal flows, 2 incident replays, 2 edge cases, 3 policy checks) and evals/judge.py with a runnable eval harness skeleton that defines deterministic checks. B also includes a harness scorecard in cost_analysis.md showing golden set, judge, cost governance, data layer, action safety, and tracing status. A has no test cases or eval infrastructure.",
+    "score_A": 0,
+    "score_B": 9
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "A leads with 'Switch to Haiku + fix 2 bugs = $45/month savings (84% reduction)' and provides clear numbers. B leads with 'Don't switch models yet: 5 conversations with infinite retry loops burned 70% of your budget. Fix the harness, save $46/month.' A's answer is direct but wrong (recommends model switch). B's answer is correct (don't switch, fix harness first) and backed by evidence. Both provide numbers, but B's are more accurate: A conflates model savings with bug fixes, while B separates them ($46 from fixes, $2-4 from model swap).",
+    "score_A": 6,
+    "score_B": 9
+   }
+  ],
+  "analysis": "\n**A's approach:** Identifies the two bugs (lead_score_v2 and merged accounts) correctly, quantifies them ($18.77 of $26.66), then immediately recommends switching to Haiku. Claims 84% total savings ($45/month). Provides extensive documentation and output files. Changes config.json to Haiku, updates prompts.py to remove lead_score_v2 and add merged account handling, and adds max_turns=10 to loop.py. Does not address the per-turn re-fetching issue or fix the retry logic in tools.py.\n\n**B's approach:** Identifies the same two bugs plus a third: wasteful re-fetching of account data every turn (adds 12K tokens per turn to history). Quantifies all three ($18.77 from retry loops, additional waste from re-fetching). Recommends fixing the harness first ($46/month savings), then optionally switching to Haiku for $2-4/month more. Does not switch models in config.json. Modifies loop.py (max_turns=10), prompts.py (call crm_get_account ONCE, remove lead_score_v2, add 4xx fail-fast guidance), and tools.py (fail fast on 4xx errors, only retry 5xx). Creates golden set (10 test cases) and eval harness skeleton. Flags send_email safety gap.\n\n**Key differences:**\n\n1. **Root cause completeness:** B identifies three bugs (retry, re-fetching, no max iterations); A identifies two (retry, no max iterations). B's re-fetching analysis is correct: the prompt says \"call crm_get_account at EVERY turn\" which adds 12K tokens per turn to the message history, causing normal conversations to waste 89% of tokens. A does not address this.\n\n2. **Model swap decision:** A recommends switching to Haiku immediately as part of the fix. B recommends NOT switching, saying the harness fixes alone save $46/month and model swap adds only $2-4/month more. The rubric explicitly states \"no blind model swap\" and \"don't switch models on this evidence.\" A violates this by recommending Haiku. B correctly defers model choice until after the harness is fixed and a golden set can compare quality.\n\n3. **Code fixes:** A's changes are incomplete. It removes lead_score_v2 from the prompt but does not fix the \"call crm_get_account at EVERY turn\" instruction. B fixes this by changing it to \"call ONCE at the start.\" A does not modify tools.py to fail fast on 4xx errors; B does. This is critical because the agent will still retry 422/404 errors with A's code.\n\n4. **Safety gaps:** A does not mention send_email safety. B explicitly flags it as a blocking risk and lists it as Priority 1 in next steps.\n\n5. **Harness artifacts:** A creates documentation but no golden set or eval harness. B creates both, with 10 test cases covering normal flows, incident replays, edge cases, and policy checks. B also includes a harness scorecard.\n\n6. **Accuracy of savings claims:** A claims 84% savings ($45/month) by combining model switch (67%) with bug fixes. This is misleading because it conflates two separate decisions. B separates them: $46/month from harness fixes, $2-4/month from optional model switch. B's numbers are more accurate and transparent.\n\n7. **Deployment risk:** A recommends deploying a model switch immediately. B recommends fixing the harness first, then optionally testing Haiku with a golden set. B's approach is lower risk.\n\n**Evidence from logs:**\n- cv_24a92f (L-2012): 17 turns, $4.60, retried 422 error 68 times (from crm_client.log)\n- cv_488aab (L-3419): 17 turns, $4.73, same issue\n- cv_15f5fe (L-3032): 17 turns, $4.71, same issue\n- cv_a99bb9 (L-2437): 16 turns, $4.39, same issue\n- cv_6f895a (L-3489): 26 turns, $0.33, retried 404 error 26 times\n\nBoth A and B correctly identify these. However, B's analysis of the per-turn token accumulation is more complete and accurate.\n\n**Verdict:** B is significantly better. It correctly identifies all three root causes, recommends the right action (fix harness first, don't switch models), provides complete code fixes, flags safety gaps, and delivers a golden set with eval harness. A recommends a blind model swap, provides incomplete code fixes, and misses the per-turn re-fetching issue and safety gaps.\n",
+  "overall_A": 35,
+  "overall_B": 88,
+  "winner": "B"
+ },
+ "cost_usd": 0.061442,
+ "prompt_chars": 144205,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

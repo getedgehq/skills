@@ -1,0 +1,85 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s7",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s7",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 78,
+  "overall_B": 42,
+  "criteria": [
+   {
+    "criterion": "Correct verdict (NO-GO for Friday)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly identify NO-GO. A says 4 violations (13%), B says 5 violations (17%). Both are defensible readings of the data, though A's count is more precise."
+   },
+   {
+    "criterion": "Refund policy violations found with evidence (T-1007, T-1013, T-1019, T-1026, T-1022 not flagged)",
+    "score_A": 9,
+    "score_B": 5,
+    "note": "A correctly identifies T-1007 (41 days), T-1013 (custom), T-1026 (custom) with day counts and SKU evidence. Does not flag T-1019 or T-1022. B claims T-1019 and T-1007 violations but provides no day counts or evidence from the actual data. B's claim of '80+ days' for T-1007 is unsupported (actual is 41 days). B does not verify against tickets.jsonl."
+   },
+   {
+    "criterion": "Internal data leak (T-1016) treated as blocking",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly flag T-1016 as a critical data leak (watchlist exposure). Both treat it as blocking. A provides the exact internal note text; B also identifies it clearly."
+   },
+   {
+    "criterion": "Reusable golden set and deterministic judge (20+ cases, runnable script)",
+    "score_A": 8,
+    "score_B": 6,
+    "note": "A creates analyze.py that runs and produces output/analysis_summary.txt with actual results. Golden set is implicit in the 30 tickets analyzed. B creates judge_golden.py and judge.py but they error out during execution (ERROR in actions_taken). B's golden_set.json exists but judge scripts don't run successfully. A's script is deterministic and ran to completion."
+   },
+   {
+    "criterion": "Per-case comparison of both prompts (scores for old and new by case ID)",
+    "score_A": 9,
+    "score_B": 7,
+    "note": "A provides detailed per-ticket analysis in analysis_summary.txt showing old vs new replies for each violation case (T-1007, T-1013, T-1016, T-1026). B provides violation_details.json but the judge scripts that would score all cases don't run successfully. A's analysis is complete and verified."
+   },
+   {
+    "criterion": "Root cause and concrete prompt fix",
+    "score_A": 9,
+    "score_B": 8,
+    "note": "A correctly identifies root cause: new prompt says 'do whatever it takes' without policy guardrails, removed explicit policy block. Proposes concrete fix in new_prompt_FIXED.md. B also identifies root cause correctly and provides new_prompt_FIXED.md. Both tie on root cause analysis, but A's fix is more directly tied to the evidence (shows what was removed)."
+   },
+   {
+    "criterion": "Accuracy of financial impact claims",
+    "score_A": 8,
+    "score_B": 3,
+    "note": "A estimates \u00a3500k-1.4M annual based on 13% violation rate on 30 tickets. B claims \u20ac52-68K/month (\u20ac624-816K/year) but also says '5 out of 8 golden set cases' which is inconsistent with the 30-ticket dataset. B's \u20ac52-68K/month figure appears to be invented without clear derivation from the data. A's estimate is more conservative and better grounded."
+   },
+   {
+    "criterion": "Verification of claims against input files",
+    "score_A": 9,
+    "score_B": 4,
+    "note": "A ran analyze.py which loaded and parsed tickets.jsonl, outputs_old.jsonl, outputs_new.jsonl, and policies/refunds.md. Verified dates, SKUs, and policy rules. B claims violations but does not show evidence of loading/parsing the actual files. B's claim of '80+ days' for T-1007 contradicts the data (41 days). B's '5 out of 8 golden set' framing is not grounded in the 30-ticket replay."
+   },
+   {
+    "criterion": "Practical next steps and timeline",
+    "score_A": 8,
+    "score_B": 8,
+    "note": "Both provide clear timelines (3-5 days to fix and retest). A recommends Thursday fix, Thursday EOD retest, Monday launch. B recommends similar 3-5 day timeline. Both provide checklists and reusable tools. Roughly equivalent."
+   },
+   {
+    "criterion": "Deliverables organized and usable",
+    "score_A": 8,
+    "score_B": 9,
+    "note": "A creates 10+ files with clear naming (EXEC_BRIEF.md, go_no_go.md, detailed_analysis.md, etc.). B creates 15+ files with even more structure (00_START_HERE.md, QUICK_REFERENCE.txt, INDEX.md). B's file organization is slightly better. However, A's files are all verified to work; B's judge scripts error out."
+   }
+  ],
+  "analysis": "\n**Response A: Correct verdict with verified evidence**\n\nA conducts a rigorous analysis by:\n1. Writing and running analyze.py that successfully parses all input files (tickets.jsonl, outputs_old.jsonl, outputs_new.jsonl, policies/refunds.md)\n2. Identifying 4 critical violations with specific evidence: T-1007 (41 days), T-1013 (CUST-4402), T-1016 (watchlist leak), T-1026 (CUST-4471)\n3. Providing side-by-side old/new replies for each violation\n4. Estimating financial impact conservatively (\u00a3500k-1.4M annual)\n5. Delivering a working deterministic judge (analyze.py) that can be reused\n6. Correctly noting that T-1022 (day 30) is NOT a violation\n\nThe analysis is grounded in the actual data. The script ran successfully and produced output/analysis_summary.txt with detailed per-ticket results.\n\n**Response B: Plausible verdict but unverified claims**\n\nB provides a well-organized deliverable package with many files, but:\n1. Claims \"5 out of 8 golden set cases\" failed, but the input is 30 tickets, not 8. This framing is inconsistent with the data.\n2. Claims T-1007 is \"80+ days outside window\" but the actual data shows 41 days (June 26 to August 6). This is a factual error.\n3. Creates judge_golden.py and judge.py but they error out during execution (visible in actions_taken). The scripts don't run successfully.\n4. Estimates \u20ac52-68K/month without clear derivation from the 30-ticket sample. The math is not shown.\n5. Does not show evidence of loading/parsing the actual input files to verify violations.\n\nB's deliverables are well-structured but the core analysis is not verified against the data. The judge scripts that would provide deterministic scoring don't work.\n\n**Key differences:**\n\n- **Verification**: A ran code that loaded and analyzed the actual files. B created scripts that don't execute successfully.\n- **Accuracy**: A correctly identifies 41 days for T-1007. B claims \"80+ days\" without evidence.\n- **Golden set framing**: A analyzes 30 real tickets. B frames it as \"8 golden set cases\" which is inconsistent with the input.\n- **Financial impact**: A's estimate is conservative and grounded. B's estimate lacks clear derivation.\n- **Reusability**: A's analyze.py works and can be reused. B's judge scripts error out.\n\nBoth reach the correct NO-GO verdict, but A's analysis is grounded in verified evidence while B's is based on unverified claims and non-functional code.\n"
+ },
+ "cost_usd": 0.04482,
+ "prompt_chars": 112530,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

@@ -1,0 +1,62 @@
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                   OUTREACH AGENT COST ANALYSIS                              │
+│                        Sept 1-15, 2026 (46 leads)                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+CURRENT STATE (with bugs)
+═══════════════════════════════════════════════════════════════════════════════
+
+Conversation Distribution:
+  Normal (3-4 turns):    41 convs   $7.89    ██████████████░░░░░░░░░░░░░░  30%
+  Runaway (16-26 turns):  5 convs  $18.77    ████████████████████████████████  70%
+                         ──────────────────
+  Total:                 46 convs  $26.66
+
+Cost Per Turn (average conversation):
+  Turn 1:    $0.01  █
+  Turn 2:    $0.04  ████
+  Turn 3:    $0.07  ███████
+  Turn 4:    $0.10  ██████████
+  Turn 5:    $0.13  █████████████
+  Turn 6:    $0.16  ████████████████
+  ...and grows ~$0.03/turn (30-40KB JSON re-sent each time)
+
+Top Cost Drivers:
+  1. Infinite retry on 404/422 errors → 5 convs burned $18.77 (70% of total)
+  2. Re-fetch account every turn       → adds 12K tokens/turn to history
+  3. No max iterations                 → 1 conv ran 26 turns
+
+
+AFTER FIXES
+═══════════════════════════════════════════════════════════════════════════════
+
+All conversations:      46 convs   $3.68    ████████░░░░░░░░░░░░░░░░░░░░  14%
+
+Cost Per Turn (fixed):
+  Turn 1:    $0.006  █
+  Turn 2:    $0.006  █
+  Turn 3:    $0.006  █
+  (stays flat - no accumulation)
+
+Fixes Applied:
+  ✓ Fail fast on 4xx errors (404, 422)    → runaway convs: $18.77 → $0.60
+  ✓ Fetch account once per conversation    → normal convs: 89% token reduction  
+  ✓ Max 10 turns per conversation          → safety net for future issues
+
+
+PROJECTED MONTHLY COST
+═══════════════════════════════════════════════════════════════════════════════
+
+                           Sept 1-15    Full Month   After Fixes   Savings
+─────────────────────────────────────────────────────────────────────────────
+Current (buggy) rate      $26.66        $53.32       -             -
+Fixed harness             -             -            $7.36         $45.96/mo
+  → Switch to Haiku       -             -            $4.91         $48.41/mo
+  → Switch to GPT-5-mini  -             -            $3.68         $49.64/mo
+
+Recommendation: Fix harness first, evaluate model swap later with golden set.
+═══════════════════════════════════════════════════════════════════════════════
+
+KEY INSIGHT: Model choice wasn't the problem. 5 conversations with infinite
+retry loops spent 70% of the budget. The other 41 were resending 12KB of data
+every turn for no reason. Both are harness failures, not model failures.

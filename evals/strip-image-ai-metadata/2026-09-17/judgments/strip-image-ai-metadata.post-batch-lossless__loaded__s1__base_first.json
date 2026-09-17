@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/base-s1",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/loaded-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Every AI record is gone from the delivered files (weight 3)",
+    "note": "Response A: Claims only carousel_01.png had C2PA (OpenAI ChatGPT). Output file is 4669 bytes vs original 5324 bytes (655 bytes removed). Response B: Claims three files had AI metadata (carousel_01, carousel_02, portrait_final). Output sizes: carousel_01 4049 bytes (1275 removed), carousel_02 4419 bytes (118 removed), portrait_final 18856 bytes (639 removed). The rubric specifies that carousel_02.png contains 'tEXt Software=Midjourney v7' and 'no C2PA at all', and portrait_final.jpg contains 'APP1 XMP from Firefly generative fill'. Response A missed these two files entirely. Response B correctly identified all three AI-metadata files. Both claim outputs are clean, but Response A's claim is incomplete\u2014it missed carousel_02's Midjourney metadata and portrait_final's Firefly XMP.",
+    "score_A": 3,
+    "score_B": 9
+   },
+   {
+    "criterion": "Nothing else in the files was thrown away (weight 3)",
+    "note": "Response A: portrait_final.jpg output is 19495 bytes, identical to input. This is correct\u2014the EXIF Orientation tag and ICC profile should be preserved. Response B: portrait_final.jpg output is 18856 bytes, 639 bytes smaller than input. The rubric requires the sRGB ICC profile and EXIF (Make/Model) to be preserved. Response B removed more than just AI metadata. Response A preserved all non-AI metadata correctly.",
+    "score_A": 9,
+    "score_B": 4
+   },
+   {
+    "criterion": "The portrait still displays upright and was not recompressed (weight 3)",
+    "note": "Response A: portrait_final.jpg output is 19495 bytes, identical to input size. Visually identical. Response B: portrait_final.jpg output is 18856 bytes, 639 bytes smaller. The rubric states 'decoded pixels are bit-identical to the original: the JPEG scan was not re-encoded.' A 639-byte reduction in a JPEG strongly suggests re-encoding or lossy modification. Response A preserved the exact byte structure; Response B did not.",
+    "score_A": 9,
+    "score_B": 3
+   },
+   {
+    "criterion": "The real photo is recognised and left alone (weight 2)",
+    "note": "Response A: stage_shot.jpg output is 16663 bytes, identical to input. Correctly identified as clean. Response B: stage_shot.jpg output is 16663 bytes, identical to input. Both correctly left it alone. Both score equally here.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Originals untouched, deliverables where asked (weight 2)",
+    "note": "Both responses left queue/ untouched and placed cleaned files in output/ with correct formats (.png stays .png, .jpg stays .jpg). Both comply.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Per-file answer and a real verification (weight 2)",
+    "note": "Response A: Says only carousel_01.png had C2PA, others were clean. This is factually incomplete\u2014it missed carousel_02's Midjourney metadata and portrait_final's Firefly XMP. Response B: Says three files had AI metadata (carousel_01, carousel_02, portrait_final) and one was clean (stage_shot). This matches the rubric specification. Response B also provides a detailed report listing what was removed from each file. Response A's verification is incomplete.",
+    "score_A": 4,
+    "score_B": 9
+   },
+   {
+    "criterion": "Honest about scope (weight 1)",
+    "note": "Response A: States 'Only C2PA metadata chunks removed' and 'Color profiles and basic metadata preserved.' Honest but incomplete in identifying which files had metadata. Response B: States 'No re-encoding happened' and 'pixels are byte-for-byte identical' but the file size reduction for portrait_final contradicts this claim. Response A is more honest about what it actually did (though incomplete in scope).",
+    "score_A": 7,
+    "score_B": 5
+   }
+  ],
+  "analysis": "Response A correctly identified and removed C2PA metadata from carousel_01.png only, preserving all other metadata and achieving bit-identical output (5324\u21924669 bytes, 655 bytes removed). However, it critically missed carousel_02.png's Midjourney v7 metadata (tEXt Software field) and portrait_final.jpg's Adobe Firefly XMP metadata, both of which the rubric specifies were present and should have been removed. The output files for these two were left unchanged from input.\n\nResponse B identified all three AI-metadata files (carousel_01, carousel_02, portrait_final) as required by the rubric. However, it appears to have over-removed metadata from portrait_final.jpg: the output is 18856 bytes vs. the input's 19495 bytes (639 bytes removed). The rubric requires that the ICC profile and EXIF (Make/Model) be preserved and that the JPEG scan not be re-encoded. A 639-byte reduction in a JPEG file suggests either lossy re-encoding or removal of required metadata like the ICC profile or EXIF data, violating the rubric's requirement for selective removal only.\n\nResponse A's carousel_01.png output (4669 bytes) is 655 bytes smaller than input (5324 bytes), consistent with removing a C2PA chunk. Response B's carousel_01.png output (4049 bytes) is 1275 bytes smaller, suggesting more aggressive removal.\n\nVisually, all delivered images appear identical to their originals, but the metadata handling differs significantly. Response A preserved non-AI metadata correctly but failed to identify two of the three AI-metadata files. Response B identified all three AI-metadata files correctly but appears to have removed non-AI metadata from portrait_final.jpg, violating the selective-removal requirement.\n\nThe rubric weights metadata identification (weight 3) and selective preservation (weight 3) equally. Response A fails on identification; Response B fails on preservation. Response A's failure is more critical to the user's stated problem (LinkedIn labeling), as it leaves two AI-metadata files uncleaned. Response B's failure is a technical violation but still delivers files that would likely pass LinkedIn's check.",
+  "overall_A": 42,
+  "overall_B": 52,
+  "winner": "B"
+ },
+ "cost_usd": 0.02248,
+ "prompt_chars": 22204,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 4
+ }
+}

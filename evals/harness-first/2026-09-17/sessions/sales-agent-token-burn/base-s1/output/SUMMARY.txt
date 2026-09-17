@@ -1,0 +1,56 @@
+======================================================================
+SEPTEMBER 2026 ANTHROPIC COSTS - AGENT ANALYSIS
+======================================================================
+
+CURRENT STATE (Sept 1-15, halfway through month)
+----------------------------------------------------------------------
+  Model:              claude-sonnet-4-5
+  Cost so far:        $26.66
+  Projected month:    $53.33 (4x August!)
+  API calls:          245
+  Conversations:      46 leads
+  Input tokens:       8,718,520 (99.6% of cost)
+  Output tokens:      33,859
+
+ROOT CAUSE
+----------------------------------------------------------------------
+  • Prompt says 'call crm_get_account at start of EVERY turn'
+  • Loads 30-40KB JSON account exports repeatedly
+  • Tokens grow: 2K → 11K → 16K per conversation
+  • Worst case: 17 turns, 1.56M tokens, $4.73 per lead
+  • Agent hallucinates IDs on 404 errors → retry loops
+
+SOLUTION: SWITCH TO HAIKU 4.5
+----------------------------------------------------------------------
+  Same volume cost:   $8.89 (67% savings)
+  Projected month:    $17.78 (vs $53.33)
+  Monthly savings:    $35.55
+  Annual savings:     $426.60
+
+  Implementation:     Change 1 line in config.json
+  Risk:               Near zero (same API, writing cold emails)
+  Time to deploy:     5 minutes
+
+PRICING COMPARISON (per Priya's sheet)
+----------------------------------------------------------------------
+                     Input       Output      Half-Month   Savings
+  Sonnet 4.5         $3.00/M     $15.00/M    $26.66       baseline
+  Haiku 4.5    ⭐    $1.00/M     $5.00/M     $8.89        67%
+  GPT-5-mini         $0.25/M     $2.00/M     $2.25        92%
+  Gemini 2.5 Flash   $0.30/M     $2.50/M     $2.70        90%
+
+  ⭐ = Recommended (drop-in, zero risk)
+
+FILES CREATED IN output/
+----------------------------------------------------------------------
+  • cost_analysis.md           - Full analysis
+  • updated_config.json        - Ready to deploy
+  • sept_1-15_cost_breakdown.csv - Per-conversation details
+  • implementation_guide.md    - How to deploy
+  • SUMMARY.txt                - This file
+
+======================================================================
+
+TL;DR: Copy output/updated_config.json to config.json and restart.
+       Saves $35/month, zero risk, 5 minute deploy.
+======================================================================

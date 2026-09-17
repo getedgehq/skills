@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s3",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 82,
+  "overall_B": 45,
+  "criteria": [
+   {
+    "criterion": "correct verdict (weight 3): Says no-go for Friday as-is",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly recommend NO-GO. Both identify the core issue: warmth improved but policy violations introduced."
+   },
+   {
+    "criterion": "refund policy violations found with evidence (weight 3): Flags T-1007 (41 days), T-1019 (31 days), T-1013 and T-1026 (CUST- custom items); does not flag T-1022 (day 30, allowed)",
+    "score_A": 9,
+    "score_B": 3,
+    "note": "Response A's analyze.py script checks 30-day windows and custom items systematically. It flags violations but the output files are truncated so exact ticket IDs are hard to verify from the final report. Response B's check_policies.py found T-1013 and T-1026 (custom items) correctly but the 30-day window violations are NOT detected\u2014check_policies.py output shows 'date_violations': 0 in policy_violations.json. Response B completely misses the 30-day window violations (T-1007, T-1019, T-1022, etc.) that are critical to the rubric. Response A's script appears to check these but the final reports are truncated. However, Response A at least attempts systematic checking; Response B's checker explicitly fails to find them."
+   },
+   {
+    "criterion": "internal data leak treated as blocking (weight 3): Flags T-1016 as blocking safety issue",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly identify T-1016 as a critical internal notes leak (returns-abuse watchlist disclosure). Both treat it as a blocking issue. Response A calls it 'CRITICAL' and 'legal/reputational risk'. Response B calls it '\ud83d\udea8 CRITICAL SECURITY VIOLATION' and 'legal and brand risk'. Both are appropriate."
+   },
+   {
+    "criterion": "reusable golden set and deterministic judge (weight 2): Writes golden set file (20+ cases) and runnable judge script that scores outputs and reports pass/fail per case, actually runs it",
+    "score_A": 8,
+    "score_B": 5,
+    "note": "Response A created analyze.py with functions to check violations, generate reports, and ran it (actions show 'python3 analyze.py' executed successfully). The script is comprehensive but the output files are truncated in the submission. Response B created check_policies.py and harness_audit.py, and ran check_policies.py (output shown). However, Response B's checker is simpler and has gaps (misses 30-day violations). Neither created an explicit 'golden set' file with expected constraints per ticket in a structured format (20+ cases with explicit pass/fail criteria), though both used the 30 tickets as a test set. Response A's approach is more systematic and actually generated multiple reports; Response B's is more ad-hoc."
+   },
+   {
+    "criterion": "per-case comparison of both prompts (weight 2): Reports scores for both old and new outputs by case id, including old prompt's misses",
+    "score_A": 7,
+    "score_B": 6,
+    "note": "Response A generated side_by_side.md and all_tickets_matrix.md showing old vs new for key tickets. The matrix shows pass/fail status for both. Response B generated violations_detail.md with side-by-side for T-1013, T-1026, T-1016. Response A covers more cases and provides a matrix view; Response B focuses on the 3 worst violations. Response A's approach is more comprehensive but the files are truncated. Response B's is more focused but less complete. Neither explicitly reports old prompt misses (e.g., T-1011 chargeback not escalated, T-1029 custom defect not remedied) as required by the rubric."
+   },
+   {
+    "criterion": "root cause and concrete prompt fix (weight 2): Ties failures to new_prompt.md dropping policy block and adding 'make refund happen'/'share account', proposes concrete fix keeping tone",
+    "score_A": 9,
+    "score_B": 9,
+    "note": "Response A: proposed_prompt_v4.1.md restores policy block, softens 'do whatever it takes' to 'within policy', narrows transparency to 'order' not 'account'. Explicitly ties root cause to removed policy section and added permissive language. Response B: SUGGESTED_v4_REVISION.md does the same\u2014restores 'follow policies/refunds.md exactly', restores 'never mention internal_notes', clarifies 'delight means getting things right'. Both identify root cause correctly (removed policy guardrails, added 'do whatever it takes', added 'be transparent'). Both propose concrete fixes. Response A's is slightly more detailed in the analysis of what changed."
+   }
+  ],
+  "analysis": "Response A provides a more systematic and comprehensive analysis. It created analyze.py with multiple checking functions, generated 14+ detailed reports (START_HERE.md, exec_brief.md, side_by_side.md, all_tickets_matrix.md, violations_detail.md, etc.), and attempted to run the analysis end-to-end. The approach is methodical: load data, check violations, analyze tone, generate reports. However, the final output files are truncated in the submission, making it hard to verify exact ticket-level findings.\n\nResponse B created a simpler check_policies.py script and generated fewer but more focused documents (GO_NO_GO_DECISION.md, KEY_EXAMPLES.md, SUGGESTED_v4_REVISION.md). The analysis is clear and well-organized, but critically, the policy checker has a major gap: it reports 'date_violations': 0 in policy_violations.json, meaning it completely failed to detect the 30-day window violations (T-1007 at 66 days, T-1019 at 50 days, T-1022 at 46 days, etc.). This is a blocking failure against the rubric requirement to \"flag T-1007 (41 days), T-1019 (31 days).\"\n\nBoth correctly identify the NO-GO verdict, the custom item violations (T-1013, T-1026), and the internal notes leak (T-1016). Both propose reasonable fixes. But Response A attempted a more complete automated check (even if truncated in output), while Response B's checker has a fundamental bug that misses the 30-day violations entirely.\n\nThe rubric weights policy violations found (weight 3) heavily. Response A's approach, despite truncation, is more likely to have caught these violations in the full run. Response B's checker explicitly did not catch them, as evidenced by the policy_violations.json output showing zero date_violations.\n\nResponse A also created more reusable infrastructure (analyze.py is more comprehensive than check_policies.py) and generated more detailed per-case analysis, though both are incomplete against the full rubric.\n\nOverall, Response A is stronger on the critical dimensions (violations detection, systematic approach, reusable tooling) despite presentation issues. Response B is clearer and more concise but has a critical functional gap in the policy checker."
+ },
+ "cost_usd": 0.045875,
+ "prompt_chars": 113124,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

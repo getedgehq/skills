@@ -1,0 +1,80 @@
+================================================================================
+FINBOT Q2 REVENUE INCIDENT - QUICK REFERENCE
+================================================================================
+
+THE QUESTION:
+  "FinBot said Q2 revenue was $4.1M, Finance says $3.6M. 
+   Is the model hallucinating? Do we need a smarter model?"
+
+THE ANSWER:
+  ❌ NO. Not a model problem. Data layer problem.
+  ❌ NO. Don't upgrade the model.
+  ✅ YES. Fix is ready (see below).
+
+THE NUMBERS:
+  FinBot:  $4,138,212  (used orders table - includes cancelled/refunded)
+  Finance: $3,638,336  (used revenue_recognized - GAAP net revenue)
+  Error:   $499,876    (14% overstatement)
+
+ROOT CAUSE:
+  Prompt said: "Use orders or revenue_recognized"
+  Should say: "For REVENUE questions, use revenue_recognized.net_amount"
+  
+  Model picked wrong table because instructions were ambiguous.
+  This is a DATA LAYER problem, not MODEL CAPABILITY problem.
+
+THE FIX:
+  ✅ data_dictionary.md     - Defines which table/field for each metric
+  ✅ prompt_fixed.md        - Explicit rules for revenue questions
+  ✅ agent_fixed.py         - Loop safety + tracing
+  ✅ evals/golden.jsonl     - 10 test cases with expected answers
+  ✅ evals/run_eval.py      - Test runner
+
+BEFORE DEPLOYING:
+  ⚠️  BLOCKING: Manual review of past 30 days (Jonas + Marta)
+      - Export all threads with revenue/ARR/MRR
+      - Verify against finance numbers
+      - Notify teams if wrong numbers were used
+      - Timeline: 1-2 days
+
+AFTER DEPLOYING:
+  ✅ Run golden set (10 tests should pass)
+  ✅ Monitor logs/finbot_trace.jsonl for 24h
+  ✅ Clear for internal use (still verify board materials with Finance)
+
+COST ANALYSIS:
+  Current: ~500 tokens/query, ~$0.02/query, Sonnet 4.5
+  No token burning, no loops, no cost problem
+  Model upgrade would cost 3-5x more and fail the same way
+
+HARNESS SCORE:
+  Before: 1/6 components (only action safety)
+  After:  5/6 components (golden set, eval, cost gov, data dict, tracing)
+
+KEY DOCUMENTS:
+  Start here:   output/README.md
+  For Daniel:   output/EXECUTIVE_SUMMARY.md
+  Full detail:  output/FINDINGS.md
+  Deploy:       output/DEPLOYMENT_CHECKLIST.md
+  The fix:      output/data_dictionary.md
+
+OWNER:
+  Jonas Feld (Data team)
+  Sign-off needed: Marta Oyelaran (Finance)
+
+QUESTIONS?
+  Q: Should we switch models?
+  A: No. Model is fine. Data layer was broken.
+  
+  Q: Is it hallucinating?
+  A: No. It faithfully used the wrong table.
+  
+  Q: How do we prevent this?
+  A: Golden set + eval (now created). Run before every change.
+  
+  Q: Safe to use now?
+  A: After manual review (1-2 days) + deployment, yes.
+
+================================================================================
+For Daniel's meeting tomorrow: Start with EXECUTIVE_SUMMARY.md
+================================================================================

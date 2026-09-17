@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/loaded-s3",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/base-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "All three generated proofs come out clean (C2PA/JUMBF/AI strings removed)",
+    "note": "Response A: Claims removal but file sizes show label_back.jpg went from 22883\u219221546 bytes (1337 bytes removed, consistent with metadata stripping). sleeve_front.png 5253\u21923964 bytes (1289 bytes removed). moodboard.webp 2832\u21921572 bytes (1260 bytes removed). Response B: label_back.jpg 22883\u219212547 bytes (10336 bytes removed\u2014excessive, suggests re-encoding). sleeve_front.png 5253\u21923514 bytes (1739 bytes removed). moodboard.webp 2832\u21921626 bytes (1206 bytes removed). Response B's label_back reduction is suspiciously large and suggests lossy re-encoding rather than surgical metadata removal. Response A's reductions are proportional to metadata size.",
+    "score_A": 8,
+    "score_B": 4
+   },
+   {
+    "criterion": "Colour is not touched (ICC profiles intact, no re-encoding)",
+    "note": "Response A: Delivered files show label_back.jpg 21546 bytes (modest reduction), sleeve_front.png 3964 bytes, moodboard.webp 1572 bytes. Pixel dimensions preserved (640x640, 720x480, 512x512). Response B: label_back.jpg 12547 bytes (41% reduction from original 22883)\u2014this is a red flag for re-encoding. sleeve_front.png shows mode=P (palette) in delivered file vs RGB in original, indicating color space conversion. This violates the 'no re-encoding' requirement. Response B's actions log shows use of ImageMagick convert and jpegtran, which are lossy operations.",
+    "score_A": 9,
+    "score_B": 2
+   },
+   {
+    "criterion": "Rights and credit survive (tEXt/EXIF/IPTC records preserved)",
+    "note": "Response A: Claims Artist, Copyright, Credit preserved. Actions log shows exiftool queries for these fields returning results. Response B: Also claims rights preserved but the aggressive re-encoding (especially label_back.jpg losing 41% of bytes) raises doubt about whether EXIF/IPTC was truly preserved or reconstructed. The mode change in sleeve_front.png (RGB\u2192P) suggests data loss.",
+    "score_A": 8,
+    "score_B": 5
+   },
+   {
+    "criterion": "The sidecar is not missed (studio_shot.xmp handled, rights preserved)",
+    "note": "Response A: studio_shot.xmp reduced from 1040\u2192725 bytes (315 bytes removed). Claims Firefly/DigitalSourceType removed while Camera Raw settings retained. Response B: studio_shot.xmp 1040\u2192886 bytes (154 bytes removed). Both claim to have handled it, but Response A's larger reduction suggests more thorough removal of AI metadata. Response A explicitly mentions retaining Camera Raw settings.",
+    "score_A": 8,
+    "score_B": 7
+   },
+   {
+    "criterion": "The real photograph is left alone (studio_shot.jpg untouched)",
+    "note": "Response A: studio_shot.jpg not listed in binary_files output (19999 bytes input, no output size given\u2014implies untouched). Response B: studio_shot.jpg not in binary_files either. Both claim it was left alone. However, Response B's aggressive approach to other files raises concern about consistency.",
+    "score_A": 8,
+    "score_B": 7
+   },
+   {
+    "criterion": "Verified by looking, reported per file (manual inspection, not tool trust)",
+    "note": "Response A: Provides detailed CLEANING_REPORT.txt with per-file breakdown of what was removed and verification methods (exiftool, strings -a, binary inspection, PNG chunk analysis, WebP RIFF analysis). Explicitly states 'Not just running a tool and trusting it' and lists 9 verification methods. Response B: Claims manual inspection but actions log shows heavy reliance on automated tools (exiftool, ImageMagick, jpegtran). No detailed per-file report created. Response B's final chat says 'manually inspected' but the actions show tool-driven approach.",
+    "score_A": 9,
+    "score_B": 4
+   },
+   {
+    "criterion": "In place, with no renamed or duplicate copies left in proofs/",
+    "note": "Response A: Overwrites files in place. Creates CLEANING_REPORT.txt (a report, not a duplicate image). Response B: Deleted VERIFICATION_REPORT.txt at end (rm proofs/VERIFICATION_REPORT.txt). Both appear to have cleaned up. However, Response B's actions show temporary files created (/tmp/label_back_orig.jpg, etc.) but these are outside proofs/ so acceptable.",
+    "score_A": 9,
+    "score_B": 8
+   }
+  ],
+  "analysis": "Response A delivers files with modest, proportional byte reductions consistent with surgical metadata removal (label_back: 22883\u219221546 bytes, sleeve_front: 5253\u21923964 bytes, moodboard: 2832\u21921572 bytes). It provides a detailed CLEANING_REPORT.txt documenting per-file findings and explicitly states it performed manual binary inspection using exiftool, strings -a, JPEG trailer analysis, PNG chunk analysis, and WebP RIFF analysis\u2014not tool trust alone.\n\nResponse B delivers files with suspicious byte reductions, particularly label_back.jpg (22883\u219212547 bytes, a 41% loss). More critically, sleeve_front.png shows a color mode change from RGB to Palette (mode=P), indicating re-encoding and color space conversion. The actions log reveals Response B used ImageMagick convert and jpegtran, which are lossy operations. While Response B claims manual inspection, the actions show heavy tool reliance and the delivered files show evidence of re-encoding rather than surgical metadata removal.\n\nThe user explicitly stated: \"colour has to match the proof exactly so nothing gets re-saved or re-compressed\" and \"overwrite them in proofs/ directly.\" Response A preserves color profiles and dimensions. Response B's palette mode conversion and excessive byte loss violate the no-re-encoding requirement.\n\nResponse A also provides a comprehensive verification report showing what was found and removed per file, matching the user's request to \"tell me it's clean because you went and looked.\" Response B's report was deleted and the final chat lacks the per-file detail requested.\n\nBoth handled the sidecar, but Response A's larger XMP reduction (315 vs 154 bytes) and explicit mention of retaining Camera Raw settings suggests more thorough AI metadata removal while preserving legitimate data.",
+  "overall_A": 82,
+  "overall_B": 38,
+  "winner": "A"
+ },
+ "cost_usd": 0.021925,
+ "prompt_chars": 23350,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 3,
+  "B": 3
+ }
+}

@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/base-s1",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/loaded-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 28,
+  "overall_B": 82,
+  "criteria": [
+   {
+    "criterion": "All three generated proofs come out clean (C2PA/JUMBF/AI strings removed)",
+    "score_A": 2,
+    "score_B": 9,
+    "note": "A claims to have cleaned files but left backup copies and did not complete the cleanup (run ended abnormally with 'turn_cap'). The final rm command failed. B successfully removed AI metadata from all three files (label_back.jpg, sleeve_front.png, moodboard.webp) with no backups left behind. B's actions show successful exiftool operations and verification scans confirming removal."
+   },
+   {
+    "criterion": "Colour is not touched (ICC profiles byte-for-byte, no re-encoding)",
+    "score_A": 3,
+    "score_B": 8,
+    "note": "A claims ICC profiles are identical (MD5 hashes match) but the file sizes changed significantly: label_back.jpg grew from 22883 to 25108 bytes, moodboard.webp grew from 2832 to 5054 bytes, sleeve_front.png shrank from 5253 to 4833 bytes. These size changes indicate re-encoding occurred. B's files show more modest size changes (label_back: 21546 bytes, moodboard: 1580 bytes, sleeve_front: 4140 bytes) consistent with metadata removal only. B's approach of surgical metadata removal without decode/re-encode is more credible."
+   },
+   {
+    "criterion": "Rights and credit survive (Copyright, Author, Licence records preserved)",
+    "score_A": 4,
+    "score_B": 9,
+    "note": "A claims rights metadata is present but provides no verification that it was actually added or preserved. B explicitly added Copyright, Artist, and Credit metadata to sleeve_front.png and moodboard.webp via exiftool commands shown in actions_taken, and verified their presence. B also preserved dc:rights in studio_shot.xmp. A's claims lack supporting evidence in the command log."
+   },
+   {
+    "criterion": "The sidecar is not missed (studio_shot.xmp handled, rights preserved)",
+    "score_A": 2,
+    "score_B": 9,
+    "note": "A modified studio_shot.xmp (1040 bytes \u2192 799 bytes) but provided no details about what was removed or preserved. The file size reduction suggests content was deleted, but no verification shown. B explicitly checked studio_shot.xmp for AI signatures (Firefly, trainedAlgorithmic) and verified dc:rights/dc:creator were preserved. B's verification report confirms the sidecar was handled correctly."
+   },
+   {
+    "criterion": "The real photograph is left alone (studio_shot.jpg untouched)",
+    "score_A": 5,
+    "score_B": 9,
+    "note": "A claims studio_shot.jpg was not modified but provides no verification. B ran explicit trailer checks and metadata scans on studio_shot.jpg, confirming no AI signatures and that it was left untouched. B's verification is documented in actions_taken."
+   },
+   {
+    "criterion": "Verified by looking, reported per file, no duplicates left in proofs/",
+    "score_A": 1,
+    "score_B": 9,
+    "note": "A left backup copies (.backup files) in the proofs/ directory and the cleanup failed (rm command errored). The user explicitly said 'overwrite them in proofs/ directly' and 'no renamed or duplicate copies left'. A violated this requirement. B completed successfully with no backups or duplicates, and provided detailed per-file verification in both the chat reply and documentation files. B's run ended normally."
+   }
+  ],
+  "analysis": "Response A claims to have cleaned the files but the execution was incomplete and problematic. The run ended abnormally ('turn_cap did not finish normally'), backup files were left in the proofs/ directory despite the user's explicit instruction to overwrite in place with no duplicates, and the final cleanup command failed. File size changes (label_back.jpg +2225 bytes, moodboard.webp +2222 bytes) indicate re-encoding occurred, violating the colour-preservation requirement. While A claims ICC profiles are identical via MD5 hashes, the significant size increases contradict this claim. A provides minimal verification detail for rights metadata preservation.\n\nResponse B successfully completed the task with no abnormal termination. All backup files were removed, leaving only the cleaned production files in proofs/. File size changes are consistent with metadata removal only (label_back.jpg reduced to 21546 bytes, moodboard.webp to 1580 bytes). B explicitly verified AI signature removal via strings, exiftool, and hex inspection across all files. B added required rights/credit metadata to files that lacked it and verified preservation of existing rights in the sidecar. B provided detailed per-file verification in both the chat response and comprehensive documentation files (README_CLEAN.txt and VERIFICATION_REPORT.txt). The actions_taken log shows successful completion of all operations with proper verification steps.\n\nThe user's core requirement was: \"i'd rather you tell me it's clean because you went and looked than because a tool said so.\" B demonstrates this through explicit manual verification steps (strings scans, hex inspection, trailer checks, exiftool full metadata dumps) and reports findings per file. A relies more on tool output without demonstrating the same level of manual inspection and leaves the job incomplete with backups still present."
+ },
+ "cost_usd": 0.02016,
+ "prompt_chars": 22138,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 3,
+  "B": 3
+ }
+}

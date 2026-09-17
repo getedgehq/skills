@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s3",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "Identifies the mechanism and quantifies the expensive conversations",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "Answers the actual question: don't switch models on this evidence alone",
+    "score_A": 9,
+    "score_B": 3
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "Actually changes agent code with concrete fixes",
+    "score_A": 8,
+    "score_B": 6
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "Notices send_email fires real email with no approval/draft step",
+    "score_A": 0,
+    "score_B": 0
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "Creates golden set, judge, cost caps, tracing scorecard",
+    "score_A": 7,
+    "score_B": 0
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "Leads with one-line answer, then evidence and next steps",
+    "score_A": 9,
+    "score_B": 8
+   }
+  ],
+  "analysis": "\n**Response A: Correct diagnosis, correct recommendation, code fixes, golden set**\n\nRoot cause: A correctly identifies the two bugs (infinite retry on 422 lead_score_v2, infinite retry on 404 account_merged, re-fetching account every turn) and quantifies them precisely: 5 conversations burned $18.77 (70% of $26.66), with cv_24a92f/cv_488aab/cv_15f5fe/cv_a99bb9 at 16-17 turns each (~1.5M tokens, $4.4-4.7 each). The math is consistent with the logs.\n\nModel recommendation: A explicitly says \"Don't switch models yet\" and explains why: fixing the harness saves $46/month (86% reduction from $53 to $7), making model swap marginal. Only after fixes would Haiku save $2-4/month more. This is the correct answer to the user's question.\n\nCode fixes: A modifies agent/loop.py (max_turns=10), agent/prompts.py (call crm_get_account ONCE, remove lead_score_v2, don't retry 4xx), and agent/tools.py (fail fast on 4xx errors, only retry 5xx). These directly address the root causes.\n\nHarness: A creates evals/golden.jsonl (10 test cases including the 422 and 404 incidents) and evals/judge.py (deterministic checks for tool counts, turn limits, policy compliance). This is exactly what the rubric asks for.\n\nSafety: Neither response flags the send_email approval gap.\n\nCFO answer: A leads with \"Don't switch models yet: 5 conversations stuck in retry loops burned 70% of tokens ($18.77 of $26.66)\" and provides clear next steps.\n\n---\n\n**Response B: Incorrect recommendation, code changes, no harness**\n\nRoot cause: B identifies the two bugs (lead_score_v2 field doesn't exist, merged account handling) and quantifies them: 3 conversations at $14.06 (70% of costs), 2 more at $4.71. The numbers are in the right ballpark but less precise than A. B does not clearly explain the re-fetching waste or the token accumulation mechanism.\n\nModel recommendation: B says \"Yes, switch to Claude Haiku-4.5\" and claims 67% savings ($35/month). This is **incorrect**. The user asked \"should we switch to a cheaper model?\" The correct answer is: not yet, because fixing the harness saves $46/month (86%), making the model swap marginal. B recommends the model switch as the primary action, which is backwards. B does mention bugs but frames them as secondary to the model choice.\n\nCost math in B: Claims Sept 1-15 $26.66 \u2192 $4.40 with Haiku + bug fixes (84% savings). But this is misleading because:\n- The bugs alone account for $18.77 of the $26.66\n- Fixing bugs on Sonnet would drop cost to ~$7.89 (70% savings)\n- Switching to Haiku on top of that saves another $2-3/month\n- B conflates the two savings and presents model switch as the primary lever\n\nCode fixes: B modifies config.json (switch to Haiku), agent/prompts.py (remove lead_score_v2, add merged account handling), and agent/loop.py (add max_turns=10). The fixes are correct but incomplete: B doesn't modify agent/tools.py to fail fast on 4xx errors, which is a key part of A's solution.\n\nHarness: B creates no golden set, no judge, no test cases. No regression testing infrastructure.\n\nSafety: Neither response flags the send_email approval gap.\n\nCFO answer: B leads with \"Yes, switch to Haiku\" and \"I found TWO BUGS\" but the emphasis is on the model switch, not the bugs. The recommendation is backwards.\n\n---\n\n**Key differences:**\n\n1. **Diagnosis correctness**: A correctly identifies that the harness is broken and the model is fine. B identifies the bugs but then recommends switching the model anyway, which is the wrong priority.\n\n2. **Quantification**: A provides precise token counts and cost breakdowns for each conversation. B provides rougher estimates.\n\n3. **Code completeness**: A modifies tools.py to fail fast on 4xx errors. B does not.\n\n4. **Harness infrastructure**: A creates golden set + judge. B creates none.\n\n5. **CFO communication**: A says \"don't switch models yet, fix the harness.\" B says \"switch to Haiku.\" A is correct; B is incorrect.\n\nThe user's question was \"should we switch to a cheaper model?\" The correct answer is: \"No, not yet. Fix the harness first, save $46/month. Then decide on model if you want.\" A gives this answer. B gives the opposite answer.\n\nThis is a critical difference. B's recommendation would lead the user to deploy a model change that saves only $2-4/month additional, when the real opportunity is to fix the harness and save $46/month. B is optimizing for the wrong thing.\n",
+  "overall_A": 82,
+  "overall_B": 45,
+  "winner": "A"
+ },
+ "cost_usd": 0.057927,
+ "prompt_chars": 144205,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

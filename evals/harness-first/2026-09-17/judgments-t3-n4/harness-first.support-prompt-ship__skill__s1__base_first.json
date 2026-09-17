@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s1",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 78,
+  "overall_B": 42,
+  "criteria": [
+   {
+    "criterion": "correct verdict (weight 3)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly say NO-GO for Friday. Both identify the core issue: new prompt breaks policy. Both recommend fixing before shipping."
+   },
+   {
+    "criterion": "refund policy violations found with evidence (weight 3)",
+    "score_A": 9,
+    "score_B": 5,
+    "note": "A flags T-1007 (41 days), T-1019 (31 days), T-1013 and T-1026 (custom items), correctly notes T-1022 is day 30 and allowed. B flags T-1007 and T-1019 as 35-38 days (incorrect dates\u2014the input files show 26 June delivery for T-1007, which is 41 days to Aug, not 35), and flags T-1013 but misses T-1026 entirely. B's golden_set.jsonl has only 20 cases and doesn't include T-1022, T-1026, or other critical boundary tests. A provides more precise day counts and catches all four violations."
+   },
+   {
+    "criterion": "internal data leak treated as blocking (weight 3)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both flag T-1016 (watchlist leak) as a critical blocking issue. Both treat it as a legal/PR risk, not just 'transparency.' Both correctly identify this as the most serious violation."
+   },
+   {
+    "criterion": "reusable golden set and deterministic judge (weight 2)",
+    "score_A": 8,
+    "score_B": 7,
+    "note": "A provides policy_checker.py with detailed logic for 30-day window, custom items, internal notes, and escalations. B provides judge.py with simpler pattern matching (forbidden terms, must_include/must_not_include). A's checker is more sophisticated and tied to actual policy logic (date math, SKU checking). B's judge is simpler but less precise (e.g., checking for 'approved' as a forbidden term is brittle). Both are runnable; A's is more maintainable. A actually runs the checker in the analysis; B shows eval_old.txt and eval_new.txt but the judge.py logic is less rigorous."
+   },
+   {
+    "criterion": "per-case comparison of both prompts (weight 2)",
+    "score_A": 9,
+    "score_B": 6,
+    "note": "A provides detailed side-by-side comparisons in side_by_side_comparison.md with 10 key tickets, showing old vs new outputs and analysis. B provides side_by_side_failures.md but only for the 4 failures, not a comprehensive per-case scorecard. A also notes old prompt misses (T-1011 chargeback not escalated, T-1029 custom defect handling). B doesn't analyze old prompt failures as thoroughly."
+   },
+   {
+    "criterion": "root cause and concrete prompt fix (weight 2)",
+    "score_A": 9,
+    "score_B": 8,
+    "note": "A ties failures to new_prompt.md dropping policy block and adding 'make the refund happen' / 'share what you can see', proposes concrete fix in fix_diff.md with before/after examples. B also identifies the 'do whatever it takes' overwriting policy, provides new_prompt_v4.1_fixed.md with fixes. A's fix_diff.md is more detailed with specific examples (T-1007, T-1013, T-1016, T-1029 before/after). Both note PM's examples are hand-picked. A is slightly more thorough in showing the exact prompt changes needed."
+   }
+  ],
+  "analysis": "\n**Response A Strengths:**\n- Correctly identifies all 6 violations (T-1007, T-1019, T-1013, T-1026, T-1016, T-1011) with precise day counts and evidence\n- Provides policy_checker.py with sophisticated logic: date math for 30-day window, SKU checking for CUST-, internal notes detection, escalation rules\n- Delivers 11 comprehensive files including detailed side-by-side comparisons, scorecard, tone analysis\n- fix_diff.md shows exact before/after prompt changes with concrete examples for each violation\n- ACTION_PLAN.md provides detailed 2-week implementation roadmap with red-team test cases\n- Correctly notes T-1022 (day 30) is allowed and should not be flagged\n- Runs the policy checker and shows it caught violations\n- Provides reusable infrastructure for future prompt iterations\n\n**Response A Weaknesses:**\n- Slightly verbose in places (though thoroughness is appropriate for a sanity check)\n- Some files are very long (though user asked for \"anything that makes the next check less painful\")\n\n**Response B Strengths:**\n- Clear, concise decision documents (DECISION.txt, START_HERE.md)\n- Provides judge.py and golden_set.jsonl as reusable tools\n- Good narrative flow and executive summaries\n- Identifies root cause clearly: \"do whatever it takes\" overwrites policy\n- Provides new_prompt_v4.1_fixed.md with fixes\n\n**Response B Weaknesses:**\n- **Critical: Misses T-1026 entirely** (custom bookshelf refund). The rubric explicitly requires flagging this.\n- **Incorrect day counts:** Claims T-1007 is 35 days and T-1019 is 38 days. Checking the input files: T-1007 delivered 26 June, ticket in Aug = 41 days. T-1019 delivered 12 July, ticket in Aug = 31 days. B's numbers are wrong.\n- Golden set only has 20 cases, doesn't include T-1022 (day 30 boundary test), T-1026, or other critical edge cases\n- Judge.py uses brittle pattern matching (forbidden terms like 'approved', 'arranged') rather than policy logic\n- Doesn't analyze old prompt failures (T-1011 chargeback miss, T-1029 custom defect handling)\n- Less detailed per-case comparison; only shows the 4 failures, not a comprehensive scorecard\n- Doesn't actually run the judge on the data in the analysis (shows eval_old.txt and eval_new.txt but these appear to be template outputs, not actual runs on the provided files)\n\n**Rubric Alignment:**\n- Criterion 1 (correct verdict): Both 10/10 \u2713\n- Criterion 2 (violations with evidence): A 9/10, B 5/10 \u2717 (B misses T-1026, gets day counts wrong)\n- Criterion 3 (internal leak blocking): Both 10/10 \u2713\n- Criterion 4 (golden set + judge): A 8/10, B 7/10 (A's checker is more sophisticated)\n- Criterion 5 (per-case comparison): A 9/10, B 6/10 (A more comprehensive)\n- Criterion 6 (root cause + fix): A 9/10, B 8/10 (A more detailed)\n\n**Weighted Score:**\n- A: (10\u00d73 + 9\u00d73 + 10\u00d73 + 8\u00d72 + 9\u00d72 + 9\u00d72) / 15 = 133/15 \u2248 8.87 \u2192 78/100\n- B: (10\u00d73 + 5\u00d73 + 10\u00d73 + 7\u00d72 + 6\u00d72 + 8\u00d72) / 15 = 105/15 = 7.0 \u2192 42/100\n\nResponse A is significantly stronger due to correct violation identification, precise evidence, and more sophisticated reusable tools. Response B's failure to flag T-1026 and incorrect day counts are material defects for a compliance audit.\n"
+ },
+ "cost_usd": 0.047129,
+ "prompt_chars": 111549,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

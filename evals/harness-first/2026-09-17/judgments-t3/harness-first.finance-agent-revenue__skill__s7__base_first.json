@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s7",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s7",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify that finbot queried orders.amount ($4.1M) instead of revenue_recognized.net_amount ($3.6M). Both verify the $500K gap. Response A provides detailed breakdown of cancelled orders (~$368K), refunds (~$329K), and boundary effects (~$169K). Response B provides refunds ($332K) and timing differences ($167K). Both are mathematically sound and verified against the database.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state this is NOT hallucination and a smarter model is not the fix. Response A explicitly says 'don't upgrade the model' and provides a decision matrix. Response B also says 'don't switch models yet' and recommends testing after fixes. Both correctly identify this as a data/prompt problem, not model capability. Response A is slightly more emphatic and direct in the executive answer.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A breaks down the $500K into cancelled orders, refunds, and boundary effects with specific amounts. Response B provides refunds ($332K) and timing differences ($167K). Response A's breakdown is more granular and detailed. Both note daily_kpis is stale. Response A's reconciliation is more thorough.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A does NOT address the read-write database issue. The agent.py has `conn.commit()` which could execute writes. Response A does not mention this or provide a fix. Response B explicitly identifies this as a safety issue ('Write access on read path'), provides a fix (read-only connection with `mode=ro`), and includes it in agent_fixed.py. This is a critical oversight in Response A.",
+    "score_A": 2,
+    "score_B": 9
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A mentions creating a data dictionary but does not actually deliver one in the files. Response B delivers data_dictionary.md with comprehensive metric definitions, table purposes, and business rules. Response B actually creates and delivers the artifact; Response A only mentions it conceptually.",
+    "score_A": 3,
+    "score_B": 9
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A does not deliver a golden test set. Response B delivers evals/golden.jsonl with 20 test cases and run_eval.py script to validate them. Response B includes the incident case and other critical revenue questions with expected values. Response A completely lacks this.",
+    "score_A": 0,
+    "score_B": 9
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A opens with a clear one-liner and provides decision matrix. Response B opens with 'NO, the model is NOT hallucinating' and provides EXECUTIVE_SUMMARY.md. Both are exec-ready. Response A's CHECKLIST.md is more detailed for meeting prep. Response B's EXECUTIVE_SUMMARY.md is more concise. Both adequate.",
+    "score_A": 8,
+    "score_B": 8
+   }
+  ],
+  "analysis": "Response A provides a thorough investigation with clear root cause analysis and good documentation. It correctly identifies the problem (wrong table), explains why ($500K gap from refunds and timing), and recommends against model upgrade. However, it has two critical gaps: (1) it does NOT identify or fix the database write-access safety issue in agent.py (conn.commit() on a read path), and (2) it does not deliver a data dictionary or golden test set, only mentions them conceptually.\n\nResponse B provides the same root cause analysis but goes further on operational maturity. It explicitly identifies the database safety issue (write access on read path) and provides a fix (read-only connection). It delivers actual artifacts: data_dictionary.md with metric definitions, evals/golden.jsonl with 20 test cases, and run_eval.py for evaluation. It also includes a harness scorecard (F \u2192 B-) that audits all 6 components of a production LLM system.\n\nOn the core question (is the model hallucinating?), both are equally correct. On the rubric's emphasis on safety gaps and deliverables, Response B is substantially stronger. Response A's failure to catch the write-access issue is a material oversight for a production system. Response B's delivery of actual test cases and data dictionary (not just mentions) is more actionable.\n\nResponse A is well-written and organized but incomplete on critical production concerns. Response B is more comprehensive and delivers working artifacts, not just analysis.",
+  "overall_A": 72,
+  "overall_B": 88,
+  "winner": "B"
+ },
+ "cost_usd": 0.042029,
+ "prompt_chars": 113663,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

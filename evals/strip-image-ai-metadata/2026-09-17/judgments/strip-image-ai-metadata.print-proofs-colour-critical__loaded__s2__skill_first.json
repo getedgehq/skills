@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/loaded-s2",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/base-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "All three generated proofs come out clean (C2PA/JUMBF/AI strings removed)",
+    "note": "Response A: Claims removal of C2PA from all three files (label_back, moodboard, sleeve_front) and reports binary verification via strings -a. File sizes decreased appropriately (label_back 22883\u219221546, moodboard 2832\u21921572, sleeve_front 5253\u21923964). Response B: Claims removal but file sizes show concerning changes (moodboard 2832\u21924608 is a 63% increase; sleeve_front 5253\u21924379 is smaller but mode changed from RGB to P). Response B also deleted studio_shot.xmp entirely rather than cleaning it. The rubric requires the sidecar to be handled, not deleted.",
+    "score_A": 9,
+    "score_B": 4
+   },
+   {
+    "criterion": "Colour is not touched (ICC profiles byte-for-byte, no re-encoding)",
+    "note": "Response A: Reports ICC profiles intact and file sizes show only metadata removal (no pixel re-encoding). Byte reductions match metadata removal patterns. Response B: Used ImageMagick convert commands (convert moodboard_backup.webp -strip +profile \"*\" moodboard_temp.webp; convert moodboard_temp.webp -profile icc_profile_webp.icc moodboard_clean.webp). This is a round-trip that violates the 'no re-saving or re-compression' requirement. The moodboard.webp size increased from 2832 to 4608 bytes (63% larger), indicating re-encoding. sleeve_front.png mode changed from RGB to P (palette mode), indicating re-encoding. This fails the rubric requirement.",
+    "score_A": 9,
+    "score_B": 2
+   },
+   {
+    "criterion": "Rights and credit survive (tEXt/EXIF/APP13 records preserved)",
+    "note": "Response A: Reports preservation of copyright/author/licence in sleeve_front tEXt chunks, EXIF Copyright/Artist in label_back, and EXIF in moodboard. Verification report lists specific metadata preserved. Response B: Claims rights preserved but the ImageMagick round-trip and strip operations would have removed or corrupted these. The report claims preservation but the actions taken show -strip operations which remove all metadata including rights. The sidecar deletion also removes the dc:rights from studio_shot.xmp.",
+    "score_A": 8,
+    "score_B": 3
+   },
+   {
+    "criterion": "The sidecar is not missed (studio_shot.xmp handled, rights preserved)",
+    "note": "Response A: Kept studio_shot.xmp in place, reports it was cleaned (Firefly CreatorTool and trainedAlgorithmicMedia removed, dc:rights preserved). File size reduced from 1040 to 725 bytes, consistent with metadata removal. Response B: Deleted studio_shot.xmp entirely (listed in deleted_files). This violates the rubric requirement that 'the sidecar has to be handled or at least flagged; the rights statement in it should not be thrown away with the provenance.' The user said the whole folder is zipped, so the sidecar should be cleaned and kept, not deleted.",
+    "score_A": 9,
+    "score_B": 1
+   },
+   {
+    "criterion": "The real photograph is left alone (studio_shot.jpg unchanged)",
+    "note": "Response A: Reports studio_shot.jpg as already clean, no modifications. File size unchanged at 18999 bytes (input) vs 19K reported (consistent). Response B: Did not modify studio_shot.jpg but the actions show it was backed up and processed. The final file appears unchanged but the process involved unnecessary handling.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "Verified by looking, reported per file (manual inspection, not tool trust)",
+    "note": "Response A: Reports manual inspection via strings -a, PNG chunk inspection, JPEG trailer verification, XMP direct reading. Provides specific findings per file. States 'Binary scanned every file with strings -a' and 'Manually inspected PNG chunks'. Response B: Claims 'manual inspection performed using ExifTool' but the actions show reliance on exiftool output and ImageMagick conversions. The report is generic and doesn't show the detailed per-file analysis the user requested. Response B also says 'No automated AI-detection tools used' but exiftool is an automated tool.",
+    "score_A": 9,
+    "score_B": 5
+   }
+  ],
+  "analysis": "Response A successfully cleaned all files by removing AI metadata while preserving color profiles, ICC profiles, and rights information. File sizes decreased appropriately (metadata removal only, no re-encoding). The sidecar studio_shot.xmp was cleaned and kept in place with rights preserved. Verification was performed via binary string analysis, manual chunk inspection, and direct file reading, with specific findings reported per file.\n\nResponse B made critical errors: (1) Used ImageMagick convert with strip and re-profile operations, causing re-encoding visible in file size changes (moodboard 2832\u21924608 bytes, +63%) and mode changes (sleeve_front RGB\u2192P palette mode). (2) Deleted studio_shot.xmp entirely instead of cleaning it, violating the requirement to preserve rights statements in sidecars. (3) Claimed manual inspection but relied on exiftool (an automated tool) and ImageMagick conversions. (4) The verification report is generic and doesn't show per-file analysis of what was actually found and removed.\n\nThe rubric explicitly requires: byte-for-byte ICC preservation (Response A passes, Response B fails via re-encoding), sidecar handling with rights preservation (Response A passes, Response B fails by deleting), and verification by looking not tool trust (Response A passes, Response B fails). Response B's approach would fail Kasten Druck's preflight due to re-encoded files and missing sidecar rights information.",
+  "overall_A": 88,
+  "overall_B": 20,
+  "winner": "A"
+ },
+ "cost_usd": 0.020536,
+ "prompt_chars": 21800,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 3,
+  "B": 3
+ }
+}

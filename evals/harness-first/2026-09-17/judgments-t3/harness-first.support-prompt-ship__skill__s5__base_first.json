@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s5",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s5",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 42,
+  "overall_B": 78,
+  "criteria": [
+   {
+    "criterion": "Correct verdict (NO-GO for Friday)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly recommend NO-GO. A says 'NO-GO for Friday' with 5 violations. B says 'NO-GO' with 4 critical violations. Both are correct verdicts."
+   },
+   {
+    "criterion": "Refund policy violations found with evidence (T-1007, T-1019, T-1013, T-1026)",
+    "score_A": 6,
+    "score_B": 10,
+    "note": "A flags T-1007 (41 days), T-1019 (31 days), T-1013, T-1026 (custom items) but the evidence is scattered across multiple files and the analysis script output is incomplete/truncated. B clearly identifies all 4 violations with ticket IDs, dates, SKUs, and cost estimates ($3k-$8k for T-1013, $1.5k-$5k for T-1026). B's judge.py output shows exact constraint failures. A's analysis is present but less organized and harder to verify."
+   },
+   {
+    "criterion": "Internal data leak (T-1016) treated as blocking",
+    "score_A": 8,
+    "score_B": 10,
+    "note": "Both flag T-1016 as a critical internal notes leak. A mentions it in the summary and detailed examples. B explicitly calls it out as CRITICAL with PR/legal risk and includes it in the judge constraints. B is more explicit about the severity and risk."
+   },
+   {
+    "criterion": "Reusable golden set and deterministic judge (20+ cases, runnable)",
+    "score_A": 2,
+    "score_B": 9,
+    "note": "A creates test_policy_compliance.py but it's a general-purpose script, not a golden set with expected outputs. B creates golden_set.jsonl with 15 test cases (T-1013, T-1026, T-1016, T-1011, T-1028, T-1007, T-1019, T-1021, T-1029, etc.) with explicit must_have/must_not constraints, and judge.py that runs deterministically and produces pass/fail results. B's judge.py was actually executed and produced outputs_new_judge_results.json showing 6 PASS, 9 FAIL. A's script has issues (needed sed fixes) and doesn't produce a reusable golden set."
+   },
+   {
+    "criterion": "Per-case comparison of both prompts (old vs new scores)",
+    "score_A": 5,
+    "score_B": 9,
+    "note": "A generates all_comparisons.txt with side-by-side old/new replies for all 30 tickets, which is comprehensive. B generates outputs_old_judge_results.json and outputs_new_judge_results.json showing OLD: 7 PASS/8 FAIL vs NEW: 6 PASS/9 FAIL, plus side_by_side_violations.md with detailed examples. B's approach is more structured (judge results per case) and shows the regression clearly. A's approach is more raw data."
+   },
+   {
+    "criterion": "Root cause and concrete prompt fix",
+    "score_A": 7,
+    "score_B": 9,
+    "note": "A identifies the root cause: 'do whatever it takes' overrides policy, and 'share what you can see' causes internal notes leak. Proposes a fixed prompt (recommended_prompt_v4_fixed.md). B identifies the same root cause with more detail and provides a copy-paste fix in QUICK_REFERENCE.md. B also notes the PM's examples are hand-picked (not a regression check). Both are good, but B is more actionable and explicit about the mechanism."
+   }
+  ],
+  "analysis": "**Response A Strengths:**\n- Correctly identifies NO-GO verdict\n- Flags all 4 critical violations (T-1007, T-1019, T-1013, T-1026, T-1016)\n- Creates comprehensive all_comparisons.txt with all 30 tickets side-by-side\n- Provides a fixed prompt (recommended_prompt_v4_fixed.md)\n- Generates multiple readable summary documents (executive_summary.md, go_no_go_report.md, detailed_examples.md)\n- Attempts to build test_policy_compliance.py for automation\n\n**Response A Weaknesses:**\n- test_policy_compliance.py is a general-purpose script, not a golden set with expected outputs\n- Script had bugs (needed sed fixes to run)\n- No deterministic judge that produces pass/fail per case\n- Analysis is spread across many files; harder to verify specific violations\n- Doesn't show old vs new prompt scores side-by-side in a structured way\n- The automation is less reusable (not a golden set format)\n\n**Response B Strengths:**\n- Correctly identifies NO-GO verdict\n- Flags all 4 critical violations with clear evidence (ticket IDs, dates, SKUs, cost estimates)\n- Creates golden_set.jsonl with 15 policy-critical test cases and explicit must_have/must_not constraints\n- Creates judge.py that runs deterministically and produces structured pass/fail results\n- Actually executes judge.py and produces outputs_old_judge_results.json (7 PASS, 8 FAIL) and outputs_new_judge_results.json (6 PASS, 9 FAIL)\n- Shows the regression clearly: new prompt is worse on the golden set\n- Provides harness_scorecard.md auditing the entire evaluation process (17/60 score)\n- Includes copy-paste prompt fix in QUICK_REFERENCE.md\n- More concise and actionable\n\n**Response B Weaknesses:**\n- Doesn't generate all_comparisons.txt with all 30 tickets (less comprehensive raw data)\n- Fewer summary documents overall\n- Golden set is 15 cases, not 20+ (though still substantial)\n\n**Key Differences:**\n1. **Golden Set & Judge:** B creates a reusable, deterministic golden set with judge.py that actually runs and produces structured results. A creates a general-purpose script without a golden set format.\n2. **Verification:** B's judge.py was executed and produced concrete pass/fail results. A's script needed debugging.\n3. **Actionability:** B's QUICK_REFERENCE.md with copy-paste fix is more immediately useful. A's recommended_prompt_v4_fixed.md is good but less integrated.\n4. **Harness Audit:** B includes a full harness scorecard (17/60) explaining why violations weren't caught. A doesn't audit the evaluation process itself.\n5. **Regression Detection:** B shows old vs new scores side-by-side (7 vs 6 PASS). A shows all comparisons but not aggregated scores.\n\n**Rubric Alignment:**\n- Correct verdict: Both 10/10\n- Refund violations: A 6/10 (evidence scattered), B 10/10 (clear, organized, with costs)\n- Internal leak: A 8/10, B 10/10 (more explicit about risk)\n- Golden set & judge: A 2/10 (no golden set, script issues), B 9/10 (working golden set + judge)\n- Per-case comparison: A 5/10 (raw data), B 9/10 (structured judge results)\n- Root cause & fix: A 7/10, B 9/10 (more actionable)\n\nB is stronger on the most important rubric criteria (golden set, judge, per-case comparison) and delivers a more reusable, deterministic solution. A is more comprehensive in raw data but less structured for future use.\n"
+ },
+ "cost_usd": 0.045833,
+ "prompt_chars": 111311,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

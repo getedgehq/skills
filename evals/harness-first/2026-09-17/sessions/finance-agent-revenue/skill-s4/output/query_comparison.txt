@@ -1,0 +1,96 @@
+================================================================================
+                    FINBOT Q2 REVENUE ERROR - QUERY COMPARISON
+================================================================================
+
+QUESTION: "What was our Q2 2026 revenue?"
+
+
+WRONG QUERY (what finbot did on 2026-09-11)
+────────────────────────────────────────────────────────────────────────────────
+SELECT ROUND(SUM(amount), 2) AS revenue 
+FROM orders 
+WHERE created_at BETWEEN '2026-04-01' AND '2026-06-30';
+
+RESULT: $4,138,212.16 ❌
+
+WHY IT'S WRONG:
+  • Uses 'orders' table - transaction log with ALL orders
+  • Includes cancelled orders: $360,039
+  • Includes fully refunded orders: $189,943
+  • Doesn't subtract partial refunds: ~$143k
+  • Uses 'created_at' timestamp instead of accounting period
+
+
+CORRECT QUERY (what finance uses)
+────────────────────────────────────────────────────────────────────────────────
+SELECT SUM(net_amount) 
+FROM revenue_recognized 
+WHERE period IN ('2026-04', '2026-05', '2026-06');
+
+RESULT: $3,638,335.79 ✓
+
+WHY IT'S CORRECT:
+  • Uses 'revenue_recognized' table - finance source of truth
+  • net_amount = gross revenue - refunds
+  • Excludes cancelled orders
+  • Uses accounting periods (YYYY-MM format)
+  • Matches finance close exactly
+
+
+DETAILED BREAKDOWN
+────────────────────────────────────────────────────────────────────────────────
+
+Orders table (Q2 2026):
+  Status              Count    Amount
+  ─────────────────────────────────────
+  completed           1,733    $3,269,511
+  partially_refunded    174    $  318,719
+  cancelled             202    $  360,039  ← shouldn't count
+  refunded              104    $  189,943  ← shouldn't count
+  ─────────────────────────────────────
+  TOTAL               2,213    $4,138,212  ← what finbot said
+
+
+Revenue_recognized table (Q2 2026):
+  Period    Gross         Refunds      Net
+  ──────────────────────────────────────────
+  2026-04   $1,369,750   -$132,233    $1,237,517
+  2026-05   $1,310,502   -$100,843    $1,209,658
+  2026-06   $1,290,612   -$ 99,451    $1,191,161
+  ──────────────────────────────────────────
+  Q2 TOTAL  $3,970,863   -$332,528    $3,638,336  ← finance number
+
+
+THE GAP
+────────────────────────────────────────────────────────────────────────────────
+FinBot answer:     $4,138,212
+Finance answer:    $3,638,336
+                   ──────────
+Difference:        $  499,876  (14% overstatement)
+
+
+ROOT CAUSE: No data dictionary. Model had to guess which table = "revenue".
+
+
+FIX
+────────────────────────────────────────────────────────────────────────────────
+1. Deploy prompt_v2.md which states:
+   
+   "For REVENUE questions:
+    ✓ USE: revenue_recognized table, SUM(net_amount)
+    ✗ NEVER use orders table for revenue"
+
+2. Test with golden_set.jsonl to verify
+
+3. Add to CI/CD so this never happens again
+
+
+VERIFICATION
+────────────────────────────────────────────────────────────────────────────────
+$ python agent_v2.py "what was our Q2 2026 revenue?"
+
+Expected output: ~$3.6M (within $1k of $3,638,336)
+
+If output is still ~$4.1M, prompt fix didn't work - check logs.
+
+================================================================================

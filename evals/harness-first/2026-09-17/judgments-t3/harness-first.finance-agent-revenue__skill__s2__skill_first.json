@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s2",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify that finbot queried orders.amount ($4,138,212) instead of revenue_recognized.net_amount ($3,638,336). Both verify the $500K gap and break down the components (cancelled orders ~$360K, refunds ~$190K). Response A provides more detailed verification including the exact SQL queries run and confirms the numbers match finance's close within 0.5%. Response B also verifies but with slightly less depth in the verification process shown.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state this is NOT hallucination and NOT a model problem. Response A explicitly says 'any model comparison is deferred until a golden set exists' and emphasizes the query ran faithfully on an undefined, ambiguous 'revenue'. Response B says 'Even GPT-6 or Claude Opus would likely make the same mistake' and recommends fixing the prompt, not upgrading. Both are correct; Response A is slightly more precise about the deferral of model comparison.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Reconciles the $500K gap (weight 2)",
+    "note": "Response A breaks down: cancelled Q2 orders (~$368K), refunds (~$329K on Q2 orders), BETWEEN boundary dropping June 30 orders (~$169K), and recognition timing (~+$28K). Response B breaks down: cancelled orders ($360K) + refunded orders ($190K) = $550K. Response A's breakdown is more detailed and attempts to account for all components including boundary effects and timing. Response B's is simpler but less complete.",
+    "score_A": 8,
+    "score_B": 6
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A explicitly notices and fixes the write-access vulnerability: 'run_sql opens the live ETL warehouse read-write and commits every statement, so a DELETE/UPDATE/DROP would hit production; patches it read-only (mode=ro URI, PRAGMA query_only, or SELECT allowlist) and verifies a write is rejected.' The agent_fixed.py shows this fix. Response B does not mention or address this critical security issue at all.",
+    "score_A": 9,
+    "score_B": 0
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A creates data_dictionary.md defining revenue as revenue_recognized.net_amount by period, excludes cancellations/refunds, with correct date filtering and warning on daily_kpis. Response B creates prompt_FIXED.md with schema documentation but it's embedded in the prompt rather than a separate authoritative data dictionary. Response A's approach is more reusable and maintainable.",
+    "score_A": 9,
+    "score_B": 6
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A creates golden.jsonl with 4 test cases including Q2 net revenue ($3,638,336), Q1 revenue, Q2 order count, and total customers. Response B creates test_finbot_fix.py that tests Q2 and Q1 revenue but doesn't provide a persistent golden set file. Response A's approach is more standard for regression testing.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A: Opens with 'Don't switch models. This isn't a model problem - it's a data layer problem.' Gives the number for the deck ($3.6M), and provides prioritized next-steps. Response B: Opens with 'No hallucination. No model upgrade needed. It's a fixable prompt issue.' Also gives the number and action plan. Both are exec-ready; Response A is slightly more structured with FOR_DANIEL.md specifically designed for the CEO.",
+    "score_A": 9,
+    "score_B": 8
+   }
+  ],
+  "analysis": "Response A delivers a more comprehensive and production-ready investigation. Both correctly identify the root cause (wrong table queried), but Response A goes significantly further:\n\n**Critical difference - Security:** Response A identifies and fixes a major vulnerability: the agent has write access to the production warehouse and commits on every statement. This is a blocking security issue that Response B completely misses. Response A patches it to read-only mode.\n\n**Data governance:** Response A creates a proper data_dictionary.md as a separate, reusable artifact defining what \"revenue\" means. Response B embeds schema guidance in the prompt, which is less maintainable.\n\n**Testing infrastructure:** Response A creates golden.jsonl (persistent test cases) plus judge.py (automated runner). Response B creates test_finbot_fix.py (one-off script). Response A's approach is more scalable for regression testing.\n\n**Gap reconciliation:** Response A attempts a more detailed breakdown of the $500K gap including boundary effects and timing adjustments. Response B's breakdown is simpler but less complete.\n\n**Deliverables:** Response A creates 12 files with clear separation of concerns (analysis, fixes, testing, navigation). Response B creates 11 files with good organization but less depth in some areas.\n\n**Accuracy on numbers:** Both verify the core numbers correctly ($4.1M vs $3.6M, ~$500K gap). Response A shows slightly more verification rigor.\n\n**Executive communication:** Both provide exec-ready summaries. Response A has FOR_DANIEL.md specifically tailored for the CEO with meeting prep. Response B has EMAIL_TO_DANIEL.txt which is also good but slightly less structured.\n\nResponse B is solid and would solve the immediate problem, but Response A is more thorough, catches a critical security issue, and provides better infrastructure for preventing future incidents. The security gap alone (write access on read path) is a significant oversight in Response B.",
+  "overall_A": 87,
+  "overall_B": 72,
+  "winner": "A"
+ },
+ "cost_usd": 0.045146,
+ "prompt_chars": 112520,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

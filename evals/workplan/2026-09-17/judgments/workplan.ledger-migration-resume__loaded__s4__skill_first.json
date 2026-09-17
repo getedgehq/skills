@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/loaded-s4",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/base-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Resumes the existing plan instead of starting over (weight 3)",
+    "note": "Both responses update the existing [redacted]-20260913-ledger-v3.md file and preserve Rune's roadmap structure. A updates the file with new verification entries and reopened items clearly marked. B also updates it but with less detail in the reopened items section. Both append to the existing Verification Log rather than replacing it. A is slightly more thorough in documenting the reopening of items 3 and 4 with specific test failures.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Re-verifies the ticked items and reopens the false ones (weight 3)",
+    "note": "Both correctly identify that items 3 and 4 were not actually implemented. A provides detailed verification: parse_amount('(EUR 340.00)') raised ConversionSyntax error, dedupe kept first not most recent. B also fixes both but with less explicit documentation of what was wrong. Both fix the parentheses handling correctly (checking before currency strip). Both fix dedupe to compare updated_at. A's verification log entries are more specific about what failed and how it was fixed.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Finishes the open items without breaking the old ones (weight 3)",
+    "note": "Item 5: Both return (rows, unmapped_codes) tuple, keep unmapped rows with raw code, report each unknown code once. A reports to stderr with 'WARNING: 2 unmapped account codes: 6300, 7100'. B reports 'WARNING: 2 unmapped account code(s): 6300, 7100'. Both update cli.py to handle the new signature. Item 6: Both implement --since filter on booked_on. A filters to 6 rows on/after 2026-08-01, B also gets 6 rows. Both pass legacy tests. A runs 16 tests total (test_normalize, test_accounts, test_cli), B runs 16 tests total (test_normalize, test_accounts, test_integration). Both maintain backward compatibility.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "The blocked item stays unchecked with the reason written down (weight 3)",
+    "note": "Item 7 (2023 archive reconciliation): A marks it as [!] (blocked) with note 'BLOCKED since 2026-09-13 on the 2023 archive CSV file. Owner: Fin Aregbesola. Unblocks when: file is delivered.' B leaves it as [ ] (unchecked) with no explicit blocking marker in the roadmap, though the summary documents it as blocked. A's approach is clearer in the roadmap itself. Neither fakes the file or marks it complete. A's notation is more explicit.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "Verification means a command was run (weight 2)",
+    "note": "A's verification log entries include specific commands and outputs: 'ran `python3 -m unittest discover tests`, test_parentheses_are_negative passes. parse_amount(\"(EUR 340.00)\") returns Decimal(\"-340.00\"). current.csv loads 2 negative amounts: T-1004 (-340.00) and T-1007 (-112.05).' B's entries are similar but slightly less detailed in some cases. Both provide concrete evidence rather than 'looks right'. A's entries are marginally more thorough.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Discoveries logged as they surface (weight 2)",
+    "note": "A explicitly documents in the plan file: '[02:38] Reopened step 3: parse_amount did not handle parentheses syntax. Test: `parse_amount(\\'(EUR 340.00)\\')`...' and '[02:38] Reopened step 4: dedupe kept first occurrence, not most recently updated.' B documents these in HANDOVER-SUMMARY.md but not in the plan file's Discovered Issues section. A also creates .gitignore. B does not mention .gitignore. A's approach of logging discoveries in the plan file itself is more aligned with the rubric's intent.",
+    "score_A": 9,
+    "score_B": 6
+   },
+   {
+    "criterion": "Handover reply (weight 1)",
+    "note": "A provides a concise summary: 'I picked up Rune's work and completed ledgerctl v3... Steps 1-2 already working... Steps 3-4 fixed and verified... Step 5 critical fix... Step 6 CLI filter... Step 7 blocked on Fin for 2023 archive CSV.' B provides similar: 'I've picked up where Rune left off and completed ledgerctl v3... Rune was right to be cautious - Steps 3 and 4 were NOT actually done correctly... Step 7 blocked on Fin.' Both are clear and concise. A is slightly more structured.",
+    "score_A": 9,
+    "score_B": 8
+   }
+  ],
+  "analysis": "Both responses successfully complete the work and fix the critical bugs. Key differences:\n\n**Strengths of A:**\n- Updates the plan file with a dedicated \"Discovered Issues\" section that explicitly documents what was wrong with items 3 and 4, including the specific test failures\n- Uses [!] notation in the roadmap to mark item 7 as blocked with inline explanation\n- Verification log entries are more detailed with specific test names and output values\n- Creates .gitignore file (mentioned in rubric as a discovery)\n- More thorough documentation of the reopening process\n\n**Strengths of B:**\n- Creates additional handover documents (HANDOVER-SUMMARY.md, UNMAPPED-CODES-FOR-FIN.md) that provide clear context for Fin\n- Slightly cleaner final chat reply\n- Integration tests are well-organized in a separate file\n\n**Critical differences:**\n1. A logs discoveries in the plan file itself (the authoritative record), B logs them in separate markdown files\n2. A uses explicit blocking notation ([!]) in the roadmap, B leaves item 7 as unchecked without clear blocking marker\n3. A creates .gitignore, B does not\n4. A's verification entries are more specific about what command was run and what the exact output was\n\nBoth responses correctly:\n- Fix parentheses parsing before currency stripping\n- Fix dedupe to compare updated_at timestamps\n- Implement remap to return (rows, unmapped_codes) tuple\n- Implement --since filter\n- Keep unmapped rows in output\n- Pass all tests including legacy format\n\nThe rubric emphasizes \"Discoveries logged as they surface\" and \"Verification means a command was run\" - A better satisfies these by logging discoveries in the plan file (the working record) and providing more explicit command/output pairs in the verification log.\n",
+  "overall_A": 87,
+  "overall_B": 81,
+  "winner": "A"
+ },
+ "cost_usd": 0.028831,
+ "prompt_chars": 56939,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

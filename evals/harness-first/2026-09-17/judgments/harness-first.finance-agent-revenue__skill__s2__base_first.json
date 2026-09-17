@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s2",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify that finbot summed orders.amount ($4,138,212) vs finance's revenue_recognized.net_amount ($3,638,336). Both verify the ~$500K gap and break down cancelled (~$360K) and refunded (~$190K) orders. Response A shows $4,138,212.16 vs $3,638,335.79 (verified in warehouse). Response B shows $4,138,212 vs $3,638,336 (same, rounded). Both within 0.5% accuracy requirement.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state this is NOT hallucination and NOT a model problem. Response A: 'No hallucination. No model upgrade needed. It's a fixable prompt issue.' Response B: 'Don't switch models yet. The model did exactly what it was told.' Both defer model comparison until golden set exists. Response A is slightly more explicit about why any model would fail without guidance ('Even GPT-6 or Claude Opus would likely make the same mistake'). Response B also makes this point clearly. Both score high.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A breaks down: cancelled Q2 orders (~$368K), refunds (~$329K on Q2 orders), BETWEEN boundary dropping June 30 orders (~$169K), recognition timing (~+$28K). Response B breaks down: cancelled orders $360K, fully refunded $189K, plus partial refund adjustments. Response A provides more granular breakdown including the BETWEEN boundary issue. Response B's breakdown is simpler but accurate. Response A edges ahead on completeness.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A: Notices run_sql has write access (conn.commit() on line 20) but does NOT provide a patch or verification that writes are blocked. Mentions the issue but doesn't fix it in code. Response B: Creates agent_fixed.py with read-only connection (mode=ro URI), includes MAX_ITERATIONS=5, and provides verify.py that tests the fix. Response B actually patches the code and verifies it works. This is a critical difference\u2014Response A identifies the gap but doesn't fix it; Response B fixes it.",
+    "score_A": 4,
+    "score_B": 9
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A: Creates audit_checklist.md with correct revenue numbers but no formal data dictionary defining the schema. Response B: Creates data_dictionary.md that explicitly defines revenue_recognized.net_amount vs orders.amount, with correct/incorrect query examples. Response B's data_dictionary.md is more authoritative and usable as a reference document.",
+    "score_A": 5,
+    "score_B": 9
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A: Creates test_finbot_fix.py but it's not clear if it has hardcoded expected values or just runs queries. No golden.jsonl file visible. Response B: Creates golden.jsonl with 4 test cases (Q2 revenue $3,638,336, Q1 revenue $3,285,494, Q2 order count 1,907, total customers 420) and judge.py to run them. Response B's golden set is explicit, structured, and runnable.",
+    "score_A": 3,
+    "score_B": 10
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A: Opens with 'Perfect! Everything is complete' and provides EMAIL_TO_DANIEL.txt with clear one-liner and action items. Response B: Opens with 'Don't switch models. This isn't a model problem' and provides FOR_DANIEL.md with meeting prep, talking points, and decisions. Both are exec-ready. Response B's FOR_DANIEL.md is slightly more polished for a CEO meeting (includes talking points for different stakeholders, decision framework). Slight edge to Response B.",
+    "score_A": 9,
+    "score_B": 10
+   }
+  ],
+  "analysis": "Response A correctly identifies the root cause ($4.1M vs $3.6M from orders vs revenue_recognized tables) and proves it with numbers from the warehouse. It clearly states this is not hallucination and not a model problem. However, it has critical gaps: (1) It identifies the write-access safety issue (run_sql can commit writes) but does NOT patch it or verify the fix works. (2) It creates test_finbot_fix.py but no structured golden test set (no golden.jsonl). (3) It creates audit_checklist.md but not a formal data dictionary. (4) The deliverables are numerous (13 files) but many are narrative/summary documents rather than actionable infrastructure.\n\nResponse B also correctly identifies the root cause with the same numbers and clearly states it's not a model problem. Critically, it goes further: (1) It creates agent_fixed.py with actual read-only connection code (mode=ro) and MAX_ITERATIONS=5, then verifies the fix works with verify.py. (2) It creates a proper golden.jsonl with 4 test cases and expected values, plus judge.py to run them. (3) It creates data_dictionary.md that formally defines revenue_recognized.net_amount vs orders.amount. (4) It provides FOR_DANIEL.md with meeting prep and talking points. (5) It includes IMPLEMENTATION.md with step-by-step deployment checklist.\n\nOn the rubric:\n- Root cause (weight 3): Both 10/10 - both prove the numbers correctly.\n- Model question (weight 3): Both 10/10 - both clearly say it's not a model problem.\n- Reconcile gap (weight 2): A=9, B=8 - Response A provides slightly more granular breakdown.\n- Safety gap (weight 3): A=4, B=9 - Response A identifies but doesn't fix; Response B fixes and verifies.\n- Data dictionary (weight 2): A=5, B=9 - Response B creates a proper data_dictionary.md; Response A has audit_checklist.md but not a formal dictionary.\n- Golden questions (weight 2): A=3, B=10 - Response B has structured golden.jsonl with expected values; Response A's test_finbot_fix.py is unclear.\n- Exec answer (weight 1): A=9, B=10 - Both good, Response B slightly more polished for CEO meeting.\n\nWeighted score:\n- Response A: (10\u00d73 + 10\u00d73 + 9\u00d72 + 4\u00d73 + 5\u00d72 + 3\u00d72 + 9\u00d71) / 16 = (30+30+18+12+10+6+9) / 16 = 115/16 = 7.19 \u2192 ~72/100\n- Response B: (10\u00d73 + 10\u00d73 + 8\u00d72 + 9\u00d73 + 9\u00d72 + 10\u00d72 + 10\u00d71) / 16 = (30+30+16+27+18+20+10) / 16 = 151/16 = 9.44 \u2192 ~94/100\n\nResponse B is significantly stronger because it delivers actual working code (agent_fixed.py with read-only connection verified), structured test infrastructure (golden.jsonl + judge.py), and a formal data dictionary. Response A identifies the issues but doesn't fully solve them\u2014it's more analysis than actionable infrastructure.",
+  "overall_A": 72,
+  "overall_B": 94,
+  "winner": "B"
+ },
+ "cost_usd": 0.047844,
+ "prompt_chars": 114513
+}

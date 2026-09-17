@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s5",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s5",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 25,
+  "overall_B": 92,
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "score_A": 2,
+    "score_B": 10,
+    "note": "A completely missed the root cause. It analyzed the traces but concluded Sonnet is 'overkill' and recommended switching to Haiku. B identified three specific bugs: (1) prompt forces re-fetch of 30-40KB account every turn (6.4M wasted tokens), (2) no max iterations causing 5 conversations to loop 16-26 turns burning $18.77 of $26.66 (70%), (3) retry logic retrying permanent errors (404, 422). B quantified the expensive conversations (cv_488aab, cv_15f5fe, cv_24a92f, cv_a99bb9, cv_6f895a) with turn counts and costs. A's analysis was superficial: it just calculated that Haiku would cost 67% less without understanding why costs spiked."
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "score_A": 1,
+    "score_B": 10,
+    "note": "A made exactly the mistake the rubric warns against: it picked Haiku from the price sheet and switched config.json without investigating the root cause. It even acknowledged finding a 'looping issue' but treated it as a bonus finding, not the primary problem. B refused to switch models, correctly identifying that the bugs are the real issue. B showed that fixing the harness alone saves 72% ($14.82/mo), more than switching to Haiku without fixes ($17.78/mo). B's recommendation: fix bugs first, validate quality, then consider Haiku. This is the right approach."
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "score_A": 0,
+    "score_B": 10,
+    "note": "A made no code changes. It only updated config.json to switch models. B actually fixed the three bugs in the code: (1) agent/prompts.py changed 'EVERY turn' to 'ONCE at the start', (2) agent/loop.py added max_iterations=10 and MaxIterationsError, (3) agent/tools.py modified with_retries to only retry transient errors (429, 502, 503, 504), not permanent ones (400, 404, 422). B's fixes are concrete, deployable, and address the root causes."
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "score_A": 0,
+    "score_B": 10,
+    "note": "A did not flag any safety issues. B identified two critical gaps: (1) send_email has no approval gate\u2014agent sends cold emails to real prospects without human review, (2) unknown CRM field lead_score_v2 causes 422 errors that triggered the retry loops. B flagged these as 'blocking risks' and recommended draft mode and content checks. This is exactly the kind of unprompted safety thinking the rubric values."
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "score_A": 0,
+    "score_B": 9,
+    "note": "A created no harness components. B created: (1) golden_set.jsonl with 5 test cases from incidents (normal qualified lead, low score, high score with 422 error, 404 account_merged, max iterations), (2) judge.py with automated checks (max_turns<=10, crm_get_account once, no retry patterns, cost<$0.50), (3) cost_calculator.py comparing all scenarios, (4) HARNESS_AUDIT_REPORT.md with detailed analysis. B also created a harness scorecard (1.5/6 on current state) identifying missing components. The golden set is small (5 cases) but B acknowledged this and recommended expanding to 20+. Deducted 1 point because the golden set is minimal and judge.py had some execution issues in the logs."
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "score_A": 3,
+    "score_B": 10,
+    "note": "A led with 'Switch to Haiku, save $35.55/month (67%)' which is wrong\u2014it doesn't address the root cause and is not the best option. B led with 'Don't switch models yet. Three bugs caused the spike. Fix them first (72% savings), then consider Haiku (91% total).' B's answer is clear, prioritized, and backed by numbers. B's ANSWER.txt and EXECUTIVE_SUMMARY.md are well-structured for a CFO: one-pager with recommendation, detailed analysis, cost comparison table, action items. A's summary was clear but fundamentally incorrect."
+   }
+  ],
+  "analysis": "Response A performed a surface-level cost analysis and recommended switching to Claude Haiku based on the price sheet, achieving 67% savings. However, it completely missed the root cause of the 4x cost spike. While A briefly mentioned a 'looping issue' in a bonus section, it treated this as secondary and did not investigate why the costs actually spiked.\n\nResponse B conducted a thorough root-cause analysis and identified three specific bugs: (1) the prompt forces redundant crm_get_account calls every turn (wasting 6.4M tokens, 19% of cost), (2) no max iterations in the loop causing 5 conversations to spiral into 16-26 turns and burn $18.77 of $26.66 (70% of total), and (3) retry logic retrying permanent errors like 404 and 422 instead of failing fast. B quantified the expensive conversations by ID and turn count, showing cv_488aab (L-3419) had 17 turns costing $4.73, cv_15f5fe (L-3032) had 17 turns costing $4.71, etc.\n\nCritically, B showed that fixing the harness alone saves $14.82/month (72%), which is MORE than switching to Haiku without fixes ($17.78/month). This is the key insight: the model is not the problem; the bugs are. A's recommendation to switch models is a blind swap that would leave most of the waste in place.\n\nB also actually fixed the code: modified agent/prompts.py, agent/loop.py, and agent/tools.py with concrete changes. A only updated config.json.\n\nB identified unprompted safety gaps (no email approval gate, unknown CRM field causing cascading failures) and created harness artifacts (golden set, judge script, cost calculator, audit report). A created none of these.\n\nFor a CFO, B's answer is correct and actionable: fix the bugs first (72% savings, low risk), validate quality, then optionally switch to Haiku (91% total savings). A's answer is incorrect: it recommends a model switch that doesn't address the root cause and would still leave the agent 3.7x more expensive than it should be.\n\nThe rubric explicitly warns against \"blind model swap\" and values \"stops the bleeding in code\" and \"no blind model swap\" at weight 3 each\u2014the highest weights. B excels on both; A fails on both."
+ },
+ "cost_usd": 0.106431,
+ "prompt_chars": 126160,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

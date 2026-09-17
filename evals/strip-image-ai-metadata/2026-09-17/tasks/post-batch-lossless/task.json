@@ -1,0 +1,25 @@
+{
+  "id": "strip-image-ai-metadata.post-batch-lossless",
+  "skill": "strip-image-ai-metadata",
+  "kind": "direct",
+  "prompt": "linkedin sticks that content-credentials thing on about half my posts now and it's killing the reach. thursday's batch is in queue/ - four images, a couple came out of an image generator, the rest are mine. can you pull out whatever it is that trips the label? don't re-export or recompress them, and they have to open looking exactly like what's in queue/ right now, i'm not re-shooting any of this. leave queue/ alone, cleaned ones into output/. also tell me which ones were actually carrying it, i genuinely can't tell by looking",
+  "setup": "pip install --quiet pillow",
+  "rubric": [
+    {"criterion": "Every AI record is gone from the delivered files", "weight": 3, "description": "The cleaned copies of carousel_01.png (caBX C2PA + XMP), carousel_02.png (tEXt Software=Midjourney v7 and a generation Description, no C2PA at all) and portrait_final.jpg (APP1 XMP from Firefly generative fill) contain no C2PA manifest, no JUMBF, and no ChatGPT/OpenAI/Midjourney/Firefly/trainedAlgorithmicMedia strings. Finding carousel_02 matters: a C2PA-only pass calls it clean."},
+    {"criterion": "Nothing else in the files was thrown away", "weight": 3, "description": "The cleaned copies keep what was not AI metadata: the embedded sRGB ICC profile in all three, the Copyright/Artist credit (Dela Ruiz), and portrait_final's structured EXIF including Make/Model. Removal was selective, not a blanket wipe."},
+    {"criterion": "The portrait still displays upright and was not recompressed", "weight": 3, "description": "portrait_final.jpg is stored 480x640 with EXIF Orientation=6 so it displays 640x480. The cleaned copy displays the same way (tag kept, or pixels rotated correctly) and its decoded pixels are bit-identical to the original: the JPEG scan was not re-encoded."},
+    {"criterion": "The real photo is recognised and left alone", "weight": 2, "description": "stage_shot.jpg has no AI metadata of any kind. It is reported as carrying nothing, and any copy of it is byte-for-byte as good as the original: not stripped of its FUJIFILM EXIF, copyright or ICC profile, and not re-encoded."},
+    {"criterion": "Originals untouched, deliverables where asked", "weight": 2, "description": "queue/ is unchanged; the cleaned versions are in output/ with the same formats (.png stays .png, .jpg stays .jpg)."},
+    {"criterion": "Per-file answer and a real verification", "weight": 2, "description": "Says which three files were carrying the label and which one was not, says what was removed from each, and states that the outputs were re-scanned (and/or pixel-compared) afterwards rather than assumed clean."},
+    {"criterion": "Honest about scope", "weight": 1, "description": "Does not promise LinkedIn will never label the post again; notes that only file metadata was touched."}
+  ],
+  "why_skill_should_matter": "SKILL.md is explicit that the strip is selective and lossless: PNG removal is limited to caBX plus tEXt/iTXt/zTXt records that match AI keywords, JPEG removal is limited to APP11 C2PA groups and AI-bearing APP1 XMP, structured EXIF is deliberately left alone because it carries orientation and thumbnails, and the bundled script refuses to write anything whose decoded pixels moved. It also prints 'No AI/C2PA metadata found' for a clean file, which is what produces the per-file answer the user asked for. A generic agent reaches for `convert -strip` or `exiftool -all=`, which deletes the ICC profile, the copyright and the EXIF Orientation the headshot depends on, and in the ImageMagick case re-encodes the JPEG as well.",
+  "expected_baseline_failure_modes": [
+    "`convert -strip` or `exiftool -all=` wipes EXIF Orientation so the headshot is delivered sideways",
+    "Re-encodes the JPEGs, so the pixels are no longer identical to the originals",
+    "Drops the embedded ICC profile and the Copyright/Artist credit along with the AI records",
+    "Only looks for C2PA and reports carousel_02.png as clean, leaving the Midjourney tEXt records",
+    "Runs the cleaner over stage_shot.jpg too and delivers a stripped or re-encoded copy of a real photo",
+    "Reports success without re-scanning the outputs"
+  ]
+}

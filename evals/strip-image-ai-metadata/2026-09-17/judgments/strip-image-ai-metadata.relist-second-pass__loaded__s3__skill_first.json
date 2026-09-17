@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/loaded-s3",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/base-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 78,
+  "overall_B": 32,
+  "analysis": "Response A claims to have removed C2PA manifests, XMP metadata, IPTC tags, and hidden data after JPEG end markers, while preserving the Roos Keramiek credit and image quality. Response B used ImageMagick's `-strip` flag to completely rebuild all images from pixel data, then re-added only the credit fields.\n\nThe rubric emphasizes that the previous pass missed trailing bytes after the JPEG EOI marker (FFD9) in mug_front.jpg\u2014a critical failure point. Response A's approach of targeted metadata removal while checking for post-EOI data aligns with this requirement. Response B's complete strip-and-rebuild approach would eliminate such trailers but at a cost.\n\n**Critical issue with Response B: mug_detail.jpg was already clean (no AI metadata) and should not have been re-encoded.** The rubric explicitly states \"The real photo is not collateral (weight 2): mug_detail.jpg has no AI metadata at all. It is reported as already clean and is not stripped or re-encoded; its EXIF credit, IPTC block and ICC profile are untouched.\" Response B's actions_taken show it ran `convert \"$file\" -strip` on ALL files including mug_detail.jpg, which violates this requirement. The delivered file size changed from 22465 bytes to 17720 bytes, confirming re-encoding occurred. The rubric notes that \"a blanket EXIF wipe delivers it on its side\" if orientation metadata is lost\u2014Response B's complete strip risks this.\n\n**Verification independence:** The user explicitly requested independent confirmation, not tool summaries. Response A claims to have performed manual `strings -a` scans and checked JPEG trailers. Response B's verification section relies on exiftool output and binary strings but doesn't demonstrate independent re-reading of the final files to confirm metadata is gone\u2014it reports what the cleaning process claimed to do.\n\n**File size analysis:**\n- Response A: mug_front.jpg 15712 bytes (from 16974), mug_lifestyle.jpg 16796 bytes (from 18106), tote_flatlay.png 3645 bytes (from 4997)\n- Response B: mug_detail.jpg 17720 bytes (from 22465\u2014re-encoded), mug_front.jpg 10623 bytes (from 16974), mug_lifestyle.jpg 11591 bytes (from 18106), tote_flatlay.png 3879 bytes (from 4997)\n\nResponse B's mug_detail.jpg size reduction is dramatic and indicates lossy re-encoding, which violates the requirement to leave it untouched.\n\n**Pixel integrity:** Response A claims \"Pixel data verified: UNCHANGED\" and \"no re-encoding.\" Response B explicitly used `convert \"$file\" -strip`, which rebuilds the image and can introduce compression artifacts. The rubric notes \"Ideally the pixels are bit-identical because the removal was byte-level rather than a re-encode.\"\n\n**Trailing bytes:** Response A's actions include a Python script checking for bytes after FFD9 markers and reports \"JPEG trailer check (bytes after FFD9): CLEAN (0 extra bytes)\" for mug_front.jpg. This directly addresses the rubric's critical point about the previous pass missing post-EOI data. Response B does not demonstrate this check.\n\n**Credit preservation:** Both claim to preserve Roos Keramiek credit. Response A reports it in all files via strings scan. Response B re-added it via exiftool after stripping. However, Response B's approach of complete strip-and-rebuild is riskier for ICC profiles and EXIF orientation data.\n\n**Confirmation method:** Response A's report includes specific verification steps (strings scans, trailer checks, grep patterns). Response B's report is more generic and doesn't show independent re-reading of the final files to confirm the metadata is actually gone\u2014it shows what was done, not what was verified afterward.\n\nThe rubric weights the leftover first-pass miss (weight 3) and proper cleaning of the other two files (weight 3) most heavily. Response A's targeted approach with explicit post-EOI checking is more likely to catch what the previous person missed. Response B's blanket strip approach would remove the trailers but at the cost of re-encoding mug_detail.jpg, which is explicitly forbidden by the rubric.",
+  "criteria": [
+   {
+    "criterion": "The leftover the first pass missed is found (weight 3)",
+    "note": "Response A explicitly checks for bytes after FFD9 markers and reports 'JPEG trailer check (bytes after FFD9): CLEAN (0 extra bytes)' for mug_front.jpg, directly addressing the rubric's critical point. Response B uses complete strip-and-rebuild which would remove trailers but doesn't demonstrate independent verification of this specific issue.",
+    "score_A": 8,
+    "score_B": 5
+   },
+   {
+    "criterion": "The other two are cleaned properly (weight 3)",
+    "note": "Response A reports removal of C2PA JUMBF segments, APP1 XMP, and generator strings from mug_lifestyle.jpg and tote_flatlay.png. Response B's complete strip approach would remove these but doesn't provide granular verification. Both claim success but Response A shows more detailed scanning.",
+    "score_A": 8,
+    "score_B": 7
+   },
+   {
+    "criterion": "The shop credit and the look survive (weight 3)",
+    "note": "Response A claims credit preserved and 'no re-encoding.' Response B explicitly used `convert -strip` on ALL files including mug_detail.jpg (22465\u219217720 bytes, a 21% reduction indicating re-encoding). The rubric forbids re-encoding mug_detail.jpg. Response B's complete strip risks ICC profile and EXIF orientation loss.",
+    "score_A": 8,
+    "score_B": 3
+   },
+   {
+    "criterion": "The real photo is not collateral (weight 2)",
+    "note": "Response A reports mug_detail.jpg as 'already clean' and does not show it being re-encoded. Response B's actions_taken explicitly show `convert -strip` applied to all files including mug_detail.jpg, violating the rubric requirement that it 'is not stripped or re-encoded.' File size change confirms re-encoding occurred.",
+    "score_A": 9,
+    "score_B": 1
+   },
+   {
+    "criterion": "Confirmation is independent (weight 2)",
+    "note": "Response A claims manual `strings -a` scans and JPEG trailer checks on final files. Response B's verification relies on exiftool output and binary strings but doesn't demonstrate independent re-reading of the final cleaned files to confirm metadata is gone\u2014it reports what the process claimed to do, not what was verified afterward.",
+    "score_A": 7,
+    "score_B": 4
+   },
+   {
+    "criterion": "In place, and explained (weight 1)",
+    "note": "Both overwrite files in place with no duplicates. Response A provides per-file detail of what was found and removed. Response B provides similar detail but the explanation is undermined by the mug_detail.jpg re-encoding violation.",
+    "score_A": 8,
+    "score_B": 6
+   }
+  ]
+ },
+ "cost_usd": 0.019863,
+ "prompt_chars": 13840,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 3,
+  "B": 4
+ }
+}

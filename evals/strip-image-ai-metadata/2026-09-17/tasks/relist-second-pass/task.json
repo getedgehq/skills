@@ -1,0 +1,24 @@
+{
+  "id": "strip-image-ai-metadata.relist-second-pass",
+  "skill": "strip-image-ai-metadata",
+  "kind": "transfer",
+  "prompt": "marketplace bounced the relist again, says the photos are 'flagged as ai generated' in the file info. folder is relist/, they're copies so just overwrite in place. the guy i paid before you already ran something over them and it still came back rejected, so please actually confirm it's gone instead of telling me the tool said ok. don't change how they look, and the shop credit line in there has to stay, that's the only thing proving the photos are mine",
+  "setup": "pip install --quiet pillow",
+  "rubric": [
+    {"criterion": "The leftover the first pass missed is found", "weight": 3, "description": "mug_front.jpg looks cleaned: its APP11 C2PA segments really are gone. But the APP1 XMP is still present and the whole manifest is still in the bytes after the JPEG's EOI marker. A pass that only rewrites segments, or that trusts a tool's 'nothing found', leaves the trailer and the file is rejected again. The trailing bytes have to go."},
+    {"criterion": "The other two are cleaned properly", "weight": 3, "description": "mug_lifestyle.jpg (APP11 C2PA JUMBF over four segments + APP1 XMP) and tote_flatlay.png (caBX + XMP + a tEXt Comment naming sd_xl_base_1.0 / stability.ai) come out with no C2PA, JUMBF or generator strings of any kind."},
+    {"criterion": "The shop credit and the look survive", "weight": 3, "description": "The Roos Keramiek copyright/artist metadata is still in all four files afterwards, the ICC profiles are intact, and mug_front.jpg still displays 640x480: it is stored 480x640 with EXIF Orientation=6, so a blanket EXIF wipe delivers it on its side. Ideally the pixels are bit-identical because the removal was byte-level rather than a re-encode."},
+    {"criterion": "The real photo is not collateral", "weight": 2, "description": "mug_detail.jpg has no AI metadata at all. It is reported as already clean and is not stripped or re-encoded; its EXIF credit, IPTC block and ICC profile are untouched."},
+    {"criterion": "Confirmation is independent", "weight": 2, "description": "The user explicitly does not want a tool's own summary. The answer says the finished files were re-read and scanned for generator strings and manifests, and reports what that scan found, rather than 'the script reported success'."},
+    {"criterion": "In place, and explained", "weight": 1, "description": "The four files in relist/ are overwritten with no renamed or duplicate copies alongside them, and the message says per file what was found and removed."}
+  ],
+  "why_skill_should_matter": "SKILL.md makes verification a step of its own rather than an afterthought, and the bundled script re-reads the file it just wrote and warns when generator signatures are still present. On mug_front.jpg that warning fires: the script removes the AI XMP, keeps everything else byte-for-byte, and then tells the agent that c2pa/openai/chatgpt strings are still in the file, which is the only signal pointing at the bytes past the EOI marker. The skill's selective scope (structured EXIF and ICC deliberately untouched) is also what keeps the shop credit and the orientation the user depends on. A generic agent either trusts one pass, or reaches for a blanket strip that takes the credit with it.",
+  "expected_baseline_failure_modes": [
+    "Removes APP11/XMP and declares the folder clean, leaving the manifest bytes after the EOI marker in mug_front.jpg",
+    "`exiftool -all=` removes the tags but preserves the unknown trailer, so the listing is rejected a third time",
+    "`convert -strip` clears the trailer but re-encodes every file and deletes the shop credit and the ICC profiles",
+    "Wipes EXIF wholesale, so mug_front.jpg is delivered rotated",
+    "Runs the cleaner over mug_detail.jpg as well and strips a real photograph",
+    "Reports 'verified' on the basis of the cleaning tool's own output"
+  ]
+}

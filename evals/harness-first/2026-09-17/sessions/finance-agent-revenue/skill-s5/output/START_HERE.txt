@@ -1,0 +1,127 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                    FINBOT Q2 REVENUE INVESTIGATION                       ║
+║                           COMPLETED 2026-09-16                           ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+PROBLEM
+-------
+FinBot told board deck team Q2 revenue was $4.1M
+Finance says Q2 close is $3.6M
+$500K difference made it into the board pre-read
+
+QUESTION ASKED
+--------------
+"Is the model hallucinating? Do we need a smarter model?"
+
+30-SECOND ANSWER
+----------------
+NO. The model faithfully executed a query against the WRONG TABLE.
+
+Two tables can answer "revenue":
+  • orders.amount = $4.1M (includes cancelled orders)
+  • revenue_recognized.net_amount = $3.6M (GAAP net revenue)
+
+The prompt never defined which one "revenue" means.
+The model made a reasonable guess and got it wrong.
+
+THIS IS A HARNESS PROBLEM, NOT A MODEL PROBLEM.
+
+THE FIX
+-------
+✓ Add data dictionary to prompt (defines all metrics)
+✓ Make DB read-only (prevents accidental corruption)
+✓ Add max iterations (prevents runaway costs)
+✓ Create 6 test cases (prevents regressions)
+✓ Build eval script (gates future changes)
+
+Cost: $0
+Time: 30 minutes deployment
+Risk: LOW (adds safety, backward compatible)
+
+FILES FOR YOUR ROLE
+-------------------
+CEO (Daniel):           SUMMARY_FOR_DANIEL.txt (2 min)
+                   or:  EXEC_BRIEF.md (3 min, more detail)
+
+Data Team (Jonas):      INCIDENT_REPORT.md (10 min)
+                   →    DEPLOYMENT_GUIDE.md (deploy in 30 min)
+
+Finance (Marta):        evidence.json + VISUAL_SUMMARY.md (5 min)
+
+Engineer:               DEPLOYMENT_GUIDE.md (step-by-step)
+
+Anyone:                 QUICK_REFERENCE.md (30 sec answer)
+
+WHAT'S IN output/
+-----------------
+Documentation:
+  • EXEC_BRIEF.md              Executive one-pager
+  • INCIDENT_REPORT.md         Full technical analysis
+  • harness_scorecard.md       Detailed harness audit
+  • VISUAL_SUMMARY.md          Diagrams and charts
+  • evidence.json              Raw recomputed numbers
+
+Deployment:
+  • DEPLOYMENT_GUIDE.md        Step-by-step instructions
+  • fixes/agent.py             Safe agent code
+  • fixes/prompt.md            Prompt with data dictionary
+  • fixes/evals/               Test suite
+
+Navigation:
+  • QUICK_REFERENCE.md         30-second answer
+  • README.md                  Overview
+  • INDEX.txt                  File guide
+  • DELIVERY_CHECKLIST.md      What was delivered
+
+KEY NUMBERS
+-----------
+FinBot's answer:     $4,138,212  (from orders table)
+Finance's close:     $3,638,336  (from revenue_recognized table)
+Difference:          $  499,876  (12% error)
+
+Why different:
+  Cancelled orders:  $  360,039  (FinBot included these)
+  Refund adjustments:$  139,837  (FinBot didn't account for these)
+
+Both numbers are CORRECT from their source.
+The model just picked the wrong source.
+
+WHAT TO DO NOW
+--------------
+1. Read SUMMARY_FOR_DANIEL.txt (2 min)
+2. Review fixes in fixes/ directory
+3. Deploy following DEPLOYMENT_GUIDE.md (30 min)
+4. Tell board: "Data definition issue. Correct Q2 is $3.6M. Fixed."
+
+DO NOT
+------
+✗ Upgrade model (not the root cause, costs 2-3x more)
+✗ Tell people "AI hallucinated" (wrong framing)
+✗ Deploy prompt changes without running evals
+
+HARNESS SCORE
+-------------
+Before: 6/60 (10%) - prototype quality, not production-ready
+After:  40/60 (67%) - production baseline with basic safety
+
+Missing harness components (before fix):
+  ✗ No golden set (NOW: 6 test cases)
+  ✗ No judge (NOW: run_evals.py)
+  ✗ No data dictionary (NOW: full definitions)
+  ✗ No max iterations (NOW: 10 max)
+  ✗ Write access (NOW: read-only)
+  ✗ No tracing (TODO: add logging)
+
+READY FOR DANIEL'S MEETING
+---------------------------
+✓ Root cause identified with evidence
+✓ Mechanism explained (file:line references)
+✓ Fix written and tested
+✓ Deployment plan documented
+✓ Cost comparison done ($0 vs 2-3x for model upgrade)
+✓ Safety risks identified (write access - urgent)
+✓ Exec brief prepared (3 min read)
+
+All files ready in: /home/user/work/output/
+
+Start with: SUMMARY_FOR_DANIEL.txt or EXEC_BRIEF.md
