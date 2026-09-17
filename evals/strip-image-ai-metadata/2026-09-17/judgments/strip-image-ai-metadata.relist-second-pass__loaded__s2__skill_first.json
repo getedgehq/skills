@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/loaded-s2",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/base-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "The leftover the first pass missed is found (weight 3)",
+    "note": "Response A claims to have removed trailing C2PA data after EOI marker in mug_front.jpg, but the delivered file is 15712 bytes vs input 16974 bytes. Response B re-encoded all JPGs via PIL, stripping everything including any trailing data. However, Response B's approach of complete re-encoding is destructive and violates the 'don't change how they look' requirement. Response A's file size reduction is more consistent with targeted metadata removal. Neither response provides independent verification of what actually remains in the delivered files by re-reading them.",
+    "score_A": 4,
+    "score_B": 3
+   },
+   {
+    "criterion": "The other two are cleaned properly (weight 3)",
+    "note": "Response A: mug_lifestyle.jpg reduced from 18106 to 16796 bytes (1310 byte reduction), tote_flatlay.png from 4997 to 3645 bytes (1352 byte reduction). These reductions are consistent with metadata stripping. Response B: mug_lifestyle.jpg reduced to 13118 bytes (4988 byte reduction), tote_flatlay.png to 2381 bytes (2616 byte reduction). Response B's larger reductions indicate re-encoding. Response B explicitly re-encoded via PIL with quality=95 for JPGs and optimize=True for PNG, which violates the 'don't change how they look' requirement and the 'pixels are identical' expectation.",
+    "score_A": 7,
+    "score_B": 3
+   },
+   {
+    "criterion": "The shop credit and the look survive (weight 3)",
+    "note": "Response A: mug_front.jpg remains 480x640 (stored with EXIF Orientation), preserving the original orientation metadata. Response B: mug_front.jpg is 480x640 but was re-encoded via PIL, which may have altered ICC profiles and EXIF orientation handling. Response B's re-encoding via PIL.save() with quality=95 is a lossy re-compression. Response A claims pixels are identical (byte-level removal). Response B's file size reductions (especially tote_flatlay.png: 4997\u21922381) indicate lossy re-encoding, not preservation.",
+    "score_A": 8,
+    "score_B": 4
+   },
+   {
+    "criterion": "The real photo is not collateral (weight 2)",
+    "note": "Response A: mug_detail.jpg unchanged at 22465 bytes (input was 22465 bytes). Response B: mug_detail.jpg changed to 20223 bytes. Response B re-encoded mug_detail.jpg even though it had no AI metadata, violating the requirement to leave it untouched. Response A correctly identified it as clean and did not modify it.",
+    "score_A": 10,
+    "score_B": 1
+   },
+   {
+    "criterion": "Confirmation is independent (weight 2)",
+    "note": "Response A claims '5 different verification methods' and 'raw byte scans, strings analysis, structure checks, and manual inspection' but the actions_taken show mostly tool outputs with 'ok' status, not independent re-reading of the delivered files. Response B provides a VERIFICATION_REPORT.txt claiming to have found and removed specific markers (OpenAI ChatGPT, trainedAlgorithmicMedia, sd_xl_base_1.0), but this is presented as a document created during the process, not independent verification of the delivered files. Neither truly re-reads the output files to confirm markers are gone.",
+    "score_A": 3,
+    "score_B": 3
+   },
+   {
+    "criterion": "In place, and explained (weight 1)",
+    "note": "Response A: Files overwritten in relist/ with no duplicates. Explanation is brief but present. Response B: Files overwritten in relist/ with no duplicates, but also created README.txt and VERIFICATION_REPORT.txt in the relist/ folder. The user asked for files to be overwritten 'in place' with no mention of wanting extra documentation files. Response B added extra files that clutter the directory.",
+    "score_A": 9,
+    "score_B": 6
+   }
+  ],
+  "analysis": "Response A claims to have performed targeted metadata removal without re-encoding, leaving mug_detail.jpg completely untouched (22465 bytes unchanged). The file size reductions for the other three files are modest (1-2KB), consistent with metadata stripping. Response A's mug_front.jpg remains 480x640 with EXIF Orientation preserved.\n\nResponse B re-encoded all four files via PIL, including mug_detail.jpg which had no AI metadata and should not have been touched. The file size reductions are substantial (mug_detail.jpg: 22465\u219220223, tote_flatlay.png: 4997\u21922381), indicating lossy re-compression. Response B explicitly used PIL.save() with quality=95 for JPGs and optimize=True for PNG, which violates the user's requirement to \"don't change how they look\" and the rubric's expectation of bit-identical pixels.\n\nThe critical failure in Response B is modifying mug_detail.jpg, which the rubric explicitly identifies as \"not collateral\" and should be \"reported as already clean and is not stripped or re-encoded.\" Response B's approach of stripping all metadata and re-adding only the credit is destructive and changes the files' internal structure.\n\nResponse A's verification is claimed but not independently demonstrated in the delivered output. Response B provides a verification report but it documents what was supposedly removed during processing, not what remains in the delivered files.\n\nNeither response truly satisfies the user's explicit request for independent confirmation by re-reading the delivered files to verify markers are gone. However, Response A's approach of targeted removal without re-encoding is technically superior and respects the constraint of not modifying mug_detail.jpg. Response B's re-encoding of all files, especially the clean one, is a fundamental violation of the requirements.",
+  "overall_A": 62,
+  "overall_B": 28,
+  "winner": "A"
+ },
+ "cost_usd": 0.019431,
+ "prompt_chars": 16635,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 3,
+  "B": 4
+ }
+}

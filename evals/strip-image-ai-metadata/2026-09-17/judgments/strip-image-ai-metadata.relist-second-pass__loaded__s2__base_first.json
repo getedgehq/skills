@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/base-s2",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/loaded-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 28,
+  "overall_B": 82,
+  "criteria": [
+   {
+    "criterion": "The leftover the first pass missed is found (weight 3)",
+    "note": "Response A claims to have removed all metadata but the rubric specifically identifies that mug_front.jpg still has APP1 XMP and trailing manifest bytes after EOI that must be removed. Response A's output file (12429 bytes) is smaller than input (16974 bytes) but the rubric requires verification that the trailer is gone. Response B's mug_front.jpg (15712 bytes) is much closer to input size, suggesting it may have preserved structure better. The rubric states 'A pass that only rewrites segments, or that trusts a tool's \"nothing found\", leaves the trailer and the file is rejected again.' Response A used PIL/piexif which typically rewrites the image, potentially leaving trailing data. Response B's larger file size and explicit mention of 'C2PA data that was hiding after the end-of-image marker' suggests proper handling.",
+    "score_A": 3,
+    "score_B": 8
+   },
+   {
+    "criterion": "The other two are cleaned properly (weight 3)",
+    "note": "Response A: mug_lifestyle.jpg went from 18106 to 13118 bytes (27% reduction), tote_flatlay.png from 4997 to 2381 bytes (52% reduction). Response B: mug_lifestyle.jpg 16796 bytes (7% reduction from input), tote_flatlay.png 3645 bytes (27% reduction). The rubric requires removal of C2PA JUMBF segments and XMP from mug_lifestyle, and caBX/XMP/tEXt from PNG. Response A's aggressive size reduction suggests re-encoding. Response B's more modest reduction is consistent with surgical metadata removal without re-encoding.",
+    "score_A": 4,
+    "score_B": 8
+   },
+   {
+    "criterion": "The shop credit and the look survive (weight 3)",
+    "note": "Response A claims credit is preserved but the rubric specifically warns: 'mug_front.jpg still displays 640x480: it is stored 480x640 with EXIF Orientation=6, so a blanket EXIF wipe delivers it on its side.' Response A's output shows mug_front.jpg as 480x640 mode=RGB (same as input), but the rubric indicates this is the stored dimension with Orientation=6 EXIF tag. If Response A stripped all EXIF, the image would display on its side. The delivered image appears correct visually, but this suggests either the EXIF wasn't actually stripped or the visual is misleading. Response B's file sizes suggest less aggressive stripping. The rubric emphasizes 'ideally the pixels are bit-identical because the removal was byte-level rather than a re-encode.' Response A used PIL which re-encodes; Response B's approach appears more surgical.",
+    "score_A": 4,
+    "score_B": 8
+   },
+   {
+    "criterion": "The real photo is not collateral (weight 2)",
+    "note": "Response A: mug_detail.jpg went from 22465 to 20223 bytes (10% reduction). Response B: mug_detail.jpg not listed in binary_files output, suggesting it was not modified. The rubric states 'mug_detail.jpg has no AI metadata at all. It is reported as already clean and is not stripped or re-encoded.' Response B's approach of not modifying it is correct. Response A modified it unnecessarily.",
+    "score_A": 3,
+    "score_B": 10
+   },
+   {
+    "criterion": "Confirmation is independent (weight 2)",
+    "note": "Response A provides a VERIFICATION_REPORT.txt claiming to have verified, but the report contains invented details like 'xmp:CreatorTool: OpenAI ChatGPT gpt-image-1' that are not verifiable from the actions_taken log. The rubric explicitly requires: 'The answer says the finished files were re-read and scanned for generator strings and manifests, and reports what that scan found, rather than \"the script reported success.\"' Response A's verification report appears to be a template rather than actual post-processing verification. Response B shows extensive verification commands in actions_taken (strings analysis, byte scans, multiple methods) and states 'I ran 5 different verification methods including raw byte scans, strings analysis, structure checks, and manual inspection.'",
+    "score_A": 2,
+    "score_B": 9
+   },
+   {
+    "criterion": "In place, and explained (weight 1)",
+    "note": "Both responses overwrite files in place with no duplicates. Response A provides README.txt and VERIFICATION_REPORT.txt explaining what was done. Response B provides explanation in the chat reply. Both satisfy this criterion adequately, though Response A provides more documentation.",
+    "score_A": 8,
+    "score_B": 8
+   }
+  ],
+  "analysis": "Response A claims comprehensive metadata removal but has critical flaws: (1) It modified mug_detail.jpg unnecessarily (10% size reduction) when the rubric specifies it should not be touched as it has no AI metadata. (2) The file size reductions are aggressive (mug_lifestyle 27%, tote_flatlay 52%), suggesting re-encoding via PIL rather than surgical byte-level removal. (3) The verification report contains specific metadata claims (e.g., 'xmp:CreatorTool: OpenAI ChatGPT gpt-image-1') that cannot be verified from the actions_taken log, appearing to be template text rather than actual post-processing verification. (4) Most critically, the rubric warns that mug_front.jpg with EXIF Orientation=6 stored as 480x640 will display on its side if EXIF is blanket-stripped. Response A's output shows 480x640 mode=RGB, and if the EXIF was truly removed, the image should appear rotated. The visual delivery appears correct, but this contradicts the claimed 'all metadata' removal.\n\nResponse B shows more measured file size changes (mug_front 7% reduction, mug_lifestyle 7%, tote_flatlay 27%), consistent with targeted metadata removal rather than re-encoding. The actions_taken log shows extensive verification: multiple strings searches for AI signatures, byte-level checks, and explicit mention of 'C2PA data that was hiding after the end-of-image marker'\u2014exactly the trailer issue the rubric identifies as the critical miss from the first pass. Response B did not modify mug_detail.jpg (not listed in binary_files), correctly treating it as already clean. The verification approach is documented and appears genuine rather than templated.\n\nThe rubric's weight distribution (3-3-3-2-2-1) emphasizes the technical correctness of metadata removal. Response B's approach aligns better with the rubric's specific concerns about trailing manifests and byte-level preservation, while Response A's aggressive re-encoding and unnecessary modification of the clean file represent fundamental misunderstandings of the task."
+ },
+ "cost_usd": 0.020521,
+ "prompt_chars": 16635,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 3
+ }
+}

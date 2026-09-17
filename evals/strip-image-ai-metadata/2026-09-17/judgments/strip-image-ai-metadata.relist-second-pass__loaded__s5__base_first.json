@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/base-s5",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/loaded-s5",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "The leftover the first pass missed is found (weight 3)",
+    "note": "mug_front.jpg must have trailing bytes after EOI marker removed. Response A claims to have done this but provides no verification. Response B explicitly checked for post-EOI data with Python and removed it. Response A's file is 15196 bytes vs Response B's 15712 bytes\u2014B's larger size suggests it may have retained more data. The rubric requires the trailer to be gone, not just APP11 segments.",
+    "score_A": 4,
+    "score_B": 7
+   },
+   {
+    "criterion": "The other two are cleaned properly (weight 3)",
+    "note": "mug_lifestyle.jpg and tote_flatlay.png must have C2PA, JUMBF, XMP, and generator strings removed. Response A used ImageMagick convert -strip on PNG and exiftool on JPGs. Response B used strings scanning and exiftool with explicit AI marker checks. Both claim success but Response B's verification was more thorough (checked for specific AI signatures like 'gpt-image', 'trainedAlgorithm', 'contentauth.org'). Response A's PNG went from 4997 to 3757 bytes (24% reduction), Response B's to 3645 bytes (27% reduction), suggesting B removed more metadata.",
+    "score_A": 6,
+    "score_B": 8
+   },
+   {
+    "criterion": "The shop credit and the look survive (weight 3)",
+    "note": "Roos Keramiek copyright must remain, ICC profiles intact, mug_front.jpg must display 640x480 (stored 480x640 with EXIF Orientation=6). Response A explicitly states it re-added copyright and that images look identical. Response B also claims copyright is intact. Both delivered images appear visually identical to inputs. Response A's mug_front.jpg is 480x640 mode=RGB (correct storage), Response B's is also 480x640 mode=RGB. However, Response A's tote_flatlay.png changed from mode=RGB to mode=P (palette), which is a re-encode and potential loss. Response B kept mode=RGB.",
+    "score_A": 5,
+    "score_B": 8
+   },
+   {
+    "criterion": "The real photo is not collateral (weight 2)",
+    "note": "mug_detail.jpg has no AI metadata and should not be stripped or re-encoded. Response A reduced it from 22465 to 21801 bytes (3% reduction), suggesting re-encoding. Response B did not modify it (no entry in binary_files for mug_detail.jpg, implying it was left untouched or the output wasn't shown). The rubric states it should be 'reported as already clean and is not stripped or re-encoded'. Response A's size reduction indicates it was processed.",
+    "score_A": 3,
+    "score_B": 8
+   },
+   {
+    "criterion": "Confirmation is independent (weight 2)",
+    "note": "User explicitly requested independent verification, not tool summaries. Response A says 'I've also created a detailed report' and the report lists what was 'wrong' but doesn't show re-reading the files to verify removal. Response B explicitly states 'I verified this by: 1. Scanning the raw bytes with strings... 2. Checking EXIF/XMP/IPTC... 3. Verifying no data is hiding after the JPEG end markers... 4. Confirming no C2PA chunks remain'. Response B's actions_taken show actual verification commands run (strings searches, exiftool checks, Python byte inspection). Response A's report is declarative, not verification-based.",
+    "score_A": 3,
+    "score_B": 9
+   },
+   {
+    "criterion": "In place, and explained (weight 1)",
+    "note": "Files must be overwritten in relist/ with no duplicates, and per-file explanation required. Response A created CLEANUP_REPORT.txt (extra file, though user didn't forbid it) and explains per-file what was found. Response B provides no separate report but explains in the chat what was done. Both overwrite in place. Response A is more explicit about per-file findings.",
+    "score_A": 8,
+    "score_B": 7
+   }
+  ],
+  "analysis": "Response A claims comprehensive cleaning but shows critical gaps in verification and execution. It reduced mug_detail.jpg (which should be untouched) by 3%, converted tote_flatlay.png from RGB to palette mode (a re-encode), and provided no independent verification\u2014only a declarative report. The CLEANUP_REPORT lists what was supposedly found but doesn't show re-reading files to confirm removal.\n\nResponse B performed explicit, independent verification: it scanned raw bytes with strings for AI signatures, checked EXIF/XMP/IPTC metadata, inspected for post-EOI data in JPEGs, and verified PNG chunks. Its actions_taken show actual verification commands. However, Response B's mug_front.jpg is larger (15712 vs 15196 bytes), which may indicate incomplete trailing-byte removal\u2014the rubric specifically flags this as the \"leftover the first pass missed.\" Response B also did not show mug_detail.jpg in its binary_files output, which is ambiguous (either untouched or not reported).\n\nThe rubric's highest-weight criterion (3) is finding the trailing bytes after JPEG EOI markers that the first pass missed. Response A claims to have done this but provides no verification. Response B explicitly checked for post-EOI data but its larger file size suggests it may not have fully removed it. Response A's PNG re-encode to palette mode is a violation of the \"don't change how they look\" requirement and suggests lossy processing. Response B preserved RGB mode.\n\nResponse B's independent verification approach directly addresses the user's explicit request: \"please actually confirm it's gone instead of telling me the tool said ok.\" Response A provides only tool output summaries and a report, not independent re-verification.\n\nOn balance, Response B's rigorous verification methodology and preservation of image properties (RGB mode, no re-encoding of mug_detail.jpg) outweigh its potential failure on the trailing-bytes criterion, which Response A also likely failed (no verification shown). Response B's approach is more trustworthy even if the outcome is uncertain.",
+  "overall_A": 42,
+  "overall_B": 74,
+  "winner": "B"
+ },
+ "cost_usd": 0.01868,
+ "prompt_chars": 13637,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 3
+ }
+}

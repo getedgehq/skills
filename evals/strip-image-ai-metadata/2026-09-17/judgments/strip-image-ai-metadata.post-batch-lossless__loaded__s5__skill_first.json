@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/loaded-s5",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/base-s5",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Every AI record is gone from the delivered files (weight 3)",
+    "note": "Response A: carousel_01.png reduced from 5324\u21924049 bytes (1275 removed), carousel_02.png 4537\u21924419 bytes (118 removed), portrait_final.jpg 19495\u219218856 bytes (639 removed). Response B: carousel_01.png 5324\u21923981 bytes (1343 removed), carousel_02.png 4537\u21924351 bytes (186 removed), portrait_final.jpg 19495\u219218856 bytes (639 removed). Both claim complete removal of C2PA/JUMBF/AI metadata. Response B removed more bytes from carousel_01 and carousel_02, suggesting more aggressive stripping. However, the rubric specifies that carousel_02 had only tEXt Software=Midjourney (no C2PA), so selective removal is required. Response A's smaller byte reduction (118 vs 186) for carousel_02 suggests more selective removal. Response B's larger reductions could indicate over-stripping or removal of legitimate metadata. Both report verification, but Response B's larger removals raise questions about whether non-AI metadata was also stripped.",
+    "score_A": 8,
+    "score_B": 7
+   },
+   {
+    "criterion": "Nothing else in the files was thrown away (weight 3)",
+    "note": "Response A: stage_shot.jpg is byte-identical (16663 bytes both), indicating no unnecessary stripping. Response B: stage_shot.jpg is also byte-identical (16663 bytes both). For the three files with AI metadata, Response A's smaller byte reductions (especially carousel_02: 118 vs 186) suggest more selective removal. Response B's larger reductions could indicate removal of ICC profiles, EXIF, or other legitimate metadata. The rubric requires keeping sRGB ICC profile, Copyright/Artist credit, and EXIF. Response A's approach appears more conservative and selective. Response B's code shows it removes 'eXIf' and 'tEXt' chunks broadly, which could strip legitimate metadata.",
+    "score_A": 8,
+    "score_B": 6
+   },
+   {
+    "criterion": "The portrait still displays upright and was not recompressed (weight 3)",
+    "note": "Both responses report portrait_final.jpg as 480x640 with identical byte size (18856 bytes). Both claim pixel-identical output. The visual comparison shows both delivered images display correctly upright. Response A explicitly states 'byte-for-byte identical' and shows verification. Response B also claims pixel verification but the larger byte reduction in carousel files raises questions about whether JPEG re-encoding occurred. For portrait_final.jpg specifically, both show identical file sizes and correct orientation, suggesting neither re-encoded this file.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "The real photo is recognised and left alone (weight 2)",
+    "note": "Both responses correctly identify stage_shot.jpg as clean (no AI metadata). Both deliver it byte-for-byte identical (16663 bytes). Response A explicitly states 'Copied unchanged to output/' and 'No AI metadata found - this one was safe to post as-is'. Response B also reports it as 'ALREADY CLEAN' with no metadata removed. Both handle this correctly.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Originals untouched, deliverables where asked (weight 2)",
+    "note": "Both responses leave queue/ untouched and place cleaned versions in output/. Both maintain original formats (.png stays .png, .jpg stays .jpg). Response A shows 'queue/ is untouched' explicitly. Response B also confirms this. Both meet this requirement.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Per-file answer and a real verification (weight 2)",
+    "note": "Response A: Clearly identifies which three files carried labels (carousel_01: ChatGPT, carousel_02: Midjourney, portrait_final: Firefly) and which one didn't (stage_shot). States what was removed from each. Claims 'verified clean - no C2PA, no AI generator mentions'. Response B: Also identifies the three files and stage_shot as clean. Provides detailed breakdown of what was removed. Both provide per-file answers. Response A's verification statement is more concise; Response B provides more detailed technical breakdown but also includes Python code (which wasn't executed, just shown). Response A's verification appears more direct and credible.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Honest about scope (weight 1)",
+    "note": "Response A: States 'The cleaned files are 100% verified clean - no C2PA, no AI generator mentions, nothing that will trip LinkedIn's content credentials label.' This is somewhat overconfident but doesn't explicitly promise LinkedIn won't label them again. Response B: States 'LinkedIn shouldn't slap that label on them anymore since all the telltale signatures are gone.' This is similarly confident but also doesn't make absolute promises. Neither explicitly notes that only file metadata was touched and LinkedIn's detection could evolve. Both are reasonably honest but could be more cautious.",
+    "score_A": 7,
+    "score_B": 7
+   }
+  ],
+  "analysis": "Both responses successfully delivered cleaned images to output/ with the originals untouched in queue/. The key differences:\n\n**Metadata Removal Amounts:**\n- Response A: carousel_01 (1275 bytes removed), carousel_02 (118 bytes), portrait_final (639 bytes)\n- Response B: carousel_01 (1343 bytes removed), carousel_02 (186 bytes), portrait_final (639 bytes)\n\nResponse B removed significantly more from carousel_02 (186 vs 118 bytes). Since the rubric specifies carousel_02 had only tEXt Software=Midjourney metadata (no C2PA), Response A's smaller removal suggests more selective, targeted stripping. Response B's larger removal could indicate it also stripped legitimate metadata like ICC profiles or EXIF data.\n\n**Verification and Approach:**\n- Response A: Concise verification, clear per-file breakdown, explicit statement of what was removed\n- Response B: More detailed technical breakdown, includes Python code snippets, created a CLEANING_REPORT.txt file\n\n**File Integrity:**\n- Both kept stage_shot.jpg byte-identical (16663 bytes)\n- Both kept portrait_final.jpg at 18856 bytes with correct orientation\n- Response A's smaller byte reductions on carousel files suggest more conservative metadata removal\n- Response B's code shows it removes 'eXIf' and 'tEXt' chunks broadly, which could strip legitimate metadata beyond just AI markers\n\n**Deliverables:**\n- Both correctly placed cleaned files in output/ with original formats preserved\n- Both left queue/ untouched\n- Visual inspection confirms all images display correctly\n\nResponse A appears to have performed more selective, targeted removal of only AI-related metadata, while Response B's larger byte reductions suggest it may have removed additional legitimate metadata. The rubric emphasizes selective removal (keeping ICC profiles, EXIF, copyright) rather than blanket stripping.\n",
+  "overall_A": 82,
+  "overall_B": 75,
+  "winner": "A"
+ },
+ "cost_usd": 0.024299,
+ "prompt_chars": 25861,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 4
+ }
+}

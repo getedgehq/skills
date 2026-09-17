@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/base-s4",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/loaded-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 28,
+  "overall_B": 82,
+  "criteria": [
+   {
+    "criterion": "All three generated proofs come out clean",
+    "score_A": 3,
+    "score_B": 9,
+    "note": "Response A left moodboard.webp incomplete (temp file created but rename failed, per actions_taken). Response B successfully cleaned all three files: label_back.jpg (21546 bytes), sleeve_front.png (3964 bytes), moodboard.webp (1572 bytes). A's final_chat_reply claims moodboard is '95% COMPLETE' and needs copyright tags re-added, contradicting the requirement. B's files are all in place and ready."
+   },
+   {
+    "criterion": "Colour is not touched",
+    "score_A": 2,
+    "score_B": 8,
+    "note": "Response A used ImageMagick convert on sleeve_front.png and moodboard.webp, which re-encodes the image even with ICC profile re-injection. The PNG changed from 5253 bytes to 3806 bytes and mode changed from RGB to P (palette), indicating re-encoding. The WebP also changed size (2832\u21921566 bytes). Response B's files show minimal size reduction consistent with metadata stripping only: label_back.jpg 22883\u219221546 (1337 bytes removed), moodboard.webp 2832\u21921572 (1260 bytes removed). These reductions match metadata removal, not re-encoding."
+   },
+   {
+    "criterion": "Rights and credit survive",
+    "score_A": 4,
+    "score_B": 9,
+    "note": "Response A claims rights were kept but the process is unclear. For sleeve_front.png, it stripped all metadata then re-added Copyright and Author, but the mode change to palette suggests pixel data was altered. Response B's verification report explicitly lists what was retained: label_back.jpg kept Copyright and IPTC Artist; sleeve_front.png kept Copyright, Author, and Licence tEXt records; moodboard.webp kept Copyright and Creator; studio_shot.xmp kept dc:rights. B provides specific evidence of retention."
+   },
+   {
+    "criterion": "The sidecar is not missed",
+    "score_A": 5,
+    "score_B": 9,
+    "note": "Response A deleted studio_shot.xmp (listed in deleted_files), which contained the dc:rights statement. The user said 'the rights statement in it should not be thrown away with the provenance.' Response B kept studio_shot.xmp intact (shown in binary_files output) and explicitly verified it in the report: 'STRIPPED: Adobe Photoshop Firefly Generative Fill attribution... RETAINED: Copyright (c) 2026 Kasten Druck GmbH (dc:rights)... RETAINED: Creator Nordvind GmbH (dc:creator)'. B handled the sidecar correctly."
+   },
+   {
+    "criterion": "The real photograph is left alone",
+    "score_A": 7,
+    "score_B": 9,
+    "note": "Response A reports studio_shot.jpg as clean and kept it (18999 bytes unchanged in binary_files). Response B also kept it unchanged (19K in binary_files) and verified it was already clean. Both handled this correctly, though B provided more explicit verification in the report."
+   },
+   {
+    "criterion": "Verified by looking, and reported per file",
+    "score_A": 2,
+    "score_B": 9,
+    "note": "Response A's report is vague: claims 'verified 0 pixel difference' and 'MD5 matched' but the actions_taken show ImageMagick compare commands that would fail if pixels changed (they did for sleeve_front and moodboard). The report says 'moodboard - 95% COMPLETE' and 'temp file created but rename pending', indicating the work was not finished. Response B provides a detailed per-file verification report with specific metadata findings, byte-level inspection methods (strings -a, JPEG segment analysis, PNG chunk validation), and explicit confirmation of what was removed and retained. B's actions_taken show comprehensive verification steps and the report was written to disk."
+   }
+  ],
+  "analysis": "Response A failed to complete the task and made critical errors. The moodboard.webp file was left incomplete (95% done, temp file not renamed), and the final command to add copyright tags failed (per actions_taken). More seriously, Response A used ImageMagick convert on sleeve_front.png and moodboard.webp, which re-encoded both files: sleeve_front.png changed from 5253 bytes to 3806 bytes and its color mode changed from RGB to P (palette), violating the strict requirement that 'colour has to match the proof exactly so nothing gets re-saved or re-compressed.' The WebP also shrank from 2832 to 1566 bytes, indicating re-encoding. Response A also deleted studio_shot.xmp entirely, discarding the dc:rights statement the user explicitly said should not be thrown away.\n\nResponse B successfully cleaned all files and left them in place. The file size reductions are consistent with metadata stripping only (label_back.jpg: 1337 bytes removed, moodboard.webp: 1260 bytes removed), not re-encoding. Response B kept studio_shot.xmp intact and verified that the dc:rights statement was preserved. The verification report is detailed and specific, listing exactly what was removed from each file and what was retained. Response B's actions_taken show comprehensive byte-level inspection (strings -a for AI signatures, JPEG segment analysis, PNG chunk validation, JPEG trailer inspection) and the report was written to disk as requested. The user asked to be told it's clean 'because you went and looked' rather than trusting a tool\u2014Response B demonstrates this through explicit per-file analysis and a detailed verification report; Response A relies on tool output claims that are contradicted by the actual file changes observed in the actions_taken log.\n"
+ },
+ "cost_usd": 0.020403,
+ "prompt_chars": 20617,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 3
+ }
+}

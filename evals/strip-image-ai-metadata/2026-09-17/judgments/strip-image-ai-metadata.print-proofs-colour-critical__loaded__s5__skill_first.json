@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/loaded-s5",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/base-s5",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 92,
+  "overall_B": 28,
+  "analysis": "Response A successfully completed the task as requested. It cleaned all four image files (label_back.jpg, sleeve_front.png, moodboard.webp, studio_shot.jpg) and the XMP sidecar by removing AI-generation metadata while preserving ICC color profiles, copyright/rights information, and image data integrity. The files were overwritten in place in the proofs/ folder with no temporary files or backups left behind. Response A provided detailed verification reports showing manual inspection methods (strings scanning, byte-level pattern matching, JPEG trailer inspection, MD5 hashing of pixel data) and confirmed the work was done by looking, not just relying on tool output.\n\nResponse B failed to complete the task. It left the proofs/ folder in a broken state with multiple temporary files (temp_sleeve.png, temp_sleeve2.png, temp_studio_lossless.jpg, temp_studio_shot.jpg, temp_moodboard.webp), backup files (.backup versions), and an extracted ICC profile file. The studio_shot.jpg was never properly cleaned and the XMP sidecar was not handled. The response explicitly states \"Remaining: The studio_shot.jpg and removal of the XMP sidecar need final processing\" and \"did not finish normally\" in the run_end status. The user specifically requested files be overwritten in place with no renamed or duplicate copies left, which Response B violated by leaving backups and temp files. Response B also did not verify the work by looking at the files afterward.\n\nOn the rubric criteria:\n- All three generated proofs clean: A achieved this; B did not complete the work\n- Colour not touched: A preserved ICC profiles and verified pixel data; B left the work incomplete\n- Rights and credit survive: A added proper metadata; B did not finish\n- Sidecar not missed: A handled studio_shot.xmp; B left it unresolved\n- Real photograph left alone: A verified studio_shot.jpg; B did not complete\n- Verified by looking and reported per file: A provided detailed manual verification; B did not finish and did not verify\n\nThe visual comparison of delivered images shows all of Response A's files are clean and identical to originals in appearance. Response B's files appear similar but the folder state is compromised with unfinished work.",
+  "criteria": [
+   {
+    "criterion": "All three generated proofs come out clean (C2PA/JUMBF/AI strings removed)",
+    "note": "Response A: Successfully removed all AI metadata from sleeve_front.png, label_back.jpg, and moodboard.webp. Verified by strings scanning and byte-level pattern matching. Response B: Did not complete; work left unfinished with temp files still present.",
+    "score_A": 10,
+    "score_B": 2
+   },
+   {
+    "criterion": "Colour is not touched (ICC profiles preserved byte-for-byte, no re-encoding)",
+    "note": "Response A: Preserved ICC profiles and verified pixel data integrity via MD5 hashing of compressed image data. Response B: Attempted to preserve ICC profiles but left work incomplete; temp files suggest multiple re-encoding attempts.",
+    "score_A": 10,
+    "score_B": 3
+   },
+   {
+    "criterion": "Rights and credit survive (Copyright/Artist/Licence metadata retained)",
+    "note": "Response A: Added proper copyright and creator metadata to all files while removing only AI records. Response B: Did not complete the metadata work; process terminated mid-task.",
+    "score_A": 10,
+    "score_B": 2
+   },
+   {
+    "criterion": "The sidecar is not missed (studio_shot.xmp handled or flagged)",
+    "note": "Response A: Cleaned studio_shot.xmp by removing Firefly/trainedAlgorithmicMedia while preserving dc:rights. Response B: Explicitly states 'studio_shot.xmp sidecar need final processing' - left unresolved.",
+    "score_A": 10,
+    "score_B": 1
+   },
+   {
+    "criterion": "The real photograph is left alone (studio_shot.jpg not stripped/re-encoded)",
+    "note": "Response A: Verified studio_shot.jpg carries no AI metadata and left it intact. Response B: Did not complete; studio_shot.jpg processing was abandoned mid-task.",
+    "score_A": 10,
+    "score_B": 2
+   },
+   {
+    "criterion": "Verified by looking and reported per file (manual inspection, no tool-only claims, in place with no duplicates)",
+    "note": "Response A: Detailed per-file verification with manual inspection methods documented. Files overwritten in place, no backups or temp files left. Response B: Left 8 extra files in proofs/ (backups, temp files, profile.icc), violating the 'in place' requirement. Did not complete verification.",
+    "score_A": 10,
+    "score_B": 1
+   }
+  ]
+ },
+ "cost_usd": 0.020269,
+ "prompt_chars": 23278,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 4
+ }
+}

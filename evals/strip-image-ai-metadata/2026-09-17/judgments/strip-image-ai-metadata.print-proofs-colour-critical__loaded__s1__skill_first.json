@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/loaded-s1",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/base-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 82,
+  "overall_B": 28,
+  "analysis": "Response A successfully cleaned the files and delivered them ready for the printer, meeting the core requirements. Response B fundamentally failed the task by re-encoding files, adding backup copies, and leaving the folder in an unusable state.\n\n**Critical failures in Response B:**\n1. **File re-encoding**: label_back.jpg grew from 22.9 KB to 25.1 KB (JPEG re-encoded), moodboard.webp grew from 2.8 KB to 5.0 KB (WebP re-encoded), sleeve_front.png grew from 5.3 KB to 4.8 KB (PNG re-encoded). The user explicitly stated \"colour has to match the proof exactly so nothing gets re-saved or re-compressed.\" This is a direct violation.\n2. **Backup files left in proofs/**: Response B created .backup copies (label_back.jpg.backup, moodboard.webp.backup, sleeve_front.png.backup, studio_shot.xmp.backup) and attempted to delete them but failed (\"rm -f *.backup -> ERROR\"). The user said \"overwrite them in proofs/ directly, that's the folder i'm zipping up\" and \"no renamed or duplicate copies left in proofs/.\" The folder now contains unwanted backups that will be included in the zip.\n3. **Incomplete cleanup**: The run ended with \"turn_cap (did not finish normally)\" indicating the process was interrupted or failed. The backups remain in the folder.\n4. **Metadata manipulation**: Response B replaced creator tools with \"Affinity Photo 2\" and \"Affinity Designer 2\" rather than cleanly removing AI references while preserving legitimate metadata. This is fabrication of provenance.\n\n**Response A's approach:**\n- Reduced file sizes (label_back.jpg: 22.9 KB \u2192 21.5 KB, moodboard.webp: 2.8 KB \u2192 1.6 KB, sleeve_front.png: 5.3 KB \u2192 4.1 KB), indicating surgical metadata removal without re-encoding\n- No backup files left in proofs/\n- Completed normally with verification reports\n- Scanned files with strings, exiftool, hex inspection, and trailer checks\n- Preserved rights metadata (Copyright, Artist, Credit)\n- Verified ICC profiles remained intact\n- Reported findings per file as requested\n\n**Verification of claims:**\n- Response A's file sizes show reduction consistent with metadata stripping only\n- Response B's file size increases prove re-encoding occurred (JPEG and WebP especially)\n- Response B's backup files are visible in the binary_files output\n- Response A's run completed normally; Response B's did not\n- The visual comparison of delivered images shows identical pixel content, but Response B's files are larger, confirming re-encoding\n\n**Rubric assessment:**\n- Criterion 1 (AI records removed): A passes (files reduced, no AI strings found); B fails (re-encoded, fabricated creator tools)\n- Criterion 2 (Colour unchanged): A passes (ICC profiles intact, no re-encoding); B fails (files re-encoded, ICC profiles may have changed)\n- Criterion 3 (Rights preserved): A passes (metadata preserved); B partially passes but fabricated creator info\n- Criterion 4 (Sidecar handled): A passes (studio_shot.xmp cleaned and preserved); B partially passes but left backup\n- Criterion 5 (Real photo untouched): A passes (studio_shot.jpg not modified); B passes\n- Criterion 6 (Verified by looking): A passes (detailed per-file reporting); B fails (incomplete, did not finish, backups remain)\n\nThe user's explicit requirement was \"i'd rather you tell me it's clean because you went and looked than because a tool said so\" and \"overwrite them in proofs/ directly\" with \"no renamed or duplicate copies left.\" Response B violates both by leaving backups and re-encoding files, making the folder unsuitable for delivery to the printer.\n",
+  "criteria": [
+   {
+    "criterion": "All three generated proofs come out clean (no C2PA, JUMBF, AI strings)",
+    "note": "A: Files reduced in size, strings scans clean, no AI signatures found. B: Files re-encoded (size increased for JPEG/WebP), fabricated creator tools instead of removing AI references.",
+    "score_A": 9,
+    "score_B": 3
+   },
+   {
+    "criterion": "Colour is not touched (ICC profiles byte-for-byte, no re-encoding)",
+    "note": "A: File sizes reduced (metadata removal only), ICC profiles verified intact. B: JPEG grew 22.9\u219225.1 KB, WebP grew 2.8\u21925.0 KB, PNG shrank 5.3\u21924.8 KB\u2014all indicate re-encoding. User explicitly forbade re-compression.",
+    "score_A": 9,
+    "score_B": 2
+   },
+   {
+    "criterion": "Rights and credit survive (Copyright, Artist, Credit metadata preserved)",
+    "note": "A: Preserved Copyright, Artist, Credit in all files. B: Preserved some metadata but fabricated creator tools (Affinity Photo 2) instead of cleanly removing AI references.",
+    "score_A": 9,
+    "score_B": 5
+   },
+   {
+    "criterion": "The sidecar is not missed (studio_shot.xmp handled, rights preserved)",
+    "note": "A: Cleaned studio_shot.xmp, removed AI references, preserved dc:rights. B: Cleaned studio_shot.xmp but created .backup copy that remains in folder.",
+    "score_A": 9,
+    "score_B": 4
+   },
+   {
+    "criterion": "The real photograph is left alone (studio_shot.jpg untouched)",
+    "note": "A: studio_shot.jpg not modified, left in original state. B: studio_shot.jpg not modified, but .backup copy created and left in folder.",
+    "score_A": 9,
+    "score_B": 5
+   },
+   {
+    "criterion": "Verified by looking, reported per file, no duplicates in proofs/",
+    "note": "A: Detailed per-file verification, no backups, completed normally. B: Run ended abnormally ('turn_cap did not finish normally'), backup files remain in proofs/ (label_back.jpg.backup, moodboard.webp.backup, sleeve_front.png.backup, studio_shot.xmp.backup), rm command failed.",
+    "score_A": 9,
+    "score_B": 1
+   }
+  ]
+ },
+ "cost_usd": 0.02151,
+ "prompt_chars": 22138,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 3,
+  "B": 3
+ }
+}

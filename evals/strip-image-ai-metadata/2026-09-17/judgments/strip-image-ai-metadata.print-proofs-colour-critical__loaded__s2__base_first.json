@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/base-s2",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/loaded-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 32,
+  "overall_B": 78,
+  "criteria": [
+   {
+    "criterion": "All three generated proofs come out clean (weight 3)",
+    "score_A": 2,
+    "score_B": 9,
+    "note": "Response A claims to have stripped AI metadata but the delivered files show evidence of destructive processing. sleeve_front.png changed from mode=RGB to mode=P (palette mode), indicating re-encoding. moodboard.webp grew from 2832 to 4608 bytes despite metadata removal. Response B's files show surgical metadata removal: label_back.jpg 22883\u219221546 bytes (644 bytes removed), moodboard.webp 2832\u21921572 bytes (1260 bytes removed), sleeve_front.png 5253\u21923964 bytes (1289 bytes removed). These byte reductions match metadata removal without pixel re-encoding. Response B preserved RGB mode in all files."
+   },
+   {
+    "criterion": "Colour is not touched (weight 3)",
+    "score_A": 1,
+    "score_B": 9,
+    "note": "Response A's sleeve_front.png changed from RGB to Palette mode, indicating ImageMagick round-trip re-encoding (the rubric explicitly states this fails). The file was re-encoded. Response B's files maintain their original color modes and ICC profiles. The byte-size reductions in B are consistent with metadata-only removal. Response A's moodboard.webp size increase (2832\u21924608) despite claimed metadata removal is a red flag for re-encoding."
+   },
+   {
+    "criterion": "Rights and credit survive (weight 3)",
+    "score_A": 3,
+    "score_B": 8,
+    "note": "Response A claims rights were preserved but provides no verification. The verification report lists generic copyright statements but doesn't show what was actually in the files. Response B explicitly shows what was preserved: sleeve_front.png kept tEXt Copyright, Author, and Licence records; studio_shot.xmp preserved dc:rights and dc:creator. Response B's verification is more specific about what survived the cleaning."
+   },
+   {
+    "criterion": "The sidecar is not missed (weight 2)",
+    "score_A": 2,
+    "score_B": 10,
+    "note": "Response A deleted studio_shot.xmp entirely, throwing away the dc:rights statement along with the AI metadata. The user said 'the rights statement in it should not be thrown away with the provenance.' Response B kept studio_shot.xmp and explicitly shows it removed only the AI CreatorTool and DigitalSourceType while preserving dc:rights and dc:creator. This is the correct approach."
+   },
+   {
+    "criterion": "The real photograph is left alone (weight 2)",
+    "score_A": 5,
+    "score_B": 9,
+    "note": "Response A claims studio_shot.jpg was left alone but provides no verification. Response B explicitly verified it was clean and untouched. Response B's file size (19K) matches the input (18999 bytes), confirming no re-encoding. Response A doesn't provide byte-level verification."
+   },
+   {
+    "criterion": "Verified by looking, and reported per file (weight 2)",
+    "score_A": 3,
+    "score_B": 9,
+    "note": "Response A claims manual inspection but the verification report is generic and doesn't show specific findings per file. It says 'All four production files show zero AI markers' but doesn't detail what was found and removed from each. Response B provides specific details: label_back.jpg had C2PA in APP11 segments (4 segments, 610 bytes of XMP); sleeve_front.png had caBX C2PA chunk (659 bytes) and iTXt XMP (606 bytes); moodboard.webp had C2PA chunk (659 bytes) and XMP chunk (584 bytes). Response B also shows the verification was re-scanned after cleaning. Response A created a verification report but didn't show the re-scan results."
+   }
+  ],
+  "analysis": "Response A made critical errors in file handling. Most damaging: sleeve_front.png was re-encoded from RGB to Palette mode (visible in the binary_files output: \"mode=P\" vs input \"mode=RGB\"), which violates the core requirement that \"nothing gets re-saved or re-compressed.\" The moodboard.webp grew from 2832 to 4608 bytes despite claimed metadata removal, suggesting re-encoding rather than surgical metadata stripping. Response A also deleted studio_shot.xmp entirely, discarding the dc:rights metadata that the rubric explicitly says should be preserved.\n\nResponse B performed surgical metadata removal with byte counts that match the claimed deletions: label_back.jpg lost 644 bytes (C2PA + XMP), moodboard.webp lost 1260 bytes (C2PA + XMP), sleeve_front.png lost 1289 bytes (C2PA + XMP). All files maintained their original color modes (RGB) and ICC profiles. Critically, Response B preserved studio_shot.xmp and explicitly removed only the AI metadata (CreatorTool, DigitalSourceType) while keeping dc:rights and dc:creator intact.\n\nResponse B also provided more granular verification: specific byte counts for what was removed from each file, explicit confirmation that rights metadata survived, and detailed chunk-level analysis. Response A's verification report is generic and doesn't show per-file details of what was actually found and removed.\n\nThe user's explicit requirement was \"i'd rather you tell me it's clean because you went and looked than because a tool said so.\" Response B demonstrated this by showing specific findings (C2PA in APP11 segments, caBX chunks, iTXt chunks) and byte-level verification. Response A claimed to have looked but provided only generic assurances without specific evidence per file."
+ },
+ "cost_usd": 0.020151,
+ "prompt_chars": 21800,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 3,
+  "B": 3
+ }
+}

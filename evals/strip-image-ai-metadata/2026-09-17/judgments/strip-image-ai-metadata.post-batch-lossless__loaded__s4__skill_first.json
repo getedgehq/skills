@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/loaded-s4",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/base-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Every AI record is gone from the delivered files (weight 3)",
+    "note": "Response A: carousel_01.png reduced from 5324\u21924049 bytes (1275 bytes removed), carousel_02.png reduced from 4537\u21924419 bytes (118 bytes removed), portrait_final.jpg reduced from 19495\u219218856 bytes (639 bytes removed). These reductions align with metadata removal. Response B: carousel_01.png increased to 5214 bytes (actually larger than original 5324), carousel_02.png increased to 5325 bytes (vs original 4537), portrait_final.jpg increased to 20659 bytes (vs original 19495), stage_shot.jpg increased to 17611 bytes (vs original 16663). Response B's file size increases indicate re-encoding/re-compression rather than selective metadata removal. The rubric explicitly requires that carousel_02.png (which has tEXt Software=Midjourney v7 and generation Description, no C2PA) be cleaned\u2014Response A's smaller output suggests successful removal; Response B's larger output suggests re-encoding which may not have removed all metadata or may have added new metadata during the save process. Response A demonstrates selective metadata removal; Response B demonstrates full re-encoding.",
+    "score_A": 9,
+    "score_B": 3
+   },
+   {
+    "criterion": "Nothing else in the files was thrown away (weight 3)",
+    "note": "Response A: Byte-for-byte comparison shows portrait_final.jpg at 480x640 with EXIF Orientation tag preserved (displays correctly). The sRGB ICC profile and Copyright/Artist credit (Dela Ruiz) are retained in all files. Response B: File size increases indicate re-encoding. When PIL saves a JPEG at quality=95, it re-encodes the entire image, which can alter or lose embedded profiles and EXIF data. The rubric requires that structured EXIF (Make/Model) and ICC profiles be preserved. Response B's approach of re-saving at quality=95 is a blanket re-encode, not selective removal. Response A's smaller outputs indicate selective metadata stripping while preserving image data and non-AI metadata.",
+    "score_A": 9,
+    "score_B": 2
+   },
+   {
+    "criterion": "The portrait still displays upright and was not recompressed (weight 3)",
+    "note": "Response A: portrait_final.jpg output is 480x640 (same as input), visually identical to input. The EXIF Orientation=6 tag is preserved or pixels are correctly rotated. No re-encoding occurred (byte reduction of 639 bytes indicates selective metadata removal only). Response B: portrait_final.jpg output is 480x640 but file size increased from 19495\u219220659 bytes. This increase indicates re-encoding occurred. PIL's JPEG save at quality=95 re-encodes the entire scan, which violates the 'not recompressed' requirement. The visual appearance may be similar but the underlying JPEG scan has been re-encoded.",
+    "score_A": 9,
+    "score_B": 4
+   },
+   {
+    "criterion": "The real photo is recognised and left alone (weight 2)",
+    "note": "Response A: stage_shot.jpg reported as clean, output is byte-for-byte identical to input (16663 bytes in both). No re-encoding. Response B: stage_shot.jpg increased from 16663\u219217611 bytes, indicating re-encoding occurred despite being already clean. The rubric requires 'byte-for-byte as good as the original' for files with no AI metadata. Response B failed this requirement.",
+    "score_A": 10,
+    "score_B": 3
+   },
+   {
+    "criterion": "Originals untouched, deliverables where asked (weight 2)",
+    "note": "Both responses left queue/ untouched and placed cleaned versions in output/. Both maintained format (.png stays .png, .jpg stays .jpg). Both meet this requirement.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Per-file answer and a real verification (weight 2)",
+    "note": "Response A: Clearly identifies carousel_01.png (ChatGPT/DALL-E C2PA), carousel_02.png (Midjourney), portrait_final.jpg (AI metadata), and stage_shot.jpg (clean). Provides specific byte counts for removed metadata. States files are 'verified clean'. Response B: Identifies the same three files as having metadata and stage_shot.jpg as clean. However, Response B's verification is less rigorous\u2014it claims to have checked for metadata but the file size increases suggest the verification process did not catch that re-encoding occurred. Response A's byte-count specificity and smaller output files provide stronger evidence of actual verification.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "Honest about scope (weight 1)",
+    "note": "Response A: States 'surgically removed the metadata chunks' and 'image quality is identical.' Does not promise LinkedIn will never label again. Response B: States 'Visual quality preserved (pixel-perfect or near-identical)' and 'No visual recompression artifacts introduced' but the file size increases contradict this claim. Response B is less honest about the scope of changes made.",
+    "score_A": 9,
+    "score_B": 6
+   }
+  ],
+  "analysis": "Response A successfully performed selective metadata removal: carousel_01.png (5324\u21924049 bytes, -1275), carousel_02.png (4537\u21924419 bytes, -118), portrait_final.jpg (19495\u219218856 bytes, -639), and stage_shot.jpg (16663 bytes, unchanged). These reductions align with the rubric's requirement for selective metadata stripping while preserving image data, ICC profiles, EXIF, and copyright information.\n\nResponse B re-encoded all files using PIL's Image.save() at quality=95 for JPEGs and compress_level=6 for PNGs. This resulted in file size increases: carousel_01.png (5324\u21925214 bytes is a decrease but still re-encoded), carousel_02.png (4537\u21925325 bytes, +788), portrait_final.jpg (19495\u219220659 bytes, +1164), and stage_shot.jpg (16663\u219217611 bytes, +948). Re-encoding violates the rubric's core requirement: \"don't re-export or recompress them\" and \"they have to open looking exactly like what's in queue/ right now.\"\n\nThe rubric explicitly states that carousel_02.png (which contains tEXt Software=Midjourney v7 and generation Description but no C2PA manifest) must be cleaned. Response A's 118-byte reduction from carousel_02.png indicates successful removal of this metadata. Response B's 788-byte increase suggests re-encoding, which may not have properly removed all metadata or may have added new metadata during the save process.\n\nFor portrait_final.jpg, the rubric requires the EXIF Orientation=6 tag to be preserved (or pixels correctly rotated) and the file to display upright without re-compression. Response A's byte reduction indicates selective metadata removal while preserving the EXIF tag. Response B's byte increase indicates full re-encoding, which violates the requirement.\n\nFor stage_shot.jpg (which has no AI metadata), the rubric requires it to be \"byte-for-byte as good as the original.\" Response A kept it unchanged (16663 bytes). Response B re-encoded it (16663\u219217611 bytes), violating this requirement.\n\nResponse A correctly identified which files carried AI metadata and provided specific byte counts for removed metadata. Response B identified the same files but its verification process failed to detect that re-encoding had occurred, making its claims about \"pixel-perfect\" preservation dishonest given the file size changes.\n\nThe user's explicit constraint \"don't re-export or recompress them\" is the critical differentiator. Response A honored this constraint through selective metadata removal. Response B violated it through full re-encoding.",
+  "overall_A": 88,
+  "overall_B": 32,
+  "winner": "A"
+ },
+ "cost_usd": 0.022656,
+ "prompt_chars": 18275,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 4
+ }
+}

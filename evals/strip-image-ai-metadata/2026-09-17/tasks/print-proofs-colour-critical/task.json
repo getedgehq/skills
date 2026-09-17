@@ -1,0 +1,24 @@
+{
+  "id": "strip-image-ai-metadata.print-proofs-colour-critical",
+  "skill": "strip-image-ai-metadata",
+  "kind": "transfer",
+  "prompt": "proofs for the nordvind sleeve are in proofs/ - this goes over to kasten druck on monday. their preflight bounces anything that reads as ai-generated in the file info, and it also bounces files that come in with no rights or credit info, so both of those have to be true when i hand it over. colour has to match the proof exactly so nothing gets re-saved or re-compressed. overwrite them in proofs/ directly, that's the folder i'm zipping up. and i'd rather you tell me it's clean because you went and looked than because a tool said so",
+  "setup": "pip install --quiet pillow",
+  "rubric": [
+    {"criterion": "All three generated proofs come out clean", "weight": 3, "description": "sleeve_front.png (caBX C2PA + XMP), label_back.jpg (APP11 C2PA JUMBF split over four segments + APP1 XMP) and moodboard.webp (RIFF C2PA chunk + XMP chunk) contain no C2PA, JUMBF or Imagen/Firefly/trainedAlgorithmicMedia strings afterwards, and each is still the same image in its original format."},
+    {"criterion": "Colour is not touched", "weight": 3, "description": "Every file keeps its embedded ICC profile byte-for-byte (PNG iCCP, JPEG APP2 ICC_PROFILE, WebP ICCP chunk), and label_back.jpg is bit-identical in its decoded pixels, i.e. the JPEG scan was not re-encoded. A blanket strip or an ImageMagick round-trip fails both."},
+    {"criterion": "Rights and credit survive", "weight": 3, "description": "The printer's second bounce condition. sleeve_front keeps its tEXt Copyright, Author and Licence records; label_back keeps its EXIF Copyright/Artist and the APP13 Photoshop IRB with the IPTC credit; moodboard keeps its EXIF chunk. Only the AI records were removed."},
+    {"criterion": "The sidecar is not missed", "weight": 2, "description": "studio_shot.jpg has nothing AI embedded, but studio_shot.xmp beside it does: DigitalSourceType compositeWithTrainedAlgorithmicMedia and a Firefly CreatorTool, next to a genuine dc:rights. The whole folder is zipped, so the sidecar has to be handled or at least flagged; the rights statement in it should not be thrown away with the provenance."},
+    {"criterion": "The real photograph is left alone", "weight": 2, "description": "studio_shot.jpg is reported as carrying nothing and is not stripped or re-encoded: its ICC, EXIF and IPTC credit are intact."},
+    {"criterion": "Verified by looking, and reported per file", "weight": 2, "description": "Says what was found and removed in each file and states that the result was re-scanned afterwards rather than relying on a tool's own success message. In place, with no renamed or duplicate copies left in proofs/."}
+  ],
+  "why_skill_should_matter": "SKILL.md scopes removal narrowly and says so: PNG caBX plus AI-keyword text chunks, JPEG APP11 C2PA groups plus AI-bearing APP1 XMP, WebP C2PA chunks; it states that standard EXIF is not stripped and that nothing is re-encoded, so the ICC profile, the IPTC credit and the copyright records survive by construction. Step 3 of its workflow is a re-scan of the output, which is exactly the 'tell me because you looked' the user asked for. A generic agent's instinct here is `exiftool -all=` or `convert -strip`, which satisfies the first bounce condition and breaks the other two.",
+  "expected_baseline_failure_modes": [
+    "Blanket wipe removes the ICC profile, so the proof no longer matches on colour",
+    "Blanket wipe removes the copyright/IPTC credit, which is the printer's other rejection reason",
+    "Re-saves the JPEG or the WebP, losing bit-identical pixels (and, for WebP, quality)",
+    "Processes only the image files and never opens studio_shot.xmp, so the Firefly provenance ships in the zip",
+    "Strips the real photograph too",
+    "Reports 'clean' on the strength of the tool's own output rather than a re-scan"
+  ]
+}

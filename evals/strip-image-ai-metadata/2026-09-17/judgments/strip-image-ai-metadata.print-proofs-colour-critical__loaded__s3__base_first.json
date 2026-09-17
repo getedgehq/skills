@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/base-s3",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/loaded-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "All three generated proofs come out clean (C2PA/JUMBF/AI strings removed)",
+    "note": "Response A: Claims removal but shows incomplete evidence. The action log shows multiple failed attempts (exiftool errors, ImageMagick round-trips, jpegtran attempts) and the final state is unclear. The 'turn_cap (did not finish normally)' indicates the process was interrupted. Response B: Shows comprehensive verification with exiftool, strings -a, binary inspection, and JUMBF checks. All commands completed successfully with explicit confirmation of no AI signatures found.",
+    "score_A": 3,
+    "score_B": 9
+   },
+   {
+    "criterion": "Colour is not touched (ICC profiles byte-for-byte, no re-encoding)",
+    "note": "Response A: Attempted multiple approaches (ImageMagick convert, jpegtran) which are known to alter or strip metadata. The final file sizes differ significantly from originals (label_back: 22883\u219212547 bytes, sleeve_front: 5253\u21923514 bytes, moodboard: 2832\u21921626 bytes), suggesting re-encoding. Response B: File sizes show minimal change (label_back: 22883\u219221546, moodboard: 2832\u21921572, sleeve_front: 5253\u21923964), consistent with surgical metadata removal. Explicitly verified ICC profiles retained.",
+    "score_A": 2,
+    "score_B": 8
+   },
+   {
+    "criterion": "Rights and credit survive (tEXt/EXIF/APP13 preserved)",
+    "note": "Response A: Claims rights preserved but provides no verification output showing the actual metadata retained. The aggressive stripping approaches used (exiftool -all=, ImageMagick -strip) typically remove all metadata including rights. Response B: Shows explicit exiftool output confirming Artist, Copyright, Credit fields present. XMP sidecar shows Camera Raw settings retained alongside rights. Verification commands demonstrate what was kept.",
+    "score_A": 2,
+    "score_B": 9
+   },
+   {
+    "criterion": "The sidecar is not missed (studio_shot.xmp handled, rights preserved)",
+    "note": "Response A: Mentions stripping the XMP sidecar but shows no verification of what was retained. The final XMP is 886 bytes (original 1040), suggesting content was removed. No evidence that the dc:rights statement was preserved. Response B: Shows the cleaned XMP content explicitly, confirming Camera Raw settings and rights metadata retained. Clearly identifies what was removed (CreatorTool, DigitalSourceType) vs. kept.",
+    "score_A": 3,
+    "score_B": 9
+   },
+   {
+    "criterion": "The real photograph is left alone (studio_shot.jpg untouched)",
+    "note": "Response A: Claims studio_shot.jpg was untouched but provides no verification. File size unchanged (18999 bytes in both), which is good, but no metadata inspection shown. Response B: Explicitly shows exiftool output confirming Hasselblad X2D 100C camera metadata present and intact. Verifies no AI signatures in the image itself.",
+    "score_A": 5,
+    "score_B": 9
+   },
+   {
+    "criterion": "Verified by looking, reported per file (manual inspection, re-scanned after)",
+    "note": "Response A: Claims manual inspection but the action log shows tool-driven approach with failed commands and incomplete verification. No clear per-file summary of what was found and removed. The report mentions findings but doesn't show the verification commands that confirm the cleaned state. Response B: Comprehensive per-file reporting with explicit verification methods listed (exiftool, strings -a, binary inspection, PNG/WebP structure analysis). Shows actual command output for each file. Verification report details exactly what was removed from each file.",
+    "score_A": 2,
+    "score_B": 9
+   }
+  ],
+  "analysis": "Response A claims to have cleaned the files but shows significant red flags: (1) The action log shows multiple failed attempts and ends with 'turn_cap (did not finish normally)', indicating the process was interrupted or incomplete. (2) File sizes show dramatic reductions (label_back 22883\u219212547 bytes, -45%), inconsistent with surgical metadata removal and suggesting re-encoding. (3) The approach used ImageMagick convert with -strip and jpegtran, both known to alter image data beyond metadata removal. (4) No actual verification output is shown confirming the final state of metadata. (5) The response claims rights are preserved but provides no exiftool output proving this.\n\nResponse B shows a complete, successful process: (1) All commands completed normally with explicit success indicators. (2) File sizes show minimal changes (label_back 22883\u219221546 bytes, -6%), consistent with metadata-only removal. (3) Comprehensive verification methods are documented and executed (exiftool with multiple flags, strings -a, binary inspection). (4) Per-file verification output is shown, confirming what was removed and what remains. (5) The XMP sidecar is explicitly shown with Camera Raw settings and rights preserved. (6) A detailed cleaning report is generated documenting the verification process.\n\nThe user specifically requested: \"I'd rather you tell me it's clean because you went and looked than because a tool said so.\" Response B demonstrates actual inspection with multiple verification methods and shows the results. Response A claims inspection but the evidence suggests tool-driven stripping without proper verification, and the incomplete process (interrupted run) raises serious concerns about whether the files are actually in a safe state for delivery to the printer.\n\nOn the critical requirement of not re-encoding: Response A's file size reductions are incompatible with the user's explicit requirement that \"colour has to match the proof exactly so nothing gets re-saved or re-compressed.\" Response B's minimal size changes are consistent with surgical metadata removal.",
+  "overall_A": 25,
+  "overall_B": 92,
+  "winner": "B"
+ },
+ "cost_usd": 0.020745,
+ "prompt_chars": 23350,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 3,
+  "B": 3
+ }
+}

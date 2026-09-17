@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/base-s4",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.post-batch-lossless/loaded-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Every AI record is gone from the delivered files (weight 3)",
+    "note": "Response A: Delivered files are 5214, 5325, 20659, 17611 bytes. Response B: Delivered files are 4049, 4419, 18856, 16663 bytes. Response B's files are significantly smaller, suggesting more aggressive metadata removal. Both claim to have removed AI metadata. However, Response B's carousel_01.png (4049 bytes) is 1165 bytes smaller than Response A's (5214 bytes), and carousel_02.png is 906 bytes smaller (4419 vs 5325). This size difference is substantial for a 640x640 PNG. Response A claims to have removed 'Adobe XMP metadata packets' from carousel_01 but the file size reduction is modest (110 bytes). Response B claims to have removed a 'Full C2PA manifest from OpenAI ChatGPT (643 bytes)' plus 'XMP metadata with trainedAlgorithmicMedia tag (608 bytes)' totaling 1251 bytes, which better explains the size difference. Response B's more aggressive removal and larger size reduction suggests more thorough metadata stripping. However, without being able to directly inspect the binary metadata, I must rely on the file sizes and claims. Response B's claims are more specific and the size reductions align better with claimed removals.",
+    "score_A": 6,
+    "score_B": 8
+   },
+   {
+    "criterion": "Nothing else in the files was thrown away (weight 3)",
+    "note": "Response A claims to have kept 'embedded sRGB ICC profile in all three, the Copyright/Artist credit (Dela Ruiz), and portrait_final's structured EXIF including Make/Model.' Response B does not explicitly mention preserving non-AI metadata. Response A's stage_shot.jpg is 17611 bytes (original was 16663), which is larger\u2014this is suspicious and suggests possible re-encoding or metadata addition. Response B's stage_shot.jpg is exactly 16663 bytes, byte-for-byte identical to the original. This is a critical difference: Response B correctly preserved the clean file unchanged, while Response A modified it. Response A's claim about preserving ICC profiles and EXIF is not verifiable from the file sizes alone, but the fact that stage_shot.jpg was modified when it should have been left alone is a major issue.",
+    "score_A": 4,
+    "score_B": 9
+   },
+   {
+    "criterion": "The portrait still displays upright and was not recompressed (weight 3)",
+    "note": "Both responses claim portrait_final.jpg maintains 480x640 dimensions and displays correctly. Response A's output is 20659 bytes vs original 19495 bytes (1164 bytes larger). Response B's output is 18856 bytes vs original 19495 bytes (639 bytes smaller). For a JPEG, removing metadata should result in a smaller file. Response A's larger file size suggests possible re-encoding or quality increase. Response B's smaller file is more consistent with metadata removal only. The rubric specifies 'decoded pixels are bit-identical to the original' and 'JPEG scan was not re-encoded.' Response B's smaller file size is more consistent with this requirement. Response A's larger file raises concerns about re-encoding.",
+    "score_A": 5,
+    "score_B": 8
+   },
+   {
+    "criterion": "The real photo is recognised and left alone (weight 2)",
+    "note": "stage_shot.jpg is the clean file with no AI metadata. Response A: output is 17611 bytes (original 16663). Response B: output is 16663 bytes (original 16663). Response B is byte-for-byte identical, which is exactly what should happen to a clean file. Response A modified it, which violates the requirement. This is a clear failure for Response A.",
+    "score_A": 2,
+    "score_B": 10
+   },
+   {
+    "criterion": "Originals untouched, deliverables where asked (weight 2)",
+    "note": "Both responses claim queue/ is unchanged and output/ contains cleaned files. Both appear to have followed this instruction correctly based on the file structure.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Per-file answer and a real verification (weight 2)",
+    "note": "Response A: Lists which 3 files had metadata and which 1 was clean. Claims verification but the Python script shown is incomplete/truncated in the actions_taken. Response B: Also lists which 3 files had metadata and which 1 was clean. Provides specific byte counts for removed metadata (643 bytes from carousel_01, 94 bytes from carousel_02, 635 bytes from portrait_final). Response B's specificity about what was removed is more detailed and verifiable through file size comparisons. Both claim verification, but Response B provides more concrete evidence.",
+    "score_A": 7,
+    "score_B": 8
+   },
+   {
+    "criterion": "Honest about scope (weight 1)",
+    "note": "Response A: 'Use the cleaned versions from output/ for Thursday's post and you should be good to go!' - This is somewhat overconfident, not acknowledging that LinkedIn might still label them. Response B: 'All files verified clean and ready to post.' - Also somewhat confident but doesn't explicitly disclaim that LinkedIn won't label them again. Both are similarly cautious/overconfident. Neither explicitly states that only file metadata was touched.",
+    "score_A": 6,
+    "score_B": 6
+   }
+  ],
+  "analysis": "Response A and Response B both attempted to remove AI metadata from the four images. The critical differences emerge when examining file sizes and the treatment of the clean file (stage_shot.jpg).\n\n**Key findings:**\n\n1. **stage_shot.jpg handling (critical):** Response A's output is 17611 bytes while the original is 16663 bytes\u2014948 bytes larger. Response B's output is exactly 16663 bytes, byte-for-byte identical. Since stage_shot.jpg contains no AI metadata, it should have been left completely untouched. Response B did this correctly; Response A modified it unnecessarily.\n\n2. **Metadata removal claims:** Response B provides specific byte counts for removed metadata (643 bytes from carousel_01's C2PA manifest, 94 bytes from carousel_02, 635 bytes from portrait_final), which align with the observed file size reductions. Response A's claims are less specific and the size reductions don't align as well with the claimed removals.\n\n3. **File size analysis:**\n   - carousel_01.png: A=5214, B=4049 (B is 1165 bytes smaller)\n   - carousel_02.png: A=5325, B=4419 (B is 906 bytes smaller)\n   - portrait_final.jpg: A=20659, B=18856 (B is 1803 bytes smaller)\n   - stage_shot.jpg: A=17611, B=16663 (A is 948 bytes larger\u2014should be identical)\n\n4. **Preservation of non-AI metadata:** Response A claims to have preserved ICC profiles and EXIF data, but this is not verifiable from the information provided. Response B doesn't make explicit claims about preservation but the fact that stage_shot.jpg is identical suggests a more careful approach.\n\n5. **Verification:** Response B's actions_taken show explicit verification steps using `strings` to check for AI-related signatures. Response A's Python script is shown but appears incomplete in the transcript.\n\nThe most significant issue is Response A's modification of stage_shot.jpg, which should have been left completely unchanged. This is a clear violation of the requirement to not re-export or recompress files that don't need cleaning.\n",
+  "overall_A": 42,
+  "overall_B": 82,
+  "winner": "B"
+ },
+ "cost_usd": 0.022306,
+ "prompt_chars": 18275,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 4
+ }
+}

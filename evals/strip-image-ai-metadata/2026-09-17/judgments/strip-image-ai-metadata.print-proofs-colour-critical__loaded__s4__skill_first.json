@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/loaded-s4",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.print-proofs-colour-critical/base-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 82,
+  "overall_B": 28,
+  "analysis": "Response A successfully completed the task as requested: all files were cleaned of AI metadata, overwritten in place in the proofs/ folder, and verified by manual inspection. The user explicitly stated \"I'd rather you tell me it's clean because you went and looked than because a tool said so,\" and Response A delivered exactly that\u2014detailed manual verification with byte-level inspection, strings scanning, and segment analysis, followed by a comprehensive verification report.\n\nResponse B failed the core requirements in multiple critical ways:\n\n1. **Incomplete delivery**: The task explicitly required files to be \"overwrite[d] in proofs/ directly.\" Response B left behind temporary files (moodboard_temp.webp, moodboard_original.webp, moodboard_icc.icc, sleeve_front.png in palette mode) and did not complete the moodboard.webp processing (the final rename command failed). The user's folder is now contaminated with extra files that will be zipped and sent to the printer.\n\n2. **Destructive action**: Response B deleted studio_shot.xmp entirely, which the rubric explicitly flags as a critical error. The XMP sidecar contained legitimate dc:rights information that should have been preserved. The user's rights statement was thrown away.\n\n3. **File format corruption**: Response B converted sleeve_front.png to palette mode (mode=P in the delivered file), changing it from RGB. This is a format change that violates the \"colour has to match the proof exactly\" requirement and the \"no re-saved or re-compressed\" instruction.\n\n4. **Incomplete work**: The final command in Response B's action log failed (`ERROR`), and the response acknowledges moodboard.webp is \"95% COMPLETE\" with \"temp file created but rename pending.\" The task was not finished.\n\n5. **Verification method mismatch**: Response B relied on ImageMagick compare and exiftool output, then stopped when the final step failed. It did not perform the manual, by-hand verification the user explicitly requested.\n\nResponse A's approach:\n- Cleaned all files of C2PA, JUMBF, and AI tool references\n- Preserved all copyright, creator, and rights metadata\n- Maintained ICC profiles byte-for-byte\n- Left no temporary files or duplicates\n- Handled the studio_shot.xmp sidecar correctly (cleaned but preserved rights)\n- Delivered a detailed verification report showing what was found and removed in each file\n- Performed manual inspection with strings, hex analysis, and segment-level verification\n- All files remain in their original formats and are ready to zip\n\nResponse B's file sizes and formats show the damage: sleeve_front.png is now 3806 bytes in palette mode (vs. 5253 bytes RGB in the input), moodboard.webp was never properly finalized, and the folder contains orphaned files that should not be there.",
+  "criteria": [
+   {
+    "criterion": "All three generated proofs come out clean",
+    "note": "Response A: All three files (sleeve_front.png, label_back.jpg, moodboard.webp) successfully stripped of C2PA/JUMBF/AI metadata and verified clean. Response B: label_back.jpg cleaned; sleeve_front.png converted to palette mode (format corruption); moodboard.webp processing incomplete and failed at final step.",
+    "score_A": 10,
+    "score_B": 3
+   },
+   {
+    "criterion": "Colour is not touched",
+    "note": "Response A: All ICC profiles preserved byte-for-byte, no re-encoding. Response B: sleeve_front.png converted to palette mode (RGB\u2192P), violating format preservation. moodboard.webp left in incomplete state with temp file. label_back.jpg appears intact.",
+    "score_A": 10,
+    "score_B": 4
+   },
+   {
+    "criterion": "Rights and credit survive",
+    "note": "Response A: Copyright, Author, Licence records preserved in all files; EXIF/IPTC credit retained. Response B: Deleted studio_shot.xmp entirely, destroying the dc:rights statement in the sidecar. This is a critical failure of the second preflight requirement.",
+    "score_A": 10,
+    "score_B": 2
+   },
+   {
+    "criterion": "The sidecar is not missed",
+    "note": "Response A: studio_shot.xmp cleaned (Firefly/DigitalSourceType removed) but dc:rights preserved; flagged in report. Response B: studio_shot.xmp deleted entirely, destroying legitimate rights metadata. User's rights statement was thrown away.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "The real photograph is left alone",
+    "note": "Response A: studio_shot.jpg reported as clean, not stripped or re-encoded. Response B: studio_shot.jpg appears untouched, but the sidecar was deleted, so the associated metadata context is lost.",
+    "score_A": 10,
+    "score_B": 5
+   },
+   {
+    "criterion": "Verified by looking, and reported per file",
+    "note": "Response A: Detailed manual verification report showing byte-level inspection, strings scanning, segment analysis, and re-scan confirmation for each file. Exactly what user requested. Response B: Relied on exiftool and ImageMagick; final step failed; no completion verification; work left unfinished.",
+    "score_A": 10,
+    "score_B": 2
+   },
+   {
+    "criterion": "Files overwritten in place with no extras",
+    "note": "Response A: All files overwritten in proofs/ directly; no temporary files or duplicates left. Response B: Left moodboard_original.webp, moodboard_temp.webp, moodboard_icc.icc, and sleeve_front.png in wrong format. Folder is contaminated with extra files that will be zipped and sent to printer.",
+    "score_A": 10,
+    "score_B": 1
+   }
+  ]
+ },
+ "cost_usd": 0.020478,
+ "prompt_chars": 20617,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 3,
+  "B": 4
+ }
+}

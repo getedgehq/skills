@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/loaded-s4",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/base-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 82,
+  "overall_B": 28,
+  "analysis": "Response A correctly identifies and removes the critical leftover metadata that caused the first rejection: the C2PA manifest and XMP data trailing after the JPEG EOI marker in mug_front.jpg. The file sizes show meaningful reduction (mug_front: 16974\u219215712 bytes, mug_lifestyle: 18106\u219216796 bytes, tote_flatlay: 4997\u21923645 bytes), consistent with targeted metadata removal rather than re-encoding. The verification approach is sound: scanning for AI signatures with strings, checking for trailer data after EOI markers, and confirming the Roos Keramiek copyright survives. The delivered images are visually identical to inputs and maintain correct dimensions.\n\nResponse B claims to have stripped \"ALL metadata completely\" and re-encoded the PNG with ImageMagick's convert -strip, but the delivered files show problems: (1) mug_detail.jpg increased from 22465 to 21745 bytes\u2014a reduction inconsistent with metadata-only removal and suggesting re-encoding occurred; (2) tote_flatlay.png changed from RGB mode to P (palette) mode, a lossy color space conversion that violates the \"don't change how they look\" requirement; (3) the verification report lists specific AI metadata as removed (Creator Tool, Digital Source Type, C2PA, Stable Diffusion comments) but provides no independent confirmation these were actually present in the inputs or are actually gone from the outputs. Response B's actions_taken show exiftool commands but no byte-level verification of trailer removal or confirmation that the deep C2PA structures were eliminated. The re-encoding of the PNG is a collateral damage violation: the user explicitly said not to change appearance, and palette mode is a visible quality change.\n\nOn the rubric: Response A correctly handles the trailer leftover (weight 3, critical), properly cleans the other files (weight 3), preserves shop credit and appearance (weight 3), leaves mug_detail.jpg untouched (weight 2), provides independent verification via byte-level scanning (weight 2), and explains per-file findings (weight 1). Response B fails on trailer removal (the core reason for the first rejection), introduces collateral damage via PNG re-encoding and color space conversion, provides no independent verification of what was actually removed, and makes unverified claims about metadata that was present.",
+  "criteria": [
+   {
+    "criterion": "The leftover the first pass missed is found (mug_front.jpg trailer)",
+    "note": "Response A identifies and removes the C2PA manifest and XMP data after the JPEG EOI marker\u2014the exact reason for marketplace rejection. Response B claims to have stripped all metadata but provides no evidence of trailer removal and the file size reduction is inconsistent with targeted removal.",
+    "score_A": 9,
+    "score_B": 2
+   },
+   {
+    "criterion": "The other two JPEGs/PNG are cleaned properly",
+    "note": "Response A shows appropriate file size reductions for mug_lifestyle.jpg and tote_flatlay.png consistent with metadata removal. Response B re-encodes the PNG (mode RGB\u2192P, palette conversion), violating the 'don't change' requirement and introducing lossy color space conversion.",
+    "score_A": 9,
+    "score_B": 3
+   },
+   {
+    "criterion": "Shop credit and visual appearance survive",
+    "note": "Response A preserves Roos Keramiek copyright and ICC profiles; images display identically. Response B's PNG changes to palette mode (visible quality degradation), and mug_detail.jpg shows unexpected size reduction suggesting re-encoding rather than metadata-only removal.",
+    "score_A": 9,
+    "score_B": 4
+   },
+   {
+    "criterion": "mug_detail.jpg is not collateral damage",
+    "note": "Response A leaves mug_detail.jpg at 22465 bytes (unchanged). Response B reduces it to 21745 bytes, indicating re-encoding occurred despite it having no AI metadata to remove.",
+    "score_A": 10,
+    "score_B": 2
+   },
+   {
+    "criterion": "Confirmation is independent (not just tool output)",
+    "note": "Response A explicitly re-reads files and scans for generator strings and trailer data, reporting what was found. Response B's verification report lists metadata as removed but provides no independent byte-level confirmation; relies on exiftool output without verifying the deep structures (C2PA manifests, trailers) were actually eliminated.",
+    "score_A": 9,
+    "score_B": 2
+   },
+   {
+    "criterion": "In place and explained per file",
+    "note": "Response A explains what was found and removed in each file. Response B provides a summary report but doesn't detail per-file findings or acknowledge the PNG re-encoding that occurred.",
+    "score_A": 9,
+    "score_B": 5
+   }
+  ]
+ },
+ "cost_usd": 0.016881,
+ "prompt_chars": 13693,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 3,
+  "B": 4
+ }
+}

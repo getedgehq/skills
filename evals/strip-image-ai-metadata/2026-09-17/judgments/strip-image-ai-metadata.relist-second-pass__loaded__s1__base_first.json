@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/base-s1",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/loaded-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 32,
+  "overall_B": 78,
+  "analysis": "Response A claims to have completely stripped all metadata and re-added only copyright info. However, the file sizes and mode changes reveal critical failures:\n\n**Response A's failures:**\n- mug_detail.jpg: 22,465 \u2192 17,646 bytes (re-encoded, ICC profile likely lost)\n- mug_front.jpg: 16,974 \u2192 10,549 bytes (re-encoded, mode unchanged but file heavily modified)\n- mug_lifestyle.jpg: 18,106 \u2192 11,517 bytes (re-encoded)\n- tote_flatlay.png: 4,997 \u2192 3,817 bytes (re-encoded, mode changed RGB\u2192P, palette conversion)\n\nThe rubric explicitly states \"Ideally the pixels are bit-identical because the removal was byte-level rather than a re-encode.\" Response A used ImageMagick's `convert` command which re-encodes images, destroying pixel-level integrity and ICC profiles. The verification report claims copyright was preserved, but the massive file size reductions and mode changes indicate this is false\u2014the files were reconstructed, not cleaned.\n\n**Response B's approach:**\n- mug_front.jpg: 16,974 \u2192 15,712 bytes (minimal change, byte-level cleaning)\n- mug_lifestyle.jpg: 18,106 \u2192 16,796 bytes (minimal change)\n- tote_flatlay.png: 4,997 \u2192 3,645 bytes (reasonable reduction for metadata removal)\n\nResponse B used exiftool with `-all=` and byte-level string scanning, which removes metadata without re-encoding. The file sizes show targeted removal rather than reconstruction.\n\n**Verification quality:**\n- Response A: Claims \"verified with full metadata dump\" but provides no actual dump output. The verification report is generic and doesn't show what was actually found in the cleaned files.\n- Response B: Explicitly states it performed \"deep string search through all file bytes (including areas after end-of-image markers)\" and reports \"JPEG trailers are empty (0 bytes after FFD9).\" This directly addresses the rubric's critical requirement about trailer data.\n\n**Trailer data (critical per rubric):**\nThe rubric emphasizes that mug_front.jpg had \"the whole manifest still in the bytes after the JPEG's EOI marker\" and \"The trailing bytes have to go.\" Response B explicitly verified this was removed; Response A's verification report makes no mention of checking trailer data.\n\n**Shop credit preservation:**\n- Response A: Claims preserved but file reconstruction suggests loss of original metadata structure\n- Response B: Explicitly verified copyright in PNG; file size changes are consistent with metadata removal, not reconstruction\n\n**Real photo collateral (mug_detail.jpg):**\n- Response A: 22,465 \u2192 17,646 bytes (22% reduction = re-encoding, violates requirement)\n- Response B: Not listed in binary_files output, suggesting it was correctly identified as already clean and left untouched\n\nResponse B correctly identified that mug_detail.jpg needed no processing and left it alone. Response A re-encoded it unnecessarily, destroying pixel integrity and ICC profiles.\n",
+  "criteria": [
+   {
+    "criterion": "The leftover the first pass missed is found (trailer data in mug_front.jpg)",
+    "note": "Response A: No mention of checking or removing trailer data after FFD9 marker. Response B: Explicitly verified 'JPEG trailers are empty (0 bytes after FFD9)' and performed 'deep string search through all file bytes (including areas after end-of-image markers)'. This is the critical failure point the rubric identifies.",
+    "score_A": 2,
+    "score_B": 9
+   },
+   {
+    "criterion": "The other two JPEGs/PNG are cleaned properly (mug_lifestyle.jpg, tote_flatlay.png)",
+    "note": "Response A: File sizes dropped 36% (18,106\u219211,517) and 23% (4,997\u21923,817), indicating re-encoding rather than metadata removal. Response B: File sizes dropped 7% (18,106\u219216,796) and 27% (4,997\u21923,645), consistent with targeted metadata removal. Response B's approach preserves pixel data; Response A's does not.",
+    "score_A": 3,
+    "score_B": 8
+   },
+   {
+    "criterion": "The shop credit and the look survive (Roos Keramiek metadata, ICC profiles, dimensions)",
+    "note": "Response A: mug_detail.jpg dropped 22% (22,465\u219217,646 bytes), indicating re-encoding and ICC profile loss. mug_front.jpg mode unchanged but file heavily modified. Response B: Minimal file size changes consistent with metadata-only removal. Response A's massive reductions indicate pixel reconstruction, not preservation.",
+    "score_A": 2,
+    "score_B": 8
+   },
+   {
+    "criterion": "The real photo is not collateral (mug_detail.jpg left untouched)",
+    "note": "Response A: Processed mug_detail.jpg (22,465\u219217,646 bytes = 22% reduction), re-encoding a file that was already clean. Response B: Does not list mug_detail.jpg in binary_files output, correctly identifying it as already clean and leaving it alone.",
+    "score_A": 1,
+    "score_B": 9
+   },
+   {
+    "criterion": "Confirmation is independent (re-read files, scanned for strings, not just tool summary)",
+    "note": "Response A: Verification report claims 'full metadata dump' but shows no actual output. Generic claims without evidence. Response B: Explicitly describes independent verification: 'Deep string search through all file bytes', 'No trace of c2pa, ChatGPT, OpenAI', 'JPEG trailers are empty', with specific technical details.",
+    "score_A": 3,
+    "score_B": 9
+   },
+   {
+    "criterion": "In place, and explained (files overwritten, per-file explanation of what was found/removed)",
+    "note": "Response A: Claims files overwritten but verification report is vague about what was actually removed from each file. Response B: Clear per-file summary in verification report with specific details about what was removed and what was preserved.",
+    "score_A": 5,
+    "score_B": 8
+   }
+  ]
+ },
+ "cost_usd": 0.018507,
+ "prompt_chars": 13110,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 3
+ }
+}

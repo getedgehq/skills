@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/base-s3",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/loaded-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 42,
+  "overall_B": 78,
+  "criteria": [
+   {
+    "criterion": "The leftover the first pass missed is found (weight 3)",
+    "note": "Response A claims to have stripped all metadata with ImageMagick's -strip flag and re-added only credit fields. However, the rubric specifically identifies that mug_front.jpg still has APP1 XMP and a manifest in the trailer after the EOI marker (FFD9). Response A's file size (10623 bytes) is suspiciously small and suggests aggressive stripping, but the actions_taken show only basic convert/strip/exiftool operations with no explicit trailer removal. Response B's mug_front.jpg (15712 bytes) is larger and the actions_taken include explicit checks for 'bytes after final FFD9' with Python, suggesting actual trailer inspection and removal. Response B explicitly states 'JPEG trailer check (bytes after FFD9): CLEAN (0 extra bytes)' in the report, indicating the critical issue was addressed.",
+    "score_A": 3,
+    "score_B": 8
+   },
+   {
+    "criterion": "The other two are cleaned properly (weight 3)",
+    "note": "Both responses claim to have removed C2PA, JUMBF, and generator strings from mug_lifestyle.jpg and tote_flatlay.png. Response A's file sizes (11591 and 3879 bytes) suggest aggressive stripping. Response B's sizes (16796 and 3645 bytes) are different. Both ran strings scans and grep checks for AI markers. Response A's report lists specific metadata found and removed (Creator Tool, Digital Source Type, JUMBF warnings, Stable Diffusion checkpoint). Response B's report also lists these. Both claim verification via strings scanning. Without access to the actual binary metadata, both appear to have performed the core removal, but Response B's more detailed trailer checking suggests more thorough work.",
+    "score_A": 7,
+    "score_B": 8
+   },
+   {
+    "criterion": "The shop credit and the look survive (weight 3)",
+    "note": "Response A explicitly states it re-added 'Artist: Roos Keramiek, Copyright: (c) 2026 Roos Keramiek, Credit: Roos Keramiek' via exiftool. The delivered images appear visually identical to inputs. However, Response A's aggressive -strip followed by re-add may have lost ICC profiles and other metadata. Response B also claims to have preserved the shop credit and states 'Original image quality (no re-encoding)' and 'Pixel data verified: UNCHANGED'. Response B's larger file sizes for JPEGs suggest less aggressive stripping. The visual appearance of both sets of delivered images is identical to the inputs, so both pass the visual test. Response B's approach of checking for preservation rather than blanket stripping is more aligned with the rubric's concern about ICC profiles and EXIF orientation.",
+    "score_A": 6,
+    "score_B": 8
+   },
+   {
+    "criterion": "The real photo is not collateral (weight 2)",
+    "note": "mug_detail.jpg had no AI metadata in the input. Response A's actions_taken show it was processed through the same convert/strip/exiftool pipeline as the others, which risks unnecessary re-encoding. Response A's delivered file is 17720 bytes vs input 22465 bytes\u2014a significant reduction suggesting re-encoding or aggressive stripping. Response B's actions_taken do not show mug_detail.jpg being processed at all in the visible commands (the final binary_files list is missing mug_detail.jpg entirely). This is a critical omission\u2014Response B failed to deliver mug_detail.jpg. The rubric requires it to be 'not stripped or re-encoded; its EXIF credit, IPTC block and ICC profile are untouched.' Response A at least attempted to preserve it, though the file size reduction is concerning.",
+    "score_A": 4,
+    "score_B": 1
+   },
+   {
+    "criterion": "Confirmation is independent (weight 2)",
+    "note": "The user explicitly requested: 'please actually confirm it's gone instead of telling me the tool said ok.' Response A's verification section states 'Scanned all metadata fields - zero AI markers' and 'Scanned binary data with strings' but the actions_taken show these were automated commands (exiftool, strings, grep). The report summarizes tool output rather than independent re-reading. Response B similarly runs strings and grep scans, but explicitly states 'Manual strings -a scan (not just trusting the tool)' and provides specific verification steps: 'JPEG trailer check (bytes after FFD9): CLEAN (0 extra bytes)' with Python code shown in actions_taken. Response B's approach of checking the trailer bytes is more independent verification than Response A's metadata field scanning.",
+    "score_A": 5,
+    "score_B": 7
+   },
+   {
+    "criterion": "In place, and explained (weight 1)",
+    "note": "Response A overwrites files in relist/ and creates a VERIFICATION_REPORT.txt explaining what was found and removed per file. Response B overwrites files in relist/ and creates a CLEANING_REPORT.txt with similar per-file explanations. Both satisfy the 'in place' requirement. However, Response B is missing mug_detail.jpg from the binary_files list, suggesting it was not delivered. Response A delivered all four files. This is a critical failure for Response B.",
+    "score_A": 9,
+    "score_B": 3
+   }
+  ],
+  "analysis": "Response A claims comprehensive metadata stripping using ImageMagick's -strip flag followed by re-adding only Roos Keramiek credits via exiftool. It delivered all four files with reduced sizes (suggesting re-encoding), created a verification report, and ran multiple scanning passes. However, the rubric identifies a critical issue: mug_front.jpg still has APP1 XMP and a C2PA manifest in the trailer after the JPEG's EOI marker (FFD9). Response A's approach of using -strip and exiftool does not explicitly address post-EOI trailer data, which is exactly what the previous attempt missed. The file size reduction (22465\u219210623 for mug_front.jpg) suggests aggressive processing but not necessarily trailer removal.\n\nResponse B explicitly checked for 'bytes after final FFD9' using Python code visible in actions_taken, demonstrating awareness of the trailer issue. The report states 'JPEG trailer check (bytes after FFD9): CLEAN (0 extra bytes)', indicating this critical problem was addressed. However, Response B has a catastrophic failure: mug_detail.jpg is missing from the binary_files list. The input file (22465 bytes) should have been delivered unchanged or minimally modified, but Response B's output lists only three files. This violates the rubric requirement that 'The real photo is not collateral' and must be 'not stripped or re-encoded.'\n\nResponse A's file size for mug_detail.jpg (17720 bytes vs 22465 input) indicates it was re-encoded despite being clean, which is a violation but less severe than complete omission. Response B's omission is a complete failure to deliver a required file.\n\nOn the critical trailer issue (weight 3), Response B demonstrates superior understanding and methodology. On the collateral photo preservation (weight 2), Response A at least attempted delivery while Response B failed entirely. Response B's explicit trailer verification is more aligned with the user's demand for actual confirmation rather than tool summaries, but this advantage is negated by the missing file."
+ },
+ "cost_usd": 0.020108,
+ "prompt_chars": 13840,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 4,
+  "B": 3
+ }
+}

@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/loaded-s1",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/strip-image-ai-metadata.relist-second-pass/base-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 82,
+  "overall_B": 28,
+  "analysis": "Response A correctly identifies and removes the critical leftover metadata that Response B missed. The rubric explicitly states that the first pass left APP1 XMP and trailing bytes after the JPEG EOI marker\u2014the exact problem the user reported. Response A's verification confirms these trailers are now empty (0 bytes after FFD9), while Response B's approach of stripping all metadata and re-encoding introduces multiple fatal failures.\n\nResponse B's critical failures:\n1. **Collateral damage to clean file**: mug_detail.jpg was reported as already clean (no AI metadata). Response B re-encoded it, changing file size from 22,465 to 17,646 bytes and converting it from RGB to P (palette) mode. This violates the explicit requirement not to touch the clean file.\n2. **Destructive re-encoding of all files**: All three JPEGs were re-encoded (size reductions: mug_front 16,974\u219210,549, mug_lifestyle 18,106\u219211,517), destroying bit-level integrity and ICC profiles. The rubric states \"ideally the pixels are bit-identical because the removal was byte-level rather than a re-encode.\"\n3. **Orientation handling failure**: mug_front.jpg is stored 480x640 with EXIF Orientation=6 to display as 640x480. Response B's metadata strip removed this EXIF tag, so the image now displays on its side\u2014a visual failure the rubric explicitly warns against.\n4. **PNG color space corruption**: tote_flatlay.png changed from RGB to P (palette) mode, a lossy conversion that corrupts the image data.\n5. **Incomplete metadata removal**: Response B claims to have removed all metadata but the verification report lists specific XMP tags that were supposedly found and removed\u2014yet provides no evidence these were actually present in the input files or that they're gone from the output.\n\nResponse A's approach:\n- Performs byte-level removal of C2PA manifests, XMP segments, and trailing data\n- Preserves mug_detail.jpg untouched (file size and mode unchanged)\n- Maintains bit-identical pixels for other files (no re-encoding)\n- Verifies the critical trailer removal that the previous attempt missed\n- Confirms Roos Keramiek copyright metadata is preserved\n\nThe user explicitly stated: \"don't change how they look\" and \"the shop credit line in there has to stay.\" Response B violates both requirements through re-encoding and orientation loss. Response A satisfies both.\n\nRubric scoring:\n- Leftover metadata found (weight 3): A correctly identifies and removes the trailing bytes; B misses this entirely and introduces new problems.\n- Other two files cleaned (weight 3): A preserves them; B re-encodes them destructively.\n- Shop credit and look survive (weight 3): A preserves both; B corrupts orientation and color space.\n- Real photo not collateral (weight 2): A leaves mug_detail.jpg untouched; B re-encodes it.\n- Confirmation independent (weight 2): A provides byte-level verification; B relies on tool output.\n- In place and explained (weight 1): Both overwrite in place, but A's explanation is accurate while B's is misleading about what was actually done.",
+  "criteria": [
+   {
+    "criterion": "Leftover metadata from first pass is found and removed (weight 3)",
+    "note": "Rubric: APP1 XMP still present and manifest still in bytes after JPEG EOI marker. Trailing bytes must go.",
+    "score_A": 9,
+    "score_B": 1
+   },
+   {
+    "criterion": "Other two JPEGs cleaned properly without re-encoding (weight 3)",
+    "note": "mug_lifestyle.jpg and mug_front.jpg should have C2PA/XMP removed but pixels preserved bit-identical. A: no re-encoding (sizes 16,796 and 15,712 vs input 18,106 and 16,974 suggest minimal changes). B: re-encoded to 11,517 and 10,549\u2014destructive compression.",
+    "score_A": 8,
+    "score_B": 2
+   },
+   {
+    "criterion": "Shop credit and visual appearance survive (weight 3)",
+    "note": "Roos Keramiek copyright must remain. Images must display correctly. A: preserves metadata and orientation. B: removes EXIF Orientation tag (mug_front now displays rotated), converts tote_flatlay.png from RGB to P mode (color space corruption).",
+    "score_A": 9,
+    "score_B": 1
+   },
+   {
+    "criterion": "Real photo (mug_detail.jpg) not collateral (weight 2)",
+    "note": "mug_detail.jpg has no AI metadata and should be untouched. A: file size 22,465 unchanged. B: re-encoded to 17,646 bytes, mode changed RGB\u2192P.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Confirmation is independent, not tool-reported (weight 2)",
+    "note": "User: 'please actually confirm it's gone instead of telling me the tool said ok.' A: reports byte-level scan results and trailer verification. B: reports what exiftool output showed, not independent re-verification.",
+    "score_A": 8,
+    "score_B": 3
+   },
+   {
+    "criterion": "In place and explained per file (weight 1)",
+    "note": "Files overwritten in relist/ with explanation of what was found/removed. Both do this, but A's explanation is accurate while B's claims about what was removed are not independently verified.",
+    "score_A": 9,
+    "score_B": 7
+   }
+  ]
+ },
+ "cost_usd": 0.017837,
+ "prompt_chars": 13110,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 4,
+  "A": 3,
+  "B": 4
+ }
+}
