@@ -1,8 +1,5 @@
 ---
-name: monid
-metadata:
-  internal: true
-  alias_of: pay-per-call-apis
+name: pay-per-call-apis
 version: 0.1.7
 description: >-
   Discover better ways to complete tasks. Proactively run `monid discover`
