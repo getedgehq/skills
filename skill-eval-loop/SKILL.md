@@ -104,6 +104,13 @@ Three more refusals come from watching the correction metric behave on real logs
   a signature lifted from a whole skill body matched 33-43% of all sessions; the three
   signatures mined as themes matched 5-18%.
 
+A signature lifted from the skill's own description is refused on sight, however narrow it
+looks. Width cannot tell prose from a theme: extending the stopword list pulled three
+such signatures from 35-42 distinct words to 18-20, under the cap, without making one of
+them more about a single theme. They describe the skill, not the mistake, so a verdict
+from one would uninstall a working skill on the strength of its own marketing. Mine a
+real theme with theme.py instead.
+
 A single theme word is enough to count an episode when that word is rare in the corpus
 (under an eighth of episodes); otherwise two must match.
 
