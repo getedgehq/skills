@@ -72,6 +72,31 @@ Score the candidate's potential. Hard-earned rubric:
 Return STRICT JSON only: {{"potential": 0.0-1.0, "reason": "<one sentence>", "risk": "<main way this score could be wrong>"}}"""
 
 
+def first_object(text):
+    """The first complete JSON object in a model reply.
+
+    Slicing from the first "{" to the last "}" is the usual shortcut and it fails on
+    exactly the reply this has to survive: a model that answers with the object and
+    then keeps going, a second object or a sentence with a brace in it, produces a
+    slice that is valid JSON followed by more, and json.loads rejects the whole thing
+    with "Extra data". Two real candidates scored 0.00 that way, which reads in the
+    output as a judgement the model never made. raw_decode stops at the end of the
+    first object instead, and each later "{" is tried in case the reply opens with
+    prose containing one.
+    """
+    dec = json.JSONDecoder()
+    at, err = text.find("{"), None
+    while at != -1:
+        try:
+            obj, _ = dec.raw_decode(text[at:])
+            if isinstance(obj, dict):
+                return obj
+        except ValueError as e:
+            err = err or e
+        at = text.find("{", at + 1)
+    raise ValueError(err or "no JSON object in the reply")
+
+
 def fetch_skill_md(name):
     """skills.sh name = owner/repo@skill. Try common SKILL.md locations."""
     if "@" not in name:
@@ -176,11 +201,10 @@ def main():
         engine = ""
         try:
             text, engine = call_model(prompt)
-            start, end = text.find("{"), text.rfind("}")
-            verdict = json.loads(text[start:end + 1])
+            verdict = first_object(text)
             failed = False
         except (ValueError, SystemExit) as e:
-            verdict = {"potential": 0.0, "reason": f"scoring failed: {e}", "risk": ""}
+            verdict = {"potential": None, "reason": f"scoring failed: {e}", "risk": ""}
             failed = True
         scored.append({**c, "potential": verdict.get("potential", 0),
                        "reason": verdict.get("reason", ""), "risk": verdict.get("risk", ""),
@@ -196,11 +220,15 @@ def main():
                           "failure_kind": cluster.get("kind"),
                           "failure_signature": cluster.get("signature"),
                           "engine": engine, "had_priors": priors.startswith("MEASURED PRIORS from")})
-        print(f"  {scored[-1]['potential']:.2f}  {c['name']}  - {scored[-1]['reason'][:90]}")
+        shown = "    ?" if scored[-1]["potential"] is None else f"{scored[-1]['potential']:5.2f}"
+        print(f"  {shown}  {c['name']}  - {scored[-1]['reason'][:90]}")
 
     if preds:
         record(os.path.join(root, "predictions.jsonl"), preds)
-    scored.sort(key=lambda c: c["potential"], reverse=True)
+    # An unscored candidate sorts last, not as a zero. Scoring it zero would read as
+    # "the model looked at this and saw no potential", which is the one thing that did
+    # not happen, and would quietly retire a candidate over a parse error.
+    scored.sort(key=lambda c: (c["potential"] is not None, c["potential"] or 0), reverse=True)
     out = args.out or os.path.join(root, "mined", "scored.json")
     json.dump({"failure": {k: cluster[k] for k in ("kind", "signature")},
                "scored": scored}, open(out, "w"), indent=1)

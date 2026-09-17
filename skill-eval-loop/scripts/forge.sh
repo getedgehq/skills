@@ -90,7 +90,7 @@ if [[ -z "$SKILL_DIR" ]]; then
   SKILL_DIR=$(python3 -c "
 import json
 scored = json.load(open('$SCORED'))['scored']
-local = [c for c in scored if c.get('path') and c.get('potential', 0) >= 0.5]
+local = [c for c in scored if c.get('path') and (c.get('potential') or 0) >= 0.5]
 print(local[0]['path'] if local else '')")
 fi
 if [[ -z "$SKILL_DIR" ]]; then

@@ -138,6 +138,32 @@ class Check(unittest.TestCase):
         self.assertIn("mean predicted potential, passed the gate: 0.90", out)
 
 
+class FirstObject(unittest.TestCase):
+    """Reading the model's verdict out of whatever it actually replied with."""
+
+    def test_a_plain_object(self):
+        self.assertEqual(score.first_object('{"potential": 0.7}')["potential"], 0.7)
+
+    def test_a_fenced_object_with_prose_around_it(self):
+        text = 'Here is my assessment:\n```json\n{"potential": 0.4, "reason": "thin"}\n```\nDone.'
+        self.assertEqual(score.first_object(text)["reason"], "thin")
+
+    def test_a_second_object_after_the_verdict(self):
+        # The real failure. Slicing from the first "{" to the last "}" spans both, which
+        # is valid JSON followed by more, and json.loads rejects all of it with "Extra
+        # data" - so the candidate scored 0.00 for a reason the model never gave.
+        text = '{"potential": 0.6, "reason": "plausible"}\n\n{"note": "also worth a look"}'
+        self.assertEqual(score.first_object(text)["potential"], 0.6)
+
+    def test_a_brace_in_the_prose_before_the_verdict(self):
+        text = 'The signature contains {<x>} placeholders.\n{"potential": 0.2}'
+        self.assertEqual(score.first_object(text)["potential"], 0.2)
+
+    def test_a_reply_with_no_object_is_an_error_not_a_zero(self):
+        with self.assertRaises(ValueError):
+            score.first_object("I cannot score this candidate.")
+
+
 class Record(unittest.TestCase):
     def test_creates_the_log_and_appends(self):
         tmp = tempfile.mkdtemp()
