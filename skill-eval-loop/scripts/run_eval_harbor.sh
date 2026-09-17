@@ -76,10 +76,34 @@ if [[ "$AGENT" == "claude" && -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]]; then
     export CLAUDE_CODE_OAUTH_TOKEN
   fi
 fi
+# Fall back to the CLI's own credential file. `claude setup-token` mints a
+# long-lived token and is the right thing to store in AgentWallet, but it needs a
+# browser, so on a host where nobody can complete that flow this reads the access
+# token Claude Code already keeps here and refreshes on its own. It is read, never
+# written: nothing in this script touches the login state, because a run that
+# logged the host out would cost far more than the eval it was trying to save.
+CLAUDE_CREDS="${CLAUDE_CREDS:-$HOME/.claude/.credentials.json}"
+if [[ "$AGENT" == "claude" && -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" && -r "$CLAUDE_CREDS" ]]; then
+  CLAUDE_CODE_OAUTH_TOKEN="$(python3 - "$CLAUDE_CREDS" <<'PY' || true
+import json, sys, time
+try:
+    d = json.load(open(sys.argv[1]))["claudeAiOauth"]
+except Exception:
+    sys.exit(0)
+# expiresAt is milliseconds. An expired token fails deep inside the container with
+# an opaque error, so treat it as absent here and let the check below say so.
+if d.get("expiresAt", 0) / 1000 <= time.time():
+    sys.exit(0)
+sys.stdout.write(d.get("accessToken", ""))
+PY
+)"
+  export CLAUDE_CODE_OAUTH_TOKEN
+fi
 [[ "$AGENT" == "claude" ]] && export CLAUDE_FORCE_OAUTH="${CLAUDE_FORCE_OAUTH:-1}"
 if [[ "$AGENT" == "claude" && -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]]; then
-  echo "no CLAUDE_CODE_OAUTH_TOKEN: run 'claude setup-token' and store it as" >&2
-  echo "anthropic/oauth-token/claude-code in AgentWallet" >&2
+  echo "no usable CLAUDE_CODE_OAUTH_TOKEN. Either run 'claude setup-token' and store" >&2
+  echo "it as anthropic/oauth-token/claude-code in AgentWallet, or log the CLI in on" >&2
+  echo "this host so $CLAUDE_CREDS holds an unexpired token." >&2
   exit 1
 fi
 
