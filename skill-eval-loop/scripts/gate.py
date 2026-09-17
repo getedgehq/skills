@@ -17,6 +17,14 @@ Decision rule (deliberately conservative):
   the winner says: the majority rule counts valid samples, so a run whose others
   were thrown out is one run, and one run is an anecdote.
 
+Every row records what the win was against. A baseline arm with no skill
+installed makes the verdict "better than nothing", and a skill is adopted into a
+fleet that is not nothing: a candidate loads 18 times in 21 with-arms, where it
+is the only skill on the machine, and once in 189 real sessions, where it is one
+of 314 and several of the others answer the same trigger. --rival names the skill
+the baseline arm was given, so a later reader can tell the two verdicts apart
+instead of reading every past row as a head-to-head it never was.
+
 On ADOPT: copies the skill into --adopt-dir and appends to ledger.jsonl. Both adopt
 and probation rows carry a baseline failure rate and a recheck date (14 days for an
 adoption, 7 for probation), so recheck.py can demote either one later.
@@ -42,6 +50,9 @@ def main():
     ap.add_argument("brief")
     ap.add_argument("skill_dir")
     ap.add_argument("--adopt-dir", default=os.path.expanduser("~/.agents/skills"))
+    ap.add_argument("--rival", default=None,
+                    help="skill the baseline arm was given; absent means it had none, "
+                         "and the verdict is 'better than nothing' rather than a head-to-head")
     ap.add_argument("--probation", action="store_true",
                     help="adopt as probationary when eval can't discriminate but the production failure is real")
     ap.add_argument("--failure-rate", type=float, default=None,
@@ -57,6 +68,15 @@ def main():
 
     skill_name = os.path.basename(os.path.normpath(args.skill_dir))
     errors = v.get("tool_errors", {})
+    # What the baseline actually had, read off the run rather than off the flag. The
+    # flag says what was asked for and the verdict says what was installed, and the
+    # whole point of the row is that a reader can tell a head-to-head from a walkover;
+    # a --rival that never reached the arm would put the wrong one on the ledger.
+    baseline = sorted(v.get("skills_installed", {}).get("without", []) or [])
+    if args.rival and not baseline:
+        sys.exit(f"--rival {args.rival} was passed but the baseline arm ran with no "
+                 f"skill installed. Rerun the brief or drop the flag; recording a "
+                 f"head-to-head that did not happen is worse than recording nothing.")
     # An older verdict has no valid_samples; treat its own sample count as the answer
     # rather than refusing every pre-fix verdict on a field it could not have written.
     n_valid = v.get("valid_samples", v.get("samples", MIN_VALID))
@@ -89,6 +109,11 @@ def main():
         # question of real sessions weeks later and keeps finding zero; this is the
         # earliest the loop can see it coming, on the row the recheck already reads.
         "eval_skill_loads": v.get("skill_loads"),
+        # What the candidate beat. An empty list is the honest reading of every row
+        # written before this field existed: the baseline arm was an empty machine,
+        # so the verdict is "better than nothing" and says nothing about whether the
+        # model would pick this skill over the one already installed for the trigger.
+        "baseline_skills": baseline,
         "verify": v["verify"],
         "tool_errors": v.get("tool_errors"),
         "reasons": v["verdict"].get("reasons", []),
@@ -114,7 +139,12 @@ def main():
             shutil.rmtree(dest)
         shutil.copytree(args.skill_dir, dest)
         tag = "ADOPTED" if adopt else "PROBATION (recheck due %s)" % entry["recheck_due"]
-        print(f"{tag} {skill_name} -> {dest}")
+        against = ("over " + ", ".join(baseline)) if baseline else "over an empty baseline"
+        print(f"{tag} {skill_name} ({against}) -> {dest}")
+        if not baseline:
+            print("  note: the baseline arm had no skill, so this says the candidate "
+                  "beats nothing, not that it beats what is already installed for the "
+                  "same trigger. --rival runs that comparison.")
     elif thin:
         print(f"REJECTED {skill_name}: {n_valid} valid sample(s), and one run is an "
               f"anecdote. Fix whatever invalidated the others and rerun the brief "

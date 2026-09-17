@@ -166,8 +166,10 @@ def never_used_its_skill(arm):
     """True when this arm had a skill, its runner would have said so, and it did not.
 
     All three conditions matter and each has a way of being wrong on its own: an arm
-    with no skill installed is the baseline and is supposed to load nothing, and an arm
-    whose runner records no skill call has an unknowable zero rather than an empty one.
+    with no skill installed is an empty baseline and is supposed to load nothing, and an
+    arm whose runner records no skill call has an unknowable zero rather than an empty
+    one. Written against the arm rather than against the with-arm by name, because a
+    baseline given a rival skill has to clear the same bar to be a baseline.
     """
     return bool(arm["skills"]) and arm["loads_knowable"] and not arm["loaded"]
 
@@ -346,13 +348,16 @@ def main():
         "loads_knowable": {a: arms[a]["loads_knowable"] for a in arms},
         "run": {a: arms[a]["run"] for a in arms},
     }
-    # The with-arm had a skill and its runner would have recorded the call, and there
-    # is no call: the two arms were the same run twice, so this pair is not a
-    # comparison. Ordered after a broken brief, because a gate nothing passes is the
-    # bigger problem, and before the blindness check, which cannot fire on an arm that
-    # never read the skill it would have to name.
-    w = arms["with"]
-    never_loaded = never_used_its_skill(w)
+    # An arm had a skill and its runner would have recorded the call, and there is no
+    # call: the two arms were the same run twice, so this pair is not a comparison.
+    # Checked on both arms rather than only the candidate's, because the baseline can
+    # have one too - under --rival it holds the skill already installed for this
+    # trigger - and a rival that was never loaded turns the head-to-head the ledger
+    # will record back into the walkover it was meant to replace. Ordered after a
+    # broken brief, because a gate nothing passes is the bigger problem, and before
+    # the blindness check, which cannot fire on an arm that never read the skill it
+    # would have to name.
+    silent = [a for a in ("with", "without") if never_used_its_skill(arms[a])]
     if both_failed:
         result["invalid"] = True
         # Two invalid samples are not the same kind of problem, and the caller has to
@@ -363,13 +368,13 @@ def main():
         result["invalid_code"] = "both_arms_failed_verify"
         result["invalid_reason"] = "both arms failed verify - fix the brief, not the loop"
         result["winner_arm"] = "invalid"
-    elif never_loaded:
+    elif silent:
         result["invalid"] = True
         result["invalid_code"] = "skill_never_loaded"
-        result["invalid_reason"] = ("the with-arm never loaded "
-                                    f"{', '.join(w['skills'])}, so both arms ran the "
-                                    "same task without it and this pair compares two "
-                                    "runs, not a skill")
+        result["invalid_reason"] = "; ".join(
+            f"the {a}-arm never loaded {', '.join(arms[a]['skills'])}, so it ran the "
+            "task without the skill it was given and this pair compares two runs, "
+            "not a skill" for a in silent)
         result["winner_arm"] = "invalid"
     elif spoken:
         result["invalid"] = True

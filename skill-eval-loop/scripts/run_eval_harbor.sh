@@ -55,8 +55,15 @@ fi
 
 ARGS=(run -p "$TASK" -a "$HAGENT" --n-concurrent 1 -o "$META/jobs")
 [[ -n "$MODEL" ]] && ARGS+=(-m "$MODEL")
-if [[ "$ARM" == "with" ]]; then
-  [[ -d "$SKILL_DIR" ]] || { echo "with-arm needs a skill dir" >&2; exit 1; }
+if [[ "$ARM" == "with" && ! -d "$SKILL_DIR" ]]; then
+  echo "with-arm needs a skill dir" >&2; exit 1
+fi
+# Whatever the arm was handed, same as the local runner: a baseline given the skill
+# already installed for this trigger is the comparison an adoption rests on, and the
+# arm names decide nothing. The without arm handed nothing still receives no --skill
+# and no skills directory, which is what keeps the blind.
+if [[ -n "$SKILL_DIR" ]]; then
+  [[ -d "$SKILL_DIR" ]] || { echo "no such skill dir: $SKILL_DIR" >&2; exit 1; }
   # -L first: production skills are deployed as symlinks, and Harbor uploads the
   # directory as it finds it, so a link would arrive dangling and the with arm
   # would silently be a second without arm.

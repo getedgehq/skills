@@ -4,6 +4,13 @@
 # One arm of a skill-forge eval: isolated dir, headless agent, transcript capture.
 # Harness metadata lives in <run>.meta so the agent under test cannot see it.
 #
+# Each arm installs the skill directory it is handed, and the without-arm is
+# normally handed none. Handing it one makes the baseline the skill already
+# installed for this trigger rather than an empty machine, which is the
+# comparison an adoption into a populated fleet actually rests on. Only the
+# with-arm requires a skill; everything downstream reads the arms by what they
+# were given, not by their names.
+#
 # FORGE_AGENT   claude (default) | codex | opencode - the agent CLI under test
 # FORGE_MODEL   model id for that CLI
 # FORGE_SAMPLE  sample number; runs land in runs/<id>/s<N>/<arm> (repeat samples
@@ -25,8 +32,11 @@ SETUP=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('setu
 printf '%s' "$PROMPT" > "$META/prompt.txt"
 cp "$BRIEF" "$META/brief.json"
 
-if [[ "$ARM" == "with" ]]; then
-  [[ -d "$SKILL_DIR" ]] || { echo "with-arm needs a skill dir" >&2; exit 1; }
+if [[ "$ARM" == "with" && ! -d "$SKILL_DIR" ]]; then
+  echo "with-arm needs a skill dir" >&2; exit 1
+fi
+if [[ -n "$SKILL_DIR" ]]; then
+  [[ -d "$SKILL_DIR" ]] || { echo "no such skill dir: $SKILL_DIR" >&2; exit 1; }
   # -L: many production skills are symlinks (deployment pattern); copy the target
   # content or the arm runs with a dangling link and silently has no skill.
   # Each CLI discovers project skills in its own folder.
