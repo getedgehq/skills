@@ -54,6 +54,49 @@ If the user declines to answer, or says "you pick", proceed on the defaults in
 and say in one line which defaults you used. Never proceed on an unstated
 assumption you did not show them.
 
+## Write down the brief's own numbers, then check against them
+
+Most briefs arrive with numbers already in them, in ordinary words: "about
+3,000 words", "1200-1500 words", "a couple of dozen sources at least", "caps
+the main text at 6,000 words and the abstract at 200", "thirty or more works",
+"cover the hospital series, the exposure problem and the policy evaluations".
+Each of those is a requirement, and each of them is a requirement this pipeline
+loses if nobody writes it down, because every stage after the first works from
+an outline rather than from the request.
+
+So write them down. At stage 6, alongside the venue format block, record what
+the user asked for in `research/brief.json`:
+
+```json
+{
+  "word_range": [2700, 3300],
+  "min_references": 24,
+  "abstract_max_words": 250,
+  "required_sections": ["Introduction", "Methodology", "Discussion", "Conclusion", "References"]
+}
+```
+
+Four rules about that file:
+
+- **Every value in it traces to a sentence in the brief**, or to the document
+  type's own skeleton in `references/paper-types.md` where the user left the
+  choice open. A number nobody asked for does not belong in it.
+- **"About N" is a range, not a point.** "About 3,000 words" is a
+  request to land near three thousand, so record a band around it rather than
+  the single number; ten percent either side is the same tolerance
+  `integrity.py` has always used for `--target`. A stated cap ("no more than
+  6,000") is a ceiling and is recorded as one.
+- **Stated minimums are floors, and the only way past one is more sources.**
+  "A couple of dozen at least" records as 24 and stays 24. See "Keep searching
+  until the count is met" below.
+- **Omit what the brief does not state.** Nothing in the file has a default,
+  and an absent key is simply not checked. An invented cap is as wrong as a
+  missed one.
+
+`integrity.py` then reads that file at the gate and checks the draft against
+it, so the numbers the user stated are tested against the delivered document
+rather than remembered.
+
 ## Four things the scripts own, and you do not
 
 A language model is good at judgement and bad at bookkeeping. The split is
@@ -105,6 +148,7 @@ wrote. The paths are the contract between stages:
 ```
 research/sources.md        research/sources.json     research/summaries.md
 research/gaps.md           research/citations.json   research/citation-notes.md
+research/brief.json
 outline.md                 outline_formatted.md
 sections/*.md              full_draft.md             final.md
 review/thread.md           review/narrator.md        review/skeptic.md
@@ -143,7 +187,7 @@ which is a script you run. Do not skip a stage because the topic looks easy.
 | 3 | Find the gap worth writing into | `agents/03-signal.md` | `research/gaps.md` |
 | 4 | Build the citation database | `agents/04-citation-manager.md` | `research/citations.json`, `research/citation-notes.md` |
 | 5 | Outline the argument | `agents/05-architect.md` | `outline.md` |
-| 6 | Apply venue format and word budgets | `agents/06-formatter.md` | `outline_formatted.md` |
+| 6 | Apply venue format and word budgets | `agents/06-formatter.md` | `outline_formatted.md`, `research/brief.json` |
 | 7 | Write each section | `agents/07-crafter.md` | `sections/*.md`, appends to `research/gaps.md` |
 | 8 | Check cross-section consistency | `agents/08-thread.md` | fixes in `sections/*.md`, `review/thread.md` |
 | 9 | Unify voice | `agents/09-narrator.md` | fixes in `sections/*.md`, `review/narrator.md` |
@@ -161,6 +205,43 @@ which is a script you run. Do not skip a stage because the topic looks easy.
 Stage 7 runs once per section, not once per paper. Stages 10 to 12 produce issue
 lists; an issue list nobody applies is a no-op, so apply the fixes and re-run the
 stage until no critical issue remains.
+
+## Keep searching until the count is met
+
+Stages 1 and 4 are a loop, not a pass. Run them, then count what survived:
+
+```bash
+python3 scripts/citations.py verify -d research/citations.json
+```
+
+It prints `resolved=N` and that N is the real number: it is what the paper can
+cite, after the DOIs that turned out to be absent, invalid or unreachable have
+come out. Compare N against the floor, which is whichever is higher of the
+`min_references` the brief stated and the per-type floor in
+`references/paper-types.md`.
+
+If N is below the floor, go back to stage 1 and search again. Not the same
+queries: different ones. The pool ran short because the queries ran out of
+angles, so widen along the ones the brief itself names, the adjacent literature,
+the sub-questions the topic decomposes into, the review articles that would
+cite this work, the outcome measures by name. Then merge into
+`research/sources.json`, re-run `citations.py build` and `verify`, and count
+again. Keep going until N clears the floor, or until further queries stop
+returning anything new.
+
+This is where verification discipline turns into its own failure mode. The
+right instinct, refusing to cite what did not verify, has a wrong ending: a
+review that drops half its sources at the verification step and then ships the
+half that survived has not been careful, it has been short. Fifty found and ten
+verified is not a ten-source review, it is a search that has to continue. The
+pool is a floor on what you go and find, and the only two honest ways to reach
+the end of this loop are to meet it or to tell the user plainly, in the
+delivered document, how many sources you verified and why the literature would
+not yield more.
+
+Never close the gap the other way. Do not lower the floor to what you have, do
+not cite a DOI whose state is not `resolved`, do not pad the list with sources
+the paper never cites, and do not count one work twice under two identifiers.
 
 Stage 12 has a number, not a feeling. Stop when a fresh run reports zero critical
 issues and an overall average of at least 3.0 out of 5, with no single dimension
@@ -204,8 +285,8 @@ you mean to restart from the sections.
 
 Match the pipeline to what was asked. The stages are the same; the depth is not.
 
-- **A short piece, 1,500 to 3,000 words.** Stages 1 to 7, then 9.5, 10, 11, 15.
-  Ten to fifteen sources.
+- **A short piece, 1,500 to 3,000 words.** Stages 1 to 7, then 9.5, 10, 11, 15, 17.
+  Ten to fifteen sources, or the brief's own minimum wherever it asks for more.
 - **A full paper, the default.** All eighteen, plus 9.5. Twenty-five to fifty
   sources, or fifty and up when the paper is a literature review, whose own
   floor governs wherever it is higher (`references/paper-types.md`).
@@ -214,6 +295,15 @@ Match the pipeline to what was asked. The stages are the same; the depth is not.
 
 Stage 9.5 is in every one of those lists. There is no scale at which a paper
 assembles itself.
+
+Stage 17 is in every one of those lists too. Every section skeleton in
+`references/paper-types.md` opens with an abstract, so a tier that skipped the
+stage that writes one produced a paper missing its first section, and the word
+it goes under is the only thing scale changes: a journal article has an
+abstract, a committee paper or an evidence brief has a summary, and both are
+the same section doing the same job. Write it in the document's own register
+and keep it inside whatever cap the brief states. Where the brief states none,
+`agents/17-abstract.md` carries the fallback range.
 
 ## The two reference files
 
@@ -247,6 +337,8 @@ python3 scripts/assemble.py sections -o full_draft.md
 python3 scripts/assemble.py sections -o full_draft.md --check
 
 python3 scripts/integrity.py final.md -d research/citations.json --target 8000
+python3 scripts/integrity.py final.md -b research/brief.json     # the brief's own numbers
+python3 scripts/integrity.py final.md --stats                    # count, do not check
 python3 scripts/integrity.py final.md -c research/summaries.md   # advisory number check
 python3 scripts/export.py final.md --format docx -o final.docx
 ```
@@ -265,6 +357,49 @@ error, and it will say so.
 
 Search two or three narrower sub-queries as well if the first pass is thin. A
 paper with five sources reads like one with five sources.
+
+## Length is a number, not an impression
+
+Count the draft before delivering it, and count it again after every trim:
+
+```bash
+python3 scripts/integrity.py full_draft.md --stats
+```
+
+That prints the main text's word count, the abstract's, the number of reference
+entries and the headings. Main text means the body: the reference list and the
+abstract are counted separately, because a brief that caps the main text and
+the abstract as two numbers is treating them as two numbers.
+
+Do this at stage 15, before the gate, and act on what it says. Over the range,
+cut, and cut the paragraphs that repeat an argument already made rather than
+shaving a word from every sentence. Under it, go back to the sources and write
+what the pool actually supports; if the pool does not support more, that is a
+finding about the literature, and it goes in the paper as one instead of being
+padded over.
+
+The estimate is the thing to distrust here. A draft that feels like five
+thousand words can be nine, and a paper that comes in half again over a stated
+cap is not a long paper, it is one the venue will not take and the reader will
+not finish. Neither the model that wrote the prose nor the person reading it
+back can tell six thousand words from nine and a half by eye; the command
+above can, and it takes a second.
+
+## The docx a reader opens
+
+`scripts/export.py` sets the body font, the body size and the page margins on
+the exported docx, through the document's Normal style rather than stamped onto
+each paragraph, so a reader who restyles Normal restyles the paper. The
+defaults are Times New Roman, twelve point, one inch margins, which is the
+ordinary manuscript setting; `--font`, `--font-size` and `--margin-inches`
+change them where a venue's house style asks for something else.
+
+This is set rather than left alone because pandoc's own default names no body
+font at all, which means the file opens in whatever the reader's word processor
+calls Normal, and on a current Word that is Calibri. A literature review for a
+supervisor, a brief for a committee and a manuscript for a journal are all
+documents whose typography somebody is expected to have decided. Arriving in
+the word processor's default is the one outcome that says nobody did.
 
 ## Verification, and what it does and does not prove
 
@@ -307,7 +442,7 @@ Before showing anyone the paper:
 ```bash
 python3 scripts/citations.py verify -d research/citations.json
 python3 scripts/citations.py compile full_draft.md -d research/citations.json --style <style> -o final.md
-python3 scripts/integrity.py final.md -d research/citations.json --target <words> -c research/summaries.md
+python3 scripts/integrity.py final.md -d research/citations.json -b research/brief.json -c research/summaries.md
 ```
 
 `verify` runs first so that every record carries a current resolution state
@@ -319,6 +454,35 @@ bibliography entry is pointed at by a marker, that every marker resolves to an
 entry, that numeric bibliographies carry their numbers, that no stranded
 punctuation was left where a marker moved, that the word count is on target, and
 that no template text is left behind.
+
+With `-b` it also checks the five things the user asked for, and this half of
+the gate is the one that answers for the finished document rather than for its
+citations:
+
+- the main text lands inside the word range they stated,
+- the abstract or summary is there and inside its cap,
+- the reference list meets the minimum they stated,
+- every section they named by name exists,
+- and, as it always has, every in-text citation resolves to an entry in the
+  reference list and every entry is cited.
+
+That last one is the one nobody checks by eye and nobody gets right by eye. A
+reference list is long, the markers are scattered through twenty pages, and a
+single entry that lost its marker in a late cut looks exactly like twenty-nine
+that did not. It is checked here or it is not checked.
+
+Run this against the file you actually hand over. Exporting `final.md` to docx
+or pdf does not change its words, so checking `final.md` checks the export; but
+a paragraph edited straight into the delivered markdown after the gate ran was
+never checked at all, and the whole gate has to run again. There is no version
+of this where the thing delivered and the thing checked are different files.
+
+If one of these truly cannot be satisfied, say which one, in one plain sentence
+to the user and in the document's own limitations section: the reference list
+came to nineteen and not to twenty-four, and here is what the searching turned
+up. An unmet requirement that is named is a fact the reader can act on. An
+unmet requirement that is silent is one they find out about from the person
+they sent the paper to.
 
 `-c research/summaries.md` adds one advisory report on top of that: every number
 in the draft that appears nowhere in the research corpus. It never changes the

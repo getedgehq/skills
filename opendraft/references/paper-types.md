@@ -75,11 +75,13 @@ Three tiers, stated in `SKILL.md` under "Scale":
 
 | Tier | Word count | Stages | Sources |
 |---|---|---|---|
-| Short piece | 1,500-3,000 words | 1-7, then 9.5, 10, 11, 15 (skips 8, 9, 12-14, 16-18) | 10-15 |
+| Short piece | 1,500-3,000 words | 1-7, then 9.5, 10, 11, 15, 17 (skips 8, 9, 12-14, 16, 18) | 10-15 |
 | Full paper (default) | Formatter's scaled table, ~21,000 words at full scale | All 18, plus 9.5 | 25-50 |
 | Thesis chapter or long review | Formatter's scaled table, scaled up | All 18, plus 9.5, with stage 7 (drafting) run once per subsection rather than once per section | 50+ |
 
 Stage 9.5 appears in every tier above and is never one of the skipped stages. It is `scripts/assemble.py`, and stages 10, 11 and 15 all read `full_draft.md`, which does not exist until assembly has run. A tier list that drops it is not a shorter pipeline, it is one that stops at stage 10 with nothing to read.
+
+Stage 17 appears in every tier for the same kind of reason. Both word-count tables above open with an abstract row, so every paper this pipeline produces has an abstract as its first section, and the tier that skipped stage 17 was not producing a shorter paper, it was producing one whose opening section nobody wrote. Scale changes its length and the document type changes its name (an article's abstract, a committee paper's summary, an evidence brief's key findings), never whether it is there. Where the brief states a cap on it, that cap governs; `agents/17-abstract.md` carries the fallback range for when none was stated.
 
 `agents/06-formatter.md`, under "Reference URLs: cite the actual source, not the tool you found it with," gives the corresponding citation-count floor by paper type rather than by scale tier: roughly 20 references for an empirical paper, 50 or more for a literature review, drawn from `research/citations.json`. The temporal shape of that pool is stage 1's to set, not the formatter's: `agents/01-scout.md` fixes it under "Quality filtering," in that section's "Balance temporally" step, relative to the current year rather than to a fixed window, and `agents/06-formatter.md` records what stage 1 achieved instead of specifying a second split against it.
 

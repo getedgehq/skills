@@ -75,6 +75,21 @@ If you have a web fetch or search tool available, use it to open `https://doi.or
 4. **Balance temporally**: aim for roughly 60 percent sources from the last 5 years, 30 percent from the 5 years before that, and a handful of older foundational works if the field has them. Note in the output if a field is too young to have a temporal spread.
 5. **Balance by type**: prefer `journal-article`, `proceedings-article`, and `report`; include `posted-content` (preprints) only when they are recent (under 12 months) or clearly still the best available source, and mark them as preprints. If a preprint is older than 24 months with no journal version found, flag it as likely superseded rather than dropping it silently.
 
+## Searching is a loop, and this stage runs more than once
+
+The tier counts above are what a first pass aims at. They are not what the paper needs, because a source found here is not yet a source the paper can cite: stage 4 verifies every DOI at Crossref and DataCite, and the ones that come back `absent`, `invalid` or `unknown` leave the pool. Whatever that removal costs has to be found, not absorbed.
+
+So expect to come back here. Stage 4 counts what verified, compares it against the floor (the `min_references` in `research/brief.json`, or the per-type floor in `references/paper-types.md`, whichever is higher), and returns to this stage when the count is short. A second visit is the normal shape of this pipeline on a review, not a sign that the first pass was done badly.
+
+When you come back, bring different queries. Re-running the same query set returns the same records and the count does not move, which is the failure this note exists to prevent. New angles come from four places, in roughly this order of yield:
+
+1. **The brief's own vocabulary.** Briefs name the sub-questions they want covered, and each one is a query: an outcome ("emergency response times", "boundary road traffic volumes"), a population ("older adults", "e-scooter riders"), a setting, an intervention's other name.
+2. **The vocabulary of the sources you already have.** Titles and abstracts in the pool name the measures, cohorts, instruments and study designs the field actually uses, and those terms are usually not the ones the topic line used.
+3. **The citation neighbourhood.** Query the surnames of authors already in the pool alongside the topic, and query the review articles a field this size will have; a review's own subject terms are a ready-made query list.
+4. **The other side.** A query built to find the contrarian position, the null result, or the critique. A pool assembled only from queries phrased like the claim will be a pool that agrees with the claim.
+
+Merge each new round into `research/sources.json` by the same deduplicating merge below, so the file stays raw tool output throughout. Stop when a round of genuinely new queries returns nothing new; that is a fact about the literature and belongs in `gaps_noticed` and in the paper's limitations, phrased as what was searched and what was not there.
+
 ## Quality filtering
 
 Keep a source only if `find` (or `verify`) actually returned it: never add a paper you recall from training but could not retrieve through the tool or a live fetch. Remove exact duplicates (same DOI) and near-duplicates (same title, different DOI, e.g. preprint plus published version, keep the published one). Drop non-English sources unless the user asked for them.
@@ -195,3 +210,4 @@ Topic: "transformers for climate modeling." Queries run: `"transformers climate 
 - Every entry in `sources.md` carries both `abstract` and `note`, neither key omitted: a fetched source has the sentences and a `null` note, an unfetched one has a `null` abstract and `"metadata only, not fetched"`. No `why_relevant` on a metadata-only entry describes a finding, method or result, since none were read.
 - Preprints are flagged as such, and any preprint older than 24 months with no journal version is flagged as possibly superseded.
 - Gaps and refinement suggestions are included, even if short.
+- The pool is large enough to survive verification. Stage 4 removes every DOI that does not resolve, so a pool that only just reaches the floor here will fall below it there; aim above the floor rather than at it, and expect to be sent back for another round of new queries if it still comes up short.

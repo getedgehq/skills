@@ -2,7 +2,7 @@
 
 Final copyedit pass: catches the two things a spellchecker cannot, confident wording that outruns the evidence, and repetition that reads as careless rather than considered. This is the last stage in the pipeline that touches prose; nothing downstream reviews wording again.
 
-**Reads:** `full_draft.md`
+**Reads:** `full_draft.md`, `research/brief.json`
 **Writes:** `full_draft.md` (edited in place), `review/polish.md`
 
 `full_draft.md` is the assembled draft from stage 9.5. Citations in it are still
@@ -66,6 +66,22 @@ Three moves, applied where the draft's own seams call for them, not inserted on 
 
 Exit bands, useful as a rough check on the pass as a whole rather than a target to hit sentence by sentence: a Flesch-Kincaid grade level around 15.8 reads as appropriate for academic prose, while something around 17.2 reads as too dense; a mean sentence length near 19 words is a reasonable landing point, which is stage 14's length mix (30 percent short, 50 percent medium, 20 percent long) averaged over band midpoints of roughly 10, 20 and 30 words rather than a second target competing with it; the midpoints are stated because two of stage 14's bands are open at one end, so an average over them is only as precise as the points you pick, and a figure carried to a decimal place would be claiming an accuracy the bands cannot support; a passive-voice share around 18 percent is acceptable for academic writing, not a defect to eliminate.
 
+## Length: count the words before handing the draft on
+
+This is the last stage that rewrites prose, so it is the last chance to make the draft the length the user asked for. Read the brief's own numbers from `research/brief.json` (stage 6 wrote them; `word_range` is the pair to work against) and count what is actually there:
+
+```bash
+python3 scripts/integrity.py full_draft.md --stats
+```
+
+That prints a `main text words` line, which counts the body and excludes the bibliography and the abstract, so it is the number a stated range is about. Compare it against the range and act on the difference:
+
+- **Over the top of the range.** Cut. Take the cut out of whatever repeats an argument already made, restates a source's finding a second time, or explains at length what a sentence already established; those are the passages whose removal costs the paper nothing. A stated cap is a cap, and a draft that overruns it by half has answered a different request, however good the prose is. Never cut a `{cite_<doi>}` placeholder or the claim it supports to make the number: if the only way to reach the cap is to drop evidence, cut elsewhere first and say what had to go.
+- **Under the bottom of the range.** Expand where the draft is genuinely thin, meaning a claim carried by one source that others also speak to, a mechanism asserted rather than explained, or a section whose implications stop short of what the discussion promised. Do not pad: repeating a paragraph in other words, restating the introduction in the conclusion, or stretching sentences adds words and subtracts credibility, and stage 14 will read the result as filler.
+- **Inside the range.** Leave the length alone and get on with the copyedit.
+
+Re-run the count after the pass rather than trusting the edit to have landed where you estimated. An estimate is how a draft arrives at 9,600 words against a 6,000-word cap; the command above is thirty seconds and settles it. `SKILL.md` under "Length is a number, not an impression" states the same rule for the pipeline as a whole.
+
 ## Worked examples
 
 - Calibration: "epigenetic clocks show indisputable predictive power" next to a later "significant limitations remain, including population bias and tissue variability" is both an overconfidence problem and an internal inconsistency; soften the first to "epigenetic clocks show strong predictive associations, though generalizability varies across populations and tissue types" so the two sentences stop fighting each other.
@@ -112,3 +128,4 @@ Flesch-Kincaid grade | Mean sentence length | Passive voice share
 - Every abrupt seam got a transition that does not repeat the stacked connectives entropy already bans, every sentence carrying more than one independent claim was considered for a split, and no reorder separated a `{cite_<doi>}` placeholder from the claim it supports.
 - `review/polish.md` reports before-and-after readability figures, even approximate ones, rather than omitting the section.
 - Every `{cite_<doi>}` placeholder present before polish is still present after, attached to the same claim.
+- The `main text words` figure, read from `python3 scripts/integrity.py full_draft.md --stats` after the pass, sits inside the `word_range` recorded in `research/brief.json`, or `review/polish.md` says which end it missed and why cutting or expanding further would have cost the paper evidence.
