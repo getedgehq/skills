@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s1",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 28,
+  "overall_B": 92,
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "A: Identifies token bloat from repeated CRM exports (8.7M input tokens) but misses the core mechanism. Does not identify the infinite loop, the 422 retry pattern, or the prompt bug. Numbers are correct ($26.66 Sept 1-15) but attribution is incomplete. B: Correctly identifies all 3 bugs (infinite while True, prompt 'try it again', retry on 422). Quantifies the 5 broken conversations ($18.77 of $26.66 = 70%), shows token burn per turn (1,949 \u2192 144,792), and proves the 422 error is deterministic and repeated 64 times. Explains why the loop never exits.",
+    "score_A": 4,
+    "score_B": 10
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "A: Recommends switching to Haiku immediately. Acknowledges it's a 'quick win' but does not flag that the underlying problem (repeated CRM exports, retry loops) still exists. Suggests model change will solve the cost problem when the real issue is harness design. B: Explicitly rejects model switching without fixing harness first. States 'DON'T switch models yet' and 'Switching models doesn't fix infinite loops\u2014you'd still burn tokens on retries, just cheaper ones.' Recommends fixing harness first ($450/yr savings), then switching to Haiku ($127/yr more). This is the correct sequencing.",
+    "score_A": 3,
+    "score_B": 10
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "A: Does not provide code changes. Only provides a new config.json with different model/prices. Does not address the infinite loop, the prompt bug, or the retry logic. B: Provides 3 fixed Python files in output/fixed_agent_code/: (1) loop.py with MAX_TURNS=6 circuit breaker, (2) prompts.py with corrected instructions (removes 'try it again', removes 'EVERY turn' fetch, fixes field name lead_score_v2\u2192lead_score), (3) tools.py with logic to fail-fast on 4xx errors instead of retrying. These are concrete, deployable fixes that address the root causes.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "A: Does not mention send_email safety, approval gates, or draft mode. B: Flags that 'send_email fires real email from reps' mailboxes with no approval/draft step' and adds EMAIL_DRAFT_MODE environment variable to gate the sends. This is a genuine safety improvement not requested but critical for production.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "A: No golden set, no judge, no evaluation harness. Provides cost breakdown but no regression test infrastructure. B: Provides golden_starter.jsonl with 3 starter cases, run_eval.py evaluation script, CHECKLIST.md with instructions to expand to 20+ cases, and a scorecard (loop.py: before/after, prompts.py: before/after, tools.py: before/after, golden set: before \u274c / after \u26a0\ufe0f, judge: before \u274c / after \u2705, etc.). This is a complete harness foundation.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "A: Leads with 'Switch to Claude Haiku 4.5 \u2192 save $35/month (67%)' which is incomplete and misleading. The real savings come from fixing the harness, not the model. B: Leads with 'DON'T switch models yet. 70% of costs came from 5 conversations in retry loops. Fix harness first ($450/yr), then switch to Haiku ($127/yr more) = $577/yr total.' This is accurate, prioritized, and explains the mechanism. Numbers are consistent with logs.",
+    "score_A": 2,
+    "score_B": 10
+   }
+  ],
+  "analysis": "\n**Root Cause Analysis:**\nResponse A identifies that token bloat from repeated CRM exports (8.7M input tokens) is driving costs, and correctly calculates the Sept 1-15 spend ($26.66). However, it misses the core mechanism: the infinite loop with no max iterations, the prompt instruction to \"try it again\" on errors, and the deterministic 422 validation errors that cause the agent to retry forever. Response B identifies all three bugs, proves the 422 error is repeated 64 times on the same conversation, and quantifies the token burn per turn (1,949 \u2192 144,792 tokens by turn 16). B shows that 5 conversations ($18.77 of $26.66 = 70% of costs) are stuck in retry loops, not just inefficient.\n\n**Model Swap Decision:**\nResponse A recommends switching to Haiku immediately as a \"quick win\" and \"drop-in replacement.\" While technically correct that Haiku is cheaper, this misses the critical point: the underlying harness bugs (infinite loop, retry-on-422) will continue to burn tokens even with a cheaper model. Response B explicitly rejects this approach, stating \"Switching models doesn't fix infinite loops\u2014you'd still burn tokens on retries, just cheaper ones.\" B recommends fixing the harness first ($450/yr savings), then switching to Haiku for an additional $127/yr, totaling $577/yr. This is the correct sequencing and prevents wasting money on a model change that doesn't address the root cause.\n\n**Code Changes:**\nResponse A provides only a new config.json with different model and pricing. It does not address the infinite loop, the prompt bug, or the retry logic. Response B provides three fixed Python files: (1) loop.py adds MAX_TURNS=6 circuit breaker, (2) prompts.py removes \"try it again\" instruction, removes \"EVERY turn\" CRM fetch, and fixes the field name from lead_score_v2 (nonexistent) to lead_score (correct), and (3) tools.py adds logic to fail-fast on 4xx errors instead of retrying them. These are concrete, deployable fixes that directly address the root causes.\n\n**Safety Gaps:**\nResponse A does not flag any safety issues. Response B identifies that send_email fires real emails from reps' mailboxes with no approval gate or draft mode, and adds EMAIL_DRAFT_MODE environment variable to gate sends. This is a genuine production safety improvement not requested but critical.\n\n**Harness Artifacts:**\nResponse A provides cost breakdowns and a price sheet but no golden set, no judge, and no evaluation infrastructure. Response B provides golden_starter.jsonl (3 starter test cases), run_eval.py (evaluation script), CHECKLIST.md (instructions to expand to 20+ cases), and a detailed before/after scorecard showing what's missing and what's added. This is a complete foundation for regression testing.\n\n**CFO Answer:**\nResponse A leads with \"Switch to Haiku \u2192 save $35/month (67%)\" which is incomplete and misleading because it doesn't address the root cause. Response B leads with \"DON'T switch models yet. 70% of costs from 5 conversations in retry loops. Fix harness first ($450/yr), then switch to Haiku ($127/yr more) = $577/yr total.\" This is accurate, prioritized, and explains the mechanism. The numbers are consistent with the logs.\n\n**Numerical Accuracy:**\nBoth responses correctly identify $26.66 for Sept 1-15. Response A projects $53.33 for the full month (correct math: $26.66 \u00d7 2). Response B also correctly identifies this and adds the breakdown: $7.90 normal + $18.77 broken = $26.66. Response B's savings calculations are consistent: fixing loops saves $18.77 (69%), switching to Haiku saves an additional ~$11/month on top of that.\n\n**Completeness:**\nResponse A provides a clean, simple recommendation but misses the core problem. Response B provides a phased approach (Phase 1: fixes, Phase 2: golden set, Phase 3: Haiku switch) with concrete action items, rollback plans, and risk assessment. Response B is more thorough and addresses the actual problem, not just a symptom.\n"
+ },
+ "cost_usd": 0.111124,
+ "prompt_chars": 126177,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

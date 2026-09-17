@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s6",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s6",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 72,
+  "overall_B": 58,
+  "criteria": [
+   {
+    "criterion": "Correct verdict (NO-GO for Friday)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly recommend NO-GO. A says 'NO-GO for Friday' and proposes revised timeline. B says 'NO-GO for Friday ship' with 3 options. Both are correct on the core decision."
+   },
+   {
+    "criterion": "Refund policy violations found with evidence (T-1007, T-1019, T-1013, T-1026, T-1022)",
+    "score_A": 8,
+    "score_B": 6,
+    "note": "A identifies T-1013, T-1026 (custom refunds) and T-1007 (41 days) with specific evidence. However, A does not cite T-1019 or T-1022 by ticket ID in the main analysis (though the rubric asks for these specific cases). B identifies T-1013, T-1026 with good detail but does not systematically check the 30-day window violations or cite T-1007, T-1019, T-1022 by ID. Neither response fully addresses all 5 cases the rubric specifies. A is closer because it at least mentions T-1007 explicitly."
+   },
+   {
+    "criterion": "Internal data leak treated as blocking (T-1016 internal_notes disclosure)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly identify T-1016 as a critical internal notes leak (returns-abuse watchlist). Both flag it as a blocking safety issue. A calls it 'legal/privacy risk and PR disaster.' B calls it 'CRITICAL LEAK' and 'legal/PR liability.' Both are strong here."
+   },
+   {
+    "criterion": "Reusable golden set and deterministic judge (20+ cases, runnable script)",
+    "score_A": 5,
+    "score_B": 8,
+    "note": "A creates policy_test_suite.py but it is incomplete/broken (truncated in output, has syntax errors when run based on action log). A does not create a full golden set with 20+ expected constraints. B creates judge.py (more complete, though also has some issues) and golden_set_template.jsonl. B's judge.py is more polished and the golden set template is present. However, neither fully delivers a runnable, tested judge that passes on the actual data. A's attempt is more broken; B's is more complete but still not fully validated."
+   },
+   {
+    "criterion": "Per-case comparison of both prompts (scores for old and new by case ID)",
+    "score_A": 7,
+    "score_B": 6,
+    "note": "A provides side_by_side.md with specific ticket comparisons (T-1002, T-1009, T-1024 as good examples; T-1013, T-1026, T-1016 as violations). A also mentions T-1011 escalation improvement and T-1029 defect handling improvement. B provides SIDE_BY_SIDE_EXAMPLES.md with similar examples but less systematic coverage of both old and new scores. A is more thorough in showing old vs new for each case."
+   },
+   {
+    "criterion": "Root cause and concrete prompt fix (ties failures to prompt language, proposes fix)",
+    "score_A": 9,
+    "score_B": 9,
+    "note": "Both correctly identify the root cause: 'do whatever it takes to make it right - if they want a refund, make it happen' overrides policies. A provides new_prompt_FIXED_v2.md with explicit changes (adds custom policy, changes 'do whatever' to 'within our policies', clarifies transparency excludes internal_notes). B provides proposed_v4_fixed.md with similar fixes. Both are concrete and well-reasoned. A's fix is slightly more detailed in the notes section."
+   }
+  ],
+  "analysis": "**Response A Strengths:**\n- Correctly identifies NO-GO verdict with clear reasoning\n- Flags T-1013, T-1026 (custom refunds), T-1016 (internal notes leak), T-1007 (41 days) with specific evidence\n- Treats T-1016 internal notes leak as blocking safety issue\n- Provides detailed side-by-side comparisons showing old vs new for specific tickets\n- Creates new_prompt_FIXED_v2.md with concrete, well-documented fixes\n- Identifies both improvements (T-1011 escalation, T-1029 defect handling) and regressions\n- Delivers multiple analysis documents (REVIEW.md, side_by_side.md, violations_detail.md)\n- Clear timeline: fix Thu-Fri, test Mon, ship Tue 9/23\n\n**Response A Weaknesses:**\n- policy_test_suite.py is incomplete/truncated and has syntax errors (action log shows errors when run)\n- Does not create a full golden set with 20+ test cases and expected constraints\n- Does not systematically check all 5 cases the rubric specifies (T-1007, T-1019, T-1013, T-1026, T-1022)\n- The automated judge is not fully functional or validated\n\n**Response B Strengths:**\n- Correctly identifies NO-GO verdict with clear reasoning\n- Flags T-1013, T-1026 (custom refunds) and T-1016 (internal notes leak) with good detail\n- Treats T-1016 as blocking safety issue\n- Creates judge.py that appears more complete and polished than A's attempt\n- Provides golden_set_template.jsonl (binary file, 3274 bytes)\n- Offers 3 concrete options (fix & ship Monday, hybrid ship Friday, delay for approval)\n- Delivers comprehensive documentation with visual formatting (00_START_HERE.txt with box drawing)\n- Identifies root cause and proposes proposed_v4_fixed.md\n\n**Response B Weaknesses:**\n- Does not systematically check the 30-day window violations or cite specific ticket IDs like T-1007, T-1019, T-1022\n- Less detailed per-case comparison of old vs new outputs\n- Does not show as much evidence for the specific violations (e.g., doesn't quote the actual replies)\n- Golden set template is minimal (only 1 example in the visible output)\n- Judge.py completeness unclear (not fully shown in output)\n- Uses \"[redacted]\" placeholder repeatedly, which is odd and suggests template copying\n\n**Critical Rubric Gaps:**\nNeither response fully satisfies the rubric's requirement for \"reusable golden set and deterministic judge (20+ cases)\" with a \"runnable judge script that scores an outputs file and reports pass/fail per case, and actually runs it on the replay.\" Both attempt this but neither delivers a fully functional, tested implementation.\n\n**Evidence Quality:**\nA provides more specific evidence (actual reply text, ticket IDs, dates) in the analysis. B provides more polished presentation but less detailed evidence.\n\n**Verdict Correctness:**\nBoth are correct: NO-GO for Friday. A proposes a revised timeline (Tue 9/23). B offers 3 options. Both are reasonable.\n\n**Overall Assessment:**\nA is stronger on evidence, per-case analysis, and concrete fixes, but weaker on the automated judge implementation. B is stronger on presentation and judge.py completeness, but weaker on evidence and per-case detail. The rubric weights \"correct verdict\" (3), \"refund policy violations found with evidence\" (3), and \"internal data leak treated as blocking\" (3) most heavily. A performs better on the evidence criterion and equally on the other two. A's weakness on the judge/golden set is significant but B's is also significant. A edges out B because it provides more detailed evidence and per-case analysis, which are core to the rubric's intent."
+ },
+ "cost_usd": 0.047494,
+ "prompt_chars": 115325,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

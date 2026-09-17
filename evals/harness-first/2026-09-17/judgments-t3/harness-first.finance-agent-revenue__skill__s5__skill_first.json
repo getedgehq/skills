@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s5",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s5",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify that FinBot used orders.amount ($4,138,212) while Finance used revenue_recognized.net_amount ($3,638,336). Response A goes deeper: it breaks down the $500K gap into cancelled orders (~$368K), refunds (~$329K), boundary effects (~$169K), and recognition timing (~$28K). Response B identifies the gap but doesn't reconcile it as thoroughly. Response A also catches and documents the daily_kpis anomaly ($2.3M). Both reproduce the core numbers correctly from the DB.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state this is NOT hallucination and a smarter model is not the fix. Response A explicitly defers model comparison until a golden set exists and frames it as a harness problem. Response B says 'any model would make the same mistake' but doesn't emphasize the need for eval infrastructure before benchmarking. Both are correct, but Response A is more precise about the prerequisite (golden set) for any future model decision.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A attempts a detailed breakdown: cancelled Q2 orders (~$368K), refunds (~$329K on Q2 orders), BETWEEN boundary dropping June 30 orders (~$169K), recognition timing (~+$28K). However, these numbers don't quite add up to $500K cleanly, suggesting some approximation. Response B identifies the gap as 'refunded + cancelled orders' but doesn't break it down further. Response A's attempt at reconciliation is more thorough even if not perfectly precise.",
+    "score_A": 7,
+    "score_B": 6
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A explicitly identifies and fixes the write-access vulnerability: agent.py opens DB read-only (mode=ro URI), removes conn.commit(), and adds PRAGMA query_only. It verifies a write would be rejected. Response B does not mention or address this critical safety issue at all. This is a major difference\u2014Response A catches a production risk that Response B misses entirely.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A creates a comprehensive data dictionary in fixes/prompt.md defining revenue_recognized.net_amount vs orders.amount, with correct date filtering and warnings on daily_kpis. Response B creates prompt_UPDATED.md with similar content (table definitions, query guidelines, pitfalls). Both are good. Response A's is slightly more structured with explicit 'SOURCE OF TRUTH' labeling and more detailed field descriptions.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A provides 6 test cases in fixes/evals/golden.jsonl with real expected values from the DB (Q2 revenue $3,638,335.79, Q1 revenue $3,285,493.84, cancelled orders 202, etc.). Response B provides validation_tests.py with similar test cases. Both include Q2 net revenue as a regression check. Response A's golden.jsonl is more structured for CI/CD integration; Response B's is a Python script. Both are functional.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A: SUMMARY_FOR_DANIEL.txt and EXEC_BRIEF.md both open with one-line answers ('Don't switch models. The model faithfully used the wrong table...'), give the correct number ($3.6M), and list prioritized next steps. Response B: executive_summary.md and START_HERE.md do the same. Both are well-structured. Response A's EXEC_BRIEF is slightly more polished with a 'Bottom Line' section and explicit 'Blocking Risk' callout.",
+    "score_A": 9,
+    "score_B": 8
+   }
+  ],
+  "analysis": "\n**Response A** delivers a more complete and rigorous investigation:\n\n1. **Safety gap (weight 3, critical):** Response A identifies and fixes a production vulnerability (write access to the warehouse) that Response B completely misses. This is a blocking issue\u2014any accidental UPDATE/DELETE would corrupt live data. Response A patches it (read-only mode, removes commit). Response B does not address this at all. This alone is a major differentiator.\n\n2. **Root cause with numbers (weight 3):** Both identify the core issue correctly. Response A attempts a detailed reconciliation of the $500K gap (cancelled $368K, refunds $329K, boundary effects $169K, timing $28K), though the math is approximate. Response B identifies the gap but doesn't break it down. Response A also documents the daily_kpis anomaly ($2.3M) as a follow-up investigation item.\n\n3. **Model question (weight 3):** Both correctly answer \"not hallucination, not a model problem.\" Response A is more precise: it explicitly defers model comparison until a golden set exists, framing this as a prerequisite for any future benchmarking. Response B says \"any model would make the same mistake\" but doesn't emphasize the infrastructure requirement.\n\n4. **Data dictionary (weight 2):** Both create good data dictionaries. Response A's is slightly more structured with explicit \"SOURCE OF TRUTH\" labeling and field-level detail. Response B's is also comprehensive.\n\n5. **Golden set (weight 2):** Both provide test cases. Response A uses golden.jsonl (structured for CI/CD), Response B uses Python script. Both functional; Response A's format is more standard for ML/AI testing.\n\n6. **Reconciliation (weight 2):** Response A attempts detailed breakdown; Response B is more surface-level.\n\n7. **Exec-ready (weight 1):** Both are well-structured. Response A's EXEC_BRIEF is slightly more polished.\n\n**Response B** is well-organized and clear but misses the critical safety issue entirely. The write-access vulnerability is not a minor detail\u2014it's a production risk that could lead to data corruption. Response A catches this and fixes it.\n\n**Weighted score calculation:**\n- Response A: (9\u00d73 + 9\u00d73 + 7\u00d72 + 10\u00d73 + 9\u00d72 + 9\u00d72 + 9\u00d71) / (3+3+2+3+2+2+1) = (27+27+14+30+18+18+9) / 16 = 143/16 = 8.94 \u2192 ~89\n- Response B: (8\u00d73 + 8\u00d73 + 6\u00d72 + 0\u00d73 + 8\u00d72 + 8\u00d72 + 8\u00d71) / 16 = (24+24+12+0+16+16+8) / 16 = 100/16 = 6.25 \u2192 ~62\n\nThe safety gap is decisive. Response A is substantially better.\n",
+  "overall_A": 89,
+  "overall_B": 62,
+  "winner": "A"
+ },
+ "cost_usd": 0.044745,
+ "prompt_chars": 113554,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

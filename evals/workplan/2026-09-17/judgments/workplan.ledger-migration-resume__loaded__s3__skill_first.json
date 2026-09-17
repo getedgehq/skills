@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/loaded-s3",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/base-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 82,
+  "overall_B": 68,
+  "analysis": "Both responses successfully completed the core technical work: they fixed the three broken items (3, 4, 5), implemented item 6, kept item 7 blocked, and got all tests passing. However, they differ significantly in how they documented and verified their work.\n\n**Response A's strengths:**\n- Properly resumed the existing plan document by updating \"Last updated\" and appending to the Verification Log with timestamped entries\n- Provided specific, command-based verification: \"ran `python3 -m unittest discover tests`, 12 tests pass\" with concrete evidence (test counts, specific amounts like \"T-1002 keeps updated_at 2026-08-30 (amount 298.40, not 318.40)\")\n- Discovered and logged the CI gap: \"run_tests.sh only ran tests.test_normalize, so CI was green over two failing account tests; that gap is written down when it is found\"\n- Reopened items 3 and 4 with clear reasoning in the plan document itself (\"Reopened steps 3 and 4 after verification audit\")\n- Provided a concise handover reply that directly answers what is done and what is blocked\n\n**Response A's weaknesses:**\n- The final chat reply is somewhat terse and could have been more polished\n- Did not create additional reference documents (though this wasn't required)\n\n**Response B's strengths:**\n- Created comprehensive reference documents (COMPLETION-SUMMARY.md, QUICK-REFERENCE.md) that are well-organized and helpful\n- Provided detailed explanations of what was wrong and why\n- Very polished and professional presentation\n\n**Response B's weaknesses:**\n- Failed to properly resume the existing plan: created a new plan document rather than updating the existing one. The new document has \"Last updated: 2026-09-16\" but the original was \"2026-09-13 17:05\". This violates the explicit rubric requirement to \"keep Rune's roadmap numbering and context, moves 'Last updated', appends to the existing Decisions and Verification Log\"\n- Verification entries lack specificity: \"All 12 tests now pass\" without showing what was run or what the output was. The original Rune entries (\"spot-checked\", \"looks right\") are criticized but Response B's entries are similarly vague\n- Did not discover or log the CI gap (run_tests.sh only ran test_normalize)\n- The plan document's Verification Log section is narrative rather than timestamped entries appended to the original log\n- Modified run_tests.sh to use `python3 -m unittest discover tests` instead of the original `python3 -m unittest tests.test_normalize`, which changes what CI runs without documenting why\n\n**Technical correctness:**\nBoth responses implemented the fixes correctly. Both handle parentheses properly (checking before stripping currency prefix), both fix deduplication to keep the most recent row, both implement remap() to return (rows, unmapped), and both add the --since filter. Both pass all tests.\n\n**Verification quality:**\nResponse A provides evidence-based verification with specific test outputs and data values. Response B provides assurances but less concrete evidence of what was actually tested.\n\n**Plan document handling:**\nThis is the critical differentiator. The rubric explicitly requires \"Resumes the existing plan instead of starting over (weight 3)\" with specific guidance: \"Continues [redacted]-20260913-ledger-v3.md: keeps Rune's roadmap numbering and context, moves 'Last updated', appends to the existing Decisions and Verification Log rather than writing a fresh plan.\"\n\nResponse A does this correctly. Response B creates a new plan document with a different structure and narrative Verification Log section, which violates the requirement to append to the existing log.\n\n**Discoveries logged:**\nResponse A explicitly logs the CI gap discovery. Response B does not mention this gap.\n\nThe weight-3 criteria (Resume plan, Re-verify items, Finish items, Block item 7, Verification means command) are where the responses diverge most significantly.\n",
+  "criteria": [
+   {
+    "criterion": "Resumes the existing plan instead of starting over (weight 3)",
+    "note": "Response A updates the existing plan document with 'Last updated: 2026-09-17' and appends to the Verification Log. Response B creates a new plan document with 'Last updated: 2026-09-16' and rewrites the Verification Log as narrative rather than appending timestamped entries to the original.",
+    "score_A": 9,
+    "score_B": 4
+   },
+   {
+    "criterion": "Re-verifies the ticked items and reopens the false ones (weight 3)",
+    "note": "Response A explicitly reopens items 3 and 4 in the plan document with reasoning ('Reopened steps 3 and 4 after verification audit'). Response B fixes the code but does not formally reopen items in the plan document; it only mentions the fixes in narrative sections.",
+    "score_A": 9,
+    "score_B": 6
+   },
+   {
+    "criterion": "Finishes the open items without breaking the old ones (weight 3)",
+    "note": "Both responses correctly implement items 5 and 6, fix items 3 and 4, and maintain backward compatibility. Both pass all tests including legacy_2024.csv. Technically equivalent.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "The blocked item stays unchecked with the reason written down (weight 3)",
+    "note": "Response A marks item 7 as '[!]' with clear blocking reason in the plan. Response B marks item 7 as '[ ]' with blocking reason. Both handle this correctly, though Response A's notation is slightly clearer.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Verification means a command was run (weight 2)",
+    "note": "Response A provides specific verification entries: 'ran `python3 -m unittest discover tests`, 12 tests pass. Tested parse_amount(\"(EUR 340.00)\") returns Decimal(\"-340.00\"). Verified T-1004 in current.csv outputs -340.00'. Response B says 'All 12 tests now pass' without showing what was run or specific test outputs.",
+    "score_A": 9,
+    "score_B": 5
+   },
+   {
+    "criterion": "Discoveries logged as they surface (weight 2)",
+    "note": "Response A explicitly logs: 'run_tests.sh only ran tests.test_normalize, so CI was green over two failing account tests; that gap is written down when it is found'. Response B does not mention discovering this CI gap.",
+    "score_A": 9,
+    "score_B": 3
+   },
+   {
+    "criterion": "Handover reply (weight 1)",
+    "note": "Response A provides a concise summary of what is done and what is blocked on Fin. Response B provides a more polished but longer summary with additional context. Both answer the question adequately.",
+    "score_A": 8,
+    "score_B": 8
+   }
+  ]
+ },
+ "cost_usd": 0.026354,
+ "prompt_chars": 49157,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

@@ -1,0 +1,13 @@
+# Section 7: Limitations
+
+This rapid evidence assessment has five principal limitations that constrain confidence in specific predictions while supporting the overall mechanistic case.
+
+**Milk-based drinks evidence gap:** No empirical studies have examined SSB tax effects on milk-based drinks or sweetened milk alternatives. The mechanistic argument is sound—the tiered levy incentive and price sensitivity mechanisms would apply identically—but remains extrapolation rather than direct observation. While reformulation is technically feasible, the specific magnitude of response cannot be predicted with empirical confidence. This gap reflects policy design choices (dairy products typically exempted) rather than evidence that the mechanism would not operate.
+
+**Four-gram threshold not tested:** No jurisdiction has implemented a 4g per 100ml threshold. Product clustering data from Scarborough et al. (2020) support the direction of effect—manufacturers reformulated to just below 5g, so would face renewed incentive at 4g—but magnitude is uncertain {cite_10.1371/journal.pmed.1003025}.
+
+**UK long-term effects not yet published:** UK purchasing data extend to November 2019, providing 18 months of post-implementation follow-up {cite_10.1136/bmjnph-2024-000981}. Long-term UK data (three or more years) have not been published, though evaluation programmes are ongoing. International evidence demonstrates sustained effects over two to three years {cite_10.2105/ajph.2019.304971} {cite_10.1136/bmj.h6704}, but UK-specific long-term validation is not yet available.
+
+**Dental outcomes not empirically measured:** No studies have directly measured dental caries or other oral health outcomes following the SDIL {cite_10.1038/s41432-024-01025-3}. The biological mechanism is well-established and population sugar reduction has been demonstrated {cite_10.1186/s12916-019-1477-4}, but outcome measurement requires longer follow-up because caries develops over years. Dental benefits are therefore anticipated based on mechanism rather than empirically demonstrated.
+
+**Observational designs and causality:** The UK evidence relies primarily on interrupted time series designs with control groups where available {cite_10.1136/bmjnph-2024-000981} {cite_10.1371/journal.pmed.1004160} {cite_10.1371/journal.pmed.1003025}. These are robust quasi-experimental designs but cannot establish causality with RCT certainty. Confounding by concurrent policies or secular trends remains possible, though control jurisdictions and specificity of effects (concentrated in levy-tier products and youngest age groups) support causal inference.

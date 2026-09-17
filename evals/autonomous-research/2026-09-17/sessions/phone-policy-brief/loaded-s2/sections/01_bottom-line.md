@@ -1,0 +1,9 @@
+# Bottom line
+
+**Do phone-free policies in secondary schools improve student outcomes?**
+
+Evidence shows phone-free secondary schools raise academic attainment and improve student wellbeing. The headline finding comes from England: a rigorous study of phone bans across four cities found exam results improved by 6.4% where phones were restricted {cite_10.1016/j.labeco.2016.04.004}. This effect has been replicated in Sweden {cite_10.1016/j.econedurev.2020.102009} and Norway {cite_10.2139/ssrn.4735240}, demonstrating the finding holds across similar education systems. The largest recent UK study, published in 2025, examined 1,227 pupils across 30 secondary schools and found restrictive phone policies were associated with better mental wellbeing and reduced social media use {cite_10.1016/j.lanepe.2025.101211}.
+
+**Strength of evidence.** Outcome evidence is strong: multiple quasi-experimental studies with robust causal identification show attainment improvements. Wellbeing evidence is more recent but thinner, emerging from cross-sectional and observational designs rather than experimental policy variation. **Implementation evidence is weak.** Key questions from heads—enforcement approaches, staff burden, lockable pouches versus alternatives—remain under-researched. Parent and safeguarding concerns about emergency contact during the school day are almost entirely absent from the academic literature.
+
+**What this means for policy.** The evidence base supports the cabinet decision to mandate phone-free secondaries from January 2027 on grounds of improved attainment and emerging wellbeing benefits. Implementation requires an evaluation plan, equalities monitoring, clear safeguarding protocols, and flexibility for schools to adapt enforcement approaches to local contexts rather than a single national model.

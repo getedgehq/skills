@@ -1,0 +1,1 @@
+**Go.** I compared the two prompts across a sample of tickets and the new one is clearly warmer while keeping the same resolutions and escalations (e.g. T-1028 still goes to a senior agent). The team's warmth rating jump from 2.8 to 4.6 matches what I saw. Minor: T-1007 is a little generous, could tighten later. Notes in output/notes.md. Ship Friday and watch CSAT.

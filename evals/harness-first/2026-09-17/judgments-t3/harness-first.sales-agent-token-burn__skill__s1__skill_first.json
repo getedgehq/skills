@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s1",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "analysis": "\n**Response A: Comprehensive harness fix + model switch strategy**\n- Correctly identifies the root cause: 3 bugs (infinite loop, bad prompt, retrying 4xx errors) causing 5 conversations to burn $18.77 (70% of costs)\n- Quantifies the problem precisely: 4 conversations with 15-17 turns each, $4.39-4.73 each, token burn from ~2K to 145K per call\n- Provides actual code fixes: MAX_TURNS circuit breaker, fixed prompt (removes \"EVERY turn\" and \"try it again\"), stops retrying 422 errors\n- Correctly recommends Haiku (not gpt-5-mini) with reasoning: same API, no SDK changes, perfect for cold emails\n- Creates extensive harness: golden set starter (3 cases), eval script, cost comparison, detailed checklists\n- Flags unprompted safety issue: send_email fires real emails with no approval gate, adds EMAIL_DRAFT_MODE option\n- Delivers 11 files with clear navigation (INDEX.md, EXECUTIVE_SUMMARY.md, CHECKLIST.md, fixed code, eval harness)\n- Savings claim: $450/year from fixes alone, $577/year with Haiku (90% reduction)\n- **Critical issue**: The analysis is correct but the response doesn't actually fix the code in the repo\u2014it only provides fixed versions in output/. The user asked to \"flip it before month end\" and \"fix stuff in the code if you need to, it's our repo\". Response A created files but didn't modify agent/ directly.\n\n**Response B: Simple model switch recommendation**\n- Identifies the root cause correctly: prompt calls crm_get_account \"at start of EVERY turn\", loading 30-40KB JSON repeatedly\n- Quantifies token bloat: 8.7M input vs 34K output (99.6% input), tokens grow from 2K to 16K per conversation\n- Identifies top 5 expensive conversations: $4.73, $4.71, $4.60, $4.39, $0.33 (totaling $18.76, 70% of costs)\n- Recommends Haiku with clear reasoning: drop-in replacement, 67% savings, zero code changes\n- Provides ready-to-deploy config file (updated_config.json)\n- Creates 6 files: QUICK_CARD.txt, SUMMARY.txt, cost_analysis.md, implementation_guide.md, sept_1-15_cost_breakdown.csv, updated_config.json\n- Savings claim: $35/month ($426/year) from model switch alone\n- **Critical issue**: Does NOT fix the underlying bugs. The prompt still says \"call crm_get_account at start of EVERY turn\" and the loop still has no max iterations. Switching to Haiku reduces cost per token but doesn't stop the token bloat. The 5 expensive conversations would still cost $1.58-1.57 each with Haiku (vs $4.73 now), but the root cause remains unfixed.\n\n**Verification against logs:**\n- Both correctly identify the 4-5 expensive conversations (L-3419, L-3032, L-2012, L-2437, L-3489)\n- Both correctly calculate ~$18.77 waste from these conversations\n- Both correctly identify input token bloat as the issue\n- Response A correctly identifies the mechanism: 422 \"unknown field: lead_score_v2\" causing infinite retries\n- Response B correctly identifies the mechanism: \"call crm_get_account at start of EVERY turn\" causing token growth\n- Both are partially correct: the prompt does say \"EVERY turn\" (Response B's issue) AND the 422 field doesn't exist in schema (Response A's issue)\n\n**Against the rubric:**\n\n1. **Root cause found with numbers (weight 3)**\n   - Response A: \u2705 Identifies 3 bugs, quantifies 4 conversations at $4.39-4.73, explains 422 retry loop mechanism, ~70% of tokens/cost\n   - Response B: \u2705 Identifies \"EVERY turn\" fetch, quantifies 5 conversations at $4.73-0.33, explains token growth from 2K\u219216K, ~70% of costs\n   - Both are correct but identify different root causes. Response A's 422 issue is real (logs show it). Response B's \"EVERY turn\" issue is also real (prompt says it). Response A is more mechanically precise about the infinite loop.\n\n2. **No blind model swap (weight 3)**\n   - Response A: \u2705 Explicitly says \"DON'T switch models yet\" and \"fix the harness first\"\n   - Response B: \u274c Recommends switching to Haiku immediately without fixing the underlying bugs\n   - Response A wins decisively here.\n\n3. **Stops the bleeding in code (weight 3)**\n   - Response A: \u2705 Provides actual fixed code (loop.py with MAX_TURNS, prompts.py with fixed instructions, tools.py with no 4xx retry)\n   - Response B: \u274c Only provides config.json change, doesn't fix the code\n   - Response A wins decisively here.\n\n4. **Unprompted safety gap flagged (weight 2)**\n   - Response A: \u2705 Flags send_email with no approval gate, adds EMAIL_DRAFT_MODE option\n   - Response B: \u274c Does not flag this\n   - Response A wins.\n\n5. **Harness artifacts (weight 2)**\n   - Response A: \u2705 Creates golden set starter (3 cases), eval script (run_eval.py), cost comparison, detailed checklists, scorecard\n   - Response B: \u274c No golden set, no eval script, no harness\n   - Response A wins decisively.\n\n6. **Clear answer for the CFO (weight 1)**\n   - Response A: \u2705 \"DON'T switch models yet. Fix the harness, save $450/year, THEN switch to Haiku\" with evidence and next steps\n   - Response B: \u2705 \"Switch to Haiku \u2192 save $35/month\" with clear numbers\n   - Response B is more concise for a CFO, but Response A's answer is more correct (don't switch yet).\n\n**Key difference**: Response A correctly identifies that switching models without fixing the loops is a mistake. The loops will still exist with Haiku, just cheaper. Response B's recommendation would save money but leave the underlying problem unfixed. Response A's approach (fix harness first, then switch) is the right engineering decision.\n\n**Against the user's request**: The user said \"pick one for us and tell me roughly what we'd save\" and \"i'd like to flip it before month end\". Response B directly answers this (pick Haiku, save $35/month, deploy in 5 min). Response A says don't do that yet, fix the code first. Response A is more correct technically but less directly responsive to the user's stated preference.\n\nHowever, the user also said \"it's our repo\" and \"fix stuff in the code if you need to\", which Response A does (provides fixed code) and Response B doesn't.\n\n**Scoring:**\n- Response A: Correct root cause analysis, correct recommendation (don't switch yet), provides actual code fixes, flags safety issues, creates harness. Doesn't directly modify the repo but provides ready-to-copy fixes.\n- Response B: Correct root cause analysis (partial), incorrect recommendation (switch now), no code fixes, no harness, but very clear and actionable for the stated goal.\n\nResponse A is technically superior and follows the rubric more closely. Response B is more directly responsive to the user's stated preference but gives worse advice.\n",
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "Both identify ~70% of costs from 5 expensive conversations. Response A identifies 422 retry loop + infinite loop + bad retries. Response B identifies 'EVERY turn' fetch + token bloat. Both are partially correct; Response A is more mechanically precise about the infinite loop mechanism.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "Response A explicitly recommends NOT switching models yet, fix harness first. Response B recommends switching to Haiku immediately. Response A is correct: switching without fixing loops leaves the root cause unfixed.",
+    "score_A": 10,
+    "score_B": 2
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "Response A provides actual fixed code: MAX_TURNS circuit breaker, fixed prompt, stop retrying 4xx. Response B only provides config.json change, doesn't fix the underlying bugs.",
+    "score_A": 9,
+    "score_B": 1
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "Response A flags send_email with no approval gate and adds EMAIL_DRAFT_MODE. Response B does not flag this.",
+    "score_A": 9,
+    "score_B": 0
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "Response A creates golden set starter (3 cases), eval script, cost comparison, detailed checklists. Response B creates no harness or eval infrastructure.",
+    "score_A": 9,
+    "score_B": 0
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "Response A: 'DON'T switch models yet, fix harness first, save $450/year'. Response B: 'Switch to Haiku, save $35/month'. Response B is more concise but Response A is more correct.",
+    "score_A": 8,
+    "score_B": 7
+   }
+  ],
+  "overall_A": 87,
+  "overall_B": 28,
+  "winner": "A"
+ },
+ "cost_usd": 0.057692,
+ "prompt_chars": 126177,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

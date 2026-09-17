@@ -1,0 +1,73 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                  OUTREACH AGENT - COST FIX QUICK REF                      ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+ANSWER TO YOUR QUESTION
+───────────────────────────────────────────────────────────────────────────────
+Q: Should we switch to a cheaper model?
+A: NO. 5 conversations with infinite retry loops burned 70% of your budget.
+   Fix the harness, save $46/month. Then decide on model if you want.
+
+ROOT CAUSE
+───────────────────────────────────────────────────────────────────────────────
+❌  Prompt says: "call crm_get_account at EVERY turn" 
+    → Re-sends 12KB JSON each turn, accumulating in history
+    → Turn 10: 114K input tokens ($0.34 input alone)
+
+❌  Prompt says: "If a tool call fails, try it again"
+    → 404 "account_merged" retried 26 times
+    → 422 "unknown field lead_score_v2" retried 68 times (4 high-value leads)
+    → These 5 conversations: $18.77 of $26.66 total
+
+❌  No max iterations
+    → Loops run until timeout
+
+FIXES APPLIED (ready to deploy)
+───────────────────────────────────────────────────────────────────────────────
+✅  agent/loop.py: Added max_turns=10, graceful stop
+✅  agent/prompts.py: "call ONCE", removed lead_score_v2, "don't retry 4xx"
+✅  agent/tools.py: Fail fast on 4xx errors (404, 422, etc.)
+
+COST IMPACT
+───────────────────────────────────────────────────────────────────────────────
+                Sept 1-15     Full Month    After Fix     Savings
+Current         $26.66        $53.32        -             -
+Fixed           -             -             $7.36         $45.96/mo
+
+If switch to Haiku (after fix):              $4.91         $48.41/mo
+If switch to GPT-5-mini (after fix):         $3.68         $49.64/mo
+
+Recommendation: Fix harness ($46 savings), keep Sonnet ($7.36/mo total).
+                Model swap adds only $2-4/mo savings for migration risk.
+
+MODEL CHOICE (IF YOU INSIST)
+───────────────────────────────────────────────────────────────────────────────
+Keep: claude-sonnet-4-5 ($7.36/mo after fix) - best quality, negligible cost
+Alt:  claude-haiku-4-5  ($4.91/mo after fix) - 1 line change, $2.45 savings
+No:   gpt-5-mini/others                      - not worth migration effort
+
+DEPLOY CHECKLIST
+───────────────────────────────────────────────────────────────────────────────
+[ ] Review code changes in agent/{loop,prompts,tools}.py
+[ ] Test 3-5 leads in staging, confirm cost ~$0.02-0.08 per lead
+[ ] Deploy to prod
+[ ] Monitor logs/calls-*.jsonl for next 2 days
+[ ] Confirm cost drops from ~$53/month to ~$7/month
+
+NEXT STEPS (after deploy)
+───────────────────────────────────────────────────────────────────────────────
+Priority 1: Add human approval gate for send_email (safety issue)
+Priority 2: Implement evals/judge.py runner with mock CRM
+Priority 3: Run golden set before every prompt change (prevent regression)
+
+FILES CREATED
+───────────────────────────────────────────────────────────────────────────────
+output/cost_analysis.md          - Full diagnostic with evidence
+output/fix_summary.md            - What changed and why
+output/model_recommendation.md   - Model comparison (after fixing harness)
+output/cost_comparison.txt       - Visual before/after
+output/QUICK_REFERENCE.txt       - This file
+evals/golden.jsonl               - 10 test cases (3 incidents, 7 policies)
+evals/judge.py                   - Eval harness skeleton
+
+Modified: agent/loop.py, agent/prompts.py, agent/tools.py

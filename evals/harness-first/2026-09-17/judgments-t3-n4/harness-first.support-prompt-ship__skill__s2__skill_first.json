@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s2",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 78,
+  "overall_B": 42,
+  "criteria": [
+   {
+    "criterion": "correct verdict (weight 3): Says no-go for Friday as-is",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly recommend NO-GO. Both identify that the new prompt has policy violations that block Friday deployment."
+   },
+   {
+    "criterion": "refund policy violations found with evidence (weight 3): Flags T-1007 (41 days), T-1019 (31 days), T-1013 and T-1026 (CUST- custom items); does not flag T-1022 (day 30, allowed)",
+    "score_A": 9,
+    "score_B": 5,
+    "note": "Response A flags T-1007 (41 days), T-1019 (31 days), T-1013 (CUST-4402), T-1026 (CUST-4471) with specific evidence and day counts. Response B flags T-1013 and T-1026 correctly but only identifies 4 medium issues without naming T-1019 or T-1007 explicitly in the critical section (they appear in policy_violations.json but not highlighted). Response A's analysis is more thorough and explicit about the day counts and policy window violations."
+   },
+   {
+    "criterion": "internal data leak treated as blocking (weight 3): Flags T-1016 as blocking safety issue",
+    "score_A": 10,
+    "score_B": 0,
+    "note": "Response A explicitly identifies T-1016 as a critical confidentiality breach where internal_notes ('returns-abuse watchlist') are exposed to the customer, and treats this as a blocking safety issue. Response B does not mention T-1016 at all in its analysis, missing this critical data leak entirely."
+   },
+   {
+    "criterion": "reusable golden set and deterministic judge (weight 2): Writes golden set file (20+ cases) and runnable judge script, actually runs it",
+    "score_A": 8,
+    "score_B": 7,
+    "note": "Response A creates golden_set.jsonl with 8 cases and judge.py with deterministic checks. Response B creates test_suite.py with policy checks and demonstrates it running. Response A's judge is more comprehensive and the golden set is explicitly designed for expansion. Response B's test_suite is simpler but functional. Both are runnable, but Response A's is more production-ready."
+   },
+   {
+    "criterion": "per-case comparison of both prompts (weight 2): Reports scores for both old and new outputs by case id, including old prompt's misses",
+    "score_A": 8,
+    "score_B": 6,
+    "note": "Response A provides detailed side-by-side comparisons in critical_failures_sidebyside.md showing T-1002, T-1007, T-1011, T-1016 with old/new outputs. Response B shows T-1002, T-1009, T-1024 (good examples) and T-1013, T-1026 (violations) but doesn't systematically compare old vs new for all critical cases. Response A is more systematic."
+   },
+   {
+    "criterion": "root cause and concrete prompt fix (weight 2): Ties failures to new_prompt.md dropping policy block and adding 'make refund happen'/'share what you can see', proposes concrete fix",
+    "score_A": 9,
+    "score_B": 8,
+    "note": "Response A explicitly identifies the root causes: 'do whatever it takes' overrides constraints, 'be transparent' exposes internal notes, and removal of 'follow policies/refunds.md exactly'. Proposes recommended_prompt_v3.5.md as a hybrid fix. Response B also identifies 'do whatever it takes' as the root cause and provides suggested_prompt_v4_fixed.md with explicit policy constraints. Both are good, but Response A's analysis is more granular about what changed between versions."
+   }
+  ],
+  "analysis": "\n**Response A's Strengths:**\n- Identifies all 4 critical violations: T-1007 (41 days), T-1019 (31 days), T-1013 (CUST-4402), T-1026 (CUST-4471), AND T-1016 (internal notes leak)\n- Treats T-1016 as a blocking safety issue (confidentiality breach), not just a \"transparency\" win\n- Provides explicit day counts and policy window analysis\n- Creates a more comprehensive golden set with 8 cases and detailed judge.py\n- Detailed side-by-side comparisons showing both old and new outputs for critical cases\n- Identifies that old prompt also fails (T-1011 chargeback not escalated, T-1029 custom defect not remedied)\n- Proposes a hybrid v3.5 prompt as Option A (safe Friday ship) and full v4 fix as Option B\n- More thorough root cause analysis tied to specific prompt lines\n\n**Response A's Weaknesses:**\n- Very long output (may be harder to digest quickly)\n- Some redundancy across multiple documents\n\n**Response B's Strengths:**\n- Clear, concise executive summary for Lena\n- Good side-by-side examples of warmth improvements (T-1002, T-1009, T-1024)\n- Functional test_suite.py that can be reused\n- Suggested_prompt_v4_fixed.md is well-structured and ready to use\n- Easier to read and digest quickly\n\n**Response B's Critical Weaknesses:**\n- **Completely misses T-1016 (internal notes leak)** - This is a major oversight. The rubric explicitly requires flagging this as a blocking safety issue. Response B does not mention T-1016 at all.\n- Does not identify T-1007 or T-1019 by name in the critical violations section (they appear in policy_violations.json but are not highlighted as critical)\n- Only identifies 2 critical violations (T-1013, T-1026) when there are actually 3 critical + multiple medium\n- Does not analyze old prompt's failures (T-1011, T-1029)\n- Less systematic per-case comparison\n\n**Evaluation Against Rubric:**\n\nThe rubric has three weight-3 criteria (most important):\n1. Correct verdict: Both get 10/10 (both say NO-GO)\n2. Refund policy violations with evidence: A gets 9/10, B gets 5/10 (B misses T-1007, T-1019 in critical section)\n3. Internal data leak as blocking: A gets 10/10, B gets 0/10 (B completely misses T-1016)\n\nThis is decisive. Response B fails to identify a critical safety issue (T-1016) that the rubric explicitly requires. This is not a style preference\u2014it's a material gap in the analysis. A support bot leaking internal notes to customers is a blocking issue that Response B entirely missed.\n\nResponse A correctly identifies all violations and treats the internal notes leak as the serious safety issue it is.\n"
+ },
+ "cost_usd": 0.040275,
+ "prompt_chars": 100428,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

@@ -1,0 +1,94 @@
+# Outreach Agent Cost Breakdown - Sept 1-15, 2026
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                         TOTAL COST: $26.66                          │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌──────────── BY CONVERSATION TYPE ────────────┐
+
+  Normal (42 conversations, 3-4 turns each)
+  ████████░░░░░░░░░░░░░░░░░░░░░░░ 28% │ $7.56
+  
+  Broken (4 conversations, 16-17 turns each)  
+  ████████████████████████████████████████████████████████ 69% │ $18.44
+  
+  Other (26-turn edge case)
+  ███ 3% │ $0.66
+
+┌──────────── ROOT CAUSES ────────────┐
+
+  Issue #1: Infinite Retry Loops
+  ├─ Prompt says: "try again" on failures
+  ├─ Tool retries ALL errors 4x (including permanent 422/404)
+  ├─ No iteration cap to stop runaway
+  └─ Impact: $18.44 / $26.66 (69%)
+
+  Issue #2: Unbounded History Growth  
+  ├─ Full conversation re-sent every turn
+  ├─ CRM exports are 30-40KB (12-14K tokens)
+  ├─ Tokens grow: 2K → 193K over 16 turns
+  └─ Impact: Amplifies cost of Issue #1
+
+  Issue #3: Bad CRM Field Reference
+  ├─ Prompt references "lead_score_v2" 
+  ├─ Field doesn't exist → 422 validation error
+  ├─ Combined with Issue #1 → infinite loop
+  └─ Impact: Triggered 3 of 4 expensive conversations
+
+┌──────────── TOKEN GROWTH IN FAILED CONVERSATIONS ────────────┐
+
+  Conversation cv_24a92f (Lead L-2012)
+  
+  Turn  1: █░░░░░░░░░░░░░░░░░░░░░░  1,892 tokens │ $0.0085
+  Turn  5: ████████░░░░░░░░░░░░░░░░ 51,594 tokens │ $0.1575
+  Turn 10: ████████████████░░░░░░░░ 113,770 tokens │ $0.3437
+  Turn 16: ███████████████████████  188,297 tokens │ $0.5668
+  
+  Total cost: $4.60 (should have been <$0.10)
+
+┌──────────── COST PROJECTIONS ────────────┐
+
+  Current (Broken Harness)
+  ████████████████████████████████████████████████ $53-60/month
+  
+  After Fixes (Same Model)
+  ██████████████ $16-18/month │ SAVE $36-44/mo (71%)
+  
+  After Fixes + Haiku
+  █████ $5-6/month │ SAVE $48-54/mo (90%)
+
+┌──────────── RECOMMENDED APPROACH ────────────┐
+
+  1. Deploy harness fixes TODAY
+     └─ Max iterations, smart retry logic, cost caps
+     └─ Saves $36-44/month
+  
+  2. Build golden set THIS WEEK
+     └─ 20-30 test cases with expected outputs
+     └─ Judge script for regression testing
+  
+  3. Run Haiku eval NEXT WEEK
+     └─ Test quality on golden set
+     └─ Only switch if quality passes
+     └─ Saves additional $10-11/month
+
+  DON'T switch models without eval evidence!
+
+┌──────────── EVIDENCE ────────────┐
+
+  Files analyzed:
+  ├─ logs/calls-2026-09-01_15.jsonl (245 API calls)
+  ├─ logs/crm_client.log (CRM HTTP calls)
+  ├─ agent/loop.py (while True, no cap)
+  ├─ agent/tools.py (@with_retries on all errors)
+  └─ agent/prompts.py (references lead_score_v2, says "try again")
+
+  Worst offenders:
+  ├─ L-2012: 64+ failed PATCH attempts, $4.60
+  ├─ L-3419: 17 turns, token growth 2K→193K, $4.73
+  ├─ L-3032: 17 turns, token growth 2K→192K, $4.71
+  └─ L-2437: 16 turns, token growth 2K→192K, $4.39
+
+  Normal conversations:
+  └─ 42 leads, avg $0.18, working as intended
+

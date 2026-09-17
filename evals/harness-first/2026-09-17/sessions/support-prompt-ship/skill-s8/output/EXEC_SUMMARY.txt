@@ -1,0 +1,82 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║          SUPPORT BOT PROMPT CHANGE - GO/NO-GO DECISION              ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+DECISION: 🟡 CONDITIONAL GO
+Ship Friday IF data layer fixed by Thursday EOD.
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ THE GOOD NEWS                                                        │
+├─────────────────────────────────────────────────────────────────────┤
+│ ✅ New prompt FIXED critical legal escalation bug (T-1011)          │
+│ ✅ Warmth score: 2.8/5 → 4.6/5 (team-rated)                         │
+│ ✅ Golden set: 3/8 → 4/8 (improvement)                              │
+│ ✅ "Do whatever it takes" NOT causing over-promising                │
+│ ✅ No NEW policy violations introduced                              │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ THE BLOCKER (shared by both prompts)                                │
+├─────────────────────────────────────────────────────────────────────┤
+│ ❌ 4 tickets offered refunds OUTSIDE 30-day window                  │
+│    • T-1007 (41 days), T-1016 (41 days)                             │
+│    • T-1019 (31 days), T-1021 (64 days)                             │
+│                                                                      │
+│ ROOT CAUSE: Model calculates date math and fails ~50% of time       │
+│                                                                      │
+│ FIX: Add computed fields to ticket payload:                         │
+│      {                                                               │
+│        "days_since_delivery": 41,                                    │
+│        "refund_eligible": false,                                     │
+│        "refund_deadline": "2026-07-26"                               │
+│      }                                                               │
+│                                                                      │
+│ IMPACT: Expected to bring score from 4/8 → 7/8 or 8/8               │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ FRIDAY SHIP CHECKLIST                                               │
+├─────────────────────────────────────────────────────────────────────┤
+│ Thursday EOD:                                                        │
+│   [ ] Eng adds refund_eligible + days_since_delivery fields         │
+│   [ ] Re-run: python output/judge.py → expect 7/8 or 8/8 pass       │
+│   [ ] Add guardrail: flag replies offering refund when ineligible   │
+│                                                                      │
+│ Friday 9am:                                                          │
+│   [ ] Ship new prompt to 10% traffic                                │
+│   [ ] Monitor for 2 hours (flagged replies, CSAT, escalations)      │
+│                                                                      │
+│ Friday 2pm:                                                          │
+│   [ ] If clean → 100% rollout                                       │
+│   [ ] If violations → rollback immediately                          │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ NO-GO CONDITIONS                                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│ • Can't fix data layer by Thursday EOD                              │
+│ • No rollback plan                                                   │
+│ • Bot issues refunds directly (vs drafting for approval)            │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ THE BIG WIN FOR FUTURE CHANGES                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│ You now have:                                                        │
+│  • Golden set (8 cases, expand to 20+)                              │
+│  • Automated judge script                                            │
+│  • Root cause diagnosis (date math → fix data layer)                │
+│                                                                      │
+│ This makes your next 10 prompt changes fast AND safe.               │
+│                                                                      │
+│ Run "python output/judge.py" before every ship.                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════
+
+See output/GO_NO_GO_REPORT.md for full details.
+See output/SIDE_BY_SIDE_EXAMPLES.md for reply comparisons.
+
+Questions? Review output/README.md
+
+═══════════════════════════════════════════════════════════════════════

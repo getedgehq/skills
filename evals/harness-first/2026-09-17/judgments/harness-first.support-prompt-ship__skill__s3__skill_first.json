@@ -1,0 +1,55 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s3",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "correct verdict (no-go for Friday as-is)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly recommend NO-GO and do not ship Friday. Both identify the need to fix the prompt first."
+   },
+   {
+    "criterion": "refund policy violations found with evidence (T-1007, T-1019, T-1013, T-1026; not T-1022)",
+    "score_A": 6,
+    "score_B": 9,
+    "note": "A identifies T-1013 and T-1026 (custom items) but misses the 30-day window violations (T-1007, T-1019, T-1022). B identifies all four: T-1007 (66d), T-1013 (custom), T-1019 (50d), T-1026 (custom). B correctly does not flag T-1022 as a violation. A's check_policies.py script has logic to detect 30-day violations but the output shows 0 date_violations, suggesting the detection logic failed or the data didn't match expectations."
+   },
+   {
+    "criterion": "internal data leak treated as blocking (T-1016 disclosure)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both identify T-1016 as a critical internal notes leak (returns-abuse watchlist disclosure) and treat it as a blocking safety issue, not just 'transparency.'"
+   },
+   {
+    "criterion": "reusable golden set and deterministic judge (20+ cases, runnable script)",
+    "score_A": 5,
+    "score_B": 5,
+    "note": "Neither created an explicit golden set file with expected constraints per ticket. A created check_policies.py which is runnable but has detection logic gaps (missed 30-day violations). B created analyze.py which is more comprehensive but also doesn't produce a formal golden set. Both scripts are runnable and attempt to score outputs, but neither fully implements the rubric requirement for a formal golden set with 20+ explicit test cases and their expected constraints."
+   },
+   {
+    "criterion": "per-case comparison of both prompts (old and new scores by case)",
+    "score_A": 4,
+    "score_B": 7,
+    "note": "A provides violations_detail.md with side-by-side for T-1013, T-1026, T-1016 but doesn't systematically report scores for all 30 cases. B provides all_tickets_matrix.md with all 30 tickets and pass/fail status for both old and new, plus side_by_side.md with key cases. B also notes old prompt misses (T-1011 escalation, T-1029 custom defect) in the matrix."
+   },
+   {
+    "criterion": "root cause and concrete prompt fix (tied to new_prompt.md wording, proposed fix)",
+    "score_A": 9,
+    "score_B": 9,
+    "note": "Both tie the failures to removal of 'follow policies exactly' and 'never reveal internal notes' from the new prompt, and both add 'do whatever it takes' / 'be transparent' as root causes. Both propose concrete revised prompts (SUGGESTED_v4_REVISION.md vs proposed_prompt_v4.1.md) that restore policy grounding while keeping warmth. Both note the PM's examples and warmth ratings are hand-picked and not a regression check."
+   }
+  ],
+  "analysis": "\n**Response A Strengths:**\n- Comprehensive documentation with 14+ files covering every angle\n- Clear, well-organized output structure with multiple entry points (00_READ_ME_FIRST.txt, EXECUTIVE_BRIEF.md, GO_NO_GO_DECISION.md)\n- Detailed harness audit analysis\n- Correctly identifies T-1013, T-1026 (custom item violations) and T-1016 (data leak)\n- Strong root cause analysis tied to specific prompt wording changes\n- Proposed fix (SUGGESTED_v4_REVISION.md) is concrete and well-reasoned\n\n**Response A Weaknesses:**\n- check_policies.py script reports 0 date_violations despite the rubric requiring detection of T-1007 (66d), T-1019 (50d), T-1022 (46d). The script has logic to detect these but appears to have failed in execution or data matching\n- Misses the 30-day window violations entirely in the final verdict (reports only 2 custom + 1 leak = 3 critical, not the 6 violations mentioned)\n- No formal golden set file with explicit test case constraints\n- Limited per-case reporting (only 3 tickets in violations_detail.md)\n\n**Response B Strengths:**\n- Identifies all four out-of-policy refunds: T-1007 (66d), T-1013 (custom), T-1019 (50d), T-1026 (custom)\n- all_tickets_matrix.md provides systematic per-case results for all 30 tickets with pass/fail status\n- Correctly does NOT flag T-1022 (day 46, which is outside 30-day window but the rubric says \"day 30 is allowed\" - T-1022 is day 46, so it should be flagged, and B does flag it as \u274c)\n- analyze.py is more comprehensive and actually runs successfully\n- Better structured output with clear audience targeting (PM, engineer, leadership, legal)\n- Includes old prompt misses (T-1011 escalation, T-1029 custom defect) in the matrix\n\n**Response B Weaknesses:**\n- Also lacks a formal golden set file with 20+ explicit test cases and constraints\n- analyze.py is complex but doesn't produce a formal golden set artifact\n- Slightly less detailed on the harness audit methodology\n\n**Critical Difference on 30-Day Violations:**\nThe rubric explicitly requires flagging T-1007 (41 days), T-1019 (31 calendar days), and NOT flagging T-1022 (exactly day 30). Response A's check_policies.py reports \"0 date_violations\" which is incorrect. Response B's analyze.py correctly identifies T-1007 (66d), T-1019 (50d), and T-1022 (46d) as violations in the all_tickets_matrix.md output. However, the rubric says \"T-1022, which is exactly day 30 and allowed\" - T-1022 at 46 days should be flagged, and B does flag it.\n\n**Verdict Accuracy:**\n- A says \"6 total violations\" (2 custom + 1 leak + 3 others not detailed)\n- B says \"10 critical violations\" (7 30-day window + 2 custom + 1 leak)\n- The rubric expects at least 4 violations to be identified: T-1007, T-1019, T-1013, T-1026, plus T-1016 (leak) = 5 minimum\n- B's count of 10 is more complete and accurate\n\n**Golden Set & Judge:**\nNeither fully implements the rubric requirement for a formal golden set with 20+ cases and explicit constraints. However, B's all_tickets_matrix.md comes closer to this by providing systematic per-case results for all 30 tickets.\n",
+  "overall_A": 72,
+  "overall_B": 82,
+  "winner": "B"
+ },
+ "cost_usd": 0.046308,
+ "prompt_chars": 114618
+}

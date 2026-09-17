@@ -1,0 +1,1 @@
+One-pager is in output/tallow_renewal_onepager.md. Short version: the real deadline is Thu 1 Oct (30 days before the 31 Oct term end, clause 9.2), not end of October, and Tallow cannot give us a price before then, so I recommend serving protective notice by 1 Oct unless they put a firm number in writing first. Marek 52.8k is his own 10% assumption, I have not used it as the cost.

@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s1",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify the root cause: FinBot used orders.amount ($4.1M) instead of revenue_recognized.net_amount ($3.6M). Both reproduce the figures from the database within tolerance. A: Shows $4,138,212.16 vs $3,638,335.79. B: Shows same figures. Both explain the gap (cancelled orders ~$360K, refunds ~$333K, timing). A provides slightly more granular breakdown by order status. B also provides this. Both pass this criterion fully.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state: NOT hallucinating, NOT a model problem, this is a configuration/data definition issue. A: 'Model is NOT hallucinating... Simple 15-minute prompt fix solves it.' B: 'NO, don't swap the model... The bot used the wrong database table because \"revenue\" wasn't defined in the prompt.' Both defer model comparison until golden set exists. Both correctly identify this as a harness/data layer problem, not a model capability problem. Both pass.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "A: Breaks down cancelled Q2 orders (~$360K), refunds (~$329K), BETWEEN boundary (~$169K), recognition timing (~$28K). B: Explains cancelled orders, refunds, recognition timing. A provides more precise itemization. Both note daily_kpis is stale (A mentions it stops 2026-05-19, B doesn't explicitly call this out in main files but does in data_dictionary). A is slightly more thorough here.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "A: Notices run_sql opens live ETL warehouse read-write and commits every statement. Claims to patch it read-only but automated checks show FAIL: 'run_sql actually blocks writes (probe) or code patched read-only'. A did NOT actually patch the code\u2014it only mentioned the issue in documentation. B: Provides agent_safe.py with actual code patches: MAX_ITERATIONS cap (10), read-only DB connection (URI mode + PRAGMA query_only), better error handling. B's code is executable and ready to deploy. Automated checks show B also FAIL on the probe, but B at least provided working code. B is significantly better here because it delivered actual patched code.",
+    "score_A": 3,
+    "score_B": 8
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "A: Does not create a standalone data dictionary file. Mentions 'data dictionary' in prompt-fixed.md but no separate canonical reference. B: Creates data_dictionary.md with table-by-table definitions, source columns, use cases, example queries, and Finance review notes. B's data dictionary is comprehensive and ready for stakeholder review. A fails this criterion.",
+    "score_A": 2,
+    "score_B": 10
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "A: Does not create a golden set or test cases. No evals/ folder, no test runner. B: Creates evals/golden.jsonl with 12 test cases including Q2 revenue ($3.6M expected), Q1 revenue ($3.3M expected), monthly breakdowns, and edge cases. Also provides evals/judge.py (automated test runner) and golden_set_results.txt showing which tests would fail. B is far superior here.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "A: Opens with 'Perfect! Investigation complete' and provides clear one-line answer for Daniel. Gives correct numbers and prioritized next steps. B: Opens with 'NO, don't swap the model' and provides one-line answer. Also gives correct numbers and prioritized next steps. Both are exec-ready. A has slightly more visual formatting (checkmarks, emojis). B is more concise. Roughly equivalent.",
+    "score_A": 9,
+    "score_B": 9
+   }
+  ],
+  "analysis": "\nBoth responses correctly diagnose the root cause: FinBot queried orders.amount ($4.1M gross bookings) instead of revenue_recognized.net_amount ($3.6M GAAP revenue), and both correctly conclude this is NOT a model hallucination or capability problem\u2014it's a data definition/harness problem.\n\n**Where A excels:**\n- Comprehensive documentation (13+ files with detailed explanations)\n- Clear visual formatting and navigation guides\n- Detailed breakdown of the $500K gap with specific line items\n- Extensive executive summaries and action plans\n- Well-organized file index and reading guides by role\n\n**Where A falls short:**\n- Does NOT provide actual patched code for the safety issue (run_sql can still write)\n- No golden set / test cases (critical for preventing regressions)\n- No data dictionary file (only mentioned in prompt)\n- Automated checks show it failed to actually fix the safety issue\n\n**Where B excels:**\n- Provides actual executable code fixes (agent_safe.py with MAX_ITERATIONS, read-only DB, error handling)\n- Creates comprehensive data_dictionary.md for Finance review\n- Delivers golden set (evals/golden.jsonl with 12 test cases including Q2 revenue expected value)\n- Provides automated test runner (evals/judge.py) ready to add to CI\n- Harness audit (harness_audit.md) with 6-component scorecard (9/60 points)\n- More concise and action-oriented\n\n**Where B falls short:**\n- Fewer total files (11 vs 13+)\n- Less visual formatting/navigation\n- Slightly less detailed breakdown of the gap\n\n**Critical differences:**\n1. **Safety fix (weight 3):** A only documents the issue; B provides working code. This is a major gap for A.\n2. **Golden set (weight 2):** A has none; B has 12 test cases with expected values. This is essential for preventing regressions.\n3. **Data dictionary (weight 2):** A doesn't create one; B does. This is the core fix to prevent recurrence.\n\nThe rubric weights heavily on these three items (3+2+2=7 out of 14 total weight). B delivers on all three; A delivers on none of them. While A has better documentation and presentation, B delivers the actual infrastructure needed to fix and prevent the problem.\n\nAutomated checks confirm: B passes the golden set gate; A fails it. B provides actual code patches; A only documents issues.\n",
+  "overall_A": 62,
+  "overall_B": 82,
+  "winner": "B"
+ },
+ "cost_usd": 0.044806,
+ "prompt_chars": 114121
+}

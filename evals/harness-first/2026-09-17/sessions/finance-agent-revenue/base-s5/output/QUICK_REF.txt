@@ -1,0 +1,80 @@
+=============================================================================
+                 FINBOT Q2 REVENUE DISCREPANCY - QUICK REF
+=============================================================================
+
+THE PROBLEM
+-----------
+FinBot told Priya: Q2 revenue = $4.1M
+Finance says:      Q2 revenue = $3.6M
+Board deck:        Had the wrong number ($4.1M)
+
+THE ANSWER
+----------
+✅ Model is NOT hallucinating
+✅ Model is NOT broken
+❌ Model queried the WRONG TABLE
+
+FinBot used:  orders table           → $4.1M (includes refunded/cancelled)
+Should use:   revenue_recognized     → $3.6M (net revenue, GAAP compliant)
+
+THE FIX
+-------
+Update prompt.md to specify which table to use for revenue questions.
+Ready-to-deploy file: output/prompt_UPDATED.md
+Deploy time: 5 minutes
+Cost: $0 (no model upgrade needed)
+
+THE NUMBERS
+-----------
+Orders table (what finbot used):
+  Completed:          $3,269,511
+  Refunded:           $  189,943  ← Shouldn't count as revenue
+  Cancelled:          $  360,039  ← Shouldn't count as revenue
+  Partially refunded: $  318,719  ← Should be netted
+  TOTAL:              $4,138,212
+
+Revenue_recognized (what finance uses):
+  Net revenue:        $3,638,336  ← Correct number for board
+
+Difference:           $  499,876  ← The error
+
+WHY IT HAPPENED
+---------------
+Current prompt says:
+  "Tables: customers, orders, refunds, revenue_recognized, daily_kpis"
+  
+No guidance on which to use → model guessed wrong.
+
+ANY model (GPT-6, Opus, etc.) would make the same mistake without 
+better instructions.
+
+WHAT TO DO
+----------
+For Daniel:   Read output/executive_summary.md
+For Jonas:    Read output/action_plan_jonas.md  
+For details:  Read output/root_cause_analysis.md
+
+Deploy:       Copy output/prompt_UPDATED.md to prompt.md
+Verify:       python3 output/validation_tests.py
+
+KEY TAKEAWAY
+------------
+This is a DATA ENGINEERING issue, not an AI model issue.
+
+The model did exactly what it was supposed to do:
+  ✅ Understood the question
+  ✅ Wrote valid SQL
+  ✅ Reported the result accurately
+  ❌ Just used the wrong table (because prompt was ambiguous)
+
+Fix: Better prompting, not better model.
+
+CORRECT Q2 2026 REVENUE
+-----------------------
+$3,638,335.79 (rounds to $3.6M)
+
+From: revenue_recognized table, net_amount column, April-June 2026
+
+=============================================================================
+Generated: 2026-09-16 | Files in: output/ | Questions: See INDEX.md
+=============================================================================

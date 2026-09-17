@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s1",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identified the root cause: FinBot queried orders.amount ($4,138,212.16) instead of revenue_recognized.net_amount ($3,638,335.79). Both verified the numbers from the database. Response A provides the exact figures and breakdown ($360k cancelled, $329k refunds, $169k timing). Response B also provides correct figures but with slightly less detailed breakdown. Both meet the criterion fully.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state: NO hallucination, NO model upgrade needed, simple configuration fix. Response A explicitly says 'not a hallucination' and 'any model comparison deferred until golden set exists.' Response B says 'Don't swap the model' and 'Fix the [redacted]' (using placeholder language). Both correctly identify this as a harness/configuration issue, not a model capability problem. Both are clear and correct.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A breaks down the $500K gap: cancelled Q2 orders (~$368K), refunds (~$329K), BETWEEN boundary dropping June 30 orders (~$169K), recognition timing (~$28K). Response B provides less detailed breakdown but still explains the mechanism. Response A is more thorough in reconciliation.",
+    "score_A": 10,
+    "score_B": 7
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A does NOT address the safety issue (run_sql opens read-write, commits every statement). Response B explicitly catches this: creates agent_safe.py with read-only DB connection (URI mode + PRAGMA query_only), max iterations cap (10), and better error handling. This is a critical production safety issue that Response A completely missed. Response B scores much higher here.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A does NOT create a data dictionary file. Response B creates data_dictionary.md with clear definitions of revenue vs bookings, table references, and example queries. This is explicitly required by the rubric. Response A fails this criterion entirely.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A does NOT create a golden set or test cases. Response B creates evals/golden.jsonl with 12 test cases including Q2 revenue ($3,638,335.79), Q1 revenue ($3,285,493.84), and other queries with expected values. Also creates evals/judge.py to run tests. Response B fully meets this criterion; Response A does not.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A: Opens with 'Perfect! Investigation complete' and provides clear one-line answer for Daniel. Response B: Opens with 'NO, don't swap the model' and provides one-line answer. Both are exec-ready. Response A has slightly more structured executive summary files (exec-summary.md, one-pager.md). Response B has EXECUTIVE_SUMMARY.md. Both adequate.",
+    "score_A": 9,
+    "score_B": 9
+   }
+  ],
+  "analysis": "Response A correctly identifies the root cause ($4.1M vs $3.6M from wrong table) and clearly answers that the model is NOT hallucinating and NO upgrade is needed. It provides 13 well-organized output files with executive summaries, technical analysis, and deployment guidance. However, it has critical gaps: (1) NO data dictionary defining revenue, (2) NO golden set/test cases, (3) MISSES the production safety issue where run_sql can write to the live warehouse (conn.commit() on line 21 of agent.py).\n\nResponse B also correctly identifies the root cause and answers the model question. It provides 11 output files but crucially includes: (1) data_dictionary.md defining revenue metrics, (2) evals/golden.jsonl with 12 test cases and evals/judge.py test runner, (3) agent_safe.py that patches the critical safety issue (read-only DB connection via URI mode + PRAGMA query_only, max iterations cap of 10, better error handling). Response B also catches that the current agent has an unbounded while loop and can commit writes to production.\n\nThe rubric weights heavily on: root cause (3), model question (3), safety gap (3), data dictionary (2), golden questions (2). Response A scores 10+10+0+0+0+9=29 weighted points. Response B scores 10+10+10+10+10+9=59 weighted points. Response B delivers the actual harness components needed to prevent recurrence, while Response A provides good analysis but misses critical infrastructure fixes that the rubric explicitly requires.",
+  "overall_A": 62,
+  "overall_B": 88,
+  "winner": "B"
+ },
+ "cost_usd": 0.042291,
+ "prompt_chars": 111921,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

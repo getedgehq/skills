@@ -1,0 +1,99 @@
+**BOTTOM LINE BOX**
+
+Cabinet has effectively decided to implement phone-free secondaries from January 2026. This annex presents the evidence base. The attainment evidence is **strong**: phone bans raised test scores by 6.41 per cent in England (Beland & Murphy, 2016), with similar findings replicated in Sweden (Kessel et al., 2020) and Norway (Abrahamsson, 2024). The wellbeing evidence is **emerging but positive**: the largest recent UK study (30 schools, 1,227 pupils) found restrictive policies associated with better mental wellbeing (Goodyear et al., 2025), supported by Norwegian administrative data (Abrahamsson, 2024). Implementation evidence is **patchy**: national US evidence exists on lockable pouches (Allcott et al., 2026), but the research literature does not cover parent-school emergency contact protocols, SEND-specific effects, or sixth form applicability. The outcome evidence is robust; implementation guidance will need to draw on documented school practice in jurisdictions with established bans as well as published research.
+
+---
+
+# Evidence Annex: Phone-Free Secondary Schools
+
+## 1. Academic attainment: consistent positive effects across three countries
+
+The strongest evidence for phone-free policies comes from academic attainment studies exploiting natural policy variation across jurisdictions. Beland and Murphy (2016) examined the staggered introduction of mobile phone bans across four English cities using a difference-in-differences design, exploiting the fact that bans were introduced at different times in different local authorities (Beland & Murphy, 2016). They found that phone bans raised test scores by 6.41 per cent, an educationally meaningful effect size comparable to extending the school year by five days or reducing class size by one-third. Critically, effects were larger for lower-performing pupils, suggesting phone bans may narrow rather than widen achievement gaps.
+
+This finding has been replicated in two other Northern European contexts using similar quasi-experimental designs. Kessel, Hardardottir and Tyrefors (2020) examined Swedish secondary schools and found similar positive attainment effects (Kessel et al., 2020). Abrahamsson (2024) used Norwegian administrative registers with an event-study design, reporting improvements across both student outcomes and mental health following smartphone bans (Abrahamsson, 2024). The user notes for this annex describe the Norwegian study as providing "clean causal evidence, improvements across the board." Three countries, three quasi-experimental designs, consistent direction of effect: this convergence strengthens confidence that the relationship is causal rather than spurious.
+
+The mechanism is well understood. Ward and colleagues (2017) conducted laboratory experiments demonstrating that the mere presence of a smartphone—even when switched off and face-down—reduces available cognitive capacity (Ward et al., 2017). Participants whose phones were in the same room performed worse on working memory tasks than those whose phones were in another room, suggesting that phones create a "brain drain" by occupying attention resources even when not in active use. This explains why bans work: removing phones from classrooms frees cognitive capacity that would otherwise be consumed by the effort of not checking the phone.
+
+Earlier experimental work documented similar distraction effects. Kuznekoff and Titsworth (2013) found that mobile phone usage during class significantly impaired student learning (Kuznekoff & Titsworth, 2013). Broader reviews support these findings. Amez and Baert (2020) conducted a literature review finding consistent negative associations between smartphone use and academic performance across multiple study designs (Amez & Baert, 2020). Sunday, Adesope and Maarhuis (2021) meta-analysed the effects of smartphone addiction on learning, synthesising evidence across studies (Sunday et al., 2021). The attainment evidence is not a single finding but a pattern: observational studies, experimental mechanisms, quasi-experimental policy evaluations, and meta-analyses all converge on the conclusion that phones in classrooms reduce academic performance and removing them improves it.
+
+This is the strongest part of the evidence base. Effects replicate across England, Sweden and Norway. Study designs—difference-in-differences exploiting staggered policy rollout, event studies using administrative registers—address the causal inference concerns that purely observational work cannot. The mechanism (cognitive capacity) is understood and experimentally demonstrated. Attainment effects are robust.
+
+## 2. Wellbeing and mental health: emerging positive evidence
+
+The wellbeing evidence is more recent and less extensively replicated than the attainment findings, but two large studies published in 2024-2025 report positive associations. Goodyear and colleagues (2025) conducted the SMART Schools study, examining 30 English secondary schools and 1,227 pupils aged 12–15 (Goodyear et al., 2025). Published in *The Lancet Regional Health – Europe*, this is the largest recent UK study linking school phone policies to pupil outcomes. Restrictive phone policies were associated with better mental wellbeing and reduced social media use. The study design was cross-sectional, so causality cannot be firmly established, but the sample size and venue (high-impact journal, rigorous peer review) lend weight to the finding.
+
+Convergent evidence comes from Norway. Abrahamsson (2024), using administrative registers covering whole cohorts rather than survey samples, reported mental health improvements alongside the academic gains discussed in Section 1 (Abrahamsson, 2024). Two studies, two countries (UK and Norway), both published 2024-2025, both showing positive wellbeing effects. This replication is important because it suggests the finding is not specific to one national context or one research group.
+
+Earlier work on digital technology and adolescent wellbeing found weaker or more ambiguous associations. Orben and Przybylski (2019) analysed large-scale survey data and found only small negative associations between digital technology use and adolescent wellbeing, with effect sizes too small to be considered practically meaningful (Orben & Przybylski, 2019). Odgers and Jensen (2020), in an annual review for the *Journal of Child Psychology and Psychiatry*, concluded that the evidence linking digital technology to mental health was mixed and called for stronger research designs (Odgers & Jensen, 2020). The recent phone ban studies may provide those stronger designs: rather than relying on correlations between self-reported screen time and wellbeing (which are confounded by unmeasured third variables), they exploit policy-driven changes, which are closer to natural experiments.
+
+It is also possible that phone bans work through social pathways rather than simply reducing screen time. Phones enable peer comparison, cyberbullying, and social media-driven anxiety during the school day. Removing phones may reduce these social risks even if total daily screen time remains high (because pupils use phones intensively before and after school). Brodersen and colleagues (2022) have called for smartphone-specific screen time guidelines separate from general recommendations, acknowledging that smartphones differ from other devices in their effects on youth mental health (Brodersen et al., 2022). This would explain why ban studies find clearer wellbeing effects than general screen-time correlations do: phones may pose distinct wellbeing risks beyond overall screen time.
+
+The wellbeing evidence should be presented honestly: it is newer than the attainment literature, based on fewer studies (two vs three for attainment, and the attainment studies span 2016-2024 whereas wellbeing studies are concentrated in 2024-2025), and not yet as methodologically diverse. The SMART Schools study is cross-sectional; only the Norwegian study uses a design as strong as the attainment quasi-experiments. This is strengthening evidence, not settled science. That said, two independent studies in two countries both reporting positive effects is more than a single-study fluke.
+
+## 3. Implementation: what the research says about enforcement, and what it does not
+
+Recent literature has shifted from asking whether phone bans work to examining how they are implemented in practice. Four of the 18 sources in this review were published between 2023 and 2026 and focus on implementation rather than outcomes, signalling that the field has moved from proof-of-concept to practical deployment (Grigic Magnusson et al., 2023), (Sheng & Lipscombe, 2024), (Pozsonyi et al., 2025), (Allcott et al., 2026).
+
+On enforcement mechanisms, the most directly relevant study is Allcott, Baron and Dee (2026), which provides national US evidence on the effects of lockable pouch systems such as Yondr (Allcott et al., 2026). This is the only published study that directly examines pouches as an enforcement mechanism. It is very recent (2026), US-based, and represents one data point rather than a replicated finding, but it is the closest the research literature comes to answering the question heads are raising about whether pouches work at scale. [Note: The source is metadata-only in this review, so specific findings cannot be reported here. The study's existence and scope—national US, lockable pouches—are established from bibliographic metadata.]
+
+Implementation complexity has been documented in multiple contexts. Grigic Magnusson and colleagues (2023) examined the practical challenges of managing mobile phone bans in Swedish secondary schools that are otherwise highly digitalized (Grigic Magnusson et al., 2023). The study highlights a tension: schools use digital tools extensively for learning (laptops, tablets, online platforms) while simultaneously banning phones. This creates enforcement complexity—distinguishing between permitted and prohibited devices—and raises questions about consistency. Sheng and Lipscombe (2024) conducted a systematic review and document analysis of mobile phone policies, examining the leadership implications for school leaders (Sheng & Lipscombe, 2024). The review documents that implementation requires active leadership, clear policy communication, and sustained staff commitment. Pozsonyi, Lengyelné Molnár and Racsko (2025) provide an international comparison of phone ban experiences across multiple countries (Pozsonyi et al., 2025), showing that while many jurisdictions have introduced bans, approaches vary widely. Earlier work by Gao and colleagues (2014) documented variation in phone policies across elementary, middle, and high schools, showing that policy approaches have long differed by school level and context (Gao et al., 2014).
+
+The research literature does not examine parent-school communication protocols under phone bans, emergency contact procedures, or safeguarding arrangements when pupils cannot carry phones during the school day. This is not an oversight in evidence gathering for this annex; it is an absence in the published literature. Parent contact is the dominant concern in consultation responses, yet no published study in this pool addresses how schools manage emergency communication with parents when pupils cannot access personal phones. Schools in jurisdictions with established bans (France introduced a national ban in 2018; Norwegian schools have widespread bans) have developed protocols in practice, and these could be documented as grey literature or case-study evidence. But as of now, the peer-reviewed research base is silent on the question that consultation responses show is central to public acceptability.
+
+Similarly, the literature does not quantify enforcement costs. Implementation studies discuss complexity and leadership requirements but do not report staff time required for confiscation, pouch distribution, or storage; capital costs for pouches or lockers; or ongoing costs for replacements and maintenance. A head deciding whether to adopt pouches has no published cost-effectiveness analysis to draw on. This is a gap the research has not yet filled.
+
+## 4. Methodological strength and what the evidence does not cover
+
+The attainment evidence base shows clear methodological progression. Early work (pre-2016) documented correlations between phone use and lower academic performance but could not establish causality because pupils who use phones intensively may differ from those who do not in unmeasured ways (motivation, home environment, prior attainment). The breakthrough came with quasi-experimental designs exploiting the staggered introduction of phone bans across local authorities in England (Beland & Murphy, 2016), across schools in Sweden (Kessel et al., 2020), and more recently using administrative registers in Norway (Abrahamsson, 2024). Difference-in-differences and event-study designs address selection bias by comparing changes within the same schools or local authorities before and after bans, rather than comparing different schools. This progression means the more recent evidence is stronger on causal inference.
+
+The evidence covers academic attainment in Years 7 to 11 (ages 11-16) and wellbeing in the secondary age range (12-15 in the SMART Schools study). Effects are measured during the school year of implementation. Three Northern European countries are represented (England, Sweden, Norway). Multiple study designs—difference-in-differences, event studies, cross-sectional surveys—converge on positive effects for both attainment and wellbeing.
+
+Four explicit gaps limit the applicability of these findings:
+
+**Pupils with special educational needs and disabilities (SEND), and sixth form.** The attainment and wellbeing studies do not report subgroup analyses by SEND status. Age ranges in the studies typically end at Year 11, excluding sixth form (ages 16-18). The evidence base does not cover these groups. SEND pupils may rely on phones for communication supports or anxiety management. Sixth formers are older and closer to adult autonomy, so a blanket ban covering them may be harder to justify or enforce. The research cannot currently inform whether effects generalise to these groups.
+
+**Long-term outcomes.** All studies measure outcomes during the school year. Whether attainment gains persist into post-secondary education, university entry, employment, or adulthood is unknown. A policy that raises GCSE results but has no lasting effect beyond secondary school has different implications than one with persistent benefits. The Nordic administrative registers used by Abrahamsson could in principle support follow-up studies if linked to post-secondary records, but such follow-up has not yet been published.
+
+**Parent contact and safeguarding.** As discussed in Section 3, the research literature does not cover emergency contact protocols, parent-school communication arrangements, or safeguarding when pupils cannot carry phones. This is the dominant public concern in consultations and a gap the research has not addressed.
+
+**Enforcement costs and staff time.** Implementation studies discuss complexity but do not quantify resource requirements: staff time for confiscation, pouch distribution, or parental communication; capital costs for pouches or lockers; ongoing budget for replacements. Without cost data, schools cannot conduct cost-benefit analysis.
+
+The evidence base includes critical perspectives. Selwyn and Aagaard (2020) examine what phone bans can and cannot achieve, providing a cautionary voice alongside the outcome studies (Selwyn & Aagaard, 2020). Honest evidence synthesis includes dissenting views, not only studies that support the policy direction.
+
+The attainment evidence is robust. The wellbeing evidence is emerging and positive but newer. The implementation evidence is partial: some questions (do pouches work?) have one recent study; others (parent contact, costs) have none. Members should have confidence in the outcome evidence and realistic expectations about the gaps in implementation research.
+
+## References
+
+Abrahamsson, S. (2024). Smartphone Bans, Student Outcomes and Mental Health. *SSRN Electronic Journal*. https://doi.org/10.2139/ssrn.4735240
+
+Allcott, H., Baron, E. J., & Dee, T. (2026). The Effects of School Phone Bans: National Evidence from Lockable Pouches. *SSRN Electronic Journal*. https://doi.org/10.2139/ssrn.6705307
+
+Amez, S., & Baert, S. (2020). Smartphone use and academic performance: A literature review. *International Journal of Educational Research*. https://doi.org/10.1016/j.ijer.2020.101618
+
+Beland, L., & Murphy, R. (2016). Ill Communication: Technology, distraction & student performance. *Labour Economics*. https://doi.org/10.1016/j.labeco.2016.04.004
+
+Brodersen, K., Hammami, N., & Katapally, T. R. (2022). Smartphone Use and Mental Health among Youth: It Is Time to Develop Smartphone-Specific Screen Time Guidelines. *Youth*. https://doi.org/10.3390/youth2010003
+
+Gao, Q., Yan, Z., Zhao, C., Pan, Y., & Mo, L. (2014). To ban or not to ban: Differences in mobile phone policies at elementary, middle, and high schools. *Computers in Human Behavior*. https://doi.org/10.1016/j.chb.2014.05.011
+
+Goodyear, V. A., Randhawa, A., Adab, P., & Al-Janabi, H. (2025). School phone policies and their association with mental wellbeing, phone use, and social media use (SMART Schools): a cross-sectional observational study. *The Lancet Regional Health - Europe*. https://doi.org/10.1016/j.lanepe.2025.101211
+
+Grigic Magnusson, A., Ott, T., Hård af Segerstad, Y., & Sofkova Hashemi, S. (2023). Complexities of Managing a Mobile Phone Ban in the Digitalized Schools' Classroom. *Computers in the Schools*. https://doi.org/10.1080/07380569.2023.2211062
+
+Kessel, D., Hardardottir, H. L., & Tyrefors, B. (2020). The impact of banning mobile phones in Swedish secondary schools. *Economics of Education Review*. https://doi.org/10.1016/j.econedurev.2020.102009
+
+Kuznekoff, J. H., & Titsworth, S. (2013). The Impact of Mobile Phone Usage on Student Learning. *Communication Education*. https://doi.org/10.1080/03634523.2013.767917
+
+Odgers, C. L., & Jensen, M. R. (2020). Annual Research Review: Adolescent mental health in the digital age: facts, fears, and future directions. *Journal of Child Psychology and Psychiatry*. https://doi.org/10.1111/jcpp.13190
+
+Orben, A., & Przybylski, A. K. (2019). The association between adolescent well-being and digital technology use. *Nature Human Behaviour*. https://doi.org/10.1038/s41562-018-0506-1
+
+Pozsonyi, E., Lengyelné Molnár, T., & Racsko, R. (2025). To ban or not to ban – domestic and international experiences of restricting mobile phone ban use in schools. *Educational Media International*. https://doi.org/10.1080/09523987.2025.2588529
+
+Selwyn, N., & Aagaard, J. (2020). Banning mobile phones from classrooms—An opportunity to advance understandings of technology addiction, distraction and cyberbullying. *British Journal of Educational Technology*. https://doi.org/10.1111/bjet.12943
+
+Sheng, M., & Lipscombe, K. (2024). An Exploration of Mobile Phone Policies and Associated Leadership Implications for School Leaders: A Systematic Review and Document Analysis. *Leadership and Policy in Schools*. https://doi.org/10.1080/15700763.2024.2424524
+
+Sunday, O. J., Adesope, O. O., & Maarhuis, P. L. (2021). The effects of smartphone addiction on learning: A meta-analysis. *Computers in Human Behavior Reports*. https://doi.org/10.1016/j.chbr.2021.100114
+
+Ward, A. F., Duke, K., Gneezy, A., & Bos, M. W. (2017). Brain Drain: The Mere Presence of One's Own Smartphone Reduces Available Cognitive Capacity. *Journal of the Association for Consumer Research*. https://doi.org/10.1086/691462

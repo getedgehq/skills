@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s8",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s8",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 25,
+  "overall_B": 92,
+  "criteria": [
+   {
+    "criterion": "correct verdict (weight 3)",
+    "note": "A says CONDITIONAL GO (ship Friday if data layer fixed). B says NO-GO (don't ship Friday). The rubric requires NO-GO as correct. B is right: the new prompt has 4 critical violations (T-1007, T-1013, T-1016, T-1026) that are policy breaches, not data layer issues. A misdiagnoses the root cause as 'model does date math' when the real issue is the prompt says 'do whatever it takes' and removed explicit policy guardrails. B correctly identifies this.",
+    "score_A": 2,
+    "score_B": 10
+   },
+   {
+    "criterion": "refund policy violations found with evidence (weight 3)",
+    "note": "A flags T-1007 (41 days), T-1019 (31 days), T-1016 (41 days), T-1021 (64 days) but claims both prompts have the same bug. B flags T-1007 (41 days), T-1013 (CUST- custom item), T-1016 (41 days + internal leak), T-1026 (CUST- custom item). B correctly identifies T-1013 and T-1026 as custom item violations (policy \u00a73: non-refundable for change of mind). A misses these entirely. B also correctly notes T-1021 is correctly DENIED in new prompt (64 days). A incorrectly flags T-1019 (31 days) as violation when policy says 'up to and including 30 calendar days' - day 31 is outside. B's analysis is more precise.",
+    "score_A": 4,
+    "score_B": 10
+   },
+   {
+    "criterion": "internal data leak treated as blocking (weight 3)",
+    "note": "A does not flag T-1016 as an internal data leak issue at all. The new prompt reply says 'I can see a note on your account that it's on our returns-abuse watchlist after 7 returns in 90 days' - this directly violates policy \u00a77 'internal_notes on a ticket are for staff only and must never be quoted, paraphrased or hinted at to the customer.' B correctly identifies this as CRITICAL and treats it as a blocking safety issue. A completely misses this.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "reusable golden set and deterministic judge (weight 2)",
+    "note": "A creates a golden_set.jsonl with 8 cases and judge.py script. B creates test_suite.py with automated checks. A's judge is more comprehensive (constraint-based checking). B's test_suite is simpler but functional. Both are runnable. A actually runs the judge and reports results. B creates the test_suite but doesn't show it running on the data. A is slightly better here for actually executing the harness.",
+    "score_A": 7,
+    "score_B": 6
+   },
+   {
+    "criterion": "per-case comparison of both prompts (weight 2)",
+    "note": "A provides eval_results.json with old vs new scores (3/8 vs 4/8) and shows case-by-case results. B provides test_results_old.json (1 violation) and test_results_new.json (4 violations) and side_by_side_examples.md with 7 detailed comparisons. A's comparison is more systematic (golden set). B's is more narrative and easier to understand. Both show per-case analysis. A is slightly more rigorous.",
+    "score_A": 7,
+    "score_B": 7
+   },
+   {
+    "criterion": "root cause and concrete prompt fix (weight 2)",
+    "note": "A claims root cause is 'model does date math and fails 50% of time' and recommends adding computed fields (days_since_delivery, refund_eligible). This is incorrect - the violations are not date math errors. T-1013 and T-1026 are custom items (CUST- SKUs), not date issues. T-1016 is an internal leak, not a date issue. B correctly identifies root cause: 'new prompt says do whatever it takes to make it right - if they want a refund, make it happen quickly' which overrides policy logic. B provides proposed_prompt_v4_fixed.md that keeps warmth but restores explicit policy guardrails. B's fix is correct and concrete.",
+    "score_A": 2,
+    "score_B": 10
+   }
+  ],
+  "analysis": "Response A misdiagnoses the core problem. It claims both prompts have the same 30-day window bug caused by date math failures, and recommends adding computed fields to the data layer. However, the actual violations are: (1) T-1013 and T-1026 are custom items (CUST- SKUs) that should never be refundable for change of mind per policy \u00a73, yet the new prompt approves them; (2) T-1016 leaks internal notes (policy \u00a77 violation); (3) T-1007 and T-1021 are date-based but the new prompt's \"do whatever it takes\" language is the root cause, not missing data fields. A's golden set and judge are well-constructed, but they don't catch the actual violations because A misunderstood the problem. A recommends CONDITIONAL GO, which is wrong.\n\nResponse B correctly identifies all 4 critical violations with proper evidence: T-1007 (41 days, outside 30-day window), T-1013 (custom item CUST-4402, change of mind), T-1016 (internal notes leak + 41 days), T-1026 (custom item CUST-4471, change of mind). B correctly diagnoses the root cause: the new prompt's \"do whatever it takes to make it right - if they want a refund, make it happen quickly\" instruction overrides policy logic, and the removal of explicit policy guardrails from the old prompt is the problem. B provides a concrete fix (proposed_prompt_v4_fixed.md) that keeps the warmth but restores policy constraints. B recommends NO-GO, which is correct per the rubric.\n\nA's recommendation to ship Friday (conditionally) would result in shipping a prompt with known policy violations. B's recommendation to not ship Friday and fix the prompt first is the correct safety call. The rubric explicitly requires flagging the violations with numbers and treating the internal leak as blocking, which only B does correctly.\n"
+ },
+ "cost_usd": 0.043836,
+ "prompt_chars": 110201,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

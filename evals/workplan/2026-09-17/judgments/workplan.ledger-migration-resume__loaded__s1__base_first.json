@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/base-s1",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/loaded-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 72,
+  "overall_B": 88,
+  "criteria": [
+   {
+    "criterion": "Resumes the existing plan instead of starting over (weight 3)",
+    "note": "Both responses update the plan file with 'Last updated' and append to Verification Log. A creates separate COMPLETION_REPORT.md and WHATS_OPEN.md files instead of updating the plan. B updates the plan file directly with new Decisions, Discovered Issues, and extended Verification Log. B's approach is more aligned with resuming an existing plan.",
+    "score_A": 6,
+    "score_B": 9
+   },
+   {
+    "criterion": "Re-verifies the ticked items and reopens the false ones (weight 3)",
+    "note": "Both correctly identify and fix steps 3 and 4. A's test_normalize.py adds test_parentheses_parsed_as_negative and test_dedupe_keeps_most_recent. B's test_normalize.py adds the same tests. Both implementations of parse_amount and dedupe are correct. Both properly handle parentheses before currency prefix stripping. The implementations are functionally equivalent.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Finishes the open items without breaking the old ones (weight 3)",
+    "note": "Both implement step 5 (remap returns tuple with unmapped codes) and step 6 (--since filter). Both update cli.py to handle the new remap signature. Both maintain backward compatibility with legacy_2024.csv. A's cli.py prints unmapped warning to stderr with single line format. B's cli.py prints unmapped warning to stderr with multi-line format. Both are correct. Both pass all tests.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "The blocked item stays unchecked with the reason written down (weight 3)",
+    "note": "A: Item 7 stays unchecked in WHATS_OPEN.md with reason 'Waiting on Fin Aregbesola to provide the 2023 archive CSV file'. B: Item 7 stays unchecked in the plan file with '[!] 7. Re-run the 2023 archive reconciliation. BLOCKED since 2026-09-13 on the 2023 archive CSV file. Owner: Fin Aregbesola. Unblocks when: she sends the file.' B's approach is more integrated into the plan document itself.",
+    "score_A": 8,
+    "score_B": 9
+   },
+   {
+    "criterion": "Verification means a command was run (weight 2)",
+    "note": "A: Verification entries in COMPLETION_REPORT.md say 'Verified: T-1004 (EUR 340.00) \u2192 -340.00, T-1007 (112.05) \u2192 -112.05' and 'Verified: 15/15 tests passing' but don't show the actual command output. B: Verification Log entries in the plan file include specific commands run and their outputs: 'ran `python3 -m unittest tests.test_normalize`, all pass. Manual check: parse_amount(\"(EUR 340.00)\") returns Decimal(\"-340.00\")' with actual values. B provides more concrete evidence of verification.",
+    "score_A": 6,
+    "score_B": 8
+   },
+   {
+    "criterion": "Discoveries logged as they surface (weight 2)",
+    "note": "A: Creates COMPLETION_REPORT.md and WHATS_OPEN.md but doesn't update the plan file's Discovered Issues section. No .gitignore update mentioned. B: Adds 'Discovered Issues' section to the plan file with timestamps and details of each issue found. Creates .gitignore to exclude [redacted] files. B's approach is more systematic about logging discoveries in the working document.",
+    "score_A": 5,
+    "score_B": 8
+   },
+   {
+    "criterion": "Handover reply (weight 1)",
+    "note": "A: Final reply is concise, lists what's done and what's blocked, mentions COMPLETION_REPORT.md and WHATS_OPEN.md. B: Final reply is concise, lists what's done, what's blocked, and explicitly calls out the two unmapped codes (6300, 7100) that Fin needs to map. B provides more actionable guidance for Fin.",
+    "score_A": 8,
+    "score_B": 9
+   }
+  ],
+  "analysis": "Both responses successfully complete the technical work: they fix the broken steps 3 and 4, implement step 5 (remap with unmapped reporting), implement step 6 (--since filter), and correctly leave step 7 blocked. Both pass all tests and maintain backward compatibility.\n\nThe key differences are in how they document and resume the work:\n\n**Plan resumption**: A creates separate summary documents (COMPLETION_REPORT.md, WHATS_OPEN.md) rather than updating the existing plan file. B updates the plan file directly with new Decisions, Discovered Issues, and extended Verification Log entries, which better aligns with \"resuming\" an existing plan.\n\n**Verification logging**: A's COMPLETION_REPORT.md says \"Verified: T-1004 (EUR 340.00) \u2192 -340.00\" without showing the command that produced this. B's Verification Log in the plan file includes the actual commands run and their outputs (e.g., \"ran `python3 -m unittest tests.test_normalize`, all pass. Manual check: parse_amount(\\\"(EUR 340.00)\\\") returns Decimal(\\\"-340.00\\\")\"), providing concrete evidence of verification.\n\n**Discoveries**: A doesn't systematically log discoveries in the working document. B adds a \"Discovered Issues\" section to the plan file with timestamps and details of each problem found (steps 3, 4, 5 being broken, and the two unmapped codes). B also creates .gitignore to exclude [redacted] files, showing attention to repository hygiene.\n\n**Handover clarity**: A's final message is clear but generic. B's final message explicitly identifies the two unmapped account codes (6300 for \"team lunch\", 7100 for \"bank charges\") and tells Fin exactly what she needs to do, making it more actionable.\n\nBoth responses have correct implementations and pass all tests. The difference is in documentation discipline and how well they integrate with the existing work record.\n"
+ },
+ "cost_usd": 0.025499,
+ "prompt_chars": 48896,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/base-s4",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/loaded-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Resumes the existing plan instead of starting over (weight 3)",
+    "note": "Both responses continue Rune's roadmap and update the plan file. A updates 'Last updated' to 2026-09-16 and appends findings to the existing Verification Log. B updates to 2026-09-17 02:52 and also appends to the log. Both preserve the original structure and context. A's update is slightly more concise; B's is more detailed with discovered issues section. Both adequately resume the plan.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Re-verifies the ticked items and reopens the false ones (weight 3)",
+    "note": "Both identify that steps 3 and 4 were not actually implemented. A: fixes parse_amount to handle parentheses before currency stripping (correct order), fixes dedupe to compare updated_at. B: same fixes. Both test with current.csv data. A's parse_amount checks for parentheses first, then strips currency\u2014correct. B's parse_amount also checks parentheses first, then strips currency\u2014also correct. Both handle '(EUR 340.00)' and '(112.05)' correctly. Both verify dedupe keeps most recent. Both reopen items 3 and 4 in the plan. Functionally equivalent.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Finishes the open items without breaking the old ones (weight 3)",
+    "note": "Item 5: A's remap returns (rows, unmapped_codes), keeps unmapped rows, reports each code once. B's remap does the same. Both update cli.py to handle the new signature. Item 6: A adds --since filter in normalize.py as filter_since(). B adds filter_since() in cli.py. Both filter on booked_on. A: 6 rows on/after 2026-08-01 (correct: T-1004, T-1005, T-1006, T-1007, T-1008, T-1009). B: also 6 rows. Both legacy_2024.csv and test_normalize suite pass. A creates test_integration.py with 3 integration tests. B creates test_cli.py with 3 integration tests. Both verify legacy format works. Both pass all tests.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "The blocked item stays unchecked with the reason written down (weight 3)",
+    "note": "Item 7 (2023 archive reconciliation): A leaves it unchecked with note 'Blocked on Fin - waiting for 2023 archive CSV file'. B marks it as [!] (blocked) with note 'BLOCKED since 2026-09-13 on the 2023 archive CSV file. Owner: Fin Aregbesola. Unblocks when: file is delivered.' Both correctly do not tick it off, do not fake it, and explain the blocker. B's notation is slightly more explicit with the [!] marker and metadata.",
+    "score_A": 9,
+    "score_B": 10
+   },
+   {
+    "criterion": "Verification means a command was run (weight 2)",
+    "note": "A's verification log entries say 'ran `./run_tests.sh`, 16 tests passing' and 'ran `python3 -m ledgerctl --input data/current.csv --out /tmp/current_output.json`' with specific output details. B's entries say 'ran `python3 -m unittest discover tests`, test_parentheses_are_negative passes. parse_amount(\"(EUR 340.00)\") returns Decimal(\"-340.00\")' and 'ran `python3 -m ledgerctl --input data/current.csv --out /tmp/test.json`, stderr shows \"WARNING: 2 unmapped account codes: 6300, 7100\"'. Both provide concrete command output. A's entries are slightly less detailed on specific test names. B's entries are more granular with exact function calls and return values.",
+    "score_A": 8,
+    "score_B": 9
+   },
+   {
+    "criterion": "Discoveries logged as they surface (weight 2)",
+    "note": "A: Does not explicitly note that run_tests.sh only ran test_normalize (missing test_accounts). B: Creates .gitignore and explicitly notes in the plan file a 'Discovered Issues' section with reopened steps 3 and 4, including the specific test failures and fixes. B also notes that CI was incomplete. A does not document this discovery. B is more thorough in logging discoveries.",
+    "score_A": 6,
+    "score_B": 9
+   },
+   {
+    "criterion": "Handover reply (weight 1)",
+    "note": "A: Provides a summary with what's done, what's open, and what to chase Fin for. Mentions 'I've created HANDOVER-SUMMARY.md with full details and UNMAPPED-CODES-FOR-FIN.md'. B: Provides a summary with what's done, what's blocked, and what to chase Fin for. Both are clear and concise. A creates two separate files (HANDOVER-SUMMARY.md and UNMAPPED-CODES-FOR-FIN.md). B creates one file (HANDOVER-completed.md). Both adequately communicate the status.",
+    "score_A": 9,
+    "score_B": 9
+   }
+  ],
+  "analysis": "Both responses successfully complete the task and fix the same bugs. They both:\n- Identify and fix steps 3 and 4 (parentheses parsing and deduplication)\n- Implement step 5 (account remapping with unmapped code reporting)\n- Implement step 6 (--since filter)\n- Leave step 7 blocked on Fin with proper documentation\n- Pass all tests (16 total)\n- Maintain backward compatibility with legacy_2024.csv\n\nKey differences:\n\n**A's strengths:**\n- Creates two separate handover documents (HANDOVER-SUMMARY.md and UNMAPPED-CODES-FOR-FIN.md) for clarity\n- Slightly cleaner final_chat_reply with clear formatting\n- Implements filter_since in normalize.py (more modular)\n\n**B's strengths:**\n- More thorough discovery logging: explicitly documents that run_tests.sh was incomplete (only ran test_normalize, missing test_accounts)\n- Creates .gitignore file (A does not)\n- Uses [!] notation in the plan for blocked items (more explicit)\n- More detailed verification log entries with specific function calls and return values\n- Includes a \"Discovered Issues\" section in the plan file documenting what was reopened and why\n- More granular test coverage documentation\n\n**Critical difference:**\nB explicitly discovers and logs that CI was incomplete (run_tests.sh only ran test_normalize, not test_accounts), which is a significant finding per the rubric (\"Discoveries logged as they surface\"). A does not document this discovery, though both fix the issue by creating test_cli.py and test_integration.py.\n\nBoth responses are functionally correct and complete. B is slightly more thorough in documentation and discovery logging, which aligns better with the rubric's emphasis on \"Discoveries logged as they surface\" and \"Verification means a command was run.\"",
+  "overall_A": 82,
+  "overall_B": 87,
+  "winner": "B"
+ },
+ "cost_usd": 0.029236,
+ "prompt_chars": 56939,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

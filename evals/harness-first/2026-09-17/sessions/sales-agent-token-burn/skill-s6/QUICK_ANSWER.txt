@@ -1,0 +1,80 @@
+┌─────────────────────────────────────────────────────────────────────┐
+│                    QUICK ANSWER FOR FINANCE                         │
+└─────────────────────────────────────────────────────────────────────┘
+
+YOUR QUESTION:
+"September Anthropic bill is 4× August. Should we switch to a cheaper 
+model (GPT-5-mini)?"
+
+THE ANSWER:
+Don't switch models yet. Fix the bug first—it saves 71% with zero risk.
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                         THE PROBLEM                                 │
+└─────────────────────────────────────────────────────────────────────┘
+
+70% of costs ($19 of $27) = 5 conversations stuck in infinite retry loops
+
+Root cause: Agent re-fetched 12KB of data every turn, retried permanent 
+            errors 15-17 times, had no iteration limit
+
+Evidence:   logs/ show 236 failed API calls for non-existent CRM field
+            Top conversation: 17 turns, 1.5M input tokens, $4.73
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                         THE FIX                                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+Changed 3 files in agent/:
+1. loop.py   - Added max 8 turns, $0.50 cost cap per conversation
+2. tools.py  - Only retry rate limits/timeouts, fail fast on bad fields
+3. prompts.py - "Call ONCE" not "EVERY turn", stop fighting errors
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                      COST COMPARISON                                │
+└─────────────────────────────────────────────────────────────────────┘
+
+                        Current   After Fix   After Fix + 
+                        (broken)  (Sonnet)    Cheaper Model
+                        ────────  ──────────  ─────────────
+Per conversation        $0.58     $0.17       $0.02
+Monthly (92 convos)     $53       $16  ⭐     $2
+Savings vs current      —         -$37 (71%)  -$51 (97%)
+Risk                    High      Low         Needs testing
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                      RECOMMENDATION                                 │
+└─────────────────────────────────────────────────────────────────────┘
+
+THIS WEEK:  Deploy the fix (no model change)
+            Save $37/month (71%) with zero risk
+
+NEXT MONTH: Test GPT-5-mini quality on golden test set
+            If it passes → switch, save another $14/month (88% more)
+            If it fails → keep Sonnet, you already saved 71%
+
+WHY FIX FIRST:
+Even on a cheaper model, the retry loops would still happen. You'd still 
+waste tokens. The bug scales with volume. Fix it regardless of model.
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                         TIMELINE                                    │
+└─────────────────────────────────────────────────────────────────────┘
+
+Today:      Code ready (see agent/)
+This week:  Deploy to production
+Sept bill:  ~$45 (partial month with fixes)
+Oct bill:   ~$16 (full month, 71% savings locked in)
+Later:      Model switch testing (optional extra 88%)
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                      WHERE TO LOOK                                  │
+└─────────────────────────────────────────────────────────────────────┘
+
+For you:          output/EXECUTIVE_SUMMARY.md (one page)
+For cost tables:  output/model_cost_comparison.md
+For engineers:    output/REPORT.md (full technical analysis)
+Changed code:     agent/loop.py, agent/tools.py, agent/prompts.py
+
+Bottom line: Fix the bug (71% savings, zero risk, deploy this week), 
+             then decide on model switch with real quality data.

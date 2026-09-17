@@ -1,0 +1,71 @@
+LEDGERCTL V3 - Q3 CLOSE STATUS
+================================
+Date: 2026-09-16
+Previous Owner: Rune (on leave until 2026-09-22)
+
+DEVELOPMENT STATUS: ✅ COMPLETE AND READY
+
+Work Plan Progress:
+-------------------
+✅ Step 1: Currency codes uppercased - DONE
+✅ Step 2: Currency prefix stripped - DONE  
+✅ Step 3: Parentheses amounts as negative - DONE (fixed)
+✅ Step 4: Deduplication by most recent - DONE (fixed)
+✅ Step 5: Account remapping without data loss - DONE (fixed)
+✅ Step 6: --since filter - DONE (implemented)
+⏸️ Step 7: 2023 reconciliation - BLOCKED (waiting on Fin)
+
+Test Status:
+-----------
+✅ 14 tests, all passing
+✅ Integration tests for legacy CSV (backward compatible)
+✅ Integration tests for current CSV (all features working)
+✅ CI script updated to run all tests
+
+Issues Found and Fixed:
+----------------------
+1. Step 3 was marked done but NOT working - FIXED
+   - Parentheses like "(EUR 340.00)" now parse as negative
+   
+2. Step 4 was marked done but INCORRECT - FIXED  
+   - Was keeping first duplicate, now keeps most recent by updated_at
+   
+3. Step 5 accounts.remap was DROPPING unmapped codes - FIXED
+   - Now keeps all rows and reports unmapped codes
+   - Prevents data loss like the August bank charges incident
+
+4. CI was only running test_normalize - FIXED
+   - Now runs all test files
+
+What Still Needs Attention (Non-Dev):
+-----------------------------------
+❗ Fin needs to handle 2 unmapped account codes in current.csv:
+   - Code 6300 (team lunch, EUR 76.20)
+   - Code 7100 (bank charges, EUR 44.00)
+   
+   See TODO-FIN.md for details.
+
+⏸️ Fin needs to send 2023 archive CSV for reconciliation
+
+Quick Test:
+----------
+./run_tests.sh                    # All 14 tests should pass
+python3 -m ledgerctl --input data/current.csv --out out.json
+  # Should output: wrote 9 rows
+  # Should warn: WARNING: 2 unmapped account code(s): 6300, 7100
+
+Files Changed:
+-------------
+- ledgerctl/normalize.py (parentheses, deduplication)
+- ledgerctl/accounts.py (keep unmapped codes)
+- ledgerctl/cli.py (--since filter, warnings)
+- run_tests.sh (run all tests)
+- tests/test_normalize.py (added tests)
+- tests/test_cli.py (new file)
+- tests/test_integration.py (new file)
+
+Documentation:
+-------------
+- COMPLETION-REPORT.md (detailed technical report)
+- TODO-FIN.md (action items for Fin)
+- This file (quick reference)

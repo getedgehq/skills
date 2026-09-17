@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s4",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 25,
+  "overall_B": 92,
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "score_A": 1,
+    "score_B": 10,
+    "note": "A provides no root cause analysis at all\u2014just recommends switching to Haiku based on price sheet. B identifies the exact mechanism: prompt says 'EVERY turn' + 'retry forever' + no max iterations = infinite loops on 422 errors. Quantifies: 5 conversations (cv_488aab, cv_15f5fe, cv_24a92f, cv_a99bb9, cv_6f895a) burned $18.77 (70% of $26.66). Shows token growth pattern (2K\u219215K\u219228K\u219240K). Cites 236 failed 422 writes and 20 404 errors from logs. Traces root to Sept 6 CRM schema change."
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "score_A": 0,
+    "score_B": 10,
+    "note": "A directly violates the rubric: picks Haiku and says 'deploy in 30 seconds' without any analysis of whether the spike is a model problem. B explicitly says 'Don't switch models yet' and explains why: bugs will burn tokens on ANY model. Shows broken Sonnet=$53/mo, broken Haiku=$22/mo (still 3x August). Recommends fixing bugs first ($18/mo), then optionally switching to Haiku ($7.50/mo). This is the correct answer."
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "score_A": 0,
+    "score_B": 10,
+    "note": "A creates no code changes\u2014only a config file swap. B modifies 4 agent files: loop.py adds max_turns=10 and max_cost_usd=$2.0 with graceful errors; prompts.py removes 'EVERY turn' and 'retry forever'; tools.py adds _is_transient_error() to skip retrying 4xx; mailer.py adds DRY_RUN mode. These directly address the root causes and stop runaway loops."
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "score_A": 0,
+    "score_B": 9,
+    "note": "A does not flag any safety issues. B notices send_email fires real emails from reps' mailboxes with no approval/draft step and no max-emails guard, and adds DRY_RUN mode to prevent spam during retry loops. Also flags email deduplication and manual approval queue as future work. Excellent catch."
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "score_A": 0,
+    "score_B": 10,
+    "note": "A creates no harness. B creates: evals/golden.jsonl with 22 test cases (normal flows, edge cases like 404/422/503, cost scenarios, policy checks); evals/run_evals.py with automated test runner and pass/fail checks; docs/crm_fields.md data dictionary explaining the Sept 6 schema change. Also creates harness_scorecard.md auditing six components (golden set, judge, cost caps, data layer, action safety, tracing) with before/after assessment."
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "score_A": 3,
+    "score_B": 10,
+    "note": "A leads with 'Switch to Haiku, save $35/month' but provides no evidence of root cause or why the spike happened. B leads with 'Don't switch models yet' and immediately explains: two prompt bugs caused 5 conversations to burn 70% of tokens. Shows numbers: broken=$53/mo, fixed=$18/mo, fixed+Haiku=$7.50/mo. Consistent with logs (5 stuck conversations at $18.77 out of $26.66 total)."
+   }
+  ],
+  "analysis": "Response A recommends switching to Claude Haiku based solely on the price sheet, claiming 67% savings ($35/month). It provides no root cause analysis, no code changes, and no investigation of why September costs 4x August. It treats this as a straightforward model-selection problem.\n\nResponse B diagnoses the actual root cause: two bugs in the system prompt create infinite retry loops. The prompt says \"call crm_get_account at the start of EVERY turn\" (adding 12KB to history each turn) and \"retry if tool fails\" (retrying permanent 422 errors forever), with no max iterations in loop.py. This caused 5 conversations to burn $18.77 (70% of the $26.66 Sept 1-15 cost) with 15-26 turns each instead of normal 3-4 turns. B provides evidence: 236 failed 422 writes for the `lead_score_v2` field that didn't exist until Sept 12, token growth patterns (2K\u219240K), and specific conversation IDs from the logs.\n\nB then fixes the code: adds max_turns=10 and max_cost_usd=$2.0 to loop.py, removes \"EVERY turn\" from prompts.py, adds deterministic error detection to tools.py, and adds DRY_RUN mode to mailer.py. It creates a 22-case golden set with automated test runner, a CRM field dictionary explaining the schema change, and comprehensive documentation.\n\nB's answer to the CFO is: \"Don't switch models yet. Fix the bugs first (saves $35/month), then optionally switch to Haiku (saves $46/month total).\" This is grounded in evidence from the logs and prevents a blind model swap that would not solve the underlying problem.\n\nA's answer is: \"Switch to Haiku, save $35/month.\" This happens to match the savings B achieves by fixing bugs, but for the wrong reason\u2014A attributes it to model cost, not to fixing the infinite loops. If deployed without fixes, Haiku would still burn tokens on the same bugs (just at $0.013/call instead of $0.03/call), resulting in ~$22/month instead of $53/month\u2014still 3x August.\n\nThe rubric explicitly penalizes \"blind model swap\" and requires \"root cause found with numbers\" and \"stops the bleeding in code.\" B satisfies all three; A satisfies none.\n"
+ },
+ "cost_usd": 0.052755,
+ "prompt_chars": 129681,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

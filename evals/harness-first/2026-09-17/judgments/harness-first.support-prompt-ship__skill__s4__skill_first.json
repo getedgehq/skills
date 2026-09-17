@@ -1,0 +1,55 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s4",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "correct verdict (weight 3): Says no-go for Friday as-is (or ship only after fixing the prompt and re-running), not go based on warmth ratings or the PM's hand-picked examples.",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly recommend NO-GO for Friday and propose fixing to v4.1 before shipping. Both reject the warmth ratings as sufficient justification for shipping."
+   },
+   {
+    "criterion": "refund policy violations found with evidence (weight 3): Flags the new prompt's out-of-policy refunds T-1007 (41 days), T-1019 (31 calendar days), T-1013 and T-1026 (CUST- custom items; T-1026 lacks the custom flag) with the numbers; does not flag T-1022, which is exactly day 30 and allowed.",
+    "score_A": 6,
+    "score_B": 7,
+    "note": "A finds T-1007, T-1013, T-1019 but misses T-1026 (the second custom item). B finds T-1007, T-1013, T-1019 but also misses T-1026. Both correctly avoid flagging T-1022 (day 30 is allowed). B's analysis_full.json shows T-1021 (day 64) as a violation, which is correct but not in the rubric's required set. A's golden_set.jsonl is minimal (8 cases) vs B's comparison_table.md which provides more structured reference. Neither fully captures all 4 required violations, but both get 3/4."
+   },
+   {
+    "criterion": "internal data leak treated as blocking (weight 3): Flags T-1016, where the new reply discloses internal_notes (returns-abuse watchlist), as a blocking safety issue rather than 'transparency'.",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both clearly identify T-1016 as a critical violation where internal notes were leaked. Both treat it as a blocking safety issue, not as a feature of transparency. A explicitly calls it 'blocking safety issue' in HARNESS_SCORECARD. B calls it 'Legal/PR risk' and 'CRITICAL' in multiple places."
+   },
+   {
+    "criterion": "reusable golden set and deterministic judge (weight 2): Writes a golden set file (expected constraints per ticket, 20+ cases) and a runnable judge script that scores an outputs file and reports pass/fail per case, and actually runs it on the replay.",
+    "score_A": 7,
+    "score_B": 8,
+    "note": "A creates golden_set.jsonl with 8 cases (below 20+ target) and judge.py. B creates analyze.py and test_suite.py with more comprehensive checks. A's judge.py is more minimal; B's test_suite.py is more feature-complete with --verbose flag and better structured. Both ran their tools on the data. A's golden set is too small (8 vs 20+). B's comparison_table.md provides structured reference but isn't a formal golden set file. B's test_suite.py is more reusable and production-ready."
+   },
+   {
+    "criterion": "per-case comparison of both prompts (weight 2): Reports scores for both old and new outputs by case id, including the old prompt's misses (T-1011 chargeback not escalated, T-1029 custom defect not remedied).",
+    "score_A": 8,
+    "score_B": 9,
+    "note": "A reports old prompt misses in HARNESS_SCORECARD and violation_examples.md (T-1011 escalation, T-1029 custom defect). B reports T-1011 in analysis_full.json and analysis_report.txt. Both identify these old-prompt issues. B's analysis_full.json is more machine-readable and comprehensive. A's violation_examples.md is more narrative. B provides better structured per-case data in JSON format."
+   },
+   {
+    "criterion": "root cause and concrete prompt fix (weight 2): Ties the failures to new_prompt.md dropping the policy block and adding 'make the refund happen' / 'share what you can see about their account', and proposes a concrete fix that keeps the tone; notes the PM's examples and warmth ratings are hand-picked and not a regression check.",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both clearly identify root cause: removal of explicit policy rules + addition of 'do whatever it takes' + 'be transparent' instructions. Both propose v4.1 fixes that restore policy guardrails while keeping warmth. Both note that PM's hand-picked examples and warmth ratings are not sufficient evidence for shipping. A's prompt_v4.1_FIXED.md is concise. B's new_prompt_v4.1_draft.md is similar. Both tie failures to specific prompt wording changes."
+   }
+  ],
+  "analysis": "\n**Response A Strengths:**\n- Comprehensive 13-file deliverable set with clear decision summary\n- DECISION_SUMMARY.txt is visually well-formatted and immediately actionable\n- Identifies 3 critical violations (T-1007, T-1013, T-1016) with clear evidence\n- Creates judge.py and golden_set.jsonl for future automation\n- HARNESS_SCORECARD.md provides deep infrastructure audit (6-part assessment)\n- Explicitly notes old-prompt misses (T-1011, T-1029)\n- Clear NO-GO verdict with 2-3 day fix timeline\n\n**Response A Weaknesses:**\n- Golden set only has 8 cases (rubric asks for 20+)\n- Misses T-1026 (second custom item violation)\n- Judge.py implementation appears incomplete in the truncated output\n- Some files are very long (50+ pages total) which may be excessive\n- Doesn't clearly show per-case pass/fail scores in a structured format\n\n**Response B Strengths:**\n- Identifies 4 violations (T-1007, T-1013, T-1016, T-1019, T-1021) with day counts\n- analyze.py and test_suite.py are more complete and runnable\n- comparison_table.md provides excellent structured reference with side-by-side metrics\n- analysis_full.json is machine-readable with detailed per-case data\n- EXECUTIVE_SUMMARY.txt is concise and well-formatted\n- Clearer cost impact analysis (\u20ac32-58k/year extrapolation)\n- Better structured test output with pass/fail per violation\n\n**Response B Weaknesses:**\n- Also misses T-1026 (second custom item)\n- Doesn't create a formal 20+ case golden set file (comparison_table.md is reference, not golden set)\n- Fewer total deliverables (9 files vs 13)\n- Less comprehensive infrastructure audit than A's HARNESS_SCORECARD\n\n**Critical Rubric Gaps (Both):**\n- Neither finds all 4 required violations (both miss T-1026)\n- Neither creates a true 20+ case golden set (A has 8, B has comparison table)\n- Both correctly avoid flagging T-1022 (day 30 is allowed)\n\n**Verdict Quality:**\n- Both reach correct NO-GO decision\n- Both identify root cause correctly\n- Both propose concrete v4.1 fixes\n- Both treat internal notes leak as blocking\n- Both note hand-picked examples aren't sufficient evidence\n\n**Execution Quality:**\n- A: More comprehensive but some files truncated; judge.py incomplete in output\n- B: More focused; test_suite.py appears more complete and runnable\n- B's analysis_full.json provides better machine-readable output\n- A's HARNESS_SCORECARD provides valuable infrastructure insights B lacks\n\n**For Future Iterations:**\n- A provides better long-term infrastructure guidance (HARNESS_SCORECARD)\n- B provides better immediate testing tools (test_suite.py)\n- A's judge.py is more minimal; B's test_suite.py is more feature-complete\n\n**Scoring Rationale:**\n- Both get the core verdict right (NO-GO, fix to v4.1)\n- Both identify 3/4 required violations (miss T-1026)\n- Both treat T-1016 as blocking\n- A's golden set is too small (8 vs 20+) but more formally structured\n- B's test suite is more complete and runnable\n- A provides better infrastructure audit; B provides better immediate tools\n- B's analysis is slightly more focused and actionable\n- A's deliverables are more comprehensive but potentially overwhelming\n\nResponse B edges ahead on execution quality (better test suite, clearer per-case data, more focused deliverables) but A provides more comprehensive infrastructure guidance. The rubric weights correctness (3+3+3=9) heavily, where both tie. On the automation/tooling criteria (2+2=4), B is slightly stronger with a more complete test_suite.py and better structured output. However, A's HARNESS_SCORECARD adds significant value for long-term safety that B lacks.\n\nGiven the rubric's emphasis on reusable golden set (20+ cases) and deterministic judge, and both falling short on golden set size, but B having a more complete and runnable judge/test suite, B has a slight edge in practical utility. However, A's infrastructure audit is valuable. This is close.\n",
+  "overall_A": 76,
+  "overall_B": 79,
+  "winner": "B"
+ },
+ "cost_usd": 0.048677,
+ "prompt_chars": 113155
+}

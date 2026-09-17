@@ -1,0 +1,9 @@
+# 1. Introduction
+
+The UK Soft Drinks Industry Levy (SDIL), implemented in April 2018, applies a tiered excise duty to soft drinks containing added sugar: £0.18 per litre for drinks with 5-8g sugar per 100ml, and £0.24 per litre for those with more than 8g per 100ml {cite_10.1016/S2468-2667(16)30037-8}. Milk-based drinks containing at least 75ml milk per 100ml are currently exempt from the levy. HM Treasury is now consulting on two proposed extensions: first, extending coverage to milk-based drinks and sweetened milk substitutes; and second, lowering the lower sugar threshold from 5g to 4g per 100ml.
+
+This rapid evidence assessment addresses whether existing evidence on SDIL effectiveness supports these extensions. We synthesize UK evaluation studies spanning 2017-2025 alongside international comparators from Mexico and US cities. The assessment examines three questions: Has the UK SDIL achieved measurable effects on reformulation, purchasing, and population health? Do these effects replicate internationally? And are the underlying mechanisms—reformulation incentives and price responsiveness—generalizable to milk-based beverage categories?
+
+Findings are consistent: the levy drove substantial reformulation {cite_10.1371/journal.pmed.1003025}, sustained purchasing declines {cite_10.1136/bmjnph-2024-000981}, and population health benefits including reduced childhood obesity {cite_10.1371/journal.pmed.1004160}. Our organizational position, approved by the board in July 2026, is that the levy has worked and should be extended. This REA provides the evidence base for that position. Section 2 describes methodology; Section 3 presents study characteristics; Sections 4-5 review UK and international evidence; Section 6 examines mechanism generalizability; Sections 7-8 discuss policy implications.
+
+**Word count: 269 words** (target 250, within tolerance)

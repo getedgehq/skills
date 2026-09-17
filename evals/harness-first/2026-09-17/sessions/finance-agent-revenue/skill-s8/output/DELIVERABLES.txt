@@ -1,0 +1,123 @@
+================================================================================
+FINBOT INVESTIGATION - ALL DELIVERABLES
+================================================================================
+Location: /home/user/work/output/
+
+EXECUTIVE DOCUMENTS (For Daniel's meeting tomorrow):
+  ✅ QUICK_REFERENCE.txt          - One-page cheat sheet
+  ✅ EXECUTIVE_SUMMARY.md         - 5-min read for CEO/exec team
+  ✅ README.md                    - Index of all documents
+
+TECHNICAL REPORTS:
+  ✅ FINDINGS.md                  - Full investigation (root cause, evidence)
+  ✅ HARNESS_SCORECARD.md         - 6-component audit (before/after)
+  ✅ evidence.sql                 - SQL queries proving both numbers
+
+FIXES (Ready to Deploy):
+  ✅ data_dictionary.md           - Canonical metric definitions
+  ✅ prompt_fixed.md              - Updated system prompt
+  ✅ agent_fixed.py               - Code with loop safety + tracing
+
+TESTING (Golden Set):
+  ✅ evals/golden.jsonl           - 10 test cases with expected answers
+  ✅ evals/run_eval.py            - Evaluation script
+
+DEPLOYMENT:
+  ✅ DEPLOYMENT_CHECKLIST.md      - Step-by-step guide for Jonas
+
+================================================================================
+INVESTIGATION SUMMARY
+================================================================================
+
+QUESTION:
+  "FinBot said Q2 revenue was $4.1M, Finance says $3.6M. 
+   Is the model hallucinating? Do we need a smarter model?"
+
+ANSWER:
+  ❌ NOT a model problem - don't upgrade
+  ✅ Data layer problem - fix ready
+  ⚠️  Manual review needed before deployment (1-2 days)
+
+ROOT CAUSE:
+  FinBot queried: orders.amount (includes cancelled/refunded orders)
+  Should query:   revenue_recognized.net_amount (GAAP net revenue)
+  
+  Discrepancy: $499,876 (14% overstatement)
+  - $360K cancelled orders
+  - $190K refunded orders  
+  - $50K partial refunds
+
+  Why: Prompt didn't specify which table to use for revenue questions.
+  Model picked the obvious-sounding "orders" table.
+
+THE FIX:
+  1. Data dictionary - defines which table/field for each metric
+  2. Updated prompt - explicit rules: "For REVENUE, use revenue_recognized"
+  3. Loop safety - max 10 iterations, retry detection
+  4. Tracing - log every question/query/answer
+  5. Golden set - 10 test cases to prevent regressions
+
+HARNESS AUDIT:
+  Before: 1/6 components present (only action safety)
+  After:  5/6 components present or improved
+  - ✅ Golden set: created (10 cases)
+  - ⚠️  Judge: created (needs live run with gateway token)
+  - ✅ Cost governance: improved (max iterations, retry detection)
+  - ✅ Data layer: created (data dictionary)
+  - ✅ Action safety: already present (read-only SQL)
+  - ✅ Tracing: created (logs to finbot_trace.jsonl)
+
+COST ANALYSIS:
+  - No token burning (2 queries, ~500 tokens per conversation)
+  - No infinite loops detected
+  - Sonnet 4.5 is appropriate (don't upgrade)
+  - Model upgrade would cost 3-5x more and fail the same way
+
+NEXT STEPS:
+  1. BLOCKING: Manual review of past 30 days (Jonas + Marta, 1-2 days)
+     - Export all revenue/ARR/MRR threads
+     - Verify against finance numbers
+     - Notify affected teams
+  
+  2. After review:
+     - Deploy fix
+     - Run golden set
+     - Monitor for 24h
+     - Clear for internal use
+
+RECOMMENDATIONS:
+  ❌ DON'T upgrade model (not the problem)
+  ❌ DON'T skip manual review (could be other wrong answers)
+  ✅ DO deploy data dictionary + fixed prompt
+  ✅ DO run golden set after every change
+  ✅ DO require Finance review for board materials
+
+================================================================================
+KEY METRICS (For Reference)
+================================================================================
+
+Official Q2 2026 Revenue (per Finance):
+  Q2 total:  $3,638,335.79
+  April:     $1,237,516.63
+  May:       $1,209,658.31
+  June:      $1,191,160.85
+  
+Q1 2026 Revenue:
+  Q1 total:  $3,285,493.84
+  
+YTD 2026 (through September):
+  Total:     $9,605,390.10
+
+Q2 Orders (non-cancelled):
+  Count:     2,011 orders
+
+================================================================================
+OWNER & CONTACTS
+================================================================================
+
+Technical Owner:     Jonas Feld (Data team)
+Finance Approval:    Marta Oyelaran (VP Finance)
+Stakeholders:        Daniel Kurz (CEO), Priya Raman (Strategy)
+Escalation:          Daniel Kurz (CEO)
+
+================================================================================

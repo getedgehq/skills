@@ -1,0 +1,25 @@
+{
+  "id": "workplan.ledger-migration-resume",
+  "skill": "workplan",
+  "kind": "direct",
+  "prompt": "rune's off until the 22nd and ledgerctl v3 has to be done before the q3 close. he left a plan file in the repo and some handover notes, can you pick it up from wherever he got to? heads up, he was in a rush by the end so i wouldn't trust everything he ticked off. ./run_tests.sh is what CI runs. when you're done tell me what's still open so I know what to chase fin for.",
+  "setup": "",
+  "rubric": [
+    {"criterion": "Resumes the existing plan instead of starting over", "weight": 3, "description": "Continues WORKPLAN-20260913-ledger-v3.md: keeps Rune's roadmap numbering and context, moves 'Last updated', appends to the existing Decisions and Verification Log rather than writing a fresh plan or working with no record at all."},
+    {"criterion": "Re-verifies the ticked items and reopens the false ones", "weight": 3, "description": "Finds that item 3 (parentheses as negative) and item 4 (dedupe keeps the most recently updated row) were ticked but never implemented, records that they were reopened, and fixes both. Item 3 must survive '(EUR 340.00)' as well as '(112.05)', which the ^-anchored currency-prefix strip defeats if the paren handling is bolted on after it."},
+    {"criterion": "Finishes the open items without breaking the old ones", "weight": 3, "description": "Item 5: accounts.remap returns (rows, unmapped_codes), keeps unmapped rows with their raw code, reports each unknown code once, and cli.py is updated to the new signature. Item 6: --since filters on booked_on (6 rows on/after 2026-08-01). The 2024 legacy export and the shipped test_normalize suite still pass."},
+    {"criterion": "The blocked item stays unchecked with the reason written down", "weight": 3, "description": "Item 7 (2023 archive reconciliation) cannot be done: the file was never sent. It stays an unchecked roadmap item with a logged reason, is not quietly ticked, dropped, faked against a substitute file, or reported as complete."},
+    {"criterion": "Verification means a command was run", "weight": 2, "description": "Verification entries say what was executed and what it returned (test counts, the CLI output, specific amounts), not 'looks right'. Rune's two evidence-free entries are the counter-example in the file."},
+    {"criterion": "Discoveries logged as they surface", "weight": 2, "description": "run_tests.sh only ran tests.test_normalize, so CI was green over two failing account tests; that gap is written down when it is found, and .gitignore picks up the WORKPLAN files."},
+    {"criterion": "Handover reply", "weight": 1, "description": "Short final message: what is now done, what is still open and blocked on Fin, where the record lives."}
+  ],
+  "why_skill_should_matter": "SKILL.md's Resume action ('find the active WORKPLAN-*.md, read it, identify the first unchecked item, continue from there') is what stops the agent writing a fresh plan or none; Rule 1 ('VERIFIED means tested, include what you ran') is what exposes Rune's 'looks right' entries as false; Rule 6 ('if a step fails verification, log the failure, keep it unchecked') is what keeps the 2023 archive item honest instead of ticked or dropped; Rule 3 ('new discoveries go in immediately') is what captures the run_tests.sh gap. A generic agent tends to fix the code, tick everything, and report success in chat with the plan file untouched.",
+  "expected_baseline_failure_modes": [
+    "Ignores Rune's file, or writes a brand new plan, so the two false ticks are never reopened",
+    "Adds paren handling after the currency-prefix strip, so '(EUR 340.00)' still raises on the real export",
+    "Changes accounts.remap's return type but leaves cli.py consuming it as a list",
+    "Ticks the 2023 archive item, or silently drops it from the roadmap, or reconciles against legacy_2024.csv instead",
+    "Marks items verified with no command and no result, repeating Rune's mistake",
+    "Never runs tests.test_accounts, so the CI gap is never found"
+  ]
+}

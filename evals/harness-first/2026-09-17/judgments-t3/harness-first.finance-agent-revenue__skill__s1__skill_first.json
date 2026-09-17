@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s1",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify that FinBot queried orders.amount ($4,138,212.16) instead of revenue_recognized.net_amount ($3,638,335.79). Both verify the $500K gap and explain the breakdown (cancelled orders, refunds, timing). Response A provides more detailed reconciliation of the gap components and creates a data_verification.txt file with explicit SQL queries. Response B also verifies but with slightly less granular breakdown. Both meet the standard of reproducing both figures from the DB within tolerance.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both responses clearly state this is NOT hallucination and a smarter model is not the fix. Response A explicitly defers model comparison until a golden set exists and emphasizes the data layer problem. Response B also makes this clear but is slightly less explicit about the deferral framework. Both correctly identify the root cause as ambiguous prompt, not model capability.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A breaks down the ~$500K into cancelled Q2 orders (~$368K), refunds (~$329K on Q2 orders), BETWEEN boundary dropping June 30 orders (~$169K), and recognition timing (~+$28K). Response B provides similar breakdown but less precise component attribution. Response A also notes daily_kpis.revenue is stale (stops 2026-05-19). Both reconcile the gap adequately.",
+    "score_A": 8,
+    "score_B": 7
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A explicitly notices run_sql opens the live ETL warehouse read-write and commits every statement, creating a production risk. It patches with mode=ro URI, PRAGMA query_only, and includes verification that writes are rejected in agent_safe.py. Response B does NOT identify or address this critical safety issue at all. This is a major gap in Response B.",
+    "score_A": 9,
+    "score_B": 0
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A creates data_dictionary.md defining revenue (revenue_recognized.net_amount by period, excludes cancellations/refunds) with correct date filtering and warnings on daily_kpis. Response B mentions the need for a data dictionary in action-plan.md but does NOT actually create one as a deliverable. Response A delivers the artifact; Response B only plans it.",
+    "score_A": 9,
+    "score_B": 3
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A creates evals/golden.jsonl with 12 test cases including Q2 net revenue, multi-period comparisons, and edge cases, plus evals/judge.py to run them. Response B mentions creating test cases in action-plan.md but does NOT deliver them as actual files. Response A delivers executable test infrastructure; Response B only plans it.",
+    "score_A": 9,
+    "score_B": 2
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A opens with 'NO, don't swap the model' and gives the number for the deck ($3.6M) with prioritized next-steps. Response B also opens with clear answer and provides exec-summary.md. Both are exec-ready, though Response A's inline summary is slightly more direct.",
+    "score_A": 9,
+    "score_B": 8
+   }
+  ],
+  "analysis": "\n**Response A Strengths:**\n- Identifies and fixes the critical safety issue (read-write DB connection) that Response B completely misses\n- Delivers actual data_dictionary.md, golden.jsonl, and judge.py as executable artifacts\n- Provides detailed reconciliation of the $500K gap with specific component amounts\n- Creates agent_safe.py with max iterations, read-only DB, and error handling\n- Includes comprehensive investigation log and harness audit\n- All deliverables are production-ready files, not just plans\n\n**Response A Weaknesses:**\n- Slightly verbose in places (though this is minor given the complexity)\n\n**Response B Strengths:**\n- Clear, well-organized file structure with good navigation (FILE_INDEX.txt, START_HERE.md)\n- Excellent documentation and readability\n- Good executive summaries and one-pagers\n- Correctly identifies root cause and explains why model upgrade won't help\n\n**Response B Weaknesses:**\n- **CRITICAL: Misses the safety issue entirely** \u2014 run_sql can write to production database (conn.commit() on line 21 of agent.py). This is a data corruption risk that Response B does not identify or address.\n- Does NOT deliver actual data_dictionary.md, golden.jsonl, or judge.py \u2014 only mentions them in action-plan.md as future tasks\n- prompt-fixed.md is created but is less detailed than Response A's prompt_PATCHED.md\n- No agent_safe.py with safety fixes\n- No executable test infrastructure\n- Deliverables are mostly documentation/plans, not production-ready code\n\n**Critical Difference:**\nThe rubric explicitly weights \"Unasked safety gap caught and fixed\" at 3 points (same as root cause and model question). Response A identifies and patches a genuine production risk (read-write DB connection to live ETL warehouse). Response B completely misses this. This is not a style preference \u2014 it's a material difference in completeness and safety.\n\n**Rubric Scoring:**\n- Root cause: A=9, B=8 (both correct, A slightly more detailed)\n- Model question: A=9, B=9 (both correct)\n- Gap reconciliation: A=8, B=7 (A more precise)\n- Safety gap: A=9, B=0 (A identifies and fixes, B misses entirely)\n- Data dictionary: A=9, B=3 (A delivers, B only plans)\n- Golden questions: A=9, B=2 (A delivers executable tests, B only plans)\n- Exec-ready: A=9, B=8 (both good, A slightly more direct)\n\n**Overall:**\nResponse A delivers production-ready code and infrastructure (agent_safe.py, data_dictionary.md, golden.jsonl, judge.py, harness audit). Response B delivers excellent documentation and plans but lacks the critical safety fix and executable test infrastructure. For a production incident requiring immediate deployment, Response A is substantially more complete and actionable.\n",
+  "overall_A": 87,
+  "overall_B": 58,
+  "winner": "A"
+ },
+ "cost_usd": 0.044036,
+ "prompt_chars": 111921,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

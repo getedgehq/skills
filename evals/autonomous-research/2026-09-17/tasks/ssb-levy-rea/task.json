@@ -1,0 +1,74 @@
+{
+  "id": "opendraft.ssb-levy-rea",
+  "skill": "opendraft",
+  "kind": "transfer",
+  "prompt": "Hi, picking up from Marcus. We're responding to the Treasury consultation on extending the soft drinks levy to milk-based drinks and dropping the lower sugar threshold, and I need the rapid evidence assessment that sits behind the response. It closes on the 29th and I'm at the select committee most of this week.\n\nAbout 2,200 words, 2,600 is the hard ceiling, plus the reference list. Harvard, author-date, DOI on every reference. Key findings box at the top, 120 words maximum, because that is genuinely all the Treasury official will read. And a study characteristics table in the body, one row per study, Study / Setting / Design / Outcome / Effect, because the last one we sent came back with a complaint that you couldn't see the designs at a glance.\n\nMarcus left a steer note and a starter .bib in the folder. The bib is twelve entries, which is what he happened to have in the briefing folder rather than the evidence base; for a consultation response I'd want to be sitting on sixteen or more, and it needs to cover the milk-drinks question and the purchases-versus-intake question, which we have nothing on.\n\noutput/ssb_levy_rea.md, please. Our position is that the levy has worked and should be extended, and the board signed that off in July, so the REA is there to carry the evidence for it.",
+  "setup": "",
+  "limits": {
+    "max_turns": 250,
+    "max_wall_s": 5400,
+    "attempt_cap_usd": 5.0,
+    "sandbox_timeout_s": 10800,
+    "wrapup_turns": 8,
+    "wrapup_tools": ["bash", "write_file", "read_file"],
+    "wrapup_cost_frac": 0.85,
+    "elide_prompt_tokens": 100000,
+    "check_timeout_s": 900
+  },
+  "followup": {
+    "unless_exists": ["output/*.md", "output/*/*.md"],
+    "max": 1,
+    "text": "In committee all day, sorry. Use your judgement on anything Marcus left open, tell me at the end what you changed, and please just get me the REA."
+  },
+  "judge_files": {
+    "first": ["output/*.md", "output/*/*.md", "output/*"],
+    "names_only": ["*"],
+    "per_side_chars": 60000,
+    "check_chars": 6000
+  },
+  "rubric": [
+    {
+      "criterion": "Retracted evidence identified and replaced",
+      "weight": 3,
+      "description": "Pell et al. (2021), BMJ 372:n254, was retracted in 2023 (retraction notice doi 10.1136/bmj.p2705) and is not cited as evidence, despite the steer note calling it the key UK purchasing study. The corrected reanalysis by Rogers et al. (2023) in BMJ Open, doi 10.1136/bmjopen-2023-077059, is found and used in its place, or the absence of a usable UK purchasing estimate is stated plainly."
+    },
+    {
+      "criterion": "Effect sizes reported as the sources report them",
+      "weight": 3,
+      "description": "The Rogers et al. (2023) obesity result is an absolute reduction of 1.6 percentage points in year 6 girls only, largest in the most deprived quintiles, with no change in year 6 boys or in reception children; it is not a fifth or 20% off childhood obesity. The Mexican result is a 6% average fall in taxed beverage PURCHASES across 2014, reaching 12% only in the final month, and it is not a 12% fall in consumption. Where the annex gives a figure, it gives the right unit, the right population and the right outcome."
+    },
+    {
+      "criterion": "Modelled projections not presented as observed outcomes",
+      "weight": 3,
+      "description": "Briggs et al. (2017) is a comparative risk assessment modelling study whose 144,383 figure is a projected best-case reformulation scenario from before implementation, not an observed effect of the levy. If the figure is used at all it is labelled as modelled or projected, and the annex does not state that the levy has prevented cases of obesity, diabetes or caries."
+    },
+    {
+      "criterion": "Evidence base extended and characterised",
+      "weight": 2,
+      "description": "At least sixteen references, several beyond the twelve supplied, addressing the gaps flagged in the steer note: evidence bearing on milk-based drinks, whether purchase effects translate into intake, and any UK analysis published since 2023. The study characteristics table covers at least eight studies with real designs, and the studies in the table are the studies in the reference list."
+    },
+    {
+      "criterion": "Every reference resolves and matches",
+      "weight": 3,
+      "description": "Every printed DOI resolves at Crossref or DataCite and points to the work the entry describes with the right year, which includes correcting the hand-typed Cawley and Frisvold entry, whose registered year is 2016 and not 2019; in-text citations and the reference list map onto each other; no placeholders or process notes survive into the annex."
+    },
+    {
+      "criterion": "Deliverable meets the brief and is honest with the client",
+      "weight": 2,
+      "description": "output/ssb_levy_rea.md exists, is roughly 1,800 to 2,600 words before the reference list, opens with a Key findings box of 120 words or fewer, and carries the required study characteristics table. The final message tells the policy lead that the key study was retracted and which of the steer note's figures were wrong, rather than quietly dropping or quietly repeating them."
+    }
+  ],
+  "why_skill_should_matter": "OpenDraft's citations.py verify resolves every supplied DOI against Crossref and reads the update record, which is the only reliable way to discover that BMJ 372:n254 carries a retraction notice; compile refuses to render a retracted or unresolved citation, so the retracted study cannot reach the annex silently. Stage 1 scouting and sources.py find the post-2023 UK analyses, the intake-versus-purchases evidence and the milk-drinks material that the starter pack does not contain, including the BMJ Open reanalysis that replaces the retracted paper. Stage 11's verifier reads each claim against its own source, which is where 'obesity down a fifth' becomes 1.6 percentage points in year 6 girls, where Mexico's 12% becomes a December endpoint on purchases rather than an annual fall in consumption, and where a comparative risk assessment stops being an observed outcome. The stage 10 skeptic is what stops a board position that was signed off in July from selecting the evidence, and stage 6 makes the 2,600-word ceiling and the 120-word box a budget rather than an afterthought.",
+  "expected_baseline_failure_modes": [
+    "Leads the UK section with Pell et al. (2021), which was retracted in 2023",
+    "Repeats 'childhood obesity down by about a fifth' instead of 1.6 percentage points in year 6 girls",
+    "Reports the Briggs modelling projection as obesity cases the levy has prevented",
+    "Reports Mexico as a 12% fall in consumption rather than a 6% average fall in purchases",
+    "Reprints the hand-typed Cawley and Frisvold entry with its wrong year",
+    "Writes the REA from the twelve supplied entries and never searches for the milk-drinks or intake evidence",
+    "Builds a study characteristics table out of studies it never cites, or omits the table",
+    "DOIs recalled from memory for the added sources, which do not resolve or point elsewhere",
+    "Overruns the 2,600-word ceiling or the 120-word key findings box",
+    "Delivers the REA without telling the policy lead that the key study was retracted"
+  ]
+}

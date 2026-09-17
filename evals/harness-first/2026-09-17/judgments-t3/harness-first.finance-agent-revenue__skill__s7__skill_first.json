@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s7",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s7",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify that FinBot queried orders.amount ($4,138,212.16) while Finance uses revenue_recognized.net_amount ($3,638,335.79). Both verify the $499,876 gap. Response A provides more detailed breakdown (refunds $332K, timing $167K) and explicitly reconciles the gap. Response B also identifies the gap but with less granular breakdown. Both verified against warehouse.db.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state this is NOT hallucination and the model is not the problem. Response A explicitly defers model comparison until golden set exists and says 'any model would have same ambiguity.' Response B also says don't upgrade models and provides a decision matrix showing why. Both correctly identify this as a data/prompt problem, not model capability. Response A is slightly more precise about the model's correct behavior.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A breaks down: cancelled Q2 orders (~$368K), refunds (~$329K on Q2 orders), BETWEEN boundary dropping June 30 orders (~$169K), recognition timing (~+$28K). Response B identifies cancelled orders ($360K) and fully refunded orders ($189K) with additional refunds (~$50K). Response A's breakdown is more detailed and includes the date boundary issue. Both reconcile the gap adequately.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A explicitly identifies and fixes: infinite loop risk (adds max_iterations=10), read-only DB connection (mode=ro), query logging. Provides agent_fixed.py with these changes. Response B does NOT address the infinite loop risk, read-only connection, or any safety hardening. This is a critical gap in Response B - the rubric explicitly requires catching and fixing the write-access vulnerability.",
+    "score_A": 9,
+    "score_B": 2
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A delivers data_dictionary.md defining revenue (revenue_recognized.net_amount by period, excludes cancellations/refunds) with correct date filtering and warning on daily_kpis. Response B mentions the need for documentation but does not deliver an actual data dictionary file. Response A provides a real, deployable artifact.",
+    "score_A": 9,
+    "score_B": 3
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A delivers evals/golden.jsonl with 20 test cases including Q2 incident, plus run_eval.py script. Response B does not deliver a golden test set or evaluation script. Response A provides actual test infrastructure; Response B does not.",
+    "score_A": 9,
+    "score_B": 0
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A: EXECUTIVE_SUMMARY.md opens with 'Model is NOT hallucinating. Don't switch models yet.' Gives $3.6M number and prioritized next steps. Response B: executive_summary.md also opens with clear answer and gives correct number. Both are exec-ready. Response A slightly more structured with visual table.",
+    "score_A": 9,
+    "score_B": 9
+   }
+  ],
+  "analysis": "Response A correctly identifies the root cause ($4.1M vs $3.6M from different tables) and verifies both numbers against the database. It explicitly states the model is not hallucinating and defers model comparison until a golden set exists. The gap is reconciled with detailed breakdowns.\n\nCritically, Response A identifies and fixes three unasked safety gaps: (1) infinite loop risk (no max_iterations), (2) write access on read path (fixes with read-only connection), and (3) no tracing. It delivers agent_fixed.py, config_fixed.py with these fixes. It also delivers a real data_dictionary.md defining metrics and a golden test set (20 cases in evals/golden.jsonl) with run_eval.py.\n\nResponse B also correctly identifies the root cause and answers the model question. It provides good analysis and a decision matrix explaining why not to upgrade. However, it has critical gaps: (1) does NOT identify or fix the infinite loop vulnerability (while True with no max_iterations), (2) does NOT fix the write-access issue on the database connection, (3) does NOT deliver a data dictionary file (only mentions it's needed), (4) does NOT deliver a golden test set or evaluation script. These are not minor omissions\u2014the rubric explicitly weights safety gaps (weight 3) and testing infrastructure (weight 2) heavily.\n\nResponse A delivers 17 files including all required artifacts. Response B delivers 13 files but is missing the safety fixes and testing infrastructure.\n\nOn the core question (is the model hallucinating?), both are correct. But Response A provides a complete, deployable solution with safety hardening and regression testing. Response B provides good analysis but incomplete implementation.",
+  "overall_A": 88,
+  "overall_B": 52,
+  "winner": "A"
+ },
+ "cost_usd": 0.042464,
+ "prompt_chars": 113663,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

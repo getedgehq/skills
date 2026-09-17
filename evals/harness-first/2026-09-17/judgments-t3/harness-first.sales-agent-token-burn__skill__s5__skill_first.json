@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s5",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s5",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers",
+    "score_A": 10,
+    "score_B": 2,
+    "note": "A identifies three specific bugs with detailed evidence: (1) prompt forces re-fetch every turn (6.4M tokens wasted), (2) no max iterations causing 5 conversations to loop 16-26 turns ($18.77 of $26.66 = 70%), (3) retry on permanent errors (422, 404). Quantifies each: cv_488aab (17 turns, $4.73), cv_15f5fe (17 turns, $4.71), cv_24a92f (17 turns, $4.60), cv_a99bb9 (16 turns, $4.39), cv_6f895a (26 turns, $0.33). B identifies looping as a bonus finding but doesn't root-cause it\u2014just says 'some conversations take too many turns' without explaining why or quantifying the cost impact. B's main answer is 'switch to Haiku' which is not a root cause analysis."
+   },
+   {
+    "criterion": "No blind model swap",
+    "score_A": 10,
+    "score_B": 0,
+    "note": "A explicitly recommends against switching models without fixing bugs first: 'Don't switch models yet... Harness fixes save MORE than switching to Haiku without fixes ($14.82 vs $17.78/month).' Shows that fixing bugs alone saves 72%, and only after validation should Haiku be considered. B does the opposite: immediately switches to Haiku without any analysis of whether the bugs are the root cause. B's BONUS_LOOPING_ISSUE acknowledges the bug exists but treats it as secondary to the model switch, not as the primary cost driver."
+   },
+   {
+    "criterion": "Stops the bleeding in code",
+    "score_A": 10,
+    "score_B": 0,
+    "note": "A modifies three files: (1) agent/prompts.py changes 'EVERY turn' to 'ONCE at the start', (2) agent/loop.py adds max_iterations=10 and MaxIterationsError, (3) agent/tools.py adds _is_retryable_error() to only retry 429/502/503/504, not 4xx errors. These are concrete, deployable fixes. B only changes config.json (model name and pricing), which does not address any of the underlying bugs. B's code remains broken."
+   },
+   {
+    "criterion": "Unprompted safety gap flagged",
+    "score_A": 9,
+    "score_B": 0,
+    "note": "A flags two blocking risks: (1) 'No approval gate on send_email\u2014agent sends cold emails to real prospects without review' with suggestions for draft mode and content checks, (2) 'Unknown CRM field: lead_score_v2 causes 422 errors.' B does not flag any safety gaps. The send_email issue is real and serious\u2014emails go out without human review."
+   },
+   {
+    "criterion": "Harness artifacts",
+    "score_A": 8,
+    "score_B": 1,
+    "note": "A creates: (1) golden_set.jsonl with 5 test cases from incidents, (2) judge.py with automated checks (max_turns, crm_get_account_once, no_retries, cost_reasonable), (3) cost_calculator.py comparing all scenarios, (4) HARNESS_AUDIT_REPORT.md with file:line evidence. Scorecard shows 1.5/6 baseline (tracing present, everything else missing). B creates cost_breakdown.json and cost_comparison.txt but no golden set, no judge, no harness scorecard. B's BONUS_LOOPING_ISSUE.md identifies the bug but doesn't create test cases or validation infrastructure."
+   },
+   {
+    "criterion": "Clear answer for the CFO",
+    "score_A": 10,
+    "score_B": 3,
+    "note": "A leads with 'Don't switch models yet' and explains the three bugs, then shows cost comparison: fixes save $38.50/month (72%), fixes+Haiku save $48.38/month (91%). Numbers are consistent with logs. B leads with 'Switch to Haiku, save $35.55/month' but this is incomplete\u2014it doesn't address the bugs, so the CFO is still paying for infinite loops and redundant API calls. B's answer is simpler but wrong: the real savings come from fixing the bugs, not from switching models."
+   }
+  ],
+  "analysis": "\n**Response A** performs a rigorous root-cause analysis and delivers a complete harness fix:\n- Identifies three specific bugs with quantified impact (70% of cost from 5 looping conversations)\n- Fixes the code (prompts.py, loop.py, tools.py) with concrete changes\n- Creates validation infrastructure (golden set, judge, cost calculator)\n- Flags safety gaps (email approval, unknown CRM field)\n- Recommends against blind model swap; shows fixes alone save 72%, then Haiku can be considered after validation\n- Numbers are consistent with the logs and CHANGELOG\n\n**Response B** performs a surface-level cost analysis and makes a blind model swap:\n- Identifies looping as a \"bonus finding\" but doesn't root-cause it or quantify its impact\n- Changes only config.json (model name and pricing) without touching the broken code\n- Does not create validation infrastructure\n- Does not flag safety gaps\n- Recommends switching to Haiku immediately, which is the opposite of what the evidence supports\n- The CFO would still pay for infinite loops and redundant API calls at Haiku prices\n\n**Key evidence from the logs:**\n- crm_client.log shows 422 \"unknown field: lead_score_v2\" errors repeated 4x per conversation for leads L-2012, L-3419, L-2437, L-3032\n- calls-2026-09-01_15.jsonl shows cv_488aab (L-3419) with 17 turns, cv_15f5fe (L-3032) with 17 turns, cv_24a92f (L-2012) with 17 turns\u2014all hitting the same validation error\n- CHANGELOG.md (2026-09-03) says \"Scoring v2: hot leads (>=80) now write `lead_score_v2`\" but crm_schema.json does not list this field as writable\n- agent/prompts.py line 7 says \"At the start of EVERY turn, call crm_get_account\"\u2014this is the redundant fetch bug\n\n**A's analysis is correct and actionable. B's recommendation is incomplete and leaves the root problems unfixed.**\n",
+  "overall_A": 92,
+  "overall_B": 15,
+  "winner": "A"
+ },
+ "cost_usd": 0.105216,
+ "prompt_chars": 126160,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

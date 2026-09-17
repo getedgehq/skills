@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s3",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify that the bot queried orders.amount ($4.1M) instead of revenue_recognized.net_amount ($3.6M). Response A provides more rigorous verification: it explicitly reproduces both figures from the database ($4,138,212.16 and $3,638,335.79), breaks down the $500K difference into components (cancelled orders ~$368K, refunds ~$329K, boundary effects ~$169K, timing ~$28K), and includes SQL queries in multiple files. Response B also identifies the correct tables and provides the breakdown but with less precision on the component reconciliation. Both verify the numbers exist in the database.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both responses correctly state this is NOT a hallucination and a smarter model is NOT the fix. Response A goes further by explicitly deferring model comparison until a golden set exists, and emphasizes that any model would make the same mistake without a data dictionary. Response B also makes this point clearly but less systematically. Both correctly identify the root cause as incomplete instructions, not model capability.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A provides a detailed breakdown: cancelled Q2 orders (~$368K), refunds (~$329K on Q2 orders), BETWEEN '...06-30' boundary dropping June 30 orders (~$169K), and recognition timing (~$28K). It also notes daily_kpis.revenue is stale (stops 2026-05-19). Response B provides a breakdown by order status (completed $3.27M, cancelled $360K, refunded $190K, partially refunded $319K) but doesn't fully reconcile how these map to the $500K difference or explain the revenue_recognized calculation. Response A's reconciliation is more complete.",
+    "score_A": 9,
+    "score_B": 6
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A identifies and fixes three critical safety gaps: (1) infinite retry loop (while True: with no max iterations), (2) write access to production warehouse (INSERT/UPDATE/DELETE possible), (3) zero tracing. It provides agent-v2.py with read-only mode (mode=ro URI), max 10 iterations, and query logging. Response B does not identify or address any of these safety issues. This is a significant gap in Response B.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A provides data-dictionary.md defining revenue (revenue_recognized.net_amount by period, excludes cancellations/refunds) separately from gross bookings, with correct date filtering and warnings on daily_kpis. Response B provides prompt_FIXED.md which adds business context to the prompt but is less formal as a data dictionary. Response A's data-dictionary.md is more comprehensive and reusable.",
+    "score_A": 9,
+    "score_B": 6
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A provides golden-set.jsonl with 19 test cases including Q2 2026 revenue with expected value $3,638,335.79, plus judge.py to run them. Response B does not provide a golden set or automated test infrastructure. Response A is significantly stronger here.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A opens with a one-line answer ('Don't switch models: the bot queried the wrong table'), provides the correct number ($3.6M), and includes prioritized next steps. Response B also provides a clear one-liner and the correct number. Both are exec-ready, though Response A's structure is slightly more polished.",
+    "score_A": 9,
+    "score_B": 8
+   }
+  ],
+  "analysis": "\n**Response A** delivers a comprehensive, production-ready investigation with:\n- Rigorous root cause analysis with detailed component reconciliation\n- Three critical safety gaps identified and fixed (infinite loops, write access, no tracing)\n- Complete harness built: 19-case golden set + automated judge + data dictionary\n- agent-v2.py with read-only DB, iteration limits, and logging\n- One-click deployment script (deploy-hotfix.sh)\n- 14 files totaling ~120 KB of documentation and code\n\n**Response B** delivers a clear, well-organized analysis with:\n- Correct identification of the root cause (wrong table)\n- Clear explanation of why it's not a model issue\n- Good documentation (ONE_PAGER, EXECUTIVE_SUMMARY, FINDINGS, TECHNICAL_ANALYSIS)\n- Fixed prompt (prompt_FIXED.md)\n- Verification script\n- 12 files with good visual formatting\n\n**Key differences:**\n\n1. **Safety gaps**: Response A identifies and fixes three critical production risks (infinite loops, write access, no tracing). Response B does not address these at all. This is a major gap\u2014the agent could corrupt the production warehouse or burn unlimited tokens.\n\n2. **Testing infrastructure**: Response A provides a golden set (19 test cases) + automated judge. Response B provides no test infrastructure. This means Response A can prevent regressions; Response B cannot.\n\n3. **Reconciliation depth**: Response A breaks down the $500K difference into specific components (cancelled orders, refunds, boundary effects, timing). Response B provides order status breakdown but doesn't fully reconcile to the $500K gap.\n\n4. **Deployment readiness**: Response A includes deploy-hotfix.sh (one-click deployment) and agent-v2.py (hardened agent). Response B provides only the fixed prompt.\n\n5. **Data dictionary**: Response A provides a formal, reusable data-dictionary.md. Response B embeds guidance in the prompt.\n\n**Rubric scoring:**\n- Criterion 1 (root cause): Both correct, A slightly more rigorous\n- Criterion 2 (model question): Both correct, A more systematic\n- Criterion 3 (reconciliation): A provides detailed breakdown, B provides partial breakdown\n- Criterion 4 (safety gaps): A fixes 3 critical gaps, B addresses 0\n- Criterion 5 (data dictionary): A provides formal dictionary, B provides prompt guidance\n- Criterion 6 (golden questions): A provides 19 cases + judge, B provides 0\n- Criterion 7 (exec-ready): Both good, A slightly more polished\n\nResponse A is substantially stronger on the rubric's weighted criteria, particularly on the high-weight items (safety gaps, testing infrastructure, reconciliation).\n",
+  "overall_A": 82,
+  "overall_B": 58,
+  "winner": "A"
+ },
+ "cost_usd": 0.0455,
+ "prompt_chars": 114027,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

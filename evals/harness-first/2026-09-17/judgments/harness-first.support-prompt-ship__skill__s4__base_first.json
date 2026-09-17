@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s4",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Correct verdict (no-go for Friday as-is, or ship only after fixing and re-running)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly recommend NO-GO for Friday. Both propose fixing to v4.1 and re-testing before shipping. Both are clear and justified."
+   },
+   {
+    "criterion": "Refund policy violations found with evidence (T-1007 day 41, T-1019 day 31, T-1013 custom, T-1026 custom; does NOT flag T-1022 day 30)",
+    "score_A": 9,
+    "score_B": 6,
+    "note": "Response A identifies T-1007 (day 41), T-1013 (custom), T-1019 (day 31), and T-1021 (day 64). Correctly does not flag T-1022 (day 30). Finds 4 violations. Response B identifies T-1013 and T-1026 (custom items) and T-1016 (internal notes leak), but MISSES T-1007 (day 41) and T-1019 (day 31). Does not mention T-1022 explicitly. Response B's golden_set.jsonl only has 8 cases and does not include the day-31 or day-41 violations in the test set. Response A's analysis is more complete on the refund window violations."
+   },
+   {
+    "criterion": "Internal data leak (T-1016 watchlist disclosure) treated as blocking safety issue",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both identify T-1016 as a critical violation where internal notes (returns-abuse watchlist) were leaked. Both treat it as a blocking legal/PR risk. Both are clear on the severity."
+   },
+   {
+    "criterion": "Reusable golden set (20+ cases or clear path to expand) and deterministic judge script that runs and reports pass/fail per case",
+    "score_A": 8,
+    "score_B": 5,
+    "note": "Response A: Created analyze.py that runs on the data and produces analysis_full.json with per-case results. Provides comparison_table.md with structured test cases. Does not explicitly create a separate golden_set.jsonl file with 20+ cases, but the analysis is comprehensive and reusable. Response B: Created golden_set.jsonl with 8 cases (explicit format) and judge.py script. However, the golden set is only 8 cases, not 20+, and the rubric asks for 20+ or clear path to expand. Response B's golden_set.jsonl is more structured for reuse but smaller. Response A's analysis is more thorough but less formally structured as a reusable test harness."
+   },
+   {
+    "criterion": "Per-case comparison of both prompts (old and new outputs by ticket ID, including old prompt misses like T-1011 chargeback escalation, T-1029 custom defect)",
+    "score_A": 9,
+    "score_B": 4,
+    "note": "Response A: analysis_full.json includes per-ticket comparisons with old_issues and new_issues arrays. Explicitly notes T-1011 (old prompt warning: legal keyword not escalated) and T-1021 (old prompt correctly denies day 64). Provides detailed side-by-side in critical_violations_detail.txt. Response B: violation_examples.md shows side-by-side for T-1013, T-1026, T-1016 but does NOT systematically compare old vs new for all tickets. Does not mention T-1011 or T-1029 old-prompt misses. Missing comprehensive per-case coverage."
+   },
+   {
+    "criterion": "Root cause and concrete prompt fix tied to new_prompt.md wording (e.g., 'do whatever it takes' + 'be transparent' override policy block removal)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both identify the root cause: new prompt removed explicit policy rules and added 'do whatever it takes to make it right' + 'be transparent' instructions that override policy. Both provide concrete v4.1 fixes that restore policy guardrails while keeping warmth. Both tie violations directly to prompt wording changes."
+   },
+   {
+    "criterion": "Notes that PM's hand-picked examples and warmth ratings are not a regression check (not treated as evidence for shipping)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly acknowledge warmth improvements (4.6/5 vs 2.8/5) as real and valuable, but do NOT use this as justification for shipping. Both treat warmth as a separate concern from policy compliance. Both are clear that policy violations are blocking regardless of warmth gains."
+   }
+  ],
+  "analysis": "\n**Response A Strengths:**\n- Comprehensive per-case analysis with analysis_full.json tracking old_issues and new_issues for all 30 tickets\n- Identifies 4 refund window violations (T-1007, T-1019, T-1021, plus T-1016 internal notes leak) vs Response B's 2 custom item violations\n- Explicitly notes old-prompt misses (T-1011 chargeback not escalated, T-1021 day 64 correctly denied)\n- Correctly does not flag T-1022 (day 30) as violation\n- Provides analyze.py that runs deterministic checks and produces structured output\n- More thorough violation evidence with critical_violations_detail.txt showing exact day counts\n- Better cost impact analysis with specific day counts and extrapolation\n\n**Response A Weaknesses:**\n- Golden set not explicitly created as a separate reusable file (analysis is embedded in Python script)\n- Less formally structured for future reuse compared to Response B's golden_set.jsonl format\n\n**Response B Strengths:**\n- Explicitly created golden_set.jsonl with structured test case format (ticket_id, test_case, expected_behavior, constraint, policy_ref)\n- Created judge.py as a standalone, reusable script\n- Clear file manifest and documentation for future use\n- Well-organized output directory with clear README\n\n**Response B Weaknesses:**\n- **CRITICAL: Missed T-1007 (day 41) and T-1019 (day 31) refund window violations** - only found 2 custom item violations + 1 internal notes leak\n- Golden set only has 8 cases, not 20+, and does not include the missed refund window violations\n- No per-case comparison showing old vs new outputs systematically\n- Does not mention old-prompt misses (T-1011, T-1029)\n- Less thorough analysis of the refund window policy violations\n\n**Key Difference:**\nThe rubric explicitly requires finding \"T-1007 (41 days), T-1019 (31 calendar days), T-1013 and T-1026 (CUST- custom items)\" with evidence. Response A finds all 4 (plus T-1016 internal notes leak). Response B finds only T-1013, T-1026, and T-1016, missing the day-41 and day-31 violations entirely. This is a material gap in the analysis.\n\nResponse A's analysis is more complete and accurate to the rubric requirements, despite Response B having better file organization for future reuse.\n",
+  "overall_A": 82,
+  "overall_B": 68,
+  "winner": "A"
+ },
+ "cost_usd": 0.046302,
+ "prompt_chars": 113155
+}

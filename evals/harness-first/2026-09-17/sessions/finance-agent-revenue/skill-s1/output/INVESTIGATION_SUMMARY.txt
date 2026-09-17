@@ -1,0 +1,159 @@
+================================================================================
+FINBOT Q2 REVENUE INVESTIGATION - SUMMARY
+================================================================================
+
+Date: 2026-09-15
+Incident: Board deck reported Q2 revenue as $4.1M (should be $3.6M)
+Question: "Is the model just hallucinating? Do we need a smarter model?"
+
+================================================================================
+ONE-LINE ANSWER FOR DANIEL
+================================================================================
+
+NO, don't swap the model. The bot used the wrong database table because 
+"revenue" wasn't defined in the prompt. Fix takes 15 minutes to deploy.
+
+================================================================================
+ROOT CAUSE (with evidence)
+================================================================================
+
+The model is NOT hallucinating. It faithfully queried the database and 
+returned the correct sum. The problem is ambiguous data:
+
+  What FinBot reported:  orders.amount = $4,138,212 (gross bookings)
+  What Finance reports:  revenue_recognized.net_amount = $3,638,336 (GAAP)
+  Difference: $499,876 (12.1%)
+
+Why they differ:
+- orders.amount = gross bookings (all order amounts when placed)
+- revenue_recognized.net_amount = GAAP revenue (after refunds, timing)
+- The prompt lists both tables but doesn't define "revenue"
+- The model made a reasonable guess — it was just wrong
+
+Evidence:
+✓ Recomputed both numbers from warehouse.db (see data_verification.txt)
+✓ Bot's exact SQL query in Slack transcript
+✓ No data dictionary in prompt.md
+
+================================================================================
+HARNESS SCORECARD: 9/60 POINTS
+================================================================================
+
+Component          Status      Score   Why
+-----------        ------      -----   ---
+Golden set         ❌ Missing   0/10   No test cases, no regression testing
+Judge              ❌ Missing   0/10   No automated validation
+Cost governance    🟡 Partial   4/10   Has MAX_ROWS, missing max iterations
+Data layer         ❌ Missing   0/10   No data dictionary, allows writes
+Action safety      🟡 Partial   5/10   Read-only intent, can write in practice
+Tracing            ❌ Missing   0/10   No logging of queries/costs/errors
+
+TOTAL: 9/60 (15%)
+
+This is a hackathon project that went to production without a harness.
+
+================================================================================
+WHAT WE FIXED (ready to deploy)
+================================================================================
+
+Created 11 files in output/:
+
+IMMEDIATE FIXES (deploy today, 15 minutes):
+  1. prompt_PATCHED.md     - Adds data dictionary defining "revenue"
+  2. agent_safe.py         - Max iterations + read-only DB
+
+TESTING INFRASTRUCTURE (add to CI this week, 2 hours):
+  3. evals/golden.jsonl    - 12 test cases including this incident
+  4. evals/judge.py        - Automated test runner
+
+DOCUMENTATION (review with Finance, 1 hour):
+  5. data_dictionary.md    - Canonical definitions for all metrics
+
+INVESTIGATION RECORDS:
+  6. EXECUTIVE_SUMMARY.md  - One-page summary for Daniel
+  7. ACTION_ITEMS.md       - Prioritized to-do list with owners
+  8. BOARD_DECK_CORRECTIONS.md - Correct Q1/Q2 numbers for Priya
+  9. data_verification.txt - Evidence of the $4.1M vs $3.6M mechanism
+  10. harness_audit.md     - Detailed 6-component analysis
+  11. INVESTIGATION_LOG.md - Full investigation timeline
+
+================================================================================
+BLOCKING RISKS (fix today)
+================================================================================
+
+1. 🔥 Data layer missing: "Revenue" will remain ambiguous without fix
+2. 🔥 Action safety: Tool can write to warehouse (data corruption risk)
+3. 🔥 No max iterations: Unbounded loop could cause runaway costs
+
+================================================================================
+MODEL SWAP DECISION: NO (not yet)
+================================================================================
+
+Should we upgrade to Opus or GPT-6?
+→ No. Fix the harness first.
+
+Why:
+- Current issue is data ambiguity (harness problem), not model capability
+- A smarter model would still have to guess (data is ambiguous)
+- Cost: Opus/GPT-6 are 3-5x more expensive per query
+- Benefit without data dictionary: Zero
+
+Decision framework:
+1. Deploy data dictionary (defines "revenue")
+2. Run golden set on current model (Sonnet)
+3. If Sonnet passes all tests → DONE
+4. If Sonnet fails → Try Opus/GPT-6 and compare cost/quality
+
+Expected outcome: With data dictionary, Sonnet will pass. No upgrade needed.
+
+================================================================================
+DEPLOYMENT PRIORITY
+================================================================================
+
+TODAY (15 minutes):
+  □ Replace prompt.md with prompt_PATCHED.md
+  □ Replace agent.py with agent_safe.py
+  □ Update board deck: Q2 = $3.6M, Q1 = $3.3M
+
+THIS WEEK (5 hours):
+  □ Copy evals/ to repo and add to CI
+  □ Finance reviews data_dictionary.md
+  □ Add logging/tracing
+
+NEXT WEEK (7 hours):
+  □ Audit Slack history for other wrong answers
+  □ Build cost/quality dashboard
+
+================================================================================
+KEY TAKEAWAYS
+================================================================================
+
+1. The model is NOT the problem. It worked correctly.
+2. The harness is missing. That's the problem.
+3. Fix: Add data dictionary (15 min), prevents recurrence
+4. Don't swap models without fixing data layer first
+5. Golden set + CI prevents this from happening again
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. Daniel: Read EXECUTIVE_SUMMARY.md
+2. Priya: Update board deck per BOARD_DECK_CORRECTIONS.md
+3. Jonas: Deploy fixes per ACTION_ITEMS.md
+4. Marta: Review data_dictionary.md
+5. Team: Meet to discuss prevention strategies
+
+================================================================================
+QUESTIONS?
+================================================================================
+
+"Do we need a better model?"      → No, fix the harness first
+"What do I deploy?"                → See ACTION_ITEMS.md
+"What are the correct numbers?"    → Q2=$3.6M, Q1=$3.3M (see BOARD_DECK_CORRECTIONS.md)
+"How did this happen?"             → See harness_audit.md
+"What's the evidence?"             → See data_verification.txt
+
+================================================================================
+FILES DELIVERED: 11 files, 2,314 lines, ready to deploy
+================================================================================

@@ -1,0 +1,55 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s1",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "A: Identifies the 4x spike and mentions token bloat from repeated CRM exports, but does NOT identify the retry-loop mechanism on 422 errors. Blames the prompt's 'EVERY turn' fetch and token growth, but misses the core bug: infinite loop + deterministic 422 retry. Does not name the 4 specific conversations (cv_488aab, cv_15f5fe, cv_24a92f, cv_a99bb9) or quantify their individual costs ($4.73, $4.71, $4.60, $4.39). Quantifies total: ~70% of $26.66 = $18.4-18.7, but attributes it to token bloat, not retry loops. B: Correctly identifies all 3 bugs (infinite while True, 'try it again' prompt, retries 422 errors). Names 4 conversations with exact costs ($4.73, $4.71, $4.60, $4.39). Explains the mechanism: 422 'unknown field: lead_score_v2' \u2192 retry 64 times \u2192 token burn from 1,949 to 144,792 per call. Quantifies: 70% of costs ($18.77 of $26.66) from 5 conversations in retry loops. Correctly identifies lead_score_v2 not in crm_schema.json. Does not blame cv_6f895a (26 turns but only $0.33).",
+    "score_A": 4,
+    "score_B": 9
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "A: Recommends unconditional switch to Haiku: 'Switch to Claude Haiku 4.5 \u2192 save $35/month (67%)' and 'SOLUTION: SWITCH TO HAIKU 4.5'. Does not identify the retry-loop bug as the root cause, so the recommendation is to swap models on incomplete evidence. Priya's sheet is consulted but the actual problem (infinite loops) is not fixed first. B: Explicitly rejects blind model swap: 'DON'T switch models yet' and 'WRONG: Switch to gpt-5-mini to save money'. Recommends fixing harness first, then switching to Haiku after golden-set eval. Provides phased approach: Phase 1 (fix loops), Phase 2 (golden set), Phase 3 (Haiku switch with eval). Does not recommend unconditional model change.",
+    "score_A": 2,
+    "score_B": 9
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "A: Does not provide code changes. Only provides updated_config.json (model name and prices). No changes to agent/loop.py, agent/prompts.py, or agent/tools.py. Does not add MAX_TURNS, does not fix the prompt, does not stop retrying 422 errors. B: Provides fixed code in output/fixed_agent_code/: loop.py (adds MAX_TURNS=6 circuit breaker), prompts.py (removes 'try it again', fixes field name lead_score_v2\u2192lead_score, removes 'EVERY turn'), tools.py (stops retrying 4xx errors, keeps 5xx/429 retries). Includes concrete implementation with comments explaining changes. Provides deployment instructions.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "A: Does not mention send_email firing without approval or draft mode. No safety gate flagged. B: Flags send_email firing real emails from reps' mailboxes with no approval/draft step. Adds EMAIL_DRAFT_MODE option in fixed tools.py. Mentions in EXECUTIVE_SUMMARY and README.",
+    "score_A": 0,
+    "score_B": 8
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "A: No golden set, no judge, no harness scorecard. Provides cost breakdown CSV but no evaluation framework. B: Provides golden_starter.jsonl (3 starter cases, instructions to expand to 20+), run_eval.py (judge script), CHECKLIST.md with golden set expansion instructions, harness scorecard in cost_analysis.md showing before/after status (golden set \u274c, judge \u274c, cost governance \u274c, etc.). Incomplete (only 3 cases, not 10+) but framework is present.",
+    "score_A": 0,
+    "score_B": 6
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "A: Leads with 'Switch to Claude Haiku 4.5 \u2192 save $35/month (67%)'. Numbers are consistent with logs ($26.66 Sept 1-15, projected $53.33/month). But the answer is incomplete: doesn't explain the root cause (retry loops), so the CFO doesn't understand why the spike happened or why the fix is safe. B: Leads with 'DON'T switch models yet. Fix the harness, save $450/year, THEN switch to Haiku.' Provides root cause (retry loops on 422 errors), evidence (4 conversations named with costs), and phased plan. Numbers: $26.66 current \u2192 $16 after fixes \u2192 $5 after Haiku = $577/year savings. More complete answer.",
+    "score_A": 6,
+    "score_B": 9
+   }
+  ],
+  "analysis": "\n**Response A** provides a clean, actionable recommendation to switch to Haiku with clear cost savings ($35/month, 67% reduction). It correctly identifies that token bloat from repeated CRM exports is driving costs and provides ready-to-deploy config. However, it **misses the core root cause**: the infinite retry loop on deterministic 422 validation errors. The analysis attributes the 70% cost spike to \"token bloat\" from the 'EVERY turn' CRM fetch, but does not identify that 4 conversations are stuck in retry loops making the same failing API call 16+ times. Critically, it recommends an unconditional model switch without fixing the underlying harness bugs, which means the retry loops would continue (just at cheaper token prices). It provides no code fixes, no golden set, no evaluation framework, and no safety gates for email sending.\n\n**Response B** correctly identifies all three bugs: (1) infinite `while True` loop with no max iterations, (2) prompt instruction \"try it again\" on errors, (3) code that retries deterministic 422 validation errors. It names 4 specific conversations (cv_488aab, cv_15f5fe, cv_24a92f, cv_a99bb9) with exact costs ($4.73, $4.71, $4.60, $4.39) and explains the mechanism: 422 \"unknown field: lead_score_v2\" \u2192 retry 64 times \u2192 token burn from 1,949 to 144,792 per call. It quantifies the waste: 70% of costs ($18.77 of $26.66) from 5 conversations in retry loops. Crucially, it **rejects the blind model swap** and recommends a phased approach: Phase 1 (fix loops, save $450/year), Phase 2 (golden set), Phase 3 (Haiku switch with eval, save additional $127/year). It provides actual code fixes (MAX_TURNS circuit breaker, prompt fixes, stop retrying 4xx), a golden set starter, an eval harness, and flags the email safety gap. The answer is more complete and safer.\n\n**Key differences:**\n- A: Identifies token bloat, recommends model swap \u2192 incomplete diagnosis, risky recommendation\n- B: Identifies retry loops, recommends harness fix first, then model swap \u2192 complete diagnosis, safe phased approach\n- A: No code changes, no eval framework, no safety gates\n- B: Provides fixed code, eval harness, safety gates, phased deployment plan\n\n**Rubric alignment:**\n- Root cause (weight 3): A=4 (partial, misses retry loop), B=9 (complete with mechanism and numbers)\n- No blind swap (weight 3): A=2 (recommends unconditional switch), B=9 (rejects blind swap, phased approach)\n- Code fixes (weight 3): A=0 (config only), B=10 (loop.py, prompts.py, tools.py with circuit breaker)\n- Safety flag (weight 2): A=0 (no mention), B=8 (flags email, adds draft mode)\n- Harness (weight 2): A=0 (no framework), B=6 (starter golden set, eval script, scorecard)\n- CFO answer (weight 1): A=6 (clear but incomplete), B=9 (complete with root cause and phased plan)\n\n**Overall:** B is significantly stronger on the critical dimensions (root cause, avoiding blind model swap, providing code fixes). A is cleaner and faster to read, but fundamentally misses the problem and recommends an unsafe action.\n",
+  "overall_A": 28,
+  "overall_B": 82,
+  "winner": "B"
+ },
+ "cost_usd": 0.057308,
+ "prompt_chars": 127895
+}

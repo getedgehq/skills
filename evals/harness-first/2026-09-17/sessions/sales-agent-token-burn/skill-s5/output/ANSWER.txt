@@ -1,0 +1,174 @@
+================================================================================
+SHORT ANSWER: DON'T SWITCH MODELS YET
+================================================================================
+
+Finance is right to be concerned—you're on track for $53/month vs. the ~$13 
+you spent in August. But the problem isn't Sonnet being "overkill."
+
+Three BUGS caused the spike:
+1. Prompt forces redundant API calls every turn (wasted 6.4M tokens)
+2. No max iterations → 5 conversations looped 16-26 turns (70% of cost)
+3. Retry logic retries permanent errors (404, 422) instead of failing fast
+
+I FIXED THEM. The fixes are in agent/ (prompts.py, loop.py, tools.py).
+
+PROJECTED SAVINGS:
+- Deploy fixes (keep Sonnet): $14.82/month (72% savings)
+- Deploy fixes + switch to Haiku: $4.94/month (91% savings)
+- Just switching to Haiku without fixes: $17.78/month (still 3.6x too high)
+
+RECOMMENDATION: Deploy the fixes this week, validate quality with judge.py, 
+THEN consider Haiku if you want the extra savings. But fix the harness first.
+
+================================================================================
+DETAILS
+================================================================================
+
+WHAT I FOUND (Sept 1-15 traces):
+• 46 conversations, 245 model calls, $26.66 total
+• 5 conversations (11%) burned $18.77 (70% of cost) in infinite loops
+• Average conversation: 5.3 turns (should be 3-4)
+• Token growth: Turn 1 = 1.9K, Turn 15 = 146K (exponential)
+• Retry patterns in 39 of 46 conversations
+
+ROOT CAUSES (with evidence):
+
+1. Prompt Bug (agent/prompts.py:7)
+   "At the start of EVERY turn, call crm_get_account..."
+   → Re-fetches 30-40KB account on EVERY turn even though data never changes
+   → Wasted ~6.4M input tokens
+   ✅ FIXED: Changed to "Call crm_get_account ONCE at the start"
+
+2. No Iteration Limit (agent/loop.py:20)
+   while True:  # infinite loop, no exit condition
+   → 5 conversations hit CRM errors and looped 16-26 turns trying to fix them
+   → cv_488aab (L-3419): 17 turns, $4.73
+   → cv_15f5fe (L-3032): 17 turns, $4.71
+   → cv_24a92f (L-2012): 17 turns, $4.60 (422 "unknown field: lead_score_v2")
+   ✅ FIXED: Added max_iterations=10 parameter
+
+3. Retry on Permanent Errors (agent/tools.py:with_retries)
+   Retries ALL errors 4x including:
+   - 422 Unprocessable Entity (validation error—will never succeed)
+   - 404 "account_merged" (account deleted—will never succeed)
+   → Wasted ~780K tokens on hopeless retries
+   ✅ FIXED: Only retry transient errors (429, 502, 503, 504)
+
+COST COMPARISON:
+
+Option                           Sept 1-15    Monthly     Savings
+─────────────────────────────────────────────────────────────────
+Current (Sonnet, bugs)             $26.66     $53.32     baseline
+Switch to Haiku (no fixes)          $8.89     $17.78         67%
+Fix harness (keep Sonnet)           $7.41     $14.82         72%  ← RECOMMENDED
+Fix harness + Haiku                 $2.47      $4.94         91%  ← After validation
+
+KEY INSIGHT: Harness fixes save MORE than switching models without fixes.
+
+================================================================================
+WHAT I DELIVERED
+================================================================================
+
+CODE FIXES (ready to deploy):
+✅ agent/prompts.py    - Remove "every turn" instruction  
+✅ agent/loop.py       - Add max_iterations=10
+✅ agent/tools.py      - Only retry transient errors
+
+HARNESS COMPONENTS:
+✅ output/golden_set.jsonl              - 5 test cases from incidents
+✅ output/judge.py                      - Automated quality checks
+✅ output/cost_calculator.py            - Compare all options
+✅ output/HARNESS_AUDIT_REPORT.md       - Full analysis (11 pages)
+✅ output/EXECUTIVE_SUMMARY.md          - One-page overview
+
+CURRENT BASELINE (judge.py on Sept 1-15 traces):
+❌ Max turns (<=10):           89.1% pass
+❌ crm_get_account once:       15.2% pass  ← THE BUG
+❌ No retry patterns:          15.2% pass  ← THE BUG
+✅ Cost reasonable (<$0.50):   91.3% pass
+
+After fixes, expect >90% pass rate on all checks.
+
+================================================================================
+ACTION ITEMS
+================================================================================
+
+THIS WEEK (before month-end):
+1. Deploy the 3 fixed files from agent/
+2. Test on 2-3 leads to verify behavior
+3. Roll out to production
+4. Check with CRM admin: does lead_score_v2 field exist?
+   (It's causing 422 errors in 4 of the 5 expensive loops)
+
+NEXT WEEK:
+5. Run judge.py on new traces to validate fixes worked
+6. Add per-conversation cost cap (stop if >$0.50)
+
+AFTER VALIDATION (if you want Haiku):
+7. Run golden_set.jsonl on both Sonnet and Haiku
+8. Compare email quality and scoring accuracy
+9. A/B test with 20% traffic for 2 weeks
+10. Monitor email response rates before full switch
+
+================================================================================
+ABOUT HAIKU
+================================================================================
+
+Haiku DOES make sense for cold emails (after fixing the bugs):
+• Cold email generation is not reasoning-heavy
+• Same Anthropic API, zero SDK changes
+• Additional 67% savings on top of fixes
+
+BUT validate quality first:
+• Run golden set on both models
+• Check: email tone, <120 word limit, score accuracy
+• A/B test in prod before full switch
+
+Don't switch without eval evidence. But yes, Haiku is the right model
+AFTER you fix the harness.
+
+================================================================================
+BLOCKING RISKS
+================================================================================
+
+⚠️  No approval gate on send_email
+   → Agent sends cold emails to prospects without human review
+   → If prompt/model produces bad content, it goes out immediately
+   → Consider: draft mode, content checks, rate limits
+
+⚠️  Unknown CRM field: lead_score_v2
+   → Prompt says use it for scores >=80, but CRM returns 422 "unknown field"
+   → This caused 4 of the 5 expensive retry loops
+   → Check: was this field removed? Is prompt out of date?
+
+================================================================================
+FILES TO READ
+================================================================================
+
+START HERE:
+• output/EXECUTIVE_SUMMARY.md  (5 min, one-pager)
+• output/README.md              (2 min, directory guide)
+
+THEN:
+• output/HARNESS_AUDIT_REPORT.md  (detailed analysis with evidence)
+
+RUN THESE:
+• output/cost_calculator.py       (see the numbers)
+• output/judge.py                 (validate after deploying fixes)
+
+DEPLOY THESE:
+• agent/prompts.py    (fixed)
+• agent/loop.py       (fixed)  
+• agent/tools.py      (fixed)
+
+================================================================================
+QUESTIONS?
+================================================================================
+
+Run cost_calculator.py or judge.py, or read HARNESS_AUDIT_REPORT.md for 
+file:line citations and log evidence.
+
+After deploying fixes, run judge.py on new traces to verify the issues are 
+resolved.
+
+— Harness-First Analysis, 2026-09-16

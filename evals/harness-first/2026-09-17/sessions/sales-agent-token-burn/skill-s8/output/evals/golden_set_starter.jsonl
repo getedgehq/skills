@@ -1,0 +1,86 @@
+# Golden Set Starter - Outreach Agent Test Cases
+
+This file contains test cases extracted from Sept 1-15 logs, including both successes and failures.
+
+## Format
+Each line is a JSON object with:
+- `case_id`: unique identifier
+- `lead_id`: CRM lead ID (for reproducibility)
+- `source`: where this case came from
+- `input`: what the agent receives
+- `expected`: constraints the output must satisfy
+- `checks`: deterministic checks to run
+
+## Test Cases
+
+### Normal Flow Cases
+
+{"case_id": "normal_001", "lead_id": "L-4402", "source": "logs Sept 4", "input": {"lead_id": "L-4402", "account_id": "acc_9821", "contact_email": "manager@claystudio.example", "company_name": "Clay Studio Portland", "kiln_count": 2, "employees": 5}, "expected": {"score_range": [60, 80], "email_sent": true, "email_max_words": 120, "crm_field": "lead_score"}, "checks": ["score is int", "score >= 0 and score <= 100", "if score >= 50 then email_sent", "if email_sent then email has subject and body", "crm_update called with lead_score field"]}
+
+{"case_id": "normal_002", "lead_id": "L-4420", "source": "logs Sept 3", "input": {"lead_id": "L-4420", "account_id": "acc_5102", "contact_email": "owner@artfire.example", "company_name": "ArtFire Ceramics", "kiln_count": 4, "employees": 12, "recent_activity": "visited website 3x this month"}, "expected": {"score_range": [70, 90], "email_sent": true, "email_max_words": 120, "crm_field": "lead_score"}, "checks": ["score is int", "email word count <= 120", "email mentions kilns or ceramics", "email is signed with rep name"]}
+
+{"case_id": "low_score_001", "lead_id": "L-8821", "source": "synthetic - edge case", "input": {"lead_id": "L-8821", "account_id": "acc_1029", "contact_email": "info@hobbypots.example", "company_name": "Hobby Pots", "kiln_count": 0, "employees": 1, "recent_activity": "none"}, "expected": {"score_range": [0, 40], "email_sent": false, "crm_field": "lead_score"}, "checks": ["score is int", "score < 50", "email_sent is false", "crm_update called"]}
+
+{"case_id": "high_score_001", "lead_id": "L-9123", "source": "synthetic - edge case", "input": {"lead_id": "L-9123", "account_id": "acc_3344", "contact_email": "ceo@industrialceramics.example", "company_name": "Industrial Ceramics Inc", "kiln_count": 15, "employees": 45, "recent_activity": "requested demo last week"}, "expected": {"score_range": [85, 100], "email_sent": true, "email_max_words": 120, "crm_field": "lead_score"}, "checks": ["score >= 80", "email_sent is true", "email is professional", "email mentions recent demo request"]}
+
+### Failure Cases (from Sept 1-15 logs)
+
+{"case_id": "fail_validation_001", "lead_id": "L-2012", "source": "logs Sept 6 - caused $4.60 in costs", "input": {"lead_id": "L-2012", "account_id": "acc_7071", "contact_email": "director@potterybarn.example", "company_name": "Pottery Barn Studios", "kiln_count": 8, "employees": 22}, "expected": {"score_range": [80, 95], "email_sent": true, "crm_field": "lead_score", "error_handling": "if CRM returns 422 validation error, stop after 3 retries, do not loop forever"}, "checks": ["conversation turns <= 10", "conversation cost <= $1.00", "does not retry 422 errors more than 3 times", "if CRM field doesn't exist, fails gracefully"]}
+
+{"case_id": "fail_merged_account_001", "lead_id": "L-3489", "source": "logs Sept 4 - caused $0.33 in costs, 26 turns", "input": {"lead_id": "L-3489", "account_id": "acc_4242", "contact_email": "contact@oldaccount.example", "company_name": "Merged Account (defunct)", "crm_status": "account_merged"}, "expected": {"error_handling": "if CRM returns 404 account_merged, stop after 3 retries", "email_sent": false}, "checks": ["conversation turns <= 10", "does not retry 404 account_merged errors forever", "returns error message for manual review"]}
+
+### Edge Cases
+
+{"case_id": "edge_no_email_001", "lead_id": "L-TEST-NO-EMAIL", "source": "synthetic", "input": {"lead_id": "L-TEST-NO-EMAIL", "account_id": "acc_9999", "contact_email": "", "company_name": "No Email Corp", "kiln_count": 3, "employees": 8}, "expected": {"score_range": [50, 80], "email_sent": false, "error_handling": "gracefully handle missing email"}, "checks": ["does not crash on missing email", "crm_update still succeeds"]}
+
+{"case_id": "edge_rate_limit_001", "lead_id": "L-TEST-RATE-LIMIT", "source": "synthetic", "input": {"lead_id": "L-TEST-RATE-LIMIT", "account_id": "acc_9998", "contact_email": "test@example.com", "company_name": "Rate Limit Test", "kiln_count": 2, "employees": 5, "crm_behavior": "return 429 on first 2 calls"}, "expected": {"error_handling": "retry 429 errors with backoff", "eventually_succeeds": true}, "checks": ["retries 429 errors", "conversation eventually completes", "conversation cost <= $1.00"]}
+
+### Policy Compliance Cases
+
+{"case_id": "policy_word_limit_001", "lead_id": "L-TEST-WORDS", "source": "synthetic", "input": {"lead_id": "L-TEST-WORDS", "account_id": "acc_9997", "contact_email": "test@longform.example", "company_name": "Test Corp", "kiln_count": 5, "employees": 15}, "expected": {"score_range": [70, 90], "email_sent": true, "email_max_words": 120}, "checks": ["email word count <= 120", "email has greeting and signature", "email mentions Brightkiln product"]}
+
+{"case_id": "policy_no_attachments_001", "lead_id": "L-TEST-ATTACH", "source": "synthetic", "input": {"lead_id": "L-TEST-ATTACH", "account_id": "acc_9996", "contact_email": "test@attach.example", "company_name": "Test Corp 2", "kiln_count": 3, "employees": 7}, "expected": {"email_sent": true, "email_has_attachments": false}, "checks": ["email has no attachments field or attachments is empty list"]}
+
+## How to Use This File
+
+1. **For each test case**, run the agent with the given input
+2. **Check deterministic constraints** first (scores, word counts, field names)
+3. **Use LLM judge only for subjective qualities** (tone, relevance)
+4. **Record pass/fail** and actual output for each case
+5. **Before shipping any change**: all cases must pass
+
+## Judge Script (Stub)
+
+```python
+import json
+from agent.loop import run_conversation
+
+def run_golden_set(model_name="claude-sonnet-4-5"):
+    with open("evals/golden_set_starter.jsonl") as f:
+        cases = [json.loads(line) for line in f if line.strip() and not line.startswith("#")]
+    
+    results = []
+    for case in cases:
+        # Run agent
+        output = run_conversation(case["lead_id"], conversation_id=f"eval_{case['case_id']}")
+        
+        # TODO: Parse output and check constraints
+        # TODO: Score against expected
+        
+        results.append({
+            "case_id": case["case_id"],
+            "passed": None,  # TODO: implement checks
+            "output": output
+        })
+    
+    return results
+```
+
+## Next Steps
+
+1. Expand this to 20-30 cases (add more normal cases, edge cases)
+2. Build the judge script with real constraint checking
+3. Run on Sonnet (baseline)
+4. Run on Haiku
+5. Compare quality + cost
+6. If Haiku passes, switch models

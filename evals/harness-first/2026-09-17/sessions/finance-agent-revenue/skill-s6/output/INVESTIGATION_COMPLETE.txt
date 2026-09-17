@@ -1,0 +1,124 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    FINBOT INVESTIGATION COMPLETE                             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Date: 2026-09-16
+For: Daniel Kurz (CEO) - Board meeting tomorrow morning
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ QUESTION ASKED                                                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+"FinBot told board deck team Q2 revenue was 4.1M, finance says 3.6M, and now 
+it's in the pre-read. Is the model just hallucinating? Do we need a smarter 
+model??"
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ ANSWER                                                                       │
+└──────────────────────────────────────────────────────────────────────────────┘
+NO to both.
+
+Not hallucinating: Model queried real data (orders table), got real result 
+($4.1M is mathematically correct for that table).
+
+Don't need smarter model: ANY model would pick wrong table given current prompt 
+(no data dictionary, ambiguous "revenue").
+
+FIX: Add data definitions + validation suite. Problem solved.
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ ROOT CAUSE                                                                   │
+└──────────────────────────────────────────────────────────────────────────────┘
+FinBot queried ORDERS table (operational data, includes cancelled/refunded)
+Finance uses REVENUE_RECOGNIZED table (GAAP accounting, net of refunds)
+
+Difference: $499,876 (13.9% error) = cancelled + refunded orders
+
+Why: Prompt lists tables but doesn't define "revenue" → model guessed wrong
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ CRITICAL FINDINGS                                                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+🔴 Infinite loop - no max iterations (token burn risk)
+🔴 Write permissions - bot can DELETE/UPDATE warehouse (data risk)
+🔴 No logging - can't audit queries or costs (visibility gap)
+🔴 No validation - no test suite to catch errors (quality gap)
+
+These gaps made the error inevitable. FinBot is a prototype that escaped the lab.
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ DELIVERABLES IN output/                                                      │
+└──────────────────────────────────────────────────────────────────────────────┘
+Executive:
+  ✓ MEETING_BRIEF.md         - 5-min read for tomorrow
+  ✓ EXECUTIVE_SUMMARY.md     - One-page answer
+  ✓ SQL_COMPARISON.md        - Visual proof (wrong vs right query)
+
+Investigation:
+  ✓ ROOT_CAUSE_ANALYSIS.md   - Complete forensics
+  ✓ HARNESS_AUDIT.md         - System assessment (6 components)
+
+Action:
+  ✓ ACTION_PLAN.md           - Prioritized fixes with timeline
+  ✓ data_dictionary.md       - Metric definitions (THE FIX)
+  ✓ golden_set.jsonl         - 10 test cases for validation
+  ✓ eval.py                  - Automated test runner
+
+Implementation:
+  ✓ agent_fixed.py           - Reference code with safety fixes
+  ✓ prompt_fixed.md          - Updated prompt with data dictionary
+
+Navigation:
+  ✓ INDEX.md                 - Guide to all files
+  ✓ README.md                - How to use deliverables
+
+Total: 13 files, 2,432 lines
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ IMMEDIATE ACTIONS (TODAY)                                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+1. Correct board deck: Q2 = $3.6M (not $4.1M)
+2. Disable bot until fixes deployed
+3. Start audit of other bot answers since March
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ FIX TIMELINE                                                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+This week (by Fri 2026-09-20):
+  - Deploy 5 blocking fixes (limits, read-only, logging, data dict, validation)
+  - Test with golden set
+  - Re-enable bot
+
+Next sprint:
+  - Expand test suite
+  - Complete historical audit
+  - Add CI checks
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ BOARD MESSAGING                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+"Q2 revenue was $3.6M. An earlier draft cited $4.1M due to an internal data 
+query error—our finance bot queried operational data instead of the GAAP close. 
+We've verified $3.6M is correct and have deployed fixes to prevent similar 
+errors."
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ KEY TAKEAWAY                                                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+This is a HARNESS problem, not a MODEL problem.
+
+Missing: data definitions, validation, safety limits
+Present: capable model, correct math, real data
+
+Fix harness → problem solved. No model upgrade needed.
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  START WITH: output/MEETING_BRIEF.md (5 minutes)                            ║
+║  THEN READ:  output/INDEX.md (guide to all files)                           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Investigation Status: ✅ COMPLETE
+Fixes: Ready for implementation
+Timeline: Blocking fixes by Friday 2026-09-20
+
+Questions: See README.md for contacts
+

@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s4",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "Response A identifies the actual bugs: prompt says 'EVERY turn' for crm_get_account (growing context), 'retry forever' on 422 errors (permanent failures), and no max iterations. Quantifies: 5 stuck conversations (cv_488aab, cv_15f5fe, cv_24a92f, cv_a99bb9, cv_6f895a) = $18.77 of $26.66 (70.4%). Shows token growth pattern (1.9K \u2192 14.6K \u2192 27.4K \u2192 40.2K). Response B does not identify any bugs\u2014it only observes that Sonnet is 'overkill' and recommends switching models without diagnosing the actual problem.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "Response A explicitly refuses to switch models without fixing bugs first: 'Don't switch models yet... Fix the bugs first and you'll save $35/month (67%). Then consider switching to Haiku for another $11/month.' It shows broken Sonnet ($53) vs fixed Sonnet ($18) vs fixed Haiku ($7.50). Response B recommends immediate model switch to Haiku as the primary solution, claiming it will save $35/month. This is a blind swap\u2014it doesn't address the underlying bugs that are causing the cost spike.",
+    "score_A": 10,
+    "score_B": 1
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "Response A modifies 4 agent files: loop.py (max_turns=10, max_cost_usd=$2.0), prompts.py (removes 'EVERY turn', changes retry logic), tools.py (deterministic errors don't retry), mailer.py (DRY_RUN mode). These directly fix the bugs. Response B creates no code changes\u2014it only generates a new config.json with Haiku model name. The underlying bugs remain unfixed.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "Response A flags send_email firing real emails from reps' mailboxes with no approval/draft step and no max-emails guard, and adds DRY_RUN mode to gate it. Response B does not mention this safety gap at all.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "Response A creates evals/golden.jsonl (22 test cases from real incidents), evals/run_evals.py (automated test runner with deterministic checks), and docs/crm_fields.md (data dictionary). Response B creates no test harness, no golden set, no judge, no automated checks.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "Response A leads with: 'Don't switch models yet. Your September spike isn't a model problem\u2014it's two prompt bugs that caused 5 conversations to burn 70% of your tokens in infinite retry loops. I've fixed the bugs and built a test harness. Deploy these fixes first and you'll save $35/month (67%). Then consider switching to Haiku for another $11/month.' Numbers are consistent with logs. Response B leads with: 'Switch to claude-haiku-4-5, save $35/month (67% off)' but does not identify the root cause or explain why the spike happened. The $35 savings claim is misleading because it doesn't address the bugs.",
+    "score_A": 10,
+    "score_B": 2
+   }
+  ],
+  "analysis": "Response A correctly diagnoses the root cause: two prompt bugs (re-fetching CRM data every turn, infinite retries on permanent errors) combined with no iteration limits caused 5 conversations to loop until context overflow. It quantifies the impact: 5 stuck conversations burned $18.77 of $26.66 (70.4%). It then fixes the bugs in code (loop.py, prompts.py, tools.py, mailer.py), adds safeguards (max_turns, max_cost_usd, DRY_RUN), builds a test harness (golden.jsonl, run_evals.py, crm_fields.md), and explains why not to switch models blindly: the bugs will burn tokens on any model. It shows the correct sequence: fixed Sonnet ($18/month) first, then optional Haiku switch ($7.50/month).\n\nResponse B does not identify any bugs. It observes that the bill is high and recommends switching to Haiku as the solution. It claims $35/month savings from the switch alone, but this is misleading: the savings come from fixing the bugs, not from the model choice. If you switch to Haiku without fixing the bugs, you'll still have runaway loops\u2014they'll just cost $0.013/call instead of $0.03/call. Response B creates no code fixes, no test harness, and no safety gates. It only generates a new config.json file.\n\nThe user's request was: \"should we just switch to a cheaper model? pick one for us and tell me roughly what we'd save.\" Response A correctly refuses to pick a model without diagnosing the problem first. Response B picks Haiku and claims $35/month savings, but this is a blind swap that leaves the bugs in place.\n\nOn the rubric: Response A scores 10/10 on all six criteria. Response B scores 0-2 on all criteria because it does not diagnose the root cause, does not fix the code, does not build a harness, and does not flag safety gaps. It only recommends a model switch without addressing the underlying issues.",
+  "overall_A": 95,
+  "overall_B": 5,
+  "winner": "A"
+ },
+ "cost_usd": 0.052235,
+ "prompt_chars": 129681,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

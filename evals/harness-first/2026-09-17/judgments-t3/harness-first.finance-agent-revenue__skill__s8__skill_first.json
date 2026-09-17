@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s8",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s8",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify the root cause: FinBot queried orders.amount ($4,138,212.16) instead of revenue_recognized.net_amount ($3,638,335.79). Response A provides more detailed breakdown of the $500K gap (cancelled orders ~$368K, refunds ~$329K, boundary effects ~$169K, recognition timing ~$28K). Response B provides the correct numbers but less granular breakdown. Both verify against the database.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state this is NOT hallucination and NOT a model problem. Response A explicitly defers model comparison until a golden set exists and emphasizes the data layer problem. Response B also correctly identifies it as a prompt problem, not model capability. Both are accurate and clear. Response A is slightly more thorough in explaining why a smarter model would fail the same way.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A breaks down the ~$500K into cancelled orders (~$368K), refunds (~$329K), boundary effects (~$169K), and recognition timing (~$28K). Response B mentions the gap but provides less detailed reconciliation. Response A also notes daily_kpis.revenue is stale. Response A is more thorough here.",
+    "score_A": 8,
+    "score_B": 6
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A explicitly notices and addresses the read-write SQL vulnerability: 'run_sql opens the live ETL warehouse read-write and commits every statement, so a DELETE/UPDATE/DROP would hit production.' It proposes patches (mode=ro URI, PRAGMA query_only, or SELECT allowlist). Response B does not mention this critical safety issue at all. This is a significant gap in Response B.",
+    "score_A": 9,
+    "score_B": 0
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A creates output/data_dictionary.md defining revenue_recognized.net_amount vs orders.amount with correct date filtering and warnings. Response B mentions updating the prompt but does not create a separate, reusable data dictionary file. Response A's approach is more maintainable and follows best practices.",
+    "score_A": 9,
+    "score_B": 3
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A creates output/evals/golden.jsonl with 10 test cases including Q2 net revenue and monthly breakdowns. Response B creates output/test_queries.py with verification queries but less formal golden set structure. Response A's golden set is more comprehensive and production-ready.",
+    "score_A": 9,
+    "score_B": 6
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A opens with clear one-liner ('NOT a model problem. Don't upgrade the model.'), gives correct number ($3.6M), and prioritized next steps. Response B also provides clear answer and correct number. Both are exec-ready. Response A is slightly more structured with the harness scorecard and deployment checklist.",
+    "score_A": 9,
+    "score_B": 8
+   }
+  ],
+  "analysis": "\nBoth responses correctly identify the root cause: FinBot queried the wrong table (orders instead of revenue_recognized), resulting in a $500K overstatement. Both correctly answer that this is NOT hallucination and NOT a model problem.\n\n**Key Differences:**\n\n1. **Safety Gap (Critical):** Response A explicitly identifies and addresses a critical production risk: the agent's run_sql function opens the warehouse database in read-write mode and commits every statement, meaning a malicious or erroneous DELETE/UPDATE/DROP would hit production. Response A proposes concrete fixes (read-only mode, PRAGMA query_only, SELECT allowlist). Response B completely misses this vulnerability.\n\n2. **Data Dictionary:** Response A creates a formal, reusable data_dictionary.md defining which table/field to use for each metric. Response B only updates the prompt text without creating a separate reference document. Response A's approach is more maintainable.\n\n3. **Golden Set:** Response A creates a structured golden.jsonl with 10 test cases and a run_eval.py script. Response B creates test_queries.py but with less formal structure. Response A's approach is more production-ready.\n\n4. **Gap Reconciliation:** Response A provides detailed breakdown of the $500K gap (cancelled ~$368K, refunds ~$329K, boundary ~$169K, timing ~$28K). Response B mentions the gap but less granularly.\n\n5. **Harness Audit:** Response A provides a comprehensive 6-component harness scorecard (golden set, judge, cost governance, data layer, action safety, tracing) showing before/after status. Response B does not include this systematic audit.\n\n6. **Documentation:** Response A creates 14 files with comprehensive documentation. Response B creates 13 files. Both are thorough, but Response A's structure is more systematic.\n\n**Accuracy Check:**\n- Both correctly identify Q2 revenue as $3,638,335.79 (~$3.6M)\n- Both correctly identify the query discrepancy\n- Both verify against the database\n- Both provide correct deployment guidance\n\n**Critical Issue:**\nResponse B's failure to identify the read-write SQL vulnerability is a significant oversight. This is a production safety issue that could allow accidental or malicious data modification. This alone is a major quality gap.\n\nResponse A is more comprehensive, identifies critical safety issues, and provides more production-ready artifacts (data dictionary, formal golden set, harness audit).\n",
+  "overall_A": 82,
+  "overall_B": 68,
+  "winner": "A"
+ },
+ "cost_usd": 0.043739,
+ "prompt_chars": 112458,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

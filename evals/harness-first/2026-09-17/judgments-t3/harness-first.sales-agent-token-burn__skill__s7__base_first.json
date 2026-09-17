@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s7",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s7",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 25,
+  "overall_B": 92,
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "score_A": 2,
+    "score_B": 10,
+    "note": "A claims the problem is 'massive input tokens per call' (36,176 avg) and attributes it to the prompt calling crm_get_account every turn, but provides no evidence from the logs. B correctly identifies the mechanism: the 2026-09-03 prompt change writes lead_score_v2 (not in crm_schema.json), causing 422 errors that retry forever. B quantifies the 5 problematic conversations (cv_24a92f, cv_488aab, cv_a99bb9, cv_15f5fe, cv_6f895a) consuming ~70% of budget (~$18.76 of $26.66), with detailed token growth analysis (1.9K\u2192147K over 15 turns). B shows 187 account fetches for 46 leads (4.1x average) and 64 failed attempts on L-2012. A's diagnosis is incomplete and lacks the specific evidence."
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "score_A": 1,
+    "score_B": 10,
+    "note": "A simply switches the model from Sonnet to Haiku in config.json without addressing the root cause. This is exactly the 'blind model swap' the rubric warns against. B explicitly recommends NOT switching models, fixes the bugs first, and only then evaluates model alternatives after building a golden set. B states: 'Don't rush to change more things' and 'The fixes already solved your immediate problem (84% reduction).' B correctly identifies that switching models without quality tests is risky."
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "score_A": 0,
+    "score_B": 10,
+    "note": "A makes no code changes\u2014only updates config.json. B actually fixes the agent code: (1) agent/loop.py adds MAX_ITERATIONS=8 and MAX_COST_PER_RUN=$0.50 with cost tracking; (2) agent/tools.py implements smart retry logic that fails fast on 4xx (CLIENT_ERRORS) and only retries 5xx/429 (TRANSIENT_STATUSES); (3) agent/prompts.py changes 'EVERY turn' to 'ONCE' and removes the non-existent lead_score_v2 field. B's fixes directly address all three root causes identified in the analysis."
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "score_A": 0,
+    "score_B": 2,
+    "note": "Neither response flags the ungated send_email risk (real emails from reps' mailboxes with no approval/draft step). B mentions it in the harness scorecard ('Action safety: \u26a0\ufe0f Still ungated') and lists it as a 'Nice to Have' for later, but doesn't gate it or flag it as urgent. A doesn't mention it at all. B gets partial credit for acknowledging the gap."
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "score_A": 0,
+    "score_B": 9,
+    "note": "A provides no golden set, judge, or harness scorecard. B delivers: (1) golden_set_starter.jsonl with 4 example cases including the 422 retry case and merged account case; (2) judge_template.py for automated quality checks; (3) README_golden_set.md guide; (4) test_fixes.py with unit tests for retry logic; (5) harness scorecard showing before/after (2/6 \u2192 3/6 components). B's scorecard explicitly tracks golden set, judge, cost governance, data layer, action safety, and tracing. Only missing: no runnable end-to-end harness, so not perfect."
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "score_A": 3,
+    "score_B": 10,
+    "note": "A leads with 'The switch is complete' and '$35.55/month savings' but this is misleading\u2014it's just a model swap without fixing the underlying bugs. The numbers are consistent with the pricing sheet but don't address the actual problem. B leads with 'NO - Don't switch models yet' and explains the bugs caused the spike, then provides 'Projected savings: 84%' from fixes alone. B's EXECUTIVE_SUMMARY.md is a proper one-pager with clear bottom line, evidence, and action items. A's answer is technically correct but answers the wrong question."
+   }
+  ],
+  "analysis": "\n**Response A: Model Swap Without Root Cause Fix**\n\nA takes the user's initial framing at face value and simply switches the model from claude-sonnet-4-5 to claude-haiku-4-5 in config.json. While the math is correct (Haiku is 67% cheaper), this approach:\n\n1. **Misses the root cause entirely.** A claims the problem is \"massive input tokens per call\" (36,176 avg) due to the prompt calling crm_get_account every turn, but provides no evidence from the logs. The actual problem is that the 2026-09-03 prompt change introduced lead_score_v2 (not in the CRM schema), causing 422 validation errors that retry forever.\n\n2. **Makes no code changes.** A only updates config.json. The agent code still has the infinite retry loop, the bad prompt instruction, and no safety caps. The bugs remain unfixed.\n\n3. **Doesn't evaluate quality risk.** A assumes Haiku will \"handle cold emails just fine\" without any testing or golden set. This is a blind model swap.\n\n4. **Provides no harness artifacts.** No golden set, judge, or quality tests.\n\n5. **Answers the wrong question.** The user asked \"should we switch?\" A answered \"yes, here's how\" without investigating whether switching is necessary.\n\n**Response B: Root Cause Analysis + Code Fixes + Conditional Model Evaluation**\n\nB takes a different approach:\n\n1. **Finds the real root cause with evidence.** B identifies three bugs:\n   - Bad prompt instruction (\"EVERY turn\" instead of \"ONCE\") causing 4.1x account fetches\n   - Retry logic retrying 422 validation errors that will never succeed (64 attempts on L-2012)\n   - No max iterations, allowing conversations to run 16-26 turns\n   \n   B quantifies this: 5 conversations (11% of leads) consumed 70% of budget ($18.76 of $26.66). Shows token growth from 1.9K (turn 1) to 147K (turn 15).\n\n2. **Fixes the code.** B modifies:\n   - agent/loop.py: Adds MAX_ITERATIONS=8 and MAX_COST_PER_RUN=$0.50\n   - agent/tools.py: Implements smart retry logic (fail fast on 4xx, retry 5xx/429)\n   - agent/prompts.py: Changes to fetch account once, removes lead_score_v2\n   \n   These fixes directly address the root causes.\n\n3. **Provides harness artifacts.** B delivers:\n   - golden_set_starter.jsonl (4 test cases)\n   - judge_template.py (quality checker)\n   - test_fixes.py (unit tests)\n   - README_golden_set.md (guide)\n   - Harness scorecard tracking 6 components\n\n4. **Recommends against blind model swap.** B explicitly states: \"Don't switch models yet\" and \"The fixes already solved your immediate problem (84% reduction).\" Only after building quality tests should model switching be considered.\n\n5. **Provides clear CFO answer.** B's EXECUTIVE_SUMMARY.md is a proper one-pager with bottom line, evidence, and action items.\n\n**Evidence from the Logs**\n\nThe crm_client.log shows the smoking gun:\n- 64 consecutive 422 errors for lead L-2012 trying to use lead_score_v2 field\n- Similar patterns for L-3419, L-2437, L-3032\n- These are validation errors that will never succeed on retry\n\nThe calls-2026-09-01_15.jsonl shows:\n- 245 total calls for 46 leads\n- 187 crm_get_account calls (should be ~46)\n- Cost concentrated in 5 conversations with 16-26 turns each\n\n**Rubric Alignment**\n\nThe rubric explicitly warns against:\n- \"No blind model swap\" (weight 3): A does exactly this; B avoids it\n- \"Stops the bleeding in code\" (weight 3): A makes no code changes; B fixes all three bugs\n- \"Root cause found with numbers\" (weight 3): A provides incomplete diagnosis; B provides detailed evidence\n\nB's approach aligns with the rubric's emphasis on fixing the mechanism, not just swapping the model.\n\n**Quality of Deliverables**\n\nA: 3 files (config.json, TLDR.txt, switch_summary.md, cost_analysis.txt)\nB: 15+ files including code fixes, analysis, tests, golden set starter, guides, and harness scorecard\n\n**Risk Assessment**\n\nA: Low immediate risk (Haiku is proven), but doesn't solve the underlying problem. Costs will still spike if the bugs remain.\n\nB: Fixes the bugs first, then conditionally evaluates model switching. Safer approach.\n\n**Correctness of Numbers**\n\nBoth A and B correctly calculate that Haiku would save ~$35.55/month vs Sonnet. However:\n- A's savings are only realized if the bugs are also fixed (which A doesn't do)\n- B's 84% savings come from fixing the bugs alone, with additional savings possible from model switching later\n\nIf the bugs remain unfixed, switching to Haiku would still leave the retry loops in place, and costs would remain high.\n"
+ },
+ "cost_usd": 0.053139,
+ "prompt_chars": 116932,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

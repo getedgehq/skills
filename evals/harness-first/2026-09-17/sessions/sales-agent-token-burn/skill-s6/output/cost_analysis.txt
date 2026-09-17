@@ -1,0 +1,58 @@
+================================================================================
+OUTREACH AGENT COST ANALYSIS: SEPT 1-15, 2026
+================================================================================
+
+Total API calls:       245
+Total conversations:   46
+Total cost:            $26.66
+Total input tokens:    8,718,520
+Total output tokens:   33,859
+Avg cost per convo:    $0.5796
+
+================================================================================
+ROOT CAUSE: RETRY LOOPS ON DETERMINISTIC ERRORS
+================================================================================
+
+Conversations stuck in retry loops:  5 of 46 (10.9%)
+Cost from retry loops:               $18.77 of $26.66 (70.4%)
+Avg turns in retry loops:            18.6
+
+Top 5 most expensive retry loops:
+  1. cv_488aab (lead L-3419): 17 turns, $4.73
+  2. cv_15f5fe (lead L-3032): 17 turns, $4.71
+  3. cv_24a92f (lead L-2012): 17 turns, $4.60
+  4. cv_a99bb9 (lead L-2437): 16 turns, $4.39
+  5. cv_6f895a (lead L-3489): 26 turns, $0.33
+
+================================================================================
+MECHANISM
+================================================================================
+
+The prompt instructs the agent to call crm_get_account at the START OF EVERY TURN
+to 'keep information fresh'. This creates exponential token growth:
+
+  Turn 1: system + user prompt + tools = ~1,900 tokens
+  Turn 2: prev history + account export (~12KB JSON) = ~14,000 tokens
+  Turn 3: prev history + prev export + new export = ~27,000 tokens
+  Turn 4: continuing to grow... = ~40,000 tokens
+  ...
+
+When crm_update_contact fails with a 422 error (unknown field 'lead_score_v2'),
+the @with_retries decorator retries it 4 times. The error is deterministic
+(CRM admin never created the custom field), so all 4 retries fail.
+
+The agent sees the error in tool results and tries again per prompt instruction:
+'Do not finish until the CRM update has succeeded. If a tool call fails, try it again.'
+
+Result: 15-17 turns of exponentially growing context, each re-fetching the full
+account export, until the agent gives up or hits some internal limit.
+
+================================================================================
+COST BREAKDOWN
+================================================================================
+
+Normal conversations (≤10 turns):     41 × $0.1926 avg = $7.90
+Retry loop conversations (>10 turns):   5 × $3.7536 avg = $18.77
+                                      ---                          -----------
+                                       46                          $26.66
+

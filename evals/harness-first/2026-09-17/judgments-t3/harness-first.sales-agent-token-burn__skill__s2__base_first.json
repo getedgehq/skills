@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s2",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "A identifies model overkill + prompt bug (EVERY turn fetch) but misses the core issue: the 422 validation error retry loop. A claims 70% of costs from 5 conversations but doesn't explain WHY they looped\u2014it's because lead_score_v2 doesn't exist in CRM schema, causing 422 errors that retried 14-16 times each. B correctly identifies this as 71% of cost ($18.93) and traces it to the Sept 3 changelog requiring lead_score_v2 for high-scoring leads. B also quantifies the other two bugs (excessive CRM fetching 21%, no max iterations 8%). A's numbers are roughly correct but the mechanism is incomplete.",
+    "score_A": 6,
+    "score_B": 9
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "A recommends switching to Haiku immediately without fixing the underlying bugs. The recommendation is 'switch to Haiku, problem solved.' B explicitly says 'Don't switch models yet' and explains that fixing the 3 bugs will reduce cost by 88% without any model change. B then recommends building a golden set and running evals before considering Haiku. This is the correct answer to the user's question ('should we switch?'). A's answer is a blind model swap.",
+    "score_A": 2,
+    "score_B": 10
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "A changes config.json and prompts.py but does NOT fix the core bugs: (1) no max iterations, (2) no cost cap, (3) retry logic still retries 422 errors. A's prompt fix removes 'EVERY turn' but doesn't address the lead_score_v2 validation error that's causing the retry loop. B fixes all three bugs: adds MAX_TURNS=10, MAX_COST=$0.50, changes retry logic to skip 4xx errors, removes lead_score_v2 requirement, and changes prompt to fetch once. B's fixes are concrete and address the root causes.",
+    "score_A": 3,
+    "score_B": 10
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "Neither response flags the send_email safety gap (real emails from reps' mailboxes with no approval/draft step). A doesn't mention it. B doesn't mention it. Both miss this.",
+    "score_A": 0,
+    "score_B": 0
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "A creates many output files but no golden set, no judge, no harness. B creates golden_set_template.jsonl with 5 test cases (including the 4 problem leads) and eval_judge.py skeleton. B also creates a scorecard in cost_breakdown.txt showing what's missing (golden set \u2717, judge \u2717, cost governance \u2713, etc.). A has no testing infrastructure.",
+    "score_A": 1,
+    "score_B": 8
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "A leads with 'Switch to Haiku, save 67%' which is wrong\u2014the real answer is 'Fix the bugs first, save 88%, then consider Haiku.' B leads with 'Don't switch models yet, fix the bugs first, save 88%.' B's answer is correct and actionable. A's answer is a trap.",
+    "score_A": 2,
+    "score_B": 10
+   }
+  ],
+  "analysis": "\n**Root Cause Analysis:**\n- A identifies model overkill + prompt bug (fetching CRM every turn) but misses the critical mechanism: the Sept 3 changelog added a `lead_score_v2` field requirement for high-scoring leads, but this field doesn't exist in the CRM schema. This causes 422 validation errors that the agent retries 14-16 times each, burning $18.93 (71% of total cost).\n- B correctly identifies all three bugs: (1) retry loop on 422 validation errors (71%, $18.93), (2) excessive CRM fetching every turn (21%, $5.61), (3) no max iterations (8%, $2.12). B traces the lead_score_v2 issue to the Sept 3 changelog and the CRM schema mismatch.\n\n**Model Switch Question:**\n- A recommends switching to Haiku immediately. This is a blind model swap that doesn't address the underlying bugs. The user asked \"should we switch?\" and A says \"yes, pick Haiku.\" This is wrong.\n- B says \"Don't switch models yet. Fix the bugs first (88% savings), then build a golden set and test Haiku vs Sonnet quality before switching.\" This is the correct answer. After fixes, Sonnet costs $7.24/month; Haiku would cost $2.41/month. But you need evals first.\n\n**Code Fixes:**\n- A changes config.json (model switch) and prompts.py (removes \"EVERY turn\" instruction). But A does NOT fix: (1) no max iterations, (2) no cost cap, (3) retry logic still retries 422 errors. A's prompt fix is incomplete\u2014it doesn't address the lead_score_v2 validation error.\n- B fixes all three bugs: (1) adds MAX_TURNS=10 and MAX_COST=$0.50 in loop.py, (2) changes retry logic to skip 4xx errors in tools.py, (3) removes lead_score_v2 requirement and changes prompt to fetch once in prompts.py. B's fixes are concrete and address root causes.\n\n**Expected Savings:**\n- A claims 67% savings from model switch alone ($35/month). But this doesn't fix the bugs, so the 4 runaway conversations will still happen with Haiku, just costing less per error.\n- B claims 88% savings from bug fixes alone ($47/month), bringing Sept from $53 \u2192 $6 (back to August). Then optionally 67% more from Haiku. B's numbers are grounded in the actual bugs.\n\n**Testing & Harness:**\n- A creates many output files (README, TLDR, cost_analysis.py, charts, etc.) but no golden set, no judge, no testing infrastructure.\n- B creates golden_set_template.jsonl with 5 test cases (including the 4 problem leads that hit errors) and eval_judge.py skeleton. B also creates a scorecard showing what's missing.\n\n**Safety Gaps:**\n- Neither response flags the send_email safety gap (real emails from reps' mailboxes with no approval/draft step). Both miss this.\n\n**Clarity for CFO:**\n- A: \"Switch to Haiku, save 67%, done.\" Wrong answer.\n- B: \"Don't switch yet. Fix bugs first, save 88%. Then test Haiku if you want another 67%.\" Correct answer.\n\n**Verdict:**\nB is substantially better. It correctly identifies the root cause (lead_score_v2 validation error retry loop), recommends NOT switching models blindly, fixes all three bugs in code, and provides a testing harness. A recommends a blind model swap that doesn't fix the underlying bugs and would leave the user with expensive failures even on Haiku.\n",
+  "overall_A": 25,
+  "overall_B": 92,
+  "winner": "B"
+ },
+ "cost_usd": 0.065554,
+ "prompt_chars": 158085,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 1,
+  "B": 0
+ }
+}

@@ -1,0 +1,96 @@
+# Data Verification: Q2 2026 Revenue
+
+**Investigation Date:** 2026-09-15  
+**Database:** warehouse.db (production snapshot)
+
+## Summary
+
+Recomputed both numbers from the warehouse to verify the discrepancy mechanism.
+
+---
+
+## FinBot's Number: $4,138,212.16
+
+**Query:** (from `transcripts/2026-09-11_board-deck.md`)
+```sql
+SELECT ROUND(SUM(amount), 2) AS revenue 
+FROM orders 
+WHERE created_at BETWEEN '2026-04-01' AND '2026-06-30';
+```
+
+**Result:** $4,138,212.16  
+**Source:** `orders` table, `amount` column  
+**Definition:** Gross bookings (total of all order amounts when placed)
+
+### Breakdown:
+- Orders placed in Q2: 2,213
+- Total order amount: $4,138,212.16
+- Includes orders that may later be refunded
+- Includes orders that may not be recognized as revenue in Q2 (timing differences)
+
+---
+
+## Finance's Number: $3,638,335.79
+
+**Query:** (what Finance uses for GAAP reporting)
+```sql
+SELECT ROUND(SUM(net_amount), 2) AS revenue 
+FROM revenue_recognized 
+WHERE recognized_on BETWEEN '2026-04-01' AND '2026-06-30';
+```
+
+**Result:** $3,638,335.79  
+**Source:** `revenue_recognized` table, `net_amount` column  
+**Definition:** GAAP revenue (gross revenue minus refunds, recognized in the period)
+
+### Breakdown:
+- Recognized revenue entries: 2,106
+- Gross amount: $3,970,863.37
+- Refund amount: $332,527.58
+- Net amount: $3,638,335.79
+
+### Monthly detail:
+- April 2026: $1,237,516.63
+- May 2026: $1,209,658.31
+- June 2026: $1,191,160.85
+- **Total Q2:** $3,638,335.79
+
+---
+
+## The $499,876.37 Gap
+
+| Component | Amount |
+|-----------|--------|
+| Orders (gross bookings) | $4,138,212.16 |
+| Refunds in Q2 | -$355,257.32 |
+| Manual calc (orders - refunds) | $3,782,954.84 |
+| **Finance (GAAP revenue)** | **$3,638,335.79** |
+| Remaining difference | $144,619.05 |
+
+The remaining $144K difference is due to:
+1. **Recognition timing:** Some Q2 orders may be recognized in Q3 (multi-period contracts, returns)
+2. **Period mismatch:** `orders.created_at` vs `revenue_recognized.recognized_on` don't align 1:1
+3. **Refunds from prior periods:** Some Q2 refunds may affect revenue recognized in Q1
+
+This is normal for GAAP accounting. **The `revenue_recognized` table is the source of truth for financial reporting.**
+
+---
+
+## Verification Steps Taken
+
+1. Connected to `warehouse.db` using Python sqlite3
+2. Executed the bot's exact query from the transcript
+3. Executed Finance's revenue recognition query
+4. Compared orders vs revenue_recognized table structure
+5. Analyzed refunds table for Q2 activity
+6. Computed monthly breakdown to verify $3.6M figure
+
+---
+
+## Conclusion
+
+Both numbers are **correct** for their respective definitions:
+- **$4.1M** is the correct sum of `orders.amount` (what the bot queried)
+- **$3.6M** is the correct sum of `revenue_recognized.net_amount` (what Finance reports)
+
+The bot did not hallucinate. It chose the wrong table because "revenue" was not defined in the prompt.

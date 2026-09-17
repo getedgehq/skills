@@ -1,0 +1,116 @@
+╔═══════════════════════════════════════════════════════════════════════╗
+║                   FINBOT Q2 REVENUE FIX - QUICK REFERENCE             ║
+║                        (Print this & tape to monitor)                 ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ THE PROBLEM                                                           │
+├───────────────────────────────────────────────────────────────────────┤
+│ FinBot said Q2 revenue: $4.1M                                         │
+│ Finance says Q2 revenue: $3.6M                                        │
+│ Discrepancy: $500K (13.7% error)                                      │
+│                                                                       │
+│ Why: Bot queried 'orders' table instead of 'revenue_recognized'      │
+│      (includes cancelled orders & ignores refunds)                    │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ THE FIX (5 MINUTES)                                                   │
+├───────────────────────────────────────────────────────────────────────┤
+│ 1. cd /home/user/work                                                 │
+│ 2. cp prompt.md prompt.md.backup                                      │
+│ 3. cp output/fixed_prompt.md prompt.md                                │
+│ 4. python agent.py "what was Q2 2026 revenue?"                        │
+│    → Should return: ~$3.6M ✓                                          │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ CORRECT NUMBERS FOR BOARD                                             │
+├───────────────────────────────────────────────────────────────────────┤
+│ Q2 2026 Revenue: $3.6M ($3,638,335.79 exact)                          │
+│                                                                       │
+│ Monthly breakdown:                                                    │
+│   • April:  $1,237,517                                                │
+│   • May:    $1,209,658                                                │
+│   • June:   $1,191,161                                                │
+│                                                                       │
+│ QoQ Growth: +10.7% (vs Q1: $3.3M)                                     │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ QUICK ANSWERS                                                         │
+├───────────────────────────────────────────────────────────────────────┤
+│ Is the bot hallucinating?        NO - real data, wrong table         │
+│ Need a smarter model?             NO - prompt issue, not model        │
+│ Need to upgrade to Opus/GPT-6?    NO - waste of money                │
+│ How much will the fix cost?       $0                                  │
+│ How long will it take?            5 minutes                           │
+│ How many lines of code to change? 0 (just text in prompt)            │
+│ Can we roll back if needed?       YES - just copy backup back        │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ WHAT CHANGED IN THE PROMPT                                            │
+├───────────────────────────────────────────────────────────────────────┤
+│ OLD (vague):                                                          │
+│   "Tables you can use: orders, revenue_recognized, ..."              │
+│                                                                       │
+│ NEW (explicit):                                                       │
+│   "For REVENUE questions, ALWAYS use revenue_recognized.net_amount"   │
+│   "NEVER use orders.amount for revenue questions"                     │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ VERIFICATION TESTS                                                    │
+├───────────────────────────────────────────────────────────────────────┤
+│ python agent.py "what was Q2 2026 revenue?"  → Should be ~$3.6M       │
+│ python agent.py "what was Q1 2026 revenue?"  → Should be ~$3.3M       │
+│ python agent.py "what was August revenue?"   → Should be ~$1.2M       │
+│                                                                       │
+│ Full test suite:                                                      │
+│   python output/test_queries.py                                       │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ FILES IN OUTPUT/ DIRECTORY                                            │
+├───────────────────────────────────────────────────────────────────────┤
+│ START_HERE.md              ← Start here for navigation                │
+│ TLDR.md                    ← 5-min summary                            │
+│ fixed_prompt.md            ← THE FIX (deploy this!)                   │
+│ DEPLOYMENT_CHECKLIST.md    ← Step-by-step deploy guide                │
+│ test_queries.py            ← Verification script                      │
+│ investigation_report.md    ← Full technical analysis                  │
+│ data_appendix.md           ← All numbers & SQL                        │
+│ VISUAL_EXPLANATION.md      ← Diagrams & flowcharts                    │
+│ executive_brief.md         ← Business summary                         │
+│ SUMMARY.md                 ← Complete overview                        │
+│ before_after_comparison.md ← Shows the fix                            │
+│ README.md                  ← File descriptions                        │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ ROLLBACK (if something goes wrong)                                    │
+├───────────────────────────────────────────────────────────────────────┤
+│ cp prompt.md.backup prompt.md                                         │
+│ python agent.py "what was Q2 revenue?"  → Will return $4.1M again     │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ ACTION ITEMS                                                          │
+├───────────────────────────────────────────────────────────────────────┤
+│ TODAY:                                                                │
+│  ☐ Deploy fixed_prompt.md                                             │
+│  ☐ Run verification tests                                             │
+│  ☐ Update board deck: Q2 = $3.6M                                      │
+│  ☐ Notify Finance (Marta): Fix deployed                               │
+│  ☐ Notify Strategy (Priya): Correct number                            │
+│                                                                       │
+│ THIS WEEK:                                                            │
+│  ☐ Review other board numbers from FinBot                             │
+│  ☐ Add automated tests for revenue queries                            │
+│  ☐ Document revenue_recognized as source of truth                     │
+└───────────────────────────────────────────────────────────────────────┘
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║  BOTTOM LINE: 5-minute prompt fix, not a model problem. Deploy now.  ║
+╚═══════════════════════════════════════════════════════════════════════╝

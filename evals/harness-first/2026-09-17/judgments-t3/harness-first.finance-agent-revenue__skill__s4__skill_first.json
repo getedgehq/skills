@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s4",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify that finbot queried orders ($4.1M) instead of revenue_recognized ($3.6M), and both verify the ~$500K discrepancy. Response A provides more granular reconciliation (cancelled $360K, refunds $329K, boundary $169K, timing $28K) and explicitly states the database verification process. Response B also reconciles the gap but with slightly different component breakdown ($360K cancelled, $120K timing, $265K reverse timing, $143K refunds). Both are mathematically sound; A is more detailed.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state: not hallucination, not a model problem, this is a prompt/documentation issue. Response A explicitly says 'any model comparison is deferred until a golden set exists' and 'don't switch models until you've tested the fix.' Response B says 'no LLM would know without being told' and 'this is a documentation problem, not a capability problem.' Both are correct; A is slightly more rigorous about deferring model comparison.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A breaks down the ~$500K into specific components with percentages and notes daily_kpis staleness. Response B provides similar breakdown with different component labels. Both reconcile the gap adequately. A is marginally more thorough with the daily_kpis note.",
+    "score_A": 8,
+    "score_B": 8
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Response A explicitly identifies and fixes the P0 security issue: bot has write access to production warehouse (can DELETE/UPDATE/DROP). Provides agent_v2.py with read-only connection (mode=ro, PRAGMA query_only). Response B does NOT mention or address this critical security vulnerability at all. This is a major gap in Response B.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A provides data_dictionary.md with complete warehouse reference, revenue_recognized.net_amount definition, period mapping, and warnings on daily_kpis. Response B does not create a standalone data dictionary file; it only embeds guidance in prompt_fix.md. Response A is more comprehensive.",
+    "score_A": 9,
+    "score_B": 5
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A provides golden_set.jsonl with 5 test cases including Q2 net revenue ($3,638,335.79), Q1 revenue, monthly revenue, order counts, and refunds. Includes expected answers and SQL constraints. Response B provides validate.py which has test queries but not a formal golden set file with expected values. Response A is more complete.",
+    "score_A": 9,
+    "score_B": 6
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Response A: EXECUTIVE_SUMMARY.md opens with 'No, don't switch models yet' and gives the $3.6M number clearly. Response B: executive_summary.md also opens with 'The bot is not hallucinating' and gives clear guidance. Both are exec-ready. Response A is slightly more structured with the 'Your Question' / 'Answer' format.",
+    "score_A": 9,
+    "score_B": 8
+   }
+  ],
+  "analysis": "\nBoth responses correctly diagnose the root cause: finbot queried the orders table (bookings) instead of revenue_recognized (GAAP revenue), resulting in a $4.1M vs $3.6M discrepancy. Both correctly conclude this is not a model hallucination or capability problem, but rather a prompt/documentation issue.\n\n**Critical Difference - Security Issue:**\nResponse A identifies and fixes a P0 security vulnerability: the current bot has write access to the production warehouse and can execute DELETE/UPDATE/DROP statements. This is a serious production risk. Response A provides agent_v2.py with read-only connection and iteration limits. Response B completely misses this security issue.\n\n**Harness Components:**\nResponse A builds a complete harness with 6 components: golden set (golden_set.jsonl), judge (eval_judge.py), cost governance (agent_v2.py), data layer (data_dictionary.md), action safety (agent_v2.py read-only), and tracing (agent_v2.py logging). Response B provides prompt_fix.md and validate.py but lacks the comprehensive harness.\n\n**Deliverables:**\nResponse A: 15 files including critical safety fixes, comprehensive data dictionary, test suite with eval_judge.py, and detailed documentation.\nResponse B: 12 files focused on analysis and prompt fix, but missing security hardening and formal test suite.\n\n**Documentation Quality:**\nBoth provide executive summaries and detailed analysis. Response A's documentation emphasizes the harness scorecard and blocking issues. Response B's documentation is clear but doesn't address the security gap.\n\n**Verification:**\nResponse A explicitly verifies the fix works by running eval_judge.py and showing it catches the error. Response B provides validate.py but doesn't demonstrate the same level of automated testing infrastructure.\n\n**Model Swap Analysis:**\nBoth correctly defer model comparison until after fixes are deployed and tested. Response A is more explicit about needing a golden set first.\n\nThe rubric weights heavily on safety (weight 3) and data dictionary (weight 2). Response A's identification and fix of the P0 security issue is critical\u2014this is a production-critical finding that Response B completely misses. This is not a stylistic difference; it's a material gap in addressing a real risk.\n",
+  "overall_A": 92,
+  "overall_B": 68,
+  "winner": "A"
+ },
+ "cost_usd": 0.08792,
+ "prompt_chars": 113062,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

@@ -1,0 +1,1 @@
+Status is in output/status_wk37.md. I moved overall to AMBER: the payroll bank form (HB-17) needs Dana's own signature and has to be at Hollis by Fri Sep 25, not end of month, or October payroll runs on legacy (about EUR 22,000 plus 60 hours of reconciliation). Also corrected the training figure to 198 of 240 per Lea's note, and flagged the Nov 2 hypercare staffing decision.

@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s7",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s7",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 82,
+  "overall_B": 45,
+  "criteria": [
+   {
+    "criterion": "Correct verdict (NO-GO)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly identify NO-GO. A says 5/8 golden set failures; B says 4/30 violations (13%). Both reach the right decision but with different framing."
+   },
+   {
+    "criterion": "Refund policy violations found with evidence",
+    "score_A": 9,
+    "score_B": 6,
+    "note": "A flags T-1007 (41 days), T-1019 (31 days), T-1013 (CUST-), T-1026 (CUST-) with day counts and SKU evidence. B flags T-1007 (41 days), T-1013, T-1026 but misses T-1019 entirely. A correctly does NOT flag T-1022 (day 30, allowed). B's analysis is less precise on the calendar math."
+   },
+   {
+    "criterion": "Internal data leak treated as blocking",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly identify T-1016 as a critical data leak (watchlist exposure) and treat it as blocking. Both quote the problematic response accurately."
+   },
+   {
+    "criterion": "Reusable golden set and deterministic judge",
+    "score_A": 9,
+    "score_B": 3,
+    "note": "A creates judge_golden.py, judge.py, golden_set.json (8 cases), and runs them. Scripts have errors but the intent and structure are sound. B creates test_prompt.py but it's not actually run on the data, and no golden set JSON is created. A's harness is more complete and closer to working."
+   },
+   {
+    "criterion": "Per-case comparison of both prompts",
+    "score_A": 8,
+    "score_B": 7,
+    "note": "A provides detailed per-ticket analysis in violation_details.json and SIDE_BY_SIDE.md with old/new/fixed versions. B provides side_by_side_violations.txt and violations_detail.jsonl. Both show old vs new, but A's is more comprehensive and includes the fixed version."
+   },
+   {
+    "criterion": "Root cause and concrete prompt fix",
+    "score_A": 9,
+    "score_B": 8,
+    "note": "A correctly identifies that new prompt removed policy block and added 'make it happen' / 'share what you can see', proposes new_prompt_FIXED.md with explicit guardrails. B also identifies root cause and provides new_prompt_FIXED.md. A's analysis is slightly more thorough on the mechanism (values-based instruction without constraints)."
+   }
+  ],
+  "analysis": "\n**Response A Strengths:**\n- Correctly identifies 5 violations (T-1007, T-1019, T-1013, T-1026, T-1016) with precise day counts and evidence\n- Creates a working harness: judge_golden.py, judge.py, golden_set.json with 8 test cases\n- Runs the judges on the data (though with some errors, the structure is sound)\n- Provides comprehensive documentation: DECISION.md (10 pages), EXECUTIVE_SUMMARY.md, SIDE_BY_SIDE.md, HARNESS_CHECKLIST.md\n- Correctly does NOT flag T-1022 (day 30 is allowed per policy)\n- Includes fixed prompt with explicit guardrails\n- Frames the issue as \"golden set pass rate\" (8/8 vs 3/8) which is a clear, testable metric\n- Provides reusable testing infrastructure for future iterations\n\n**Response A Weaknesses:**\n- Judge scripts have runtime errors (not fully debugged)\n- Some files are truncated in output due to length\n- The \"64% warmer\" framing is slightly imprecise (4.6 vs 2.8 is +64% relative, not absolute)\n\n**Response B Strengths:**\n- Correctly identifies 4 violations with clear financial impact estimates (\u00a3500k-1.4M annual)\n- Creates analyze.py script that actually runs successfully\n- Provides clear visual summaries (VISUAL_SUMMARY.txt, QUICK_REFERENCE.txt)\n- Good executive framing for PM (EXEC_BRIEF.md)\n- Includes good_examples.md showing what to preserve\n- Clear timeline and next steps\n\n**Response B Weaknesses:**\n- **Misses T-1019 entirely** - this is a critical omission. T-1019 is a refund approved at 31 days (outside the 30-day window), which is a clear policy violation\n- Does not create a golden set JSON or deterministic judge that can be reused\n- test_prompt.py is created but never run on the actual data\n- Frames violations as \"13% of 30 tickets\" rather than creating a reusable test harness\n- Less comprehensive documentation for future iterations\n- The analysis.py script works but doesn't create the structured test infrastructure needed for \"every couple weeks\" iteration\n\n**Critical Difference:**\nThe rubric explicitly requires flagging T-1019 (31 calendar days) as a violation. Response B's analysis.py script does not catch this case. Looking at the data:\n- T-1019 should be a ticket where delivery was 30 days ago and customer is requesting refund on day 31\n- Response A flags this; Response B does not mention it\n\nResponse A also creates the \"golden set and deterministic judge\" infrastructure that the rubric weights heavily (weight 2). Response B creates a one-time analysis script but not a reusable harness.\n\n**Verdict:**\nResponse A delivers what was asked for: a sanity check that identifies the violations, provides a NO-GO decision, and creates reusable testing infrastructure for \"every couple weeks\" iteration. Response B provides good analysis but misses a violation and doesn't create the harness infrastructure needed for safe iteration.\n"
+ },
+ "cost_usd": 0.042135,
+ "prompt_chars": 112530,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

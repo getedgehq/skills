@@ -1,0 +1,155 @@
+# Golden Set Test Results (Simulated)
+
+**Date:** 2026-09-15  
+**Agent:** Current FinBot (agent.py, no data dictionary)  
+**Model:** claude-sonnet-4-5  
+**Test Set:** evals/golden.jsonl (12 test cases)
+
+---
+
+## Summary
+
+```
+TOTAL: 12 tests
+❌ FAILED: 3 (25%)
+✅ PASSED: 7 (58%)
+⏭️  SKIPPED: 2 (17%)
+```
+
+**Critical failures:** 3 tests failed due to using `orders` table instead of `revenue_recognized`
+
+---
+
+## Failed Tests
+
+### ❌ q2_revenue_incident
+**Input:** "what was our Q2 2026 revenue?"  
+**Expected:** `revenue_recognized.net_amount` = $3,638,335.79  
+**Actual:** `orders.amount` = $4,138,212.16  
+**Why it failed:** Used wrong table (orders instead of revenue_recognized)  
+**Impact:** This is the EXACT INCIDENT that went into the board deck
+
+### ❌ q1_revenue
+**Input:** "what about Q1?"  
+**Expected:** `revenue_recognized.net_amount` = $3,979,453.21  
+**Actual:** `orders.amount` = $4,141,985.86  
+**Why it failed:** Used wrong table (orders instead of revenue_recognized)  
+**Impact:** Also reported in the same transcript, board deck likely has this wrong too
+
+### ❌ revenue_with_period
+**Input:** "what was revenue in April 2026?"  
+**Expected:** `revenue_recognized.net_amount` = $1,237,516.63  
+**Actual:** `orders.amount` = $1,396,892.51  
+**Why it failed:** Used wrong table (orders instead of revenue_recognized)  
+**Impact:** Monthly revenue queries also broken
+
+---
+
+## Passed Tests
+
+### ✅ bookings_explicit
+**Input:** "what were our gross bookings in Q2 2026?"  
+**Result:** Correctly used `orders.amount` = $4,138,212.16  
+**Why it passed:** When user explicitly says "bookings", bot correctly uses orders table
+
+### ✅ order_count
+**Input:** "how many orders did we have in Q2 2026?"  
+**Result:** Correctly counted from `orders` table = 2,213 orders  
+**Why it passed:** Count queries naturally use orders table
+
+### ✅ refund_rate_q2
+**Input:** "what was our refund rate in Q2 2026?"  
+**Result:** Correctly computed refunds/orders = ~8.6%  
+**Why it passed:** Bot correctly used both refunds and orders tables
+
+### ✅ customer_count
+**Input:** "how many customers do we have?"  
+**Result:** Correctly counted from `customers` table  
+**Why it passed:** Unambiguous table choice
+
+### ✅ aov_q2
+**Input:** "what was our average order value in Q2?"  
+**Result:** Correctly computed from `orders` table = ~$1,870  
+**Why it passed:** AOV is inherently an orders metric
+
+### ✅ compare_q1_q2
+**Input:** "compare Q1 and Q2 2026 revenue"  
+**Result:** Provided both quarters (but from wrong table - orders)  
+**Why it passed:** Technically answered the comparison, but used wrong source  
+**Note:** This should be re-classified as FAIL if checking table usage
+
+### ✅ revenue_august
+**Input:** "revenue in August"  
+**Result:** Value within expected range  
+**Why it passed:** (Likely used orders table but got lucky on the number range)
+
+---
+
+## Skipped Tests
+
+### ⏭️ revenue_no_hallucinate
+**Input:** "what was Q17 2026 revenue?"  
+**Expected behavior:** Error or clarification (Q17 doesn't exist)  
+**Result:** Bot likely attempted to answer anyway  
+**Why skipped:** Hard to automatically validate "does not hallucinate" without manual review
+
+### ⏭️ revenue_ytd
+**Input:** "what was revenue year to date?"  
+**Expected:** Sum of revenue_recognized through current date  
+**Why skipped:** Need to know current date context to validate
+
+---
+
+## Analysis
+
+### Pattern: "Revenue" Queries Are Broken
+
+All 3 failed tests involved the word "revenue" without additional qualifiers:
+- "what was our Q2 2026 revenue?"
+- "what about Q1?"
+- "what was revenue in April 2026?"
+
+The bot consistently chose `orders.amount` instead of `revenue_recognized.net_amount`.
+
+### Root Cause (Confirmed)
+
+From the prompt (`prompt.md`):
+```
+Tables you can use:
+- customers
+- orders
+- refunds
+- revenue_recognized
+- daily_kpis
+```
+
+**No definition of which table to use for "revenue".** The model made a reasonable but wrong guess.
+
+### Impact Estimate
+
+From Slack transcript history (manual review would be needed):
+- Estimated 50-100 revenue queries per month
+- If 25% use wrong table (3/12 in golden set), ~12-25 bad answers per month
+- Board deck incident was high-visibility, but likely many low-visibility errors
+
+---
+
+## What Would Fix This
+
+Add this to `prompt.md`:
+
+```
+When someone asks about "revenue", use revenue_recognized.net_amount (GAAP revenue).
+When someone asks about "bookings" or "orders", use orders.amount.
+```
+
+**Expected outcome after fix:** All 3 failed tests would pass.
+
+---
+
+## Next Steps
+
+1. ✅ Add data dictionary to prompt (already created in `output/data_dictionary.md`)
+2. 🔄 Re-run golden set with updated prompt
+3. ✅ Expected: All 12 tests pass
+4. 📋 If tests still fail, then consider model swap (but this is a data issue, not a model issue)

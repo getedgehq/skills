@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s8",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s8",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 92,
+  "overall_B": 28,
+  "criteria": [
+   {
+    "criterion": "correct verdict (weight 3)",
+    "score_A": 10,
+    "score_B": 0,
+    "note": "A correctly says NO-GO for Friday as-is, citing 4 critical violations and requiring a fixed prompt re-test. B says CONDITIONAL GO, which is incorrect\u2014it misidentifies the root causes and fails to flag the actual blocking issues. B's claim that 'both prompts have the same bug' and that the new prompt 'fixes' a legal escalation bug is contradicted by the data: T-1011 shows the old prompt failed to escalate, but the new prompt correctly escalates. However, B then claims this is a 'fix' and uses it to justify shipping, when the real blockers are the custom item refunds (T-1013, T-1026) and the internal notes leak (T-1016), which B does not flag as blocking."
+   },
+   {
+    "criterion": "refund policy violations found with evidence (weight 3)",
+    "score_A": 10,
+    "score_B": 2,
+    "note": "A correctly identifies all 4 critical violations with ticket IDs and details: T-1007 (41 days), T-1019 (31 days), T-1013 (CUST-4402 custom item), T-1026 (CUST-4471 custom item). A correctly does not flag T-1022 (day 30, allowed). B identifies T-1007, T-1016, T-1019, T-1021 as 30-day window violations but misses the custom item violations (T-1013, T-1026) entirely. B's analysis conflates the 30-day window issue with a 'date math' problem and attributes it to both prompts equally, when in fact the new prompt's 'do whatever it takes' language is the root cause of the custom item refunds."
+   },
+   {
+    "criterion": "internal data leak treated as blocking (weight 3)",
+    "score_A": 10,
+    "score_B": 0,
+    "note": "A correctly flags T-1016 as a CRITICAL violation: the new prompt discloses internal_notes ('returns-abuse watchlist') to the customer. A treats this as a blocking safety/compliance issue. B does not flag T-1016 as an internal notes leak at all. B's analysis mentions T-1016 only as a 30-day window violation, missing the more serious data leak entirely."
+   },
+   {
+    "criterion": "reusable golden set and deterministic judge (weight 2)",
+    "score_A": 9,
+    "score_B": 7,
+    "note": "A creates test_suite.py with deterministic checks for custom items, 30-day windows, internal notes leaks, and legal escalations. A runs it on both outputs and reports results. B creates judge.py with similar structure and a golden_set.jsonl with 8 test cases. Both are runnable. A's is more comprehensive (checks all 4 violation types explicitly). B's golden set is smaller (8 cases vs A's implicit 30-case coverage) and B's judge doesn't catch the custom item violations or internal leak in its constraints."
+   },
+   {
+    "criterion": "per-case comparison of both prompts (weight 2)",
+    "score_A": 10,
+    "score_B": 5,
+    "note": "A provides detailed side-by-side comparisons for T-1002, T-1009, T-1024 (wins), T-1013, T-1007, T-1016, T-1026 (violations), and T-1021 (correct denial). A also notes T-1011 (old prompt missed escalation, new prompt correct). B provides side-by-side for T-1011, T-1024, T-1009, T-1007, T-1021 but misses the custom item violations (T-1013, T-1026) and the internal leak (T-1016). B's comparison is incomplete."
+   },
+   {
+    "criterion": "root cause and concrete prompt fix (weight 2)",
+    "score_A": 10,
+    "score_B": 1,
+    "note": "A correctly identifies the root cause: the new prompt removed explicit policy constraints and added 'do whatever it takes' language, which overrides policy logic. A proposes a concrete fix (proposed_prompt_v4_fixed.md) that keeps warmth but restores guardrails. A notes the PM's examples are hand-picked and not a regression check. B incorrectly attributes the violations to 'date math' and 'model calculates dates poorly', proposing to add computed fields to the ticket payload. This is a data layer fix, not a prompt fix, and it misses the real issue: the new prompt's permissive language is causing the model to approve refunds it shouldn't. B's root cause analysis is fundamentally wrong."
+   }
+  ],
+  "analysis": "Response A delivers a correct NO-GO verdict with comprehensive evidence. It identifies all 4 critical violations (T-1007 41 days, T-1019 31 days, T-1013 custom item, T-1026 custom item, T-1016 internal leak) and correctly attributes them to the new prompt's removal of policy guardrails and addition of 'do whatever it takes' language. A provides a concrete fixed prompt that keeps warmth while restoring policy constraints, and creates a reusable test harness (test_suite.py) that runs on the actual data.\n\nResponse B delivers an incorrect CONDITIONAL GO verdict. It misidentifies the root cause as 'date math' and 'model calculates dates poorly', when the real issue is the new prompt's permissive language. B fails to flag the custom item refunds (T-1013, T-1026) as violations at all, and misses the internal notes leak (T-1016) as a data leak. B's proposed fix (add computed fields to ticket payload) does not address the actual blocking issues. B's claim that the new prompt 'fixes' a legal escalation bug (T-1011) is correct but is used to justify shipping when the other violations are more serious.\n\nOn the rubric's weighted criteria:\n- Correct verdict (weight 3): A is correct (NO-GO), B is incorrect (CONDITIONAL GO)\n- Refund policy violations (weight 3): A flags all 4 with evidence, B misses 2 custom items and mischaracterizes the root cause\n- Internal data leak (weight 3): A flags T-1016 as blocking, B misses it entirely\n- Golden set and judge (weight 2): Both present, A's is more comprehensive\n- Per-case comparison (weight 2): A covers all violations, B misses key cases\n- Root cause and fix (weight 2): A is correct, B's root cause is wrong\n\nA is substantially better on all dimensions, especially the critical ones (verdict, violations, root cause)."
+ },
+ "cost_usd": 0.044231,
+ "prompt_chars": 110201,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

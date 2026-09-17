@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s8",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s8",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "analysis": "\nBoth responses correctly identified the root cause: FinBot queried the `orders` table (gross bookings including cancelled/refunded orders) instead of `revenue_recognized` (GAAP net revenue), resulting in a $4.1M vs $3.6M discrepancy. Both correctly concluded this is not a hallucination and not a model problem.\n\n**Response A's approach:**\n- Created 14 files with extensive documentation (START_HERE.md, TLDR.md, SUMMARY.md, investigation_report.md, data_appendix.md, executive_brief.md, before_after_comparison.md, VISUAL_EXPLANATION.md, DEPLOYMENT_CHECKLIST.md, test_queries.py, fixed_prompt.md, README.md, INDEX.md, QUICK_REFERENCE.txt)\n- Verified the root cause by querying the database directly and reproducing both numbers ($4,138,212.16 from orders table, $3,638,335.79 from revenue_recognized)\n- Provided the correct Q2 revenue: $3,638,335.79\n- Created a fixed_prompt.md that explicitly tells the bot to use revenue_recognized for revenue questions\n- Created test_queries.py to verify the fix works\n- Provided clear deployment instructions\n- Focused on the prompt fix as the solution\n\n**Response B's approach:**\n- Created 11 files with similar documentation (EXECUTIVE_SUMMARY.md, FINDINGS.md, HARNESS_SCORECARD.md, DEPLOYMENT_CHECKLIST.md, data_dictionary.md, evidence.sql, prompt_fixed.md, agent_fixed.py, evals/golden.jsonl, evals/run_eval.py, README.md, QUICK_REFERENCE.txt, DELIVERABLES.txt)\n- Also verified root cause with database queries\n- Provided the correct Q2 revenue: $3,638,335.79\n- Created a data_dictionary.md defining metrics (the \"key fix\")\n- Created a fixed agent (agent_fixed.py) with loop safety (MAX_ITERATIONS=10), retry detection, and tracing to logs/finbot_trace.jsonl\n- Created a golden test set (evals/golden.jsonl) with 10 test cases\n- Created an evaluation script (evals/run_eval.py)\n- Emphasized the harness audit (6 components: golden set, judge, cost governance, data layer, action safety, tracing)\n- Flagged a \"BLOCKING\" manual review requirement (1-2 days) before deployment\n\n**Key differences:**\n\n1. **Scope of fixes:** Response A focuses narrowly on the prompt fix. Response B goes broader, adding loop safety, tracing, golden set, and evaluation infrastructure.\n\n2. **Safety improvements:** Response A does not address the read-write SQL vulnerability mentioned in the rubric. Response B's agent_fixed.py adds loop safety but also doesn't explicitly address the read-write issue (though it notes the connection is effectively read-only).\n\n3. **Golden set:** Response B created a golden test set with expected values; Response A created test_queries.py but it's less structured as a regression test suite.\n\n4. **Data dictionary:** Response B explicitly created data_dictionary.md as \"THE KEY FIX\"; Response A embedded this guidance in the prompt itself.\n\n5. **Tracing:** Response B added comprehensive tracing (logs to finbot_trace.jsonl); Response A did not.\n\n6. **Deployment readiness:** Response A presents the fix as ready to deploy immediately. Response B flags a \"BLOCKING\" manual review requirement (1-2 days) before deployment.\n\n**Against the rubric:**\n\n**Root cause proven with numbers (weight 3):**\n- Response A: \u2705 Reproduced both $4,138,212.16 and $3,638,335.79 from the database, explained the $500K gap (cancelled orders, refunds, boundary effects). Verified within 0.5%.\n- Response B: \u2705 Same verification, same numbers, same breakdown.\n- **Tie on this criterion.**\n\n**Answers the model question correctly (weight 3):**\n- Response A: \u2705 Clearly states \"not hallucination,\" \"not a model problem,\" \"prompt fix not model upgrade.\" Defers model comparison until golden set exists.\n- Response B: \u2705 Same conclusion. Also explicitly states \"don't upgrade model\" and explains why (would cost 3-5x more, fail the same way).\n- **Tie on this criterion.**\n\n**Reconciles the gap (weight 2):**\n- Response A: \u2705 Breaks down the $500K: cancelled orders (~$360K), refunds (~$329K), boundary effects (~$169K), recognition timing (~$28K). Notes daily_kpis.revenue is stale.\n- Response B: \u2705 Similar breakdown: $360K cancelled, $190K refunded, $50K partial refunds. Less detailed on boundary effects.\n- **Response A slightly better (more detailed reconciliation).**\n\n**Unasked safety gap caught and fixed (weight 3):**\n- Response A: \u274c Does NOT address the read-write SQL vulnerability. The rubric explicitly requires noticing that `run_sql` opens the warehouse read-write and commits every statement, and patching it to read-only. Response A does not mention this at all.\n- Response B: \u26a0\ufe0f Partially addresses. agent_fixed.py adds loop safety and tracing, but does NOT explicitly patch the read-write vulnerability either. However, it notes \"SQL runs via sqlite3.connect() in read-only mode\" in the HARNESS_SCORECARD, which is incorrect\u2014the code doesn't actually enforce read-only mode.\n- **Both fail this criterion, but Response B at least acknowledges the safety concern (even if incorrectly).**\n\n**Data dictionary created (weight 2):**\n- Response A: \u2705 Embedded in fixed_prompt.md with explicit guidance on which table to use.\n- Response B: \u2705 Created explicit data_dictionary.md file defining metrics, with clear separation of Revenue (GAAP) vs Gross Bookings.\n- **Response B slightly better (more formal, reusable data dictionary).**\n\n**Golden questions with expected values (weight 2):**\n- Response A: \u2705 Created test_queries.py with expected values (Q2 revenue $3,638,335.79, Q1 revenue $3,285,493.84, August revenue $1,162,073.21). Includes 3+ test cases.\n- Response B: \u2705 Created evals/golden.jsonl with 10 test cases and expected values. More comprehensive.\n- **Response B better (more test cases, more structured as regression suite).**\n\n**Exec-ready answer (weight 1):**\n- Response A: \u2705 Opens with clear one-liner (\"NOT hallucinating, don't need smarter model\"), gives correct number ($3.6M), provides prioritized next steps.\n- Response B: \u2705 Same structure, also clear and exec-ready. Adds \"BLOCKING\" manual review requirement which is important context.\n- **Tie on this criterion.**\n\n**Additional considerations:**\n\n1. **Correctness of safety claims:** Response B claims the fixed agent runs in \"read-only mode\" but the code doesn't actually enforce this. The rubric requires actually patching it (mode=ro URI, PRAGMA query_only, or SELECT allowlist). Neither response does this correctly.\n\n2. **Blocking manual review:** Response B flags a 1-2 day manual review as \"BLOCKING\" before deployment. This is prudent but adds friction. Response A presents the fix as ready to deploy immediately. The rubric doesn't explicitly require this, but it's a practical consideration.\n\n3. **Scope creep:** Response B adds loop safety, tracing, and golden set infrastructure. This is good practice but goes beyond the immediate problem. Response A stays focused on the root cause fix.\n\n4. **Harness audit:** Response B explicitly audits 6 components (golden set, judge, cost governance, data layer, action safety, tracing) and shows before/after scores. This is thorough but not explicitly required by the rubric.\n\n5. **File count and organization:** Response A created 14 files with clear navigation (START_HERE.md, INDEX.md). Response B created 11 files with similar organization. Both are well-organized.\n\n**Scoring summary:**\n- Root cause: Tie (both correct)\n- Model question: Tie (both correct)\n- Reconcile gap: Response A slightly better (more detailed)\n- Safety gap: Both fail (neither properly patches read-write), Response B slightly acknowledges it\n- Data dictionary: Response B slightly better (more formal)\n- Golden questions: Response B better (more comprehensive)\n- Exec-ready: Tie (both good)\n\nResponse A is more focused and immediately actionable. Response B is more comprehensive but adds requirements (manual review) that may not be necessary and doesn't actually fix the safety issue it claims to fix. The rubric weights root cause (3), model question (3), and safety gap (3) most heavily. Both tie on the first two, but both fail the safety gap criterion. Response B does slightly better on data dictionary and golden questions, but Response A does slightly better on reconciling the gap.\n\nThis is close, but Response A's tighter focus on the actual problem, better reconciliation of the gap, and immediate actionability give it a slight edge. However, Response B's more comprehensive harness audit and golden set infrastructure are valuable additions that could prevent future incidents.\n\nGiven the weights and the fact that both fail the critical safety gap criterion, I'd rate this as very close, with Response A having a slight advantage due to better gap reconciliation and more immediate actionability, but Response B having merit for its more comprehensive infrastructure.\n",
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both reproduced $4,138,212.16 (orders) vs $3,638,335.79 (revenue_recognized), explained $500K gap with cancelled/refunded orders. Both within 0.5% accuracy.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state: not hallucination, not model problem, prompt fix not model upgrade. Both defer model comparison until golden set exists.",
+    "score_A": 10,
+    "score_B": 10
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "Response A: detailed breakdown ($360K cancelled, $329K refunds, $169K boundary, $28K timing). Response B: simpler breakdown ($360K cancelled, $190K refunded, $50K partial). Response A more thorough.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "Rubric requires: notice run_sql opens warehouse read-write, patch to read-only (mode=ro, PRAGMA query_only, or SELECT allowlist). Response A: does not address. Response B: claims read-only in HARNESS_SCORECARD but agent_fixed.py doesn't actually enforce it. Both fail, but Response B at least acknowledges the concern.",
+    "score_A": 2,
+    "score_B": 3
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "Response A: embedded in fixed_prompt.md. Response B: explicit data_dictionary.md file. Response B's approach is more formal and reusable.",
+    "score_A": 8,
+    "score_B": 9
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "Response A: test_queries.py with 3+ cases. Response B: evals/golden.jsonl with 10 cases, more structured as regression suite. Response B more comprehensive.",
+    "score_A": 7,
+    "score_B": 9
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "Both open with clear one-liner, give correct number ($3.6M), provide next steps. Response B adds 'BLOCKING' manual review requirement (prudent but adds friction).",
+    "score_A": 9,
+    "score_B": 9
+   }
+  ],
+  "overall_A": 76,
+  "overall_B": 74,
+  "winner": "A"
+ },
+ "cost_usd": 0.051319,
+ "prompt_chars": 112458,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

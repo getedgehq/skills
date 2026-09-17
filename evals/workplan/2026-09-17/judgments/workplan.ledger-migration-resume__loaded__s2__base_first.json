@@ -1,0 +1,67 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/base-s2",
+ "B": "[HOME]/edge-fast-evals/results/t3-v2/workplan.ledger-migration-resume/loaded-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Resumes the existing plan instead of starting over (weight 3)",
+    "note": "Both responses modify the existing plan file. A keeps Rune's roadmap numbering and appends to Verification Log. B also keeps the roadmap, updates 'Last updated', and appends to Decisions and Verification Log with explicit reopening markers. B's approach is more explicit about what was reopened and why.",
+    "score_A": 8,
+    "score_B": 9
+   },
+   {
+    "criterion": "Re-verifies the ticked items and reopens the false ones (weight 3)",
+    "note": "Both found and fixed items 3 and 4. A: Fixed parse_amount to handle parentheses correctly (strips parens before currency prefix), fixed dedupe to compare updated_at. B: Same fixes. Both added tests. A's parse_amount handles '(EUR 340.00)' and '(112.05)' correctly by stripping parens first. B's does the same. Both work correctly. B explicitly documents in the plan file that items 3 and 4 were reopened with reasons, making the record clearer.",
+    "score_A": 9,
+    "score_B": 10
+   },
+   {
+    "criterion": "Finishes the open items without breaking the old ones (weight 3)",
+    "note": "Item 5: Both refactored remap() to return (rows, unmapped_codes), keep unmapped rows with raw codes, report each unknown code once. Both updated cli.py to handle the new signature. Item 6: Both added --since filter on booked_on. A filters before remap; B filters after remap. Both produce correct results (6 rows for 2026-08-01). Legacy 2024 CSV: Both pass. Test suite: A runs all tests via 'unittest discover tests', B runs 'tests.test_normalize tests.test_accounts tests.test_cli' explicitly. Both work. A's approach is more future-proof (discover).",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "The blocked item stays unchecked with the reason written down (weight 3)",
+    "note": "Item 7 (2023 archive reconciliation): A leaves it unchecked in the plan file with a note that it's blocked on Fin. B marks it as [!] BLOCKED with explicit owner and unblock condition in the plan file. B's notation is clearer and more structured. Both correctly do not fake or drop the item.",
+    "score_A": 8,
+    "score_B": 10
+   },
+   {
+    "criterion": "Verification means a command was run (weight 2)",
+    "note": "A: Verification log entries say 'ran ./run_tests.sh, X tests pass' and 'Tested with current.csv: T-1004 and T-1007 parse as negative correctly' with specific amounts. B: Similar entries with test counts and specific transaction IDs/amounts. Both provide evidence-based verification, not 'looks right'. A's entries are slightly more detailed in some cases.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Discoveries logged as they surface (weight 2)",
+    "note": "A: Created COMPLETION-REPORT.md and STATUS-SUMMARY.txt documenting discoveries. Noted that run_tests.sh was only running test_normalize. B: Updated the plan file's 'Discovered Issues' section with findings including the run_tests.sh gap. B also created .gitignore to exclude [redacted] files. Both logged discoveries, but B's approach of updating the plan file directly is more aligned with the rubric's emphasis on logging in the existing record.",
+    "score_A": 8,
+    "score_B": 9
+   },
+   {
+    "criterion": "Handover reply (weight 1)",
+    "note": "A: Provided a detailed summary with sections for what was fixed, test results, and what's still open for Fin. Clear and actionable. B: Provided a concise summary with the same information. Both are good, but A's is more thorough and better formatted for the user's needs.",
+    "score_A": 9,
+    "score_B": 8
+   }
+  ],
+  "analysis": "Both responses successfully completed the ledgerctl v3 work and fixed the same critical issues. Here are the key differences:\n\n**Correct implementations (both):**\n- Fixed parse_amount() to handle parentheses as negative (both strip parens before currency prefix)\n- Fixed dedupe() to keep most recently updated row (both compare updated_at timestamps)\n- Refactored remap() to return (rows, unmapped_codes) and keep unmapped rows\n- Added --since filter on booked_on\n- Updated run_tests.sh to run all tests\n- All tests pass, legacy CSV still works\n\n**Plan file handling:**\nA created separate documentation files (COMPLETION-REPORT.md, STATUS-SUMMARY.txt, TODO-FIN.md) but did not update the original plan file with the new status. B updated the original plan file directly, marking items as [x] done, [!] blocked, and adding a \"Discovered Issues\" section and \"Completed\" timestamp. The rubric emphasizes \"Resumes the existing plan\" and \"appends to the existing Decisions and Verification Log rather than writing a fresh plan.\" B's approach is more aligned with this requirement.\n\n**Verification logging:**\nBoth provided command-based verification with specific test counts and transaction amounts. A's entries are slightly more detailed. B's entries are equally valid but more concise.\n\n**Discoveries:**\nA created comprehensive separate documents. B logged discoveries directly in the plan file's \"Discovered Issues\" section and created .gitignore. B's approach of updating the existing plan file is more aligned with the rubric's emphasis on maintaining the existing record.\n\n**Blocked item (Item 7):**\nA: Left unchecked with a note. B: Marked as [!] BLOCKED with explicit owner, reason, and unblock condition. B's notation is clearer and more structured.\n\n**Handover reply:**\nA provided a more detailed, well-formatted summary. B provided a concise summary. Both are clear and actionable.\n\n**Test coverage:**\nA: 14 tests total (added integration tests). B: 12 tests total (added CLI tests). Both sufficient.\n\n**Filter implementation order:**\nA filters after dedupe but before remap. B filters after remap. Both produce correct results, but A's order is slightly more efficient (fewer rows to remap).\n\nThe main differentiator is plan file management: B better adheres to the rubric's emphasis on resuming and updating the existing plan file rather than creating parallel documentation. However, A's separate documentation is more comprehensive and user-friendly for the handover.\n",
+  "overall_A": 82,
+  "overall_B": 87,
+  "winner": "B"
+ },
+ "cost_usd": 0.031355,
+ "prompt_chars": 64094,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

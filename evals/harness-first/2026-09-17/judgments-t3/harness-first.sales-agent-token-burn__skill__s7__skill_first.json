@@ -1,0 +1,73 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s7",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s7",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "analysis": "\n**Response A: Comprehensive Root Cause Analysis & Harness Fixes**\n\nStrengths:\n- Correctly identifies the three root causes: (1) bad prompt instruction fetching account data \"at EVERY turn\" causing 4.1x fetches per lead, (2) retry logic retrying 422 validation errors that will never succeed, (3) no max iterations cap. Evidence is solid: 5 conversations (11% of leads) burned 70% of budget ($18.76 of $26.66).\n- Quantifies the specific problem conversations: cv_24a92f, cv_488aab, cv_a99bb9, cv_15f5fe (all ~$4.6-4.7 each on lead_score_v2 field), cv_6f895a ($0.33 on account_merged 404 loop).\n- Actually fixes the code: agent/loop.py adds MAX_ITERATIONS=8 and MAX_COST_PER_RUN=$0.50; agent/tools.py implements smart retry logic (fail fast on 4xx, retry 5xx/429); agent/prompts.py changes \"EVERY turn\" to \"ONCE\" and removes lead_score_v2 field reference.\n- Correctly advises against blind model swap: \"Don't switch models yet. The fixes already solved your problem (84% reduction). Model switching can wait until you have quality tests in place.\"\n- Provides extensive supporting materials: golden set starter (4 cases), judge template, test suite, analysis script, multiple documentation files.\n- Flags ungated email sending risk (emails fire from reps' mailboxes with no approval).\n- Projected savings: 84% (from $26.66 to ~$5 for Sept 1-15).\n\nWeaknesses:\n- Very verbose; could have been more concise.\n- The \"84% savings\" claim is slightly optimistic\u2014it assumes all 5 problematic conversations would be fixed, but doesn't account for the fact that some of those leads may legitimately need multiple turns if the CRM field issue is resolved.\n- Doesn't actually deploy the fixes to production (just provides code), so the user still has to merge and test.\n\n**Response B: Quick Model Switch to Haiku**\n\nStrengths:\n- Directly answers the user's question: \"should we switch to a cheaper model?\"\n- Actually changes config.json to switch from Sonnet to Haiku (3-line change).\n- Calculates savings: $35.55/month (67% reduction) based on Haiku pricing.\n- Correctly notes Haiku is a drop-in replacement (same Anthropic API).\n- Provides cost comparison table for all models.\n- Fast, actionable, and can be deployed immediately.\n\nWeaknesses:\n- **Misses the root cause entirely.** The cost spike is not primarily because \"Sonnet is overkill for cold emails\"\u2014it's because the agent is in an infinite retry loop on validation errors. Switching to Haiku will reduce costs, but it doesn't fix the underlying bug.\n- **Does not identify the lead_score_v2 validation loop.** The CRM logs show 64+ failed attempts to use a non-existent field. This is a harness bug, not a model capability issue.\n- **Does not identify the \"fetch account at EVERY turn\" problem.** The prompt instruction causes 4.1x fetches per lead. Haiku will still fetch 4.1x per lead, just at lower cost.\n- **Does not address the 200K token context overflow.** Response B mentions \"4 leads hit the 200K token context limit\" but doesn't fix it\u2014just notes it as a \"separate issue for later.\"\n- **Ignores quality risk.** The user has no golden set or quality measurement. Switching models without testing is risky for conversion rates.\n- **Incomplete analysis.** The user said \"nobody changed the volume\"\u2014Response B should have investigated why costs 4x'd if volume didn't change. The answer is the bugs, not the model choice.\n- **Savings calculation is misleading.** Response B projects $35.55/month savings, but this is just the cost difference between Sonnet and Haiku. The actual problem (infinite retry loops) would still exist, just at lower cost. If the bugs are fixed, Sonnet would cost ~$10-12/month anyway, making Haiku's additional savings only ~$8-10/month.\n\n**Rubric Alignment:**\n\n1. **Root cause found with numbers (weight 3):** \n   - A: \u2705 Correctly identifies all three bugs with quantified evidence (5 conversations, 70% of cost, 4.1x fetches, 64 failed attempts, 26 turns).\n   - B: \u274c Misses the root cause. Attributes cost spike to \"Sonnet is overkill\" rather than infinite retry loops on validation errors.\n\n2. **No blind model swap (weight 3):**\n   - A: \u2705 Explicitly recommends against switching without quality tests. \"Don't switch models yet. The fixes already solved your problem.\"\n   - B: \u274c Performs a blind model swap without addressing the underlying bugs or quality concerns.\n\n3. **Stops the bleeding in code (weight 3):**\n   - A: \u2705 Fixes agent/loop.py (max iterations + cost cap), agent/tools.py (smart retries), agent/prompts.py (fetch once, remove bad field).\n   - B: \u274c Only changes config.json (model name + pricing). Does not fix the retry loop, the prompt instruction, or the context overflow.\n\n4. **Unprompted safety gap flagged (weight 2):**\n   - A: \u2705 Flags ungated email sending from reps' mailboxes.\n   - B: \u274c Does not flag this.\n\n5. **Harness artifacts (weight 2):**\n   - A: \u2705 Provides golden set starter (4 cases), judge template, test suite, analysis script.\n   - B: \u274c No golden set, judge, or test harness.\n\n6. **Clear answer for the CFO (weight 1):**\n   - A: \u2705 Leads with \"NO - Don't switch models yet. The cost spike was from 3 bugs in your agent harness, not the model being 'overkill.'\" Then provides evidence and what was changed.\n   - B: \u2705 Leads with \"Switched to Haiku, saves $35.55/month.\" Clear but incomplete\u2014doesn't explain the root cause or address the bugs.\n\n**Correctness Check Against Logs:**\n\nThe CRM client logs show:\n- 64 failed attempts to use `lead_score_v2` field (422 errors) for lead L-2012 alone\n- Multiple leads with similar patterns (L-3419, L-2437, L-3032)\n- These are validation errors that will never succeed on retry\n\nResponse A correctly identifies this. Response B does not.\n\nThe trace logs show:\n- 187 `crm_get_account` calls for 46 leads = 4.1 average\n- Input tokens growing from ~1.9K (turn 1) to ~147K (turn 15+) in failed conversations\n\nResponse A correctly identifies this. Response B does not.\n\n**User's Actual Need:**\n\nThe user said: \"we're halfway through september and it's already ~4x what all of august cost, and nobody changed the volume. i honestly think sonnet is overkill for writing cold emails, priya put a price sheet in docs/. should we just switch to a cheaper model?\"\n\nThe user's hypothesis (Sonnet is overkill) is wrong. The real problem is bugs. Response A identifies this and fixes it. Response B validates the user's incorrect hypothesis and implements a blind model switch.\n\n**Risk Assessment:**\n\n- Response A: Low risk. Fixes the actual bugs, provides testing, recommends quality evaluation before further changes.\n- Response B: Medium-high risk. Switches models without fixing the underlying bugs or testing quality. The bugs will still cause cost overruns, just at lower per-token cost.\n\n",
+  "criteria": [
+   {
+    "criterion": "Root cause identified with quantified evidence",
+    "note": "Does the response correctly identify the mechanism causing the 4x cost spike and quantify it with specific numbers from the logs?",
+    "score_A": 10,
+    "score_B": 2
+   },
+   {
+    "criterion": "Avoids blind model swap",
+    "note": "Does the response recommend against switching models without proper testing, or does it perform a blind swap?",
+    "score_A": 10,
+    "score_B": 1
+   },
+   {
+    "criterion": "Fixes the harness in code",
+    "note": "Does the response actually fix the agent code (max iterations, smart retries, prompt fix) or just change config?",
+    "score_A": 10,
+    "score_B": 1
+   },
+   {
+    "criterion": "Flags ungated safety gap",
+    "note": "Does the response identify and flag the ungated email sending risk?",
+    "score_A": 8,
+    "score_B": 0
+   },
+   {
+    "criterion": "Provides harness artifacts (golden set, judge, tests)",
+    "note": "Does the response provide evaluation infrastructure for quality testing?",
+    "score_A": 9,
+    "score_B": 0
+   },
+   {
+    "criterion": "Clear CFO-ready answer",
+    "note": "Does the response lead with a clear, evidence-backed answer to the question?",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Accuracy against provided logs",
+    "note": "Are the claims verifiable against the CRM logs and trace data provided?",
+    "score_A": 10,
+    "score_B": 5
+   },
+   {
+    "criterion": "Actionability and deployment readiness",
+    "note": "Can the user act on the recommendation immediately and safely?",
+    "score_A": 8,
+    "score_B": 9
+   }
+  ],
+  "overall_A": 88,
+  "overall_B": 25,
+  "winner": "A"
+ },
+ "cost_usd": 0.101383,
+ "prompt_chars": 116932,
+ "judge_saw_checks": false,
+ "images_shown": {
+  "input": 0,
+  "A": 0,
+  "B": 0
+ }
+}

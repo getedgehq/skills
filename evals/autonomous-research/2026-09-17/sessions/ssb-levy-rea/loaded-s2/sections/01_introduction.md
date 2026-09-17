@@ -1,0 +1,7 @@
+# Section 1: Introduction
+
+The UK Soft Drinks Industry Levy (SDIL), implemented in April 2018, established a tiered taxation structure based on sugar content: a lower tier for products containing 5-8g sugar per 100ml and a higher tier for those exceeding 8g per 100ml (Scarborough et al., 2020). The levy was designed to reduce childhood obesity and dental caries by incentivising industry reformulation and reducing population sugar consumption. Treasury is now consulting on two potential extensions: applying the levy to milk-based drinks and sweetened milk alternatives, and lowering the threshold from 5g to 4g per 100ml.
+
+This rapid evidence assessment evaluates evidence for the effectiveness of the existing SDIL and the likely effects of the proposed extensions. The UK evidence base comprises household purchasing data (Rogers et al., 2025), obesity surveillance outcomes (Rogers et al., 2023), product reformulation analyses (Scarborough et al., 2020), and pre-implementation modelling (Briggs et al., 2017). International comparator evidence from Mexico and US cities provides validation and addresses the translation of purchasing effects to dietary intake (Cawley et al., 2019).
+
+Two important limitations are stated at the outset. First, no empirical studies have examined SSB tax effects on milk-based drinks specifically; evidence for this extension relies on mechanistic extrapolation. Second, no jurisdiction has tested a 4g threshold, though product-level data provide insight into likely industry responses (Scarborough et al., 2020).

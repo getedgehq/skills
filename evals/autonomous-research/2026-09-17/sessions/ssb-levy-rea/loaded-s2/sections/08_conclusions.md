@@ -1,0 +1,9 @@
+# Section 8: Conclusions
+
+The evidence clearly supports the effectiveness of the existing UK Soft Drinks Industry Levy. Household purchasing of high-levy soft drinks has declined and remained reduced over 18 months {cite_10.1136/bmjnph-2024-000981}, obesity prevalence in Reception-year children has fallen by approximately one-fifth {cite_10.1371/journal.pmed.1004160}, and population sugar intake from soft drinks has decreased substantially {cite_10.1186/s12916-019-1477-4}. The mechanism operates through dual pathways: industry reformulation and reduced purchase volumes. This mechanism is well-established and operates across diverse jurisdictions {cite_10.1111/obr.12868}, with no evidence of worsening health inequalities {cite_10.1136/bmjnph-2024-000981}.
+
+The proposed extension to milk-based drinks is supported by mechanistic extrapolation rather than direct empirical evidence. The reformulation incentive and price sensitivity mechanisms documented for conventional soft drinks would apply identically to milk-based products. Reformulation is technically feasible, and no health rationale exists for exempting sugar from milk-based drinks while taxing identical sugar content in other beverages.
+
+Lowering the threshold to 4g would close an observed reformulation gap. Product clustering shows manufacturers reformulated to 4.5-4.9g per 100ml to avoid the existing 5g threshold {cite_10.1371/journal.pmed.1003025}. A 4g threshold would create renewed incentive for further reformulation. While this specific threshold has not been empirically tested, the mechanism is established and the direction of effect is clear.
+
+Dental health benefits are anticipated based on biological mechanisms and demonstrated population sugar reduction, though empirical outcome measurement has not yet occurred. The evidence base supports both proposed extensions while acknowledging the limitations documented in Section 7.

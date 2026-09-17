@@ -53,7 +53,7 @@ The loop was developed on one person's own session logs, so these numbers are ev
 | --- | --- |
 | `agent-evals` | Builds evals for a working agent: yes/no tasks and verifiers, resettable environments, then a loop that turns production traces into new tasks. |
 | `agent-infra-fixer` | Finds guard hooks that block legitimate work or hide their reason from the agent, replays every past block through the current hooks, and fixes stdout blocks so the agent sees why. |
-| `autonomous-research` | Turns one topic line into a research-paper draft: eighteen agent prompts, keyless Crossref and OpenAlex lookup, and a citation-integrity gate that fails the run instead of shipping a broken bibliography. |
+| `autonomous-research` | Turns one topic line into a research-paper draft: eighteen agent prompts, keyless Crossref and OpenAlex lookup, and a citation-integrity gate that fails the run instead of shipping a broken bibliography. Measured in [`autonomous-research/EVALS.md`](autonomous-research/EVALS.md). |
 | `cli-ux-review` | Scores a command-line tool against a fixed rubric and writes the before/after fix for each failure. |
 | `cv-job-match` | Reads a CV, works out what the person can actually do, and returns live startup roles from Rocketlist's public board with published salary, the evidence for the fit and an apply link. Rocketlist's own Skill. |
 | `generate-image` | Generates images through the Codex CLI, billed to a ChatGPT subscription rather than a per-image API key. |
@@ -69,8 +69,8 @@ The loop was developed on one person's own session logs, so these numbers are ev
 | `skill-eval-loop` | Runs blind A/B evals of a Skill on your own tasks, three samples each, and adopts it only on a majority win with a passing deterministic check. |
 | `skill-miner` | Mines Claude Code, Codex and OpenCode session logs for corrections, frustration, token burn and failures, and drafts or finds a Skill for each theme. |
 | `strip-image-ai-metadata` | Strips C2PA and AI-generation metadata so platforms stop labelling an image. |
-| `top-down-comms` | Structures a client-facing artifact the way MBB consultants do: governing thought first. |
-| `workplan` | Creates, updates and closes a work plan so multi-step work survives losing context. |
+| `top-down-comms` | Structures a client-facing artifact the way MBB consultants do: governing thought first. Measured in [`top-down-comms/EVALS.md`](top-down-comms/EVALS.md). |
+| `workplan` | Creates, updates and closes a work plan so multi-step work survives losing context. Measured in [`workplan/EVALS.md`](workplan/EVALS.md). |
 
 ### Renamed Skills
 
@@ -90,7 +90,7 @@ A Skill is a folder with a `SKILL.md` at its root: a short front matter block na
 
 ## Every one of these is a derived copy, and each says how it was derived
 
-Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; two are companies' own Skills: `pay-per-call-apis` is Monid's, published unchanged apart from its name, and `cv-job-match` is Rocketlist's, published by GetEdge; seven were written directly for this repository: `people-search`, `agent-evals`, `harness-first`, and the four Skills of the loop above. `harness-first` is the only one measured so far: it ships an evaluation of itself in [`harness-first/EVALS.md`](harness-first/EVALS.md).
+Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; two are companies' own Skills: `pay-per-call-apis` is Monid's, published unchanged apart from its name, and `cv-job-match` is Rocketlist's, published by GetEdge; seven were written directly for this repository: `people-search`, `agent-evals`, `harness-first`, and the four Skills of the loop above. Four ship an evaluation of themselves: [`harness-first`](harness-first/EVALS.md), [`autonomous-research`](autonomous-research/EVALS.md), [`top-down-comms`](top-down-comms/EVALS.md) and [`workplan`](workplan/EVALS.md). Each EVALS.md says whether its result cleared our bar. One did, two did not, and one cleared it with the Skill pasted into the prompt but not with the Skill left on disk for the agent to find.
 
 Nine of them started in Federico's own working set. The original was read, never modified. What is published is a copy, edited so that it is useful to a stranger rather than only to the person who wrote it.
 
@@ -126,6 +126,8 @@ Before their recorded licence dates these copies carried no licence file at all,
 
 ## What is not claimed
 
-With one exception, no comparative model evaluation has been run against any of these Skills themselves, and no general quality or safety state is asserted. The exception is `harness-first`: [`harness-first/EVALS.md`](harness-first/EVALS.md) reports a single run comparing the same agent with and without that Skill loaded, on three tasks, with the confidence interval and the one task where it did not help stated there. That is evidence about those three tasks, not a general quality bar. The loop results above measure the Skills the loop produced for one user, not the four loop Skills. These are working instructions, published because they were useful in practice. Package-level tests and gates are documented separately from evaluations.
+Four of these Skills have been measured against the same agent with the Skill absent, and each publishes its own page: `harness-first`, `autonomous-research`, `top-down-comms` and `workplan`. For the rest, no comparative evaluation has been run and no quality or safety state is asserted.
+
+A published page is not the same as a positive result. Our rule, fixed before any of these numbers were read, is that a result counts only if the 95% confidence interval on the difference excludes zero. One of the four clears that bar, two do not, and one clears it only in the arm where the Skill is pasted into the prompt rather than left on disk for the agent to find. Each page says which it is in its opening paragraph. A result that clears the bar is evidence about the handful of tasks it was run on, not a general quality bar. Every session log, grader verdict and task definition behind each page is in [`evals/`](evals/), so the numbers can be checked rather than taken. The loop results above measure the Skills the loop produced for one user, not the four loop Skills. These are working instructions, published because they were useful in practice. Package-level tests and gates are documented separately from evaluations.
 
 Several call out to tools that must already be on your machine: `generate-image` drives the Codex CLI, `linkedin-media-prep` and `strip-image-ai-metadata` use ffmpeg and Python imaging libraries, and `security-audit-checklist` bundles three Python scanners. Read a Skill's instructions and its scripts before you run it, the same as any other code you install.
