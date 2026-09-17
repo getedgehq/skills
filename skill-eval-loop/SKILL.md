@@ -31,6 +31,13 @@ FORGE_PROJECTS=~/.claude/projects bash scripts/forge.sh --dry-run  # no eval spe
 Briefs are JSON: `{id, prompt, setup, verify, rubric}`. `setup` builds a realistic
 workdir, `verify` is a shell command that exits 0 only on correct completion.
 
+## Runs on your own machine
+
+No sandbox service, no account. Needs `python3`, `bash`, and a logged-in `claude`
+CLI - evals use your own subscription or API key and your own session logs. Works on
+macOS (falls back to `gtimeout` or a perl alarm when `timeout` is missing) and Linux,
+or on your own cloud box. To watch and drive it in a browser, use **skill-cockpit**.
+
 ## Three-tier gate
 
 - **ADOPT** - with-arm wins the blind eval AND passes verify AND makes no more

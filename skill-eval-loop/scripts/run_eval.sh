@@ -34,7 +34,11 @@ MODEL="${FORGE_MODEL:-claude-sonnet-4-5}"
 TIMEOUT="${FORGE_TIMEOUT:-1200}"
 start=$(date +%s)
 set +e
-timeout "$TIMEOUT" nice -n 10 claude -p "$PROMPT" --model "$MODEL" \
+# macOS ships no `timeout`; fall back to gtimeout (coreutils) or a perl alarm.
+if command -v timeout >/dev/null; then TO=(timeout "$TIMEOUT")
+elif command -v gtimeout >/dev/null; then TO=(gtimeout "$TIMEOUT")
+else TO=(perl -e 'alarm shift; exec @ARGV' "$TIMEOUT"); fi
+"${TO[@]}" nice -n 10 claude -p "$PROMPT" --model "$MODEL" \
   --setting-sources project,local --strict-mcp-config \
   --permission-mode acceptEdits --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Skill" \
   --output-format stream-json --verbose < /dev/null > "$META/transcript.jsonl" 2> "$META/stderr.log"

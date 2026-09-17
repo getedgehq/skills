@@ -25,6 +25,23 @@ done
 FAIL="$FORGE_ROOT/mined/failures.json"
 python3 "$MINER/mine.py" --sessions "$SESSIONS" --projects "$PROJECTS" --out "$FAIL"
 
+# Route the chosen cluster: infra-class goes to agent-infra-fixer, not the eval loop.
+# If the requested index is infra, advance to the next task-class cluster.
+IDX=$(python3 - <<PYEOF
+import json, sys
+clusters = json.load(open("$FAIL"))["clusters"]
+if not clusters:
+    sys.exit("no clusters mined - nothing to do")
+i = $IDX
+while i < len(clusters) and clusters[i].get("class") == "infra":
+    print(f"cluster {i} is infra-class -> route to agent-infra-fixer: {clusters[i]['signature'][:80]}", file=sys.stderr)
+    i += 1
+if i >= len(clusters):
+    sys.exit("all mined clusters are infra-class - nothing to eval")
+print(i)
+PYEOF
+)
+
 BRIEF_OUT=$(python3 "$HERE/brief.py" "$FAIL" --index "$IDX" --out "$FORGE_ROOT/briefs" | head -1)
 BRIEF="$BRIEF_OUT"
 echo "brief: $BRIEF"

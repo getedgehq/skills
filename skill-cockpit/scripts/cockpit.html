@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edge Skill Cockpit</title>
+<style>
+:root{
+  --bg:#fff;--ink:#050505;--muted:#6f6f6f;--faint:#858585;--line:#e5e5e5;
+  --surface:#f7f7f7;--surface2:#f0f0ed;--accent:#154cff;--accent-soft:#154cff14;
+  --good:#0f7b3f;--good-soft:#0f7b3f14;--warn:#a15c00;--warn-soft:#a15c0017;
+  --bad:#b42318;--bad-soft:#b4231812;--radius:14px;--shadow:0 20px 70px #00000014;
+  --font:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#1b1a17;--ink:#f2f0eb;--muted:#b0ada5;--faint:#97938a;--line:#3a3831;
+  --surface:#25241f;--surface2:#2e2c26;--accent:#a5b6ff;--accent-soft:#a5b6ff1f;
+  --good:#6fd39b;--good-soft:#6fd39b1c;--warn:#f0b35a;--warn-soft:#f0b35a1c;
+  --bad:#ff8a80;--bad-soft:#ff8a801c;--shadow:0 20px 70px #0006;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+header.top{border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+header.top .wrap{display:flex;align-items:center;gap:14px;height:56px}
+.mark{display:flex;align-items:center;gap:9px;font-weight:650;letter-spacing:-.01em}
+.mark i{width:22px;height:22px;border-radius:7px;background:var(--accent);display:block;position:relative}
+.mark i:after{content:"";position:absolute;inset:6px 6px 6px 9px;border-left:2.5px solid #fff;border-top:2.5px solid #fff;transform:rotate(45deg) translate(1px,2px)}
+.mark span{color:var(--muted);font-weight:500}
+.root{margin-left:auto;color:var(--faint);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:45%}
+.live{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12.5px}
+.live b{width:7px;height:7px;border-radius:50%;background:var(--good)}
+.live.busy b{background:var(--accent);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.35}}
+
+.hero{padding:44px 0 26px;display:grid;grid-template-columns:1.15fr 1fr;gap:40px;align-items:end}
+h1{font-size:clamp(30px,4.2vw,46px);line-height:1.04;letter-spacing:-.035em;margin:0 0 14px;font-weight:650;text-wrap:balance}
+.lede{color:var(--muted);font-size:15.5px;max-width:52ch;margin:0}
+.loop{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.loop span{padding:5px 10px;border:1px solid var(--line);border-radius:99px;background:var(--surface)}
+.loop em{font-style:normal;color:var(--faint)}
+
+.stats{display:grid;grid-template-columns:repeat(6,1fr);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:18px}
+.stat{padding:16px 18px;border-right:1px solid var(--line)}
+.stat:last-child{border-right:0}
+.stat b{display:block;font-size:26px;letter-spacing:-.03em;font-weight:620;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:12.5px}
+.stat.accent b{color:var(--accent)}
+
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);margin-bottom:26px}
+.actions label{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:6px;margin-right:6px}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:6px 9px}
+input[type=number]{width:72px}
+button{font:inherit;font-weight:560;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:7px 13px;cursor:pointer}
+button:hover{border-color:var(--faint)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (prefers-color-scheme:dark){button.primary{color:#0b0d18}}
+button:disabled{opacity:.45;cursor:not-allowed}
+.actions .sp{flex:1}
+.msg{font-size:13px;color:var(--muted)}
+.msg.err{color:var(--bad)}
+
+nav.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto}
+nav.tabs button{border:0;border-radius:0;background:none;color:var(--muted);padding:10px 14px;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+nav.tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
+nav.tabs button i{font-style:normal;color:var(--faint);margin-left:5px;font-weight:500}
+
+.list{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.row{display:grid;gap:14px;align-items:center;padding:13px 16px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row.head{background:var(--surface);color:var(--muted);font-size:12.5px;padding:9px 16px}
+.row.click{cursor:pointer}
+.row.click:hover{background:var(--surface)}
+.ev{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) 110px 150px 100px}
+.fl{grid-template-columns:minmax(0,1fr) 130px}
+.cd{grid-template-columns:minmax(0,1.3fr) 120px 110px minmax(0,1.4fr)}
+.cl{grid-template-columns:70px minmax(0,1fr) 70px 70px 104px}
+button{white-space:nowrap}
+.name{font-weight:580;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub{color:var(--muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.desc{color:var(--muted);font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.num{font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:560;padding:3px 9px;border-radius:99px;background:var(--surface2);color:var(--muted);white-space:nowrap}
+.chip.adopt,.chip.adopt-confirmed,.chip.done{background:var(--good-soft);color:var(--good)}
+.chip.probation,.chip.running,.chip.judged{background:var(--warn-soft);color:var(--warn)}
+.chip.reject,.chip.reject-final,.chip.revoked,.chip.failed,.chip.invalid{background:var(--bad-soft);color:var(--bad)}
+.chip.infra{background:var(--surface2);color:var(--muted)}
+.chip.task{background:var(--accent-soft);color:var(--accent)}
+.vs{display:flex;gap:6px;font-size:12.5px;color:var(--muted)}
+.vs b{font-weight:560;color:var(--ink)}
+.ok{color:var(--good)} .no{color:var(--bad)}
+.bar{height:6px;border-radius:9px;background:var(--surface2);overflow:hidden;width:100%}
+.bar i{display:block;height:100%;background:var(--accent)}
+.detail{padding:4px 16px 18px;border-top:1px dashed var(--line);background:var(--surface);display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.detail h4{margin:12px 0 6px;font-size:13px;font-weight:600}
+.detail p,.detail li{color:var(--muted);font-size:13px;margin:0}
+.detail ul{margin:0;padding-left:18px}
+.detail li{margin:3px 0}
+.prompt{white-space:pre-wrap;font-size:12.5px;color:var(--muted);max-height:220px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.section-title{display:flex;align-items:baseline;gap:10px;margin:26px 0 10px}
+.section-title:first-child{margin-top:0}
+.section-title h3{margin:0;font-size:16px;letter-spacing:-.01em;font-weight:620}
+.section-title p{margin:0;color:var(--muted);font-size:13px}
+.empty{padding:34px 16px;text-align:center;color:var(--muted)}
+.quote{padding:12px 16px;border-top:1px solid var(--line);font-size:13.5px}
+.quote:first-child{border-top:0}
+.quote small{display:block;color:var(--faint);font-size:12px;margin-top:3px}
+pre.log{font:12px/1.5 var(--mono);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;max-height:420px;overflow:auto;white-space:pre-wrap;margin:10px 0 0}
+.search{width:260px;max-width:100%}
+.evalform{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+footer{color:var(--faint);font-size:12.5px;padding:40px 0}
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr;gap:18px;padding-top:28px}
+  .stats{grid-template-columns:repeat(3,1fr)}
+  .stat:nth-child(3){border-right:0}
+  .stat:nth-child(-n+3){border-bottom:1px solid var(--line)}
+  .ev{grid-template-columns:minmax(0,1fr) 100px}
+  .ev>:nth-child(2),.ev>:nth-child(4),.ev>:nth-child(5){display:none}
+  .cd{grid-template-columns:minmax(0,1fr) 100px}
+  .cd>:nth-child(3),.cd>:nth-child(4){display:none}
+  .cl{grid-template-columns:64px minmax(0,1fr) 60px}
+  .cl>:nth-child(4),.cl>:nth-child(5){display:none}
+  .detail,.grid2{grid-template-columns:1fr}
+  .root{display:none}
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="mark"><i></i>Edge <span>Skill cockpit</span></div>
+  <div class="root" id="root"></div>
+  <div class="live" id="live"><b></b><span>local</span></div>
+</div></header>
+
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <h1>Every time your agent fails, it gets a chance to get better.</h1>
+      <p class="lede">Failures come from your own session logs. Candidate skills are re-run on the exact task, judged blind, and only reach your harness when they measurably win. Everything runs on this machine.</p>
+    </div>
+    <div class="loop">
+      <span>Mine sessions</span><em>→</em><span>Find or draft a skill</span><em>→</em><span>Re-run the task</span><em>→</em><span>Blind judge</span><em>→</em><span>Adopt or reject</span>
+    </div>
+  </section>
+
+  <section class="stats" id="stats"></section>
+
+  <section class="actions">
+    <label>Sessions <input type="number" id="sessions" value="40" min="5" max="500"></label>
+    <button data-act="mine">Mine sessions</button>
+    <button data-act="dry-run">Dry run</button>
+    <button data-act="recheck">Recheck probation</button>
+    <span class="sp"></span>
+    <span class="msg" id="msg"></span>
+    <button class="primary" data-act="loop">Run full loop</button>
+  </section>
+
+  <nav class="tabs" id="tabs"></nav>
+  <section id="view"></section>
+  <footer>Local only. Actions start the skill-miner and skill-eval-loop scripts with your own agent CLI and models. Evals are never overwritten, and every decision is appended to ledger.jsonl.</footer>
+</main>
+
+<script>
+const TOKEN = "__COCKPIT_TOKEN__";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ago = t => { if(!t) return ""; const s = Date.now()/1000 - t; return s<90?"just now":s<5400?Math.round(s/60)+"m ago":s<129600?Math.round(s/3600)+"h ago":Math.round(s/86400)+"d ago"; };
+const DECISION = {adopt:"Adopted","adopt-confirmed":"Confirmed",probation:"Probation",reject:"Rejected","reject-final":"Rejected",revoked:"Revoked"};
+let S = null, tab = "evals", open = new Set(), query = "";
+try { tab = localStorage.getItem("cockpit.tab") || tab; } catch(e) {}
+const hashTab = (location.hash.match(/tab=(\w+)/)||[])[1]; if(hashTab) tab = hashTab;
+
+async function load(){
+  try {
+    const r = await fetch("/api/state", {cache:"no-store"});
+    S = await r.json(); render();
+  } catch(e) { $("#msg").textContent = "cockpit server not reachable"; $("#msg").className = "msg err"; }
+}
+
+function counts(){
+  const latest = {};
+  S.ledger.forEach(r => { if(r.skill) latest[r.skill] = r.decision; });
+  const v = Object.values(latest);
+  return {
+    fleet: S.fleet.length,
+    candidates: S.drafts.filter(d => !d.forge).length + S.candidates.filter(c => (c.potential||0) >= .5 && !c.forge).length,
+    evals: S.evals.filter(e => e.verdict).length,
+    adopted: v.filter(x => x==="adopt"||x==="adopt-confirmed").length,
+    probation: v.filter(x => x==="probation").length,
+    rejected: v.filter(x => x==="reject"||x==="reject-final"||x==="revoked").length,
+  };
+}
+
+function render(){
+  $("#root").textContent = S.forge_root;
+  const running = S.jobs.some(j => j.status==="running");
+  $("#live").className = "live" + (running ? " busy" : "");
+  $("#live span").textContent = running ? "job running" : "local";
+  document.querySelectorAll("[data-act]").forEach(b => b.disabled = running);
+  const c = counts();
+  $("#stats").innerHTML = [
+    ["fleet","Installed skills"],["candidates","Open candidates"],["evals","Evals judged"],
+    ["adopted","Adopted"],["probation","On probation"],["rejected","Rejected"]
+  ].map(([k,l]) => `<div class="stat ${k==="adopted"?"accent":""}"><b>${c[k]}</b><small>${l}</small></div>`).join("");
+
+  const tabs = [["evals","Evals",S.evals.length],["candidates","Candidates",S.drafts.length+S.candidates.length],
+    ["fleet","Fleet",S.fleet.length],["failures","Failures",S.failures.clusters.length],["jobs","Jobs",S.jobs.length]];
+  $("#tabs").innerHTML = tabs.map(([k,l,n]) => `<button class="${k===tab?"on":""}" data-tab="${k}">${l}<i>${n}</i></button>`).join("");
+  ({evals:vEvals,candidates:vCandidates,fleet:vFleet,failures:vFailures,jobs:vJobs})[tab]();
+}
+
+function decisionChip(d){ return d ? `<span class="chip ${esc(d)}">${esc(DECISION[d]||d)}</span>` : ""; }
+
+function vEvals(){
+  if(!S.evals.length) return $("#view").innerHTML = `<div class="list"><div class="empty">No evals yet. Run the full loop, or start one from a candidate.</div></div>`;
+  $("#view").innerHTML = `<div class="list"><div class="row head ev"><div>Task</div><div>Skill</div><div>Winner</div><div>Verify · tool errors</div><div>Decision</div></div>` +
+    S.evals.map(e => {
+      const v = e.verdict || {}, L = e.ledger || {};
+      const vf = v.verify || {}, te = v.tool_errors || {};
+      const win = v.invalid ? `<span class="chip invalid">Invalid</span>` : v.winner_arm ? `<span class="chip">${v.winner_arm==="with"?"With skill":v.winner_arm==="without"?"Baseline":"Tie"}</span>` : `<span class="chip ${e.stage}">${e.stage}</span>`;
+      const ex = x => x===undefined ? "–" : `<b class="${x===0?"ok":"no"}">${x===0?"pass":"fail"}</b>`;
+      const row = `<div class="row ev click" data-open="${esc(e.id)}">
+        <div><div class="name">${esc(e.id)}</div><div class="sub">${ago(e.mtime)}${e.runs.with?` · ${e.runs.with.model} · ${e.runs.without?.seconds??"?"}s / ${e.runs.with.seconds}s`:""}</div></div>
+        <div class="name" style="font-weight:500">${esc(L.skill||"–")}</div>
+        <div>${win}</div>
+        <div class="vs">${v.verify?`<span>base ${ex(vf.without)} ${te.without??0}</span><span>skill ${ex(vf.with)} ${te.with??0}</span>`:"–"}</div>
+        <div>${decisionChip(L.decision)||'<span class="sub">not gated</span>'}</div></div>`;
+      if(!open.has(e.id)) return row;
+      const crit = v.verdict?.per_criterion || {};
+      const slotArm = s => v.slots?.[s] === "with" ? "skill" : "baseline";
+      const critName = w => w==="tie"?"tie":(w==="A"||w==="B")?slotArm(w):w;
+      return row + `<div class="detail">
+        <div><h4>Task given to both arms</h4><div class="prompt">${esc(e.prompt||"(brief not found)")}</div>
+          ${L.failure?`<h4>Production failure</h4><p>${esc(L.failure.signature)} · ${L.failure.count}× in ${L.failure.session_count} sessions</p>`:""}
+          ${L.recheck_due?`<h4>Recheck</h4><p>Due ${esc(L.recheck_due)}, baseline failure rate ${Math.round((L.baseline_failure_rate||0)*1000)/10}%</p>`:""}</div>
+        <div><h4>Blind judge</h4><ul>${(v.verdict?.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join("")||"<li>No verdict yet</li>"}</ul>
+          ${Object.keys(crit).length?`<h4>Per criterion</h4><ul>${Object.entries(crit).map(([k,w])=>`<li>${esc(k.replace(/_/g," "))}: <b>${esc(critName(w))}</b></li>`).join("")}</ul>`:""}
+          ${v.invalid_reason?`<h4>Invalid</h4><p>${esc(v.invalid_reason)}</p>`:""}</div></div>`;
+    }).join("") + `</div>`;
+}
+
+function vCandidates(){
+  const briefs = S.briefs.map(b => `<option>${esc(b)}</option>`).join("");
+  const usedBriefs = new Set(S.evals.map(e => e.id));
+  const drafts = S.drafts.length ? S.drafts.map(d => {
+    const row = `<div class="row cd click" data-open="d:${esc(d.path)}">
+      <div><div class="name">${esc(d.dir)}${d.name!==d.dir?` <span class="sub">(${esc(d.name)})</span>`:""}</div><div class="desc">${esc(d.description)}</div></div>
+      <div>${decisionChip(d.forge)||'<span class="chip">Not evaluated</span>'}</div>
+      <div class="sub">${d.installed?"installed":"draft"} · ${ago(d.mtime)}</div>
+      <div class="sub">${esc(d.path)}</div></div>`;
+    if(!open.has("d:"+d.path)) return row;
+    return row + `<div class="detail" style="grid-template-columns:1fr"><div>
+      <h4>Evaluate on a task</h4><p>Runs a baseline arm and a with-skill arm on the brief, judges blind, then gates. Two headless agent runs of spend.</p>
+      <div class="evalform"><select data-brief>${S.briefs.filter(b=>!usedBriefs.has(b)).map(b=>`<option>${esc(b)}</option>`).join("")||"<option value=''>no unused briefs, run the loop to mine new ones</option>"}</select>
+      <label class="sub"><input type="checkbox" data-probation> allow probation on a tie</label>
+      <button class="primary" data-eval="${esc(d.path)}">Run eval</button></div></div></div>`;
+  }).join("") : `<div class="empty">No drafted skills yet.</div>`;
+
+  const cf = S.candidate_failure;
+  const cands = S.candidates.length ? S.candidates.slice().sort((a,b)=>(b.potential||0)-(a.potential||0)).map(c => `<div class="row cd">
+      <div><div class="name">${esc(c.name)}</div><div class="desc">${esc(c.reason||c.description)}</div></div>
+      <div><div class="bar"><i style="width:${Math.round((c.potential||0)*100)}%"></i></div><div class="sub num">${Math.round((c.potential||0)*100)}% potential</div></div>
+      <div>${decisionChip(c.forge)||`<span class="sub">${(c.potential||0)>=.5?"worth an eval":"below bar"}</span>`}</div>
+      <div class="sub">${esc(c.pool||c.source||"")}</div></div>`).join("") : `<div class="empty">No scored candidates. Run a dry run to match and score skills.</div>`;
+
+  $("#view").innerHTML = `<div class="section-title"><h3>Drafted skills</h3><p>Written from your failure clusters when nothing existing fit</p></div>
+    <div class="list">${drafts}</div>
+    <div class="section-title"><h3>Scored matches</h3><p>${cf?`For “${esc(cf.signature)}”, `:""}existing skills from local, getedge, Floom and skills.sh, scored for P(measurable improvement)</p></div>
+    <div class="list">${cands}</div>`;
+}
+
+function vFleet(){
+  const q = query.toLowerCase();
+  const rows = S.fleet.filter(s => !q || (s.name+" "+s.description).toLowerCase().includes(q));
+  $("#view").innerHTML = `<div class="section-title"><h3>Installed skills</h3><p>${esc(S.skills_dirs.join(" · "))}</p><span style="flex:1"></span><input class="search" id="q" placeholder="Filter skills" value="${esc(query)}"></div>
+    <div class="list">${rows.map(s => `<div class="row fl">
+      <div><div class="name">${esc(s.name)}</div><div class="desc">${esc(s.description)}</div></div>
+      <div style="text-align:right">${decisionChip(s.forge)||'<span class="sub">never evaluated</span>'}</div></div>`).join("")||'<div class="empty">No skills match.</div>'}</div>`;
+  const i = $("#q"); i.oninput = () => { query = i.value; vFleet(); const n=$("#q"); n.focus(); n.setSelectionRange(n.value.length,n.value.length); };
+}
+
+function vFailures(){
+  const F = S.failures;
+  const cl = F.clusters.length ? F.clusters.map((c,i) => `<div class="row cl">
+      <div><span class="chip ${esc(c.class)}">${esc(c.class)}</span></div>
+      <div><div class="name" style="font-weight:500">${esc(c.signature)}</div><div class="sub">${esc(c.kind)} · ${c.class==="infra"?"routes to agent-infra-fixer":"eligible for the eval loop"}</div></div>
+      <div class="num">${c.count}×</div><div class="num sub">${c.session_count} sess.</div>
+      <div>${c.class==="task"?`<button data-cluster="${i}">Loop this</button>`:""}</div></div>`).join("") : `<div class="empty">Nothing mined yet. Click Mine sessions.</div>`;
+  const anger = F.anger.slice(0,12).map(a => `<div class="quote">“${esc(a.text.slice(0,220))}${a.text.length>220?"…":""}”<small>${esc(a.cwd||"")} · ${esc((a.session||"").slice(0,8))}</small></div>`).join("");
+  const spend = F.top_spend_sessions.map(s => `<div class="quote"><b class="num">${(s.out_tokens||0).toLocaleString()}</b> output tokens · ${s.errors} errors · ${s.user_msgs} messages<small>${esc(s.cwd)} · ${esc((s.session||"").slice(0,8))}</small></div>`).join("");
+  $("#view").innerHTML = `<div class="section-title"><h3>Failure clusters</h3><p>${F.sessions_scanned??0} sessions scanned${F.generated?` · ${esc(F.generated)}`:""}</p></div>
+    <div class="list">${cl}</div>
+    <div class="grid2" style="margin-top:8px">
+      <div><div class="section-title"><h3>Where you got frustrated</h3><p>${F.anger_count} messages</p></div><div class="list">${anger||'<div class="empty">None found.</div>'}</div></div>
+      <div><div class="section-title"><h3>Heaviest sessions</h3><p>By output tokens</p></div><div class="list">${spend||'<div class="empty">None found.</div>'}</div></div>
+    </div>`;
+}
+
+function vJobs(){
+  $("#view").innerHTML = S.jobs.length ? S.jobs.map(j => `<div class="list" style="margin-bottom:14px"><div class="row fl">
+      <div><div class="name">${esc(j.label)}</div><div class="sub">started ${ago(j.started)}${j.ended?` · took ${j.ended-j.started}s`:""}</div></div>
+      <div style="text-align:right"><span class="chip ${j.status}">${j.status}${j.exit?` (${j.exit})`:""}</span></div></div>
+      <div style="padding:0 16px 16px"><pre class="log">${esc(j.tail)}</pre></div></div>`).join("")
+    : `<div class="list"><div class="empty">No jobs started from this cockpit yet.</div></div>`;
+  document.querySelectorAll("pre.log").forEach(p => p.scrollTop = p.scrollHeight);
+}
+
+async function startJob(body, confirmText){
+  if(confirmText && !confirm(confirmText)) return;
+  $("#msg").className = "msg"; $("#msg").textContent = "starting…";
+  const r = await fetch("/api/jobs", {method:"POST", headers:{"Content-Type":"application/json","X-Cockpit-Token":TOKEN}, body:JSON.stringify(body)});
+  const d = await r.json();
+  if(!r.ok){ $("#msg").className = "msg err"; $("#msg").textContent = d.error; return; }
+  $("#msg").textContent = "job started"; tab = "jobs"; await load();
+}
+
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-tab],[data-open],[data-act],[data-eval],[data-cluster]");
+  if(!t) return;
+  const sessions = +$("#sessions").value || 40;
+  if(t.dataset.tab){ tab = t.dataset.tab; try{localStorage.setItem("cockpit.tab",tab)}catch(_){} render(); }
+  else if(t.dataset.act){
+    const a = t.dataset.act;
+    startJob({action:a, sessions}, a==="loop" ? "Run the full loop? This mines, drafts or picks a skill, and runs two headless agent evals with your own CLI." : null);
+  }
+  else if(t.dataset.eval){
+    const box = t.closest(".detail");
+    const brief = box.querySelector("[data-brief]").value;
+    if(!brief) return;
+    startJob({action:"eval", brief, skill_path:t.dataset.eval, probation:box.querySelector("[data-probation]").checked},
+      `Evaluate this skill on “${brief}”? Two headless agent runs.`);
+  }
+  else if(t.dataset.cluster){ startJob({action:"loop", sessions, cluster_index:+t.dataset.cluster}, "Run the full loop on this cluster? Two headless agent evals."); }
+  else if(t.dataset.open && !e.target.closest("select,input,label,button")){
+    const k = t.dataset.open; open.has(k) ? open.delete(k) : open.add(k); render();
+  }
+});
+
+load();
+setInterval(() => { const editing = document.activeElement?.matches("input,select") || (tab==="candidates" && [...open].some(k=>k.startsWith("d:")));
+  if(document.visibilityState==="visible" && !editing) load(); }, 4000);
+</script>
+</body>
+</html>

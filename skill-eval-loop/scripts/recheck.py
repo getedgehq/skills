@@ -40,7 +40,11 @@ def main():
 
     tmp = os.path.join(root, "mined", "recheck-failures.json")
     here = os.path.dirname(os.path.abspath(__file__))
-    subprocess.run([sys.executable, os.path.join(here, "mine.py"), "--sessions", str(sessions),
+    # mine.py lives in the sibling skill-miner skill
+    miner = os.environ.get("MINER_SCRIPTS") or os.path.join(here, "..", "..", "skill-miner", "scripts")
+    if not os.path.isfile(os.path.join(miner, "mine.py")):
+        miner = here
+    subprocess.run([sys.executable, os.path.join(miner, "mine.py"), "--sessions", str(sessions),
                     "--projects", projects, "--out", tmp], check=True)
     fresh = json.load(open(tmp))
 
