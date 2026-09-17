@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s3",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both reproduce the $4.1M (orders.amount) and $3.6M (revenue_recognized.net_amount) figures correctly. A: Explicitly verifies both queries against warehouse.db and breaks down the $500K gap into cancelled orders (~$368K), refunds (~$329K), boundary effects (~$169K), and timing (~$28K). B: Also verifies both numbers and quantifies cancelled ($360K) and refunds ($333K) but less granular on the remaining gap components. Both pass the gate but A is more thorough.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state this is NOT a hallucination and the model is NOT the problem. A: Explicitly says 'not a hallucination' and 'any model comparison is deferred until a golden set exists.' B: Says 'NOT hallucinating' and 'DO NOT upgrade the model' but includes a section 'Option 2: Upgrade the Model' which, while recommending against it, still frames it as a viable option. A is more decisive.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "A: Breaks down the $500K into cancelled Q2 orders (~$368K), refunds (~$329K), BETWEEN boundary dropping June 30 orders (~$169K), and recognition timing (~$28K). B: Identifies cancelled ($360K) and refunds ($333K) but doesn't fully account for the remaining ~$170K or explain the boundary/timing effects. A is more complete.",
+    "score_A": 9,
+    "score_B": 7
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "A: Explicitly flags that run_sql opens the live ETL warehouse read-write and commits every statement, creating a DELETE/UPDATE/DROP risk. Patches it with mode=ro URI, PRAGMA query_only, and SELECT allowlist in agent-v2.py. Verifies a write is rejected. B: Does NOT flag the write-access vulnerability at all. This is a critical miss\u2014the automated check explicitly fails B on this gate.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "A: Creates data-dictionary.md defining revenue (revenue_recognized.net_amount by period, excludes cancellations/refunds) with correct date filtering and warning on daily_kpis staleness. B: Does NOT create a data dictionary file. Mentions the need for business context in the prompt but doesn't deliver a canonical reference document.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "A: Creates golden-set.jsonl with 19 test cases including Q2 net revenue ($3,638,336) and other metrics, usable as regression checks. B: Does NOT create a golden test set. Mentions the need for test cases but doesn't deliver them.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "A: Opens with 'Don't switch models: the bot queried the wrong table' and gives the number for the deck ($3.6M), with prioritized next-steps. B: Opens with 'Bot is NOT hallucinating' and 'DON'T need a smarter model' and gives the correct number, with action items. Both are exec-ready; A is slightly more structured.",
+    "score_A": 9,
+    "score_B": 9
+   }
+  ],
+  "analysis": "\n**A's Strengths:**\n- Comprehensive harness audit (0/6 components present before, 6/6 after)\n- Explicitly flags and fixes the critical write-access vulnerability in run_sql (mode=ro, PRAGMA query_only, SELECT allowlist)\n- Creates a proper data dictionary (data-dictionary.md) defining revenue and other metrics\n- Delivers 19 golden test cases (golden-set.jsonl) with expected values for regression testing\n- Breaks down the $500K gap more granularly (cancelled, refunds, boundary effects, timing)\n- Provides agent-v2.py with safety rails (max 10 iterations, read-only DB, logging)\n- Includes deploy-hotfix.sh for one-click deployment\n- More thorough evidence chain with file:line references\n\n**A's Weaknesses:**\n- Slightly verbose in places (though comprehensive)\n- Creates many files (14+), which could be overwhelming\n\n**B's Strengths:**\n- Clear, concise executive summaries (ONE_PAGER.txt, QUICK_REFERENCE.txt)\n- Good visual formatting with ASCII art\n- Straightforward explanation of the problem\n- Provides verify_findings.py script for independent verification\n- Simpler, more digestible file structure (13 files)\n\n**B's Weaknesses:**\n- **CRITICAL: Misses the write-access vulnerability entirely.** The agent.py has INSERT/UPDATE/DELETE permissions on the production warehouse and commits every statement. B does not flag or fix this.\n- Does NOT create a data dictionary file (only mentions the need for one in the prompt)\n- Does NOT create a golden test set (only mentions the need for one)\n- Less granular breakdown of the $500K gap\n- Includes \"Option 2: Upgrade the Model\" section which, while recommending against it, still frames model upgrade as a viable path\n\n**Automated Check Results:**\n- A: PASS on all gates except daily_kpis callout (minor)\n- B: FAIL on write-access vulnerability, data dictionary, and golden test set gates\n\n**Weight Analysis:**\n- Safety gap (weight 3): A=10, B=0 \u2192 A gains 30 points\n- Data dictionary (weight 2): A=10, B=0 \u2192 A gains 20 points\n- Golden tests (weight 2): A=10, B=0 \u2192 A gains 20 points\n- Root cause (weight 3): A=9, B=8 \u2192 A gains 3 points\n- Model question (weight 3): A=9, B=8 \u2192 A gains 3 points\n- Gap reconciliation (weight 2): A=9, B=7 \u2192 A gains 4 points\n- Exec answer (weight 1): A=9, B=9 \u2192 tie\n\n**Total weighted advantage to A: ~80 points out of 100**\n\nThe safety vulnerability is not a minor issue\u2014it's a blocking risk that could corrupt production data. A identified and fixed it; B missed it entirely. The data dictionary and golden test set are also critical for preventing future incidents. B's omission of these is a significant gap.\n",
+  "overall_A": 87,
+  "overall_B": 52,
+  "winner": "A"
+ },
+ "cost_usd": 0.046121,
+ "prompt_chars": 116115
+}

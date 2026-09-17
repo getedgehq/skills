@@ -1,0 +1,128 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    OUTREACH AGENT COST ANALYSIS                              ║
+║                         Sept 1-15, 2026                                      ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ TOTAL COST: $26.66 across 46 conversations (241 API calls)                  │
+│ August cost: ~$6.66 (estimated)                                              │
+│ Increase: 4x                                                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+ROOT CAUSES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. RETRY LOOP ON VALIDATION ERRORS                         71% ($18.93)
+   ┌────────────────────────────────────────────────────────────────────┐
+   │ 4 conversations hit 422 "lead_score_v2 field unknown" error        │
+   │ Each retried 14-16 times, eventually hit 200K token limit          │
+   │                                                                     │
+   │ • cv_488aab (L-3419): 17 turns, $4.73                              │
+   │ • cv_15f5fe (L-3032): 17 turns, $4.71                              │
+   │ • cv_24a92f (L-2012): 17 turns, $4.60                              │
+   │ • cv_a99bb9 (L-2437): 16 turns, $4.39                              │
+   │                                                                     │
+   │ WHY: Prompt says retry all errors + fetch CRM every turn           │
+   │      → Token growth: 1.9K → 14K → 113K → 188K → 200K (limit)      │
+   └────────────────────────────────────────────────────────────────────┘
+
+2. EXCESSIVE CRM FETCHING                                  21% ($5.61)
+   ┌────────────────────────────────────────────────────────────────────┐
+   │ Prompt: "At the start of EVERY turn, call crm_get_account..."     │
+   │ Each export: 30-40KB JSON (~10K tokens)                            │
+   │ 4-turn conv: 1.9K + (10K × 4) + outputs = ~42K tokens avg         │
+   │                                                                     │
+   │ 187 crm_get_account calls total                                    │
+   │ 29 conversations with 3+ fetches                                   │
+   │ Most wasteful: cv_6f895a (L-3489) with 25 fetches in 26 turns     │
+   └────────────────────────────────────────────────────────────────────┘
+
+3. NO COST GOVERNANCE                                       8% ($2.12)
+   ┌────────────────────────────────────────────────────────────────────┐
+   │ • while True: (unbounded loop)                                     │
+   │ • No max iterations                                                │
+   │ • No per-conversation cost cap                                     │
+   │ • No graceful degradation                                          │
+   └────────────────────────────────────────────────────────────────────┘
+
+WHAT CHANGED ON SEPT 3?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+From CHANGELOG.md:
+  ✗ Added lead_score_v2 for high-scoring leads (BUT field doesn't exist in CRM!)
+  ✗ Added "refresh account every turn" instruction (exponential token growth)
+  ✗ Added "do not finish until update succeeds" (infinite retry on errors)
+
+This triple-whammy explains the 8x cost increase.
+
+FIXES APPLIED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Added MAX_TURNS = 10 (prevents runaway loops)
+✓ Added MAX_COST = $0.50 per conversation (hard budget limit)
+✓ Fixed retry logic: only retry 5xx errors, not 4xx validation errors
+✓ Changed prompt: fetch CRM once, not every turn
+✓ Removed lead_score_v2 requirement (until CRM schema is fixed)
+
+EXPECTED IMPACT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                    BEFORE          AFTER           SAVINGS
+                    ──────────────────────────────────────────────
+Sept 1-15 Cost      $26.66          $3.08           $23.58 (88%)
+Monthly Projected   $53.32          $6.16           $47.16 (88%)
+
+TOKEN USAGE (per conversation avg, after fixes):
+  • Turns: 4 (unchanged)
+  • Input: 24K tokens (was 180K in problem cases)
+  • Output: 300 tokens (unchanged)
+  • Cost: $0.077 per conversation (was $1.03 for problem cases)
+
+MODEL COMPARISON (after fixes deployed)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Assumptions: 94 conversations/month, 24K input + 300 output tokens each
+
+Model                 Input $/M   Output $/M   Monthly Cost   Savings
+────────────────────────────────────────────────────────────────────────
+claude-sonnet-4-5      $3.00       $15.00       $7.24         (baseline)
+claude-haiku-4-5       $1.00       $5.00        $2.41         -67%
+gpt-5-mini             $0.25       $2.00        $1.13         -84%
+gemini-2.5-flash       $0.30       $2.50        $1.41         -81%
+
+RECOMMENDATION: Don't switch models yet
+  • Deploy these fixes first (back to $6-7/month)
+  • Build golden set from real leads
+  • Test Haiku vs Sonnet on evals
+  • If quality holds, Haiku saves another $4.83/month
+
+  Total potential savings: $47.16 (fixes) + $4.83 (Haiku) = $52/month
+
+HARNESS SCORECARD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✗ Golden set          Missing (no evals/ folder)
+✗ Judge               Missing (no automated checks)
+✗ Cost governance     FIXED (added max turns + cost cap)
+⚠ Data layer          Partial (CRM schema mismatch)
+⚠ Action safety       Partial (no approval, but low risk)
+✓ Tracing             Present (good logs in logs/calls-*.jsonl)
+
+FILES CREATED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+output/
+  ├── QUICK_ANSWER.md              ← Start here!
+  ├── cost_analysis.md             ← Full analysis with evidence
+  ├── fixes_applied.md             ← What changed in the code
+  ├── agent_fixes.patch            ← Git diff of changes
+  ├── golden_set_template.jsonl    ← Starter eval set
+  ├── eval_judge.py                ← Eval harness script
+  └── cost_breakdown.txt           ← This file
+
+agent/ (FIXED)
+  ├── loop.py       ← Added max turns + cost cap
+  ├── prompts.py    ← Fetch once, removed retry instruction
+  └── tools.py      ← Only retry 5xx, not 4xx
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

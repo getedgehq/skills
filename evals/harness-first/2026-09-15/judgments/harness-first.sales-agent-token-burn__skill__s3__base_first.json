@@ -1,0 +1,55 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s3",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "Both identify the 422 lead_score_v2 retry loop and the 404 account_merged issue. A quantifies the 4 problem conversations at ~$18.77 (70% of costs) with specific conversation IDs and per-conversation costs ($4.60-$4.73 each). B also identifies these but adds a third root cause (re-fetching account every turn) and quantifies it as 89% token waste on normal conversations. B's analysis is more complete (3 bugs vs 2), though A's numbers on the specific loop conversations are clearer.",
+    "score_A": 8,
+    "score_B": 9
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "A says 'Yes, switch to Claude Haiku-4.5' in the opening, then qualifies it with 'but more importantly, I found TWO BUGS'. This is still an unconditional model switch recommendation upfront. B explicitly says 'NO. Don't switch models yet' and recommends fixing the harness first, then evaluating model choice with a golden set. B's answer directly contradicts the rubric's requirement to not recommend an unconditional swap. However, A's framing is misleading because it leads with the switch despite finding bugs.",
+    "score_A": 4,
+    "score_B": 9
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "Both add max_turns=10 to loop.py and modify prompts.py to remove lead_score_v2. A removes the per-turn fetch requirement and adds error handling. B goes further: modifies tools.py to fail fast on 4xx errors (only retry 5xx/429), which is the correct fix for non-transient errors. B's fix is more precise and addresses the root cause better. Both are deployable.",
+    "score_A": 8,
+    "score_B": 9
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "A does not flag the send_email safety issue. B explicitly flags it: 'send_email writes to external system, but no approval gate or draft mode' and lists it as Priority 1 blocking issue. This is a significant oversight in A.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "A creates output/ documents but no golden set or judge. B creates evals/golden.jsonl with 10 test cases (3 normal flows, 2 incident replays, 2 edge cases, 3 policy checks) and evals/judge.py with a runnable harness skeleton. B also includes a harness scorecard in cost_analysis.md. B is significantly more complete.",
+    "score_A": 2,
+    "score_B": 9
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "A leads with 'Yes, switch to Haiku' which is the wrong answer per the rubric. B leads with 'NO. Don't switch models yet' and explains the harness bugs are the real problem. B's answer is correct and evidence-based. A's answer is actionable but incorrect.",
+    "score_A": 3,
+    "score_B": 10
+   }
+  ],
+  "analysis": "\n**A's approach:** Identifies the 422 lead_score_v2 retry loop and 404 account_merged issue, quantifies them at $18.77 (70% of costs), then recommends switching to Haiku immediately. Creates comprehensive output documentation but does not create a golden set or eval harness. Does not flag the send_email safety issue. The core problem: leads with an unconditional model switch recommendation despite finding bugs, which violates the rubric's requirement to not recommend a blind model swap.\n\n**B's approach:** Identifies the same two bugs plus a third (wasteful re-fetching every turn), quantifies all three with evidence from logs, then explicitly recommends NOT switching models yet. Fixes the harness bugs in code (including the critical fail-fast-on-4xx fix in tools.py), creates a 10-case golden set with incident replays and policy checks, builds an eval harness skeleton, and flags the send_email safety gap as Priority 1. The answer is: fix the harness ($46/month savings), then evaluate model choice with a golden set.\n\n**Key differences:**\n\n1. **Root cause completeness:** A finds 2 bugs; B finds 3 (adds the per-turn re-fetch waste). B's analysis is more thorough.\n\n2. **Model recommendation:** A says \"Yes, switch to Haiku\" upfront (unconditional). B says \"NO, fix harness first\" (conditional). The rubric explicitly penalizes blind model swaps. A violates this; B follows it.\n\n3. **Code fixes:** A removes lead_score_v2 and adds max_turns. B does the same plus modifies tools.py to fail fast on 4xx errors (only retry 5xx/429), which is the correct fix for non-transient errors. B's fix is more precise.\n\n4. **Safety:** A does not flag send_email. B flags it as Priority 1 blocking issue.\n\n5. **Harness artifacts:** A creates no golden set or judge. B creates both (10 cases, runnable skeleton).\n\n6. **CFO answer:** A: \"Yes, switch to Haiku.\" B: \"No, fix harness first.\" B's answer is correct per the rubric.\n\n**Scoring notes:**\n\n- Root cause (weight 3): A=8 (clear on 2 bugs, good numbers), B=9 (3 bugs, more complete analysis)\n- No blind swap (weight 3): A=4 (leads with unconditional switch), B=9 (explicitly recommends against it)\n- Code fixes (weight 3): A=8 (correct but incomplete), B=9 (includes fail-fast-on-4xx)\n- Safety flag (weight 2): A=0 (missed it), B=10 (flagged as Priority 1)\n- Harness (weight 2): A=2 (no golden set/judge), B=9 (10-case golden set + judge skeleton)\n- CFO answer (weight 1): A=3 (wrong answer), B=10 (correct answer)\n\n**Overall:**\n- A: (8\u00d73 + 4\u00d73 + 8\u00d73 + 0\u00d72 + 2\u00d72 + 3\u00d71) / 14 = (24 + 12 + 24 + 0 + 4 + 3) / 14 = 67/14 \u2248 48/100\n- B: (9\u00d73 + 9\u00d73 + 9\u00d73 + 10\u00d72 + 9\u00d72 + 10\u00d71) / 14 = (27 + 27 + 27 + 20 + 18 + 10) / 14 = 129/14 \u2248 92/100\n\nB is substantially better. It answers the actual question correctly (don't switch models, fix harness), provides more complete root cause analysis, includes the critical fail-fast-on-4xx fix, flags the safety issue, and delivers a golden set + eval harness.\n",
+  "overall_A": 48,
+  "overall_B": 92,
+  "winner": "B"
+ },
+ "cost_usd": 0.059437,
+ "prompt_chars": 146102
+}

@@ -1,0 +1,55 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s2",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 28,
+  "overall_B": 72,
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "A: Identifies context bloat from repeated CRM fetches and model overkill, but misses the critical 422 validation error retry loop that accounts for 71% of costs ($18.93). Quantifies the 4 expensive conversations (~$18.40) but attributes it to context bloat rather than the retry mechanism. B: Correctly identifies all three root causes with precise numbers: 71% ($18.93) from retry loop on lead_score_v2 validation errors, 21% ($5.61) from excessive CRM fetching, 8% ($2.12) from no max iterations. Names the specific field (lead_score_v2) missing from CRM schema and shows the exact 422 error from logs. Quantifies per-conversation costs for the 4 problem leads (cv_488aab $4.73, cv_15f5fe $4.71, cv_24a92f $4.60, cv_a99bb9 $4.39).",
+    "score_A": 4,
+    "score_B": 10
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "A: Recommends switching to Haiku immediately without any caveats. States 'I've implemented a fix' and 'changes are already in your repo' but the fix is only a model switch, not addressing the root bugs. Explicitly says 'just switch to a cheaper model' and 'pick one for us'. This is exactly the blind swap the rubric warns against. B: Explicitly recommends NOT switching models yet. States 'Don't switch models yet' and 'Deploy these fixes first. You'll save $47/month immediately.' Recommends building a golden set and running evals before any model switch. Provides model comparison but only after fixing the bugs.",
+    "score_A": 1,
+    "score_B": 10
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "A: Modified config.json to switch models and agent/prompts.py to remove 'EVERY turn' instruction. Does not add max iterations, does not add cost cap, does not fix retry logic to skip 4xx errors. The prompt fix is incomplete (removes 'EVERY turn' but doesn't address the retry instruction or lead_score_v2 requirement). B: Comprehensively fixed all three issues: (1) Added MAX_TURNS=10 and MAX_COST=$0.50 in loop.py with cost tracking, (2) Fixed with_retries to only retry 5xx errors, not 4xx validation errors, (3) Changed prompt to fetch CRM once and removed lead_score_v2 requirement. All changes are in the actual code files (loop.py, prompts.py, tools.py).",
+    "score_A": 3,
+    "score_B": 10
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "A: Does not flag send_email safety issue. B: Does not flag send_email safety issue. Both miss this.",
+    "score_A": 0,
+    "score_B": 0
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "A: Creates many output files but no golden set with >=10 cases, no judge, no harness scorecard. Provides analysis and charts but not evaluation infrastructure. B: Creates golden_set_template.jsonl with 5 starter cases (including the 4 problem leads), eval_judge.py skeleton, and includes a harness scorecard in cost_breakdown.txt showing what's missing (\u2717 Golden set, \u2717 Judge, \u2713 Cost governance, etc.). More complete evaluation infrastructure.",
+    "score_A": 2,
+    "score_B": 6
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "A: Leads with 'Switch to Haiku, save 67%' which is the wrong answer. The CFO would be misled. B: Leads with 'Don't switch models yet, fix the bugs first, save 88%' which is correct. Provides clear numbers ($26.66 \u2192 $3.08 after fixes, $53 \u2192 $6 monthly). Explains the blocking issue (CRM schema mismatch). Numbers are consistent with logs.",
+    "score_A": 2,
+    "score_B": 10
+   }
+  ],
+  "analysis": "\n**Response A's Critical Flaw:**\nResponse A recommends an unconditional model switch to Haiku without fixing the underlying bugs. It identifies context bloat from repeated CRM fetches but misses the dominant cost driver: the retry loop on 422 validation errors (71% of costs, $18.93). The analysis attributes the expensive conversations to context bloat, but the logs show the real issue is that 4 leads hit `lead_score_v2` validation errors and retried 14-16 times each. Response A's \"fix\" only changes the model and removes the \"EVERY turn\" instruction\u2014it doesn't add max iterations, doesn't add cost caps, and doesn't fix the retry logic to skip non-transient 4xx errors. This leaves the agent vulnerable to future validation errors causing runaway costs.\n\n**Response B's Correct Diagnosis:**\nResponse B correctly identifies all three root causes with precise numbers:\n1. **Retry loop on validation errors (71%, $18.93):** 4 leads with scores >=80 hit CRM 422 errors because `lead_score_v2` field doesn't exist. The agent retried 14-16 times each, eventually hitting the 200K token limit. Names the specific field and shows the exact error from logs.\n2. **Excessive CRM fetching (21%, $5.61):** Prompt says fetch every turn, each fetch is 30-40KB (~10K tokens).\n3. **No max iterations (8%, $2.12):** Unbounded while True loop.\n\nResponse B then fixes all three issues in the actual code: adds MAX_TURNS=10 and MAX_COST=$0.50 in loop.py, fixes with_retries to only retry 5xx errors (not 4xx), and updates the prompt to fetch CRM once.\n\n**The User's Question:**\nThe user asked: \"should we just switch to a cheaper model?\" Response A says yes (wrong). Response B says no, fix the bugs first (correct). The automated checks confirm this: Response A gets \"unconditional switch\" flagged as a failure, Response B does not.\n\n**Expected Outcomes:**\n- **Response A's recommendation:** Switch to Haiku, save 67% on model costs. But the retry loop bug remains. If another validation error occurs, the agent will still burn $4+ per lead. The user would see some savings but not the full 88% possible.\n- **Response B's recommendation:** Fix the bugs first, save 88% ($47/month). Then optionally switch to Haiku for another 67% savings on top of that. The user gets the correct diagnosis and the right fix.\n\n**Code Quality:**\n- Response A: Modifies config.json and prompts.py. Incomplete fixes.\n- Response B: Modifies loop.py, prompts.py, and tools.py. Comprehensive fixes with cost governance, proper retry logic, and max iterations.\n\n**Evaluation Infrastructure:**\n- Response A: No golden set, no judge, no harness.\n- Response B: Provides golden_set_template.jsonl with 5 cases, eval_judge.py skeleton, and harness scorecard.\n\nResponse B is substantially better because it identifies the correct root cause, recommends the correct fix, and implements comprehensive code changes that actually stop the bleeding. Response A would mislead the user into a model switch that doesn't address the real problem.\n"
+ },
+ "cost_usd": 0.064693,
+ "prompt_chars": 159773
+}

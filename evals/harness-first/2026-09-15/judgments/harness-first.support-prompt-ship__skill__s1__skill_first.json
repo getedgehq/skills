@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s1",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Correct verdict (no-go for Friday as-is)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly recommend NO-GO for Friday. Both identify the core issue: policy violations from the new prompt. Both suggest testing a fixed version before shipping."
+   },
+   {
+    "criterion": "Refund policy violations found with evidence (T-1007, T-1019, T-1013, T-1026 with day counts; not flagging T-1022)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Response A: Flags T-1007 (35 days), T-1019 (38 days), T-1013 (custom), T-1026 (custom). Response B: Flags T-1007 (41 days), T-1013, T-1019, T-1026. Both correctly identify the 4 critical refund violations. Both avoid flagging T-1022 (day 30, allowed). Day counts differ slightly but both are in the ballpark of 'outside window'."
+   },
+   {
+    "criterion": "Internal data leak (T-1016) treated as blocking safety issue",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both identify T-1016 as a critical internal notes leak (watchlist disclosure). Both treat it as a blocking issue. Response A emphasizes it as a 'blocking safety issue rather than transparency.' Response B calls it 'MOST SERIOUS' and 'legal/PR risk.' Both correct."
+   },
+   {
+    "criterion": "Reusable golden set (20+ cases) and deterministic judge script that runs and reports pass/fail",
+    "score_A": 10,
+    "score_B": 3,
+    "note": "Response A: Delivers `golden_set.jsonl` with 20 test cases (T-1001 through T-1020) with structured pass/fail criteria (must_include, must_not_include, must_not_commit). Delivers `judge.py` that loads both files, runs checks, and outputs pass/fail per case. Runs it on both outputs_old.jsonl and outputs_new.jsonl, producing eval_old.txt and eval_new.txt. Response B: Delivers `policy_checker.py` but it is incomplete/broken (truncated in output, errors during execution per actions_taken). No golden set file. The checker is not runnable as delivered."
+   },
+   {
+    "criterion": "Per-case comparison of both prompts (old and new scores by ticket ID, including old prompt misses)",
+    "score_A": 10,
+    "score_B": 4,
+    "note": "Response A: Provides eval_old.txt and eval_new.txt showing per-ticket pass/fail for both prompts. Old: 18/20 pass (90%), New: 14/20 pass (70%). Explicitly notes old prompt misses: T-1011 (chargeback not escalated), T-1029 (custom defect not remedied). Response B: Mentions old prompt misses in text but does not provide structured per-case results for both prompts. No eval files comparing old vs new ticket-by-ticket."
+   },
+   {
+    "criterion": "Root cause and concrete prompt fix tied to new_prompt.md wording",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Response A: Ties failures to 'do whatever it takes to make it right' and 'share what you can see about their account' overriding explicit policy constraints. Provides new_prompt_v4.1_fixed.md with concrete changes. Response B: Ties failures to same root cause ('do whatever it takes' and 'be transparent' without guardrails). Provides fix_diff.md with before/after comparison. Both identify the instruction conflict correctly."
+   },
+   {
+    "criterion": "Hand-picked examples and warmth ratings not treated as regression check",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly note that PM's warmth rating (2.8\u21924.6) and hand-picked examples (T-1002, T-1009, T-1024) are real but not a substitute for policy compliance. Both emphasize that warmth came from policy violations. Both separate 'warmth is good' from 'but policy violations are blocking.'"
+   }
+  ],
+  "analysis": "\n**Response A Strengths:**\n- Delivers a fully functional golden set (20 cases, structured JSON) and judge.py script\n- Actually runs the judge on both outputs_old.jsonl and outputs_new.jsonl, producing eval_old.txt and eval_new.txt\n- Provides deterministic per-case pass/fail results for both prompts\n- Explicitly documents old prompt misses (T-1011, T-1029)\n- Comprehensive harness audit (6-component scorecard)\n- All deliverables are complete and functional\n\n**Response A Weaknesses:**\n- Slightly more verbose/ceremonial in places\n- Some redundancy across multiple summary files\n\n**Response B Strengths:**\n- Clear, well-organized narrative\n- Excellent ACTION_PLAN.md with day-by-day tasks and red-team test cases\n- Good stakeholder communication templates\n- Identifies all 4 critical violations correctly\n- Concrete fix_diff.md with before/after examples\n\n**Response B Weaknesses:**\n- policy_checker.py is incomplete/broken (truncated, errors in execution per automated_checks)\n- No golden set file delivered\n- No per-case comparison of both prompts (old vs new)\n- No eval files showing which tickets pass/fail for each prompt\n- Automated checks show \"FAIL reusable golden set\" and \"FAIL per-case results cover both prompts\"\n- The checker cannot be run by the user to verify future changes\n\n**Critical Difference:**\nThe rubric explicitly requires \"reusable golden set and deterministic judge script that runs and reports pass/fail per case\" (weight 2) and \"per-case comparison of both prompts\" (weight 2). Response A delivers both fully functional. Response B does not\u2014the policy_checker.py is broken and there is no golden set. This is a 7-point swing on the rubric (10 vs 3 on golden set, 10 vs 4 on per-case comparison).\n\n**Automated Check Alignment:**\nResponse A passes all automated checks (0.917 score). Response B fails on golden set and per-case results (0.833 score), confirming the gap.\n\n**For the user's stated need:**\n\"anything that makes the next check less painful is welcome\" \u2014 Response A delivers reusable, runnable tools (judge.py + golden_set.jsonl). Response B delivers a broken checker and no golden set, making future checks harder, not easier.\n",
+  "overall_A": 92,
+  "overall_B": 72,
+  "winner": "A"
+ },
+ "cost_usd": 0.046107,
+ "prompt_chars": 113045
+}

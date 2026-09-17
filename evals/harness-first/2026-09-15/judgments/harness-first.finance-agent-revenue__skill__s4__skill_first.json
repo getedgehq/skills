@@ -1,0 +1,61 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s4",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify that finbot used orders.amount ($4.1M) instead of revenue_recognized.net_amount ($3.6M), and both reconcile the ~$500K gap. A provides more granular breakdown (cancelled $360K, refunds $329K, BETWEEN boundary $169K, timing $28K). B provides similar breakdown (cancelled $360K, timing lag $120K, Q1 orders $265K, refunds $143K). Both are within acceptable tolerance. A's breakdown is slightly more detailed and mechanistic.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state this is NOT hallucination and NOT a model problem. A goes further: explicitly says 'any model comparison is deferred until a golden set exists' and 'don't swap models until you've tested the fix.' B says 'no LLM would know without being told' and 'don't upgrade model.' A is more cautious and evidence-driven; B is more dismissive of model upgrade. Both are correct, but A's framing is more rigorous.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "A breaks down: cancelled $360K, refunds $329K, BETWEEN boundary $169K, timing $28K. B breaks down: cancelled $360K, Q2\u2192Q3 timing $120K, Q1\u2192Q2 timing $265K, refunds $143K. Both reconcile the gap, but A's is more precise (mentions the specific BETWEEN '...06-30' boundary issue). B's is more business-narrative. A is slightly more technical/precise.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "CRITICAL DIFFERENCE: A explicitly flags the P0 security issue (run_sql opens read-write, can DELETE/UPDATE/DROP), provides agent_v2.py with read-only fix (mode=ro, PRAGMA query_only), and verifies write is rejected. B does NOT mention this security issue at all. This is a major gap in B. Automated checks confirm: A has readonly probe passing, B fails the security gate.",
+    "score_A": 10,
+    "score_B": 0
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "A provides data_dictionary.md defining revenue_recognized.net_amount, excludes cancellations/refunds, correct date filtering, warning on daily_kpis. B provides prompt_fix.md with embedded guidance but no separate data dictionary file. A is more complete and reusable.",
+    "score_A": 9,
+    "score_B": 6
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "A provides golden_set.jsonl with 5 test cases (Q2 revenue, Q1 revenue, monthly, order counts, refunds) with expected answers and SQL constraints. B does NOT provide a golden set file. A has eval_judge.py to run tests. B has validate.py but it's not a regression test suite. A is significantly more complete.",
+    "score_A": 10,
+    "score_B": 2
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "A: EXECUTIVE_SUMMARY.md is one page, clear answer, prioritized next steps. B: executive_summary.md is similar quality. Both are exec-ready. Tie.",
+    "score_A": 9,
+    "score_B": 9
+   }
+  ],
+  "analysis": "\n**Response A Strengths:**\n- Identifies and fixes P0 security issue (write access to production warehouse) with agent_v2.py\n- Creates comprehensive golden test set (golden_set.jsonl) with 5 cases and automated judge (eval_judge.py)\n- Provides separate data_dictionary.md defining revenue tables and exclusions\n- Embeds data dictionary in improved prompt_v2.md\n- Delivers 15 files with clear navigation (START_HERE.txt, INDEX.txt, MANIFEST.txt)\n- Includes tracing/logging in agent_v2.py for debugging\n- More rigorous on model swap decision: \"defer until golden set exists\"\n- Automated checks pass on security, data dictionary, golden set, readonly probe\n\n**Response A Weaknesses:**\n- Slightly verbose in places\n- Some files are redundant (multiple summaries)\n\n**Response B Strengths:**\n- Clear, business-focused narrative\n- Good cost-benefit analysis (why not upgrade model)\n- Excellent visual diagrams (data_flow_diagram.txt)\n- Well-organized file structure with clear reading order\n- Concise and actionable recommendations\n- Good analogies (\"houses we signed contracts for\" vs \"houses we closed on\")\n\n**Response B Weaknesses:**\n- **CRITICAL: Misses P0 security issue entirely** (run_sql can DELETE/UPDATE/DROP production warehouse)\n- No golden test set (no regression testing capability)\n- No separate data dictionary file (only embedded in prompt)\n- No automated test runner (validate.py is manual, not a harness)\n- No tracing/logging recommendations\n- Automated checks fail on security gate, data dictionary, golden set\n\n**Key Differentiator:**\nThe P0 security issue is a blocking problem. Response A catches it and fixes it; Response B completely misses it. This alone is worth 3x weight in the rubric (unasked safety gap). Additionally, Response A provides a complete testing harness (golden_set.jsonl + eval_judge.py) which is essential for preventing future regressions, while Response B provides only manual validation.\n\n**Verdict:**\nResponse A is significantly better. It catches a critical security vulnerability that Response B misses entirely, provides a complete testing harness, and delivers a more production-ready solution. While Response B has better narrative and business framing, it fails on critical safety and testing requirements.\n",
+  "overall_A": 87,
+  "overall_B": 52,
+  "winner": "A"
+ },
+ "cost_usd": 0.043536,
+ "prompt_chars": 115133
+}

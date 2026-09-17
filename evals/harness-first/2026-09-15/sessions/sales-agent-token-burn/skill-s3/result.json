@@ -1,0 +1,71 @@
+{
+ "attempt_id": "harness-first.sales-agent-token-burn:skill:s3",
+ "task_id": "harness-first.sales-agent-token-burn",
+ "skill": "harness-first",
+ "arm": "skill",
+ "sample": 3,
+ "status": "done",
+ "turns": 41,
+ "cost_usd": 0.8816443500000001,
+ "usage": {
+  "inputTokens": 246,
+  "outputTokens": 21501,
+  "cacheReadInputTokens": 800067,
+  "cacheWriteInputTokens": 84899
+ },
+ "skill_read": true,
+ "skill_file_reads": [
+  {
+   "tool": "read_file",
+   "args": "{\"path\": \"/home/user/.skills/harness-first/SKILL.md\"}"
+  }
+ ],
+ "tool_calls": 44,
+ "tool_errors": 4,
+ "system_prompt": "You are an AI assistant with access to a Linux computer through tools. The user's files are in /home/user/work, which is your current working directory.\n\nComplete the user's request end to end: do the actual work with the tools, save deliverables as files when a file is the natural output, and finish with a reply to the user in chat. The user is not available for follow-up questions during the task; if something is ambiguous or missing, make a sensible call and say so, or explain clearly what blocks you.\n\nEnvironment: Debian Linux, Python 3.11, Node 20, git, jq, curl, ImageMagick. Internet access is available (pip/npm/apt installs work). Today's date is 2026-09-15.\n\n<available_skills>\n<skill>\n<name>harness-first</name>\n<description>Diagnose and fix an unreliable, expensive, or unsafe LLM agent by auditing its harness (golden set, judge, cost caps, data layer, action approvals, tracing) before blaming or swapping the model. Use when someone says an agent is \"burning tokens\", \"hallucinating\", \"brittle\", gives inconsistent answers, asks whether to switch to a cheaper/better model, or wants to ship an agent or prompt change to customers.</description>\n<location>/home/user/.skills/harness-first/SKILL.md</location>\n</skill>\n</available_skills>\n\nSkills are folders of expert instructions, scripts, and resources. When a user's request matches a skill's description, read that skill's SKILL.md with read_file before starting, then follow it, using any bundled files it references.",
+ "sandbox_id": "[SANDBOX]",
+ "setup_s": 8.5,
+ "followups": [],
+ "max_prompt_tokens": 45259,
+ "wrapup": "turn_cap",
+ "wrapup_turn": 40,
+ "stop": "turn_cap",
+ "final_message": "## Summary\n\n**Don't switch models yet: 5 conversations stuck in retry loops burned 70% of tokens ($18.77 of $26.66).**\n\nI've completed a full harness-first diagnosis of your outreach agent's 4x cost spike. The problem wasn't the model - it was three harness bugs:\n\n### Root Causes (with evidence)\n\n1. **Infinite retry on permanent errors** - Prompt said \"if a tool call fails, try it again.\" Agent retried 404 \"account_merged\" 26 times and 422 \"unknown field lead_score_v2\" 68+ times across 4 high-scoring leads. These 5 conversations cost $18.77 (70% of total).\n\n2. **Wasteful re-fetching** - Prompt said \"call crm_get_account at EVERY turn.\" Each fetch adds 12KB JSON to message history. By turn 10: 114K input tokens. Normal conversations wasted 89% of tokens.\n\n3. **No max iterations** - `while True:` loop with no cap. One conversation ran 26 turns.\n\n### What I Fixed\n\n\u2705 **agent/loop.py** - Added `max_turns=10`, graceful stop message  \n\u2705 **agent/prompts.py** - Call crm_get_account ONCE, removed non-existent `lead_score_v2` field, don't retry 4xx errors  \n\u2705 **agent/tools.py** - Fail fast on 4xx errors (404, 422, etc.), only retry 5xx\n\n### Expected Savings\n\n- **Current:** $26.66/half-month = **$53/month**\n- **After fixes:** $3.68/half-month = **$7/month**\n- **Savings: $46/month (86% reduction)**\n\n### Model Recommendation\n\n**Keep Claude Sonnet 4-5.** After the harness fix, switching models would save only $2-4/month more, not worth migration risk. If you must switch, use **claude-haiku-4-5** (1 line config change, $2.45/mo additional savings).\n\n### What I Delivered\n\n**In output/:**\n- `README.txt` - Executive summary (start here)\n- `QUICK_REFERENCE.txt` - Deploy checklist\n- `cost_analysis.md` - Full diagnostic with evidence\n- `cost_comparison.txt` - Visual before/after\n- `fix_summary.md` - What changed and why\n- `model_recommendation.md` - Model comparison\n- `CHANGES.diff` - Exact code changes\n\n**In evals/:**\n- `golden.jsonl` - 10 test cases from real incidents\n- `judge.py` - Eval harness skeleton\n\n**All code fixes are deployed to agent/ and ready to test.**",
+ "agent_wall_s": 1277.9,
+ "model_wait_s": 1266.9,
+ "tool_s": 10.9,
+ "changed_files": [
+  "agent/loop.py",
+  "agent/prompts.py",
+  "agent/tools.py",
+  "evals/golden.jsonl",
+  "evals/judge.py",
+  "output/CHANGES.diff",
+  "output/QUICK_REFERENCE.txt",
+  "output/README.txt",
+  "output/cost_analysis.md",
+  "output/cost_comparison.txt",
+  "output/fix_summary.md",
+  "output/model_recommendation.md"
+ ],
+ "deleted_files": [],
+ "total_wall_s": 1289.0,
+ "check": {
+  "pass": false,
+  "score": 0.909,
+  "details": [
+   "PASS retry-loop mechanism on the 422 / lead_score_v2 write identified",
+   "PASS dominating conversations named (>=3 of 4 ids) or their ~70% share quantified",
+   "PASS noisy cv_6f895a not blamed as the main cost driver",
+   "FAIL does not recommend an unconditional model switch (fix/eval first)",
+   "PASS flags send_email firing without approval",
+   "PASS max-iterations / cost cap enforced (behavioral={'calls': 10, 'terminated': True, 'inconclusive': False, 'exc': None})",
+   "PASS root field named: lead_score_v2 not in CRM schema",
+   "PASS per-conversation numbers for the loop conversations (>=3)",
+   "PASS full account export re-sent every turn identified",
+   "PASS stops retrying non-transient errors (retry only 429/5xx)",
+   "PASS golden set with >=10 cases written",
+   "unconditional switch: ['Switching to GPT-5-mini would save $4/month.', 'Gemini and Deepseek: Even more migration work, similar or worse savings than GPT-5-mini.']"
+  ]
+ }
+}

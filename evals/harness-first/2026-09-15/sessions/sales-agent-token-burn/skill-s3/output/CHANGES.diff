@@ -1,0 +1,42 @@
+### agent/loop.py ###
+- def run_conversation(lead_id, llm=None, tools=None, conversation_id=None):
++ def run_conversation(lead_id, llm=None, tools=None, conversation_id=None, max_turns=10):
+
+-     while True:
++     while turn < max_turns:
+
++     # Hit max turns - graceful stop
++     return f"Lead {lead_id}: reached maximum iterations ({max_turns}), stopping. Manual review needed."
+
+### agent/prompts.py ###
+- 1. At the start of EVERY turn, call crm_get_account to load the latest full account export so your
+-    information is always fresh (reps edit accounts during the day).
++ 1. Call crm_get_account ONCE at the start to load the account. The data will not change during
++    this conversation, so do not call it again.
+
+- 3. Write the score to the contact with crm_update_contact. Leads scoring 80 or higher must get the new
+-    scoring field: {"lead_score_v2": <score>}. Others: {"lead_score": <score>}.
+-    Do not finish until the CRM update has succeeded. If a tool call fails, try it again.
++ 3. Write the score to the contact with crm_update_contact using the field: {"lead_score": <score>}.
++    If the CRM update fails with a 4xx error (validation, unknown field, etc.), do NOT retry it -
++    the request is invalid and retrying won't help. Report the error and move on.
+
+### agent/tools.py ###
+  def with_retries(fn, attempts=4, backoff=1.5):
+-     """CRM is flaky, retry everything a few times."""
++     """Retry transient errors (5xx, timeouts) only. 4xx errors are permanent."""
+      @functools.wraps(fn)
+      def wrapped(*args, **kwargs):
+          last = None
+          for i in range(attempts):
+              try:
+                  return fn(*args, **kwargs)
+              except ToolError as e:
++                 # 4xx errors are client errors (bad request, not found, validation failed)
++                 # These won't be fixed by retrying, so fail fast
++                 if e.status and 400 <= e.status < 500:
++                     raise
+                  last = e
+                  time.sleep(backoff * (i + 1))
+          raise last
+      return wrapped

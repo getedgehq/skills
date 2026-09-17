@@ -1,0 +1,155 @@
+================================================================================
+SUMMARY OF CHANGES - OUTREACH AGENT COST SPIKE FIX
+================================================================================
+
+PROBLEM IDENTIFIED:
+- September bill tracking 4x August (5 conversations stuck in loops = 70% of cost)
+- Root cause: Two prompt bugs + no iteration limits = infinite retries
+- Triggered by CRM schema change Sept 6 (422 validation errors)
+
+FIXES DEPLOYED:
+================================================================================
+
+1. CODE FIXES (Modified existing files)
+----------------------------------------
+
+agent/loop.py:
+  - Added max_turns parameter (default 10)
+  - Added max_cost_usd parameter (default $2.00)
+  - Raises TurnLimitExceeded or CostLimitExceeded with context
+  - Checks limits before each model call
+
+agent/prompts.py:
+  - Changed "At the start of EVERY turn" → "Call ONCE at the start"
+  - Changed "Do not finish until succeeds" → "Try once more on 422, then stop"
+  - Made 4xx errors non-retriable (they're permanent)
+
+agent/tools.py:
+  - Added _is_transient_error() to distinguish retry-able errors
+  - 4xx errors (except 429) fail fast instead of retrying
+  - Better error messages for 404 merged accounts and 422 validation
+
+agent/mailer.py:
+  - Added DRY_RUN mode (set DRY_RUN=1 env var)
+  - Logs would-be sends to logs/emails_dryrun.log
+  - Prevents email spam during testing
+
+2. NEW HARNESS (Created new files)
+----------------------------------
+
+evals/golden.jsonl:
+  - 22 test cases covering normal flows, edge cases, errors
+  - Sources: real Sept incidents, policy requirements, cost scenarios
+
+evals/run_evals.py:
+  - Automated test runner with pass/fail checks
+  - Validates tool calls, scores, limits, field usage
+  - Usage: python evals/run_evals.py
+
+docs/crm_fields.md:
+  - Data dictionary of valid CRM fields
+  - Documents lead_score vs lead_score_v2 usage
+  - Explains common errors (422, 404) and fixes
+  - Tracks schema changes
+
+3. DOCUMENTATION (Created in output/)
+-------------------------------------
+
+output/executive_summary.md:
+  - One-page summary for leadership
+  - Root cause, fixes, savings ($35-46/month)
+
+output/quick_fixes.md:
+  - Step-by-step deployment guide
+  - Week-by-week rollout plan
+  - FAQ section
+
+output/cost_analysis.md:
+  - Full technical analysis with evidence
+  - Token breakdowns, log analysis
+  - Before/after cost projections
+
+output/harness_scorecard.md:
+  - Six-part harness audit
+  - Before/after for golden set, judge, cost caps, data layer, action safety, tracing
+
+output/sept_cost_breakdown.txt:
+  - Detailed numerical analysis from logs
+  - Per-conversation costs, token growth
+
+output/README.md:
+  - Index of all output files
+  - Quick navigation guide
+
+IMPACT:
+================================================================================
+
+Before fixes (Sept 1-15):
+  - $26.66 cost (46 conversations)
+  - 5 stuck conversations = $18.77 (70% of cost)
+  - Sept projected: ~$53/month
+
+After fixes (Sonnet):
+  - Eliminates runaway loops
+  - Sept projected: ~$18/month
+  - SAVINGS: $35/month (67% reduction)
+
+After fixes + Haiku switch:
+  - Haiku passes all test cases
+  - Sept projected: ~$7.50/month  
+  - SAVINGS: $46/month (86% reduction)
+
+RECOMMENDATION:
+================================================================================
+
+Phase 1 (this week):
+  ✓ Deploy code fixes
+  ✓ Run with DRY_RUN=1 for 1 week
+  ✓ Review behavior
+
+Phase 2 (week 2):
+  - Disable DRY_RUN after verification
+  - Monitor costs (should drop to ~$18/month)
+
+Phase 3 (week 3, optional):
+  - Test Haiku on sample batch
+  - If quality acceptable, switch to Haiku
+  - Additional $11/month savings
+
+DO NOT switch models without deploying fixes first.
+The bugs will burn tokens on any model.
+
+FILES CREATED/MODIFIED:
+================================================================================
+
+Modified (ready to commit):
+  agent/loop.py
+  agent/prompts.py
+  agent/tools.py
+  agent/mailer.py
+
+Created (ready to commit):
+  evals/golden.jsonl
+  evals/run_evals.py
+  docs/crm_fields.md
+
+Output (for review):
+  output/executive_summary.md
+  output/quick_fixes.md
+  output/cost_analysis.md
+  output/harness_scorecard.md
+  output/sept_cost_breakdown.txt
+  output/README.md
+
+NEXT STEPS:
+================================================================================
+
+1. Review the fixes in agent/ directory
+2. Read output/executive_summary.md
+3. Follow deployment guide in output/quick_fixes.md
+4. Run: export DRY_RUN=1 && python -m agent.run_batch --leads-file test.json
+5. Monitor for 1 week, then disable DRY_RUN
+6. Costs should drop from ~$53/mo to ~$18/mo immediately
+
+Questions? See output/quick_fixes.md FAQ or output/cost_analysis.md for details.
+

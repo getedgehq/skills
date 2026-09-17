@@ -1,0 +1,107 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         FINBOT Q2 REVENUE BUG - ONE PAGE SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+THE NUMBERS
+┌────────────────────────────────────────────┐
+│ FinBot reported:  $4,138,212  (4.1M)  ❌   │
+│ Finance actual:   $3,638,336  (3.6M)  ✅   │
+│ ───────────────────────────────────────    │
+│ Difference:       $  499,876  (500K)       │
+└────────────────────────────────────────────┘
+
+THE PROBLEM
+┌──────────────────────────────────────────────────────────────────────┐
+│ Bot queried WRONG TABLE:                                             │
+│                                                                       │
+│ ❌ SELECT SUM(amount) FROM orders                                    │
+│    WHERE created_at BETWEEN '2026-04-01' AND '2026-06-30'           │
+│                                                                       │
+│    This includes cancelled and refunded orders!                      │
+│                                                                       │
+│ ✅ Should be: SELECT SUM(net_amount) FROM revenue_recognized        │
+│               WHERE period IN ('2026-04', '2026-05', '2026-06')     │
+└──────────────────────────────────────────────────────────────────────┘
+
+WHAT THE BOT COUNTED
+┌───────────────────────────────────────────────────────────┐
+│ Completed orders:         $3,269,511  ← Should count      │
+│ Partially refunded:       $  318,719  ← Need to adjust    │
+│ Refunded orders:          $  189,943  ← Shouldn't count   │
+│ Cancelled orders:         $  360,039  ← Shouldn't count   │
+│ ───────────────────────────────────────────────────────   │
+│ Bot's total:              $4,138,212  ❌                   │
+└───────────────────────────────────────────────────────────┘
+
+WHAT FINANCE USES (CORRECT)
+┌───────────────────────────────────────────────────────────┐
+│ Gross revenue:            $3,970,863                      │
+│ Refunds:                 -$  332,528                      │
+│ ───────────────────────────────────────────────────────   │
+│ Net revenue:              $3,638,336  ✅                   │
+│                                                            │
+│ Monthly: April $1.24M + May $1.21M + June $1.19M          │
+└───────────────────────────────────────────────────────────┘
+
+ROOT CAUSE
+┌──────────────────────────────────────────────────────────────────────┐
+│ The system prompt doesn't tell the bot:                              │
+│   • Which table to use for revenue questions                         │
+│   • That orders can be cancelled/refunded                            │
+│   • That revenue_recognized is the financial source of truth         │
+│                                                                       │
+│ Bot made a reasonable guess (orders → revenue) but was wrong         │
+└──────────────────────────────────────────────────────────────────────┘
+
+IS THE MODEL BAD?
+┌──────────────────────────────────────────────────────────────────────┐
+│ NO! The model (Claude Sonnet 4.5) worked perfectly:                  │
+│   ✅ Understood the question                                         │
+│   ✅ Generated correct SQL syntax                                    │
+│   ✅ Calculated Q2 date range correctly                              │
+│   ✅ Returned accurate results                                       │
+│                                                                       │
+│ It just didn't know which table represents "revenue"                 │
+│                                                                       │
+│ ❌ Upgrading to GPT-6/Opus WON'T help - same mistake without        │
+│    better instructions                                               │
+└──────────────────────────────────────────────────────────────────────┘
+
+THE FIX
+┌──────────────────────────────────────────────────────────────────────┐
+│ ✅ UPDATE THE PROMPT (not the model)                                 │
+│                                                                       │
+│ Add to prompt.md:                                                    │
+│   "For revenue questions, ALWAYS use revenue_recognized table"       │
+│   "This contains net revenue (gross - refunds)"                      │
+│   "The orders table includes cancelled orders - don't use it"        │
+│                                                                       │
+│ Time:  10 minutes                                                    │
+│ Cost:  $0                                                            │
+│ Risk:  Very low                                                      │
+│                                                                       │
+│ See: output/prompt_FIXED.md                                          │
+└──────────────────────────────────────────────────────────────────────┘
+
+ACTION ITEMS FOR DANIEL
+┌──────────────────────────────────────────────────────────────────────┐
+│ [ ] 1. Deploy updated prompt (10 min)                                │
+│ [ ] 2. Correct the board deck - Q2 revenue is $3.6M                  │
+│ [ ] 3. Test the fix with same question                               │
+│ [ ] 4. Add test suite to prevent future issues                       │
+│ [ ] 5. Don't upgrade the model - won't help                          │
+└──────────────────────────────────────────────────────────────────────┘
+
+BOTTOM LINE
+┌──────────────────────────────────────────────────────────────────────┐
+│ • NOT a hallucination - bot calculated exactly what it queried       │
+│ • NOT a model quality issue - instructions were incomplete           │
+│ • Fix is simple: add business context to the prompt                  │
+│ • Upgrading the model won't solve this                               │
+└──────────────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Full details: output/FINDINGS.md | output/TECHNICAL_ANALYSIS.md
+Data: output/analysis_data.json | output/comparison_data.csv
+Fix: output/prompt_FIXED.md
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,0 +1,212 @@
+================================================================================
+                        FINBOT INVESTIGATION - FILE INDEX
+================================================================================
+
+📋 START HERE (in this order):
+
+1. EXECUTIVE_SUMMARY.md      → One page for Daniel (CEO)
+                                "Should we switch models?"
+                                Answer: No, fix the harness first
+
+2. QUICK_START.md            → Deploy checklist for Jonas (bot owner)
+                                Step-by-step: what to deploy, how to test
+
+3. query_comparison.txt      → Visual side-by-side comparison
+                                Wrong query ($4.1M) vs correct query ($3.6M)
+
+
+================================================================================
+📊 DETAILED ANALYSIS:
+
+4. REPORT.md                 → Complete technical investigation
+                                - Root cause with evidence
+                                - Harness scorecard (6 components)
+                                - What I built and why
+                                - Recommendations by priority
+                                - Model swap analysis
+                                - Next steps for Jonas
+
+5. agent_harness_analysis.md → Line-by-line audit of agent.py
+                                - 6 harness issues found
+                                - P0 security risk (write access)
+                                - Recommendations by priority
+
+
+================================================================================
+🛠️ DELIVERABLES (deploy these):
+
+6. agent_v2.py               → Hardened agent with safety fixes
+                                ✅ Read-only DB (prevents DELETE/DROP)
+                                ✅ Max iterations = 5
+                                ✅ Token cap = 50k per run
+                                ✅ Tracing to agent_trace.jsonl
+
+7. prompt_v2.md              → Improved system prompt
+                                ✅ Data dictionary embedded
+                                ✅ Explicit: "use revenue_recognized"
+                                ✅ Quarter mapping (Q2 = Apr/May/Jun)
+                                ✅ Example correct queries
+
+8. data_dictionary.md        → Complete warehouse data dictionary
+                                ✅ Every table and column defined
+                                ✅ Common mistakes section
+                                ✅ Correct query examples
+                                ✅ Period mapping reference
+
+
+================================================================================
+✅ TEST SUITE (regression testing):
+
+9. golden_set.jsonl          → 5 test cases with expected answers
+                                - Q2 2026 revenue (incident)
+                                - Q1 2026 revenue
+                                - August 2026 revenue
+                                - Q2 order count
+                                - Q2 refunds
+                                
+                                Each case includes:
+                                - Input question
+                                - Expected number
+                                - SQL constraints
+                                - Correct SQL example
+
+10. eval_judge.py            → Automated test runner
+                                - Extracts numbers from answers
+                                - Checks SQL constraints
+                                - Reports pass/fail per case
+                                - Blocks deploy if failures
+                                
+                                Usage:
+                                  python eval_judge.py
+                                  (tests with incident data)
+                                
+                                  python eval_judge.py --run-agent
+                                  (tests live agent)
+
+
+================================================================================
+📖 REFERENCE:
+
+11. README.md                → Directory overview (this + more detail)
+
+12. INDEX.txt                → This file
+
+
+================================================================================
+🔢 THE NUMBERS:
+
+FinBot said:           $4,138,212.16  (wrong)
+Finance says:          $3,638,335.79  (correct)
+Difference:            $  499,876.37  (14% error)
+
+Q2 2026 orders table breakdown:
+  completed             $3,269,511
+  partially_refunded    $  318,719
+  cancelled             $  360,039  ← shouldn't count
+  refunded              $  189,943  ← shouldn't count
+  ─────────────────────────────────
+  TOTAL                 $4,138,212  ← finbot's answer
+
+Q2 2026 revenue_recognized table:
+  Gross                 $3,970,863
+  Refunds              -$  332,528
+  ─────────────────────────────────
+  Net                   $3,638,336  ← finance's answer
+
+
+================================================================================
+🎯 ROOT CAUSE:
+
+No data dictionary → model guessed which table → guessed wrong
+
+NOT a model problem. Model executed query correctly.
+Query was wrong because harness gave no guidance.
+
+
+================================================================================
+🚀 DEPLOY SEQUENCE:
+
+Step 1: Read EXECUTIVE_SUMMARY.md (Daniel) + QUICK_START.md (Jonas)
+
+Step 2: Deploy agent_v2.py
+        → CRITICAL: fixes P0 security issue (read-only DB)
+
+Step 3: Deploy prompt_v2.md
+        → Tells bot to use revenue_recognized for revenue
+
+Step 4: Test manually
+        $ python agent.py "what was our Q2 2026 revenue?"
+        Expected: ~$3.6M
+
+Step 5: Run regression test
+        $ cd output && python eval_judge.py
+        Expected: PASS ✓
+
+Step 6: Correct board pre-read
+        Q2 revenue = $3.6M (not $4.1M)
+
+
+================================================================================
+❓ FAQ:
+
+Q: Is the model hallucinating?
+A: No. It executed the query correctly. Query was wrong.
+
+Q: Should we switch to opus or gpt-6?
+A: Not yet. Fix harness first, then test both models with golden set.
+
+Q: Is this expensive to fix?
+A: No. Just deploy the files here. No model changes needed.
+
+Q: Will it happen again?
+A: Not if you run eval_judge.py before deploying changes.
+
+Q: Can we trust the bot now?
+A: After deploying agent_v2.py + prompt_v2.md, yes (with test suite).
+
+Q: What's the P0 security issue?
+A: Current bot can DELETE/UPDATE/DROP warehouse tables.
+   Fixed in agent_v2.py (read-only connection).
+
+
+================================================================================
+📞 WHO SHOULD READ WHAT:
+
+Daniel (CEO):
+  → EXECUTIVE_SUMMARY.md
+
+Marta (VP Finance):
+  → EXECUTIVE_SUMMARY.md
+  → query_comparison.txt
+
+Jonas (FinBot owner):
+  → QUICK_START.md (immediate action)
+  → REPORT.md (full context)
+  → agent_harness_analysis.md (technical debt)
+
+Data Team:
+  → data_dictionary.md
+  → golden_set.jsonl
+  → eval_judge.py
+
+
+================================================================================
+⏱️ TIME ESTIMATES:
+
+Deploy agent_v2.py + prompt_v2.md:     30 minutes
+Run eval_judge.py and verify:          15 minutes
+Fix board pre-read:                    15 minutes
+                                       ──────────
+Total critical path:                   1 hour
+
+Add to CI/CD:                          2 hours
+Cost monitoring dashboard:             1 day
+Full incident postmortem:              1 meeting
+
+
+================================================================================
+
+Investigation completed: 2026-09-15
+Methodology: Harness-first diagnosis
+All files ready for deployment in output/
+

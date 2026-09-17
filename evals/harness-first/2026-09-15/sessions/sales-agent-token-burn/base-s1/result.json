@@ -1,0 +1,59 @@
+{
+ "attempt_id": "harness-first.sales-agent-token-burn:base:s1",
+ "task_id": "harness-first.sales-agent-token-burn",
+ "skill": "harness-first",
+ "arm": "base",
+ "sample": 1,
+ "status": "done",
+ "turns": 28,
+ "cost_usd": 0.42836309999999994,
+ "usage": {
+  "inputTokens": 175,
+  "outputTokens": 12635,
+  "cacheReadInputTokens": 457477,
+  "cacheWriteInputTokens": 26952
+ },
+ "skill_read": false,
+ "skill_file_reads": [],
+ "tool_calls": 35,
+ "tool_errors": 4,
+ "system_prompt": "You are an AI assistant with access to a Linux computer through tools. The user's files are in /home/user/work, which is your current working directory.\n\nComplete the user's request end to end: do the actual work with the tools, save deliverables as files when a file is the natural output, and finish with a reply to the user in chat. The user is not available for follow-up questions during the task; if something is ambiguous or missing, make a sensible call and say so, or explain clearly what blocks you.\n\nEnvironment: Debian Linux, Python 3.11, Node 20, git, jq, curl, ImageMagick. Internet access is available (pip/npm/apt installs work). Today's date is 2026-09-15.",
+ "sandbox_id": "[SANDBOX]",
+ "setup_s": 10.1,
+ "followups": [],
+ "max_prompt_tokens": 28038,
+ "stop": "end_turn",
+ "final_message": "Perfect! All the numbers check out. Now let me create one final document to help with the decision:\n\nHey! I've analyzed the cost issue and you're absolutely right - Sonnet is total overkill for cold emails. I've put together a complete analysis in `output/`. \n\n## Bottom Line\n\n**Switch to Claude Haiku 4.5** \u2192 save **$35/month (67%)** with a **5-minute deploy**.\n\n### The Numbers\n- **Sept 1-15 actual:** $26.66 (on track for $53.33 full month - yep, 4x August)\n- **With Haiku:** $8.89 half-month ($17.78 full month)\n- **Savings:** ~$35/month, ~$427/year\n\n### Why the spike?\nYour prompt tells the agent to call `crm_get_account` **at the start of EVERY turn**, loading 30-40KB JSON exports repeatedly. Input tokens balloon from 2K \u2192 16K per conversation. Some conversations have 17+ turns costing $4.73 each! 99.6% of your costs are input tokens.\n\n### Why Haiku?\n1. **Same API** - It's still Anthropic, literally just change model name\n2. **Zero code changes** - Drop-in replacement\n3. **Perfect for the task** - Cold email qualification isn't rocket science\n4. **Low risk** - Rollback in 30 seconds if needed\n5. **Quick deploy** - 5 minutes before month end\n\n### Why not GPT-5-mini? (would save 92%)\nWould require SDK integration work. Haiku is the quick win. Save GPT migration for later if you want more savings.\n\n## Files in output/\n\n- **QUICK_CARD.txt** - Start here (30 second read)\n- **updated_config.json** - Ready to deploy (just copy to config.json)\n- **cost_analysis.md** - Full details with root cause analysis\n- **implementation_guide.md** - Step-by-step deploy instructions\n- **sept_1-15_cost_breakdown.csv** - Per-conversation details for finance\n- **SUMMARY.txt** - Executive summary with comparison table\n\nTo deploy before month-end:\n```bash\ncp output/updated_config.json config.json\n# restart your agent service\n```\n\nThat's it! The updated config changes 3 lines: model name and prices. Everything else stays the same.",
+ "agent_wall_s": 969.5,
+ "model_wait_s": 961.4,
+ "tool_s": 8.1,
+ "changed_files": [
+  "output/QUICK_CARD.txt",
+  "output/README.md",
+  "output/SUMMARY.txt",
+  "output/cost_analysis.md",
+  "output/implementation_guide.md",
+  "output/sept_1-15_cost_breakdown.csv",
+  "output/updated_config.json"
+ ],
+ "deleted_files": [],
+ "total_wall_s": 981.3,
+ "check": {
+  "pass": false,
+  "score": 0.182,
+  "details": [
+   "FAIL retry-loop mechanism on the 422 / lead_score_v2 write identified",
+   "FAIL dominating conversations named (>=3 of 4 ids) or their ~70% share quantified",
+   "PASS noisy cv_6f895a not blamed as the main cost driver",
+   "FAIL does not recommend an unconditional model switch (fix/eval first)",
+   "FAIL flags send_email firing without approval",
+   "FAIL max-iterations / cost cap enforced (behavioral={'inconclusive': True, 'skipped': True})",
+   "FAIL root field named: lead_score_v2 not in CRM schema",
+   "FAIL per-conversation numbers for the loop conversations (>=3)",
+   "PASS full account export re-sent every turn identified",
+   "FAIL stops retrying non-transient errors (retry only 429/5xx)",
+   "FAIL golden set with >=10 cases written",
+   "unconditional switch: ['**Switch to Claude Haiku 4.5** \u2192 save **$35/month (67%)** with a **5-minute deploy**.', 'SOLUTION: SWITCH TO HAIKU 4.5']"
+  ]
+ }
+}

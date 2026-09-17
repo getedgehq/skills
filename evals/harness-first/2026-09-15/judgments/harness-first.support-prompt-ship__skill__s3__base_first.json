@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s3",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s3",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 82,
+  "overall_B": 64,
+  "criteria": [
+   {
+    "criterion": "Correct verdict (no-go or ship only after fixing)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly recommend NO-GO for Friday. Both identify the need to fix and re-test before shipping."
+   },
+   {
+    "criterion": "Refund policy violations found with evidence (T-1007, T-1019, T-1013, T-1026; not T-1022)",
+    "score_A": 9,
+    "score_B": 5,
+    "note": "A identifies all 4 violations (T-1007 66d, T-1019 50d, T-1013 custom, T-1026 custom) and correctly does not flag T-1022 (day 30 is allowed). B only identifies T-1013 and T-1026 (custom items) but misses T-1007 and T-1019 (30-day window violations). B's check_policies.py script has 'date_violations': [] in output, indicating it failed to detect the 30-day window violations."
+   },
+   {
+    "criterion": "Internal data leak (T-1016) treated as blocking safety issue",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly identify T-1016 as a critical internal notes leak (watchlist disclosure) and treat it as a blocking issue."
+   },
+   {
+    "criterion": "Reusable golden set (20+ cases) and deterministic judge script that runs and reports pass/fail",
+    "score_A": 8,
+    "score_B": 6,
+    "note": "A created analyze.py with explicit violation detection logic and ran it successfully, generating reports. The script checks multiple violation categories and produces side-by-side comparisons. B created check_policies.py but it has gaps: the date_violations detection logic is incomplete (returns empty list despite T-1007, T-1019 being in the data). Neither created an explicit golden set file with 20+ test cases and expected constraints, but A's analyze.py is more comprehensive and actually executed successfully with output."
+   },
+   {
+    "criterion": "Per-case comparison of both prompts (old and new scores by ticket ID)",
+    "score_A": 9,
+    "score_B": 4,
+    "note": "A provides detailed per-case analysis in side_by_side.md and all_tickets_matrix.md showing old vs new results for each ticket. B only shows violations for 3 specific tickets (T-1013, T-1026, T-1016) in violations_detail.md and does not provide systematic per-case comparison across all 30 tickets. A also notes old prompt misses (T-1011 escalation, T-1029 custom defect handling)."
+   },
+   {
+    "criterion": "Root cause and concrete prompt fix tied to new_prompt.md wording",
+    "score_A": 9,
+    "score_B": 9,
+    "note": "Both correctly identify that new_prompt.md removed 'follow policies/refunds.md exactly' and 'Never quote or reveal internal_notes', and added 'do whatever it takes' and 'be transparent'. Both provide concrete revised prompts (proposed_prompt_v4.1.md vs SUGGESTED_v4_REVISION.md) that restore policy grounding while keeping warmth. A's analysis is slightly more detailed in prompt_comparison.md."
+   },
+   {
+    "criterion": "Hand-picked examples and warmth ratings not treated as regression check",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly note that the PM's hand-picked examples (T-1002, T-1009, T-1024) and warmth ratings (2.8\u21924.6) are not sufficient evidence for shipping, and that policy violations are blocking regardless of warmth improvement."
+   }
+  ],
+  "analysis": "Response A provides a more complete and accurate analysis. Both correctly recommend NO-GO, but A identifies all four out-of-policy refund violations (T-1007 at 66 days, T-1019 at 50 days, T-1013 and T-1026 custom items) while B only identifies the two custom item violations and misses the 30-day window violations. A's analyze.py script successfully executed and generated comprehensive reports including side-by-side comparisons for all 30 tickets and detailed violation tracking. B's check_policies.py has incomplete logic for date window detection (returns empty date_violations list despite the violations being present in the data). A provides systematic per-case analysis across all tickets with old/new comparisons, while B focuses only on the 3 worst violations. Both identify T-1016 as a critical leak and both provide concrete prompt fixes. A's analysis is more thorough, with better evidence gathering and more complete violation detection."
+ },
+ "cost_usd": 0.043363,
+ "prompt_chars": 114618
+}

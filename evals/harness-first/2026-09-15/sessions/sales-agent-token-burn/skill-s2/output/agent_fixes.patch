@@ -1,0 +1,92 @@
+diff --git a/agent/loop.py b/agent/loop.py
+index 1234567..abcdefg 100644
+--- a/agent/loop.py
++++ b/agent/loop.py
+@@ -10,12 +10,25 @@ from agent.prompts import SYSTEM_PROMPT
+ from agent.tracing import log_call
+ 
+ 
++MAX_TURNS = 10
++MAX_COST_PER_CONVERSATION = 0.50
++
++
+ def run_conversation(lead_id, llm=None, tools=None, conversation_id=None):
+     llm = llm or llm_mod.Client.from_config()
+     tools = tools or tools_mod.Toolbox()
+     messages = [{
+         "role": "user",
+-        "content": f"Work lead {lead_id}: qualify it, update the CRM, and send the first-touch email if it's a fit.",
++        "content": f"Work lead {lead_id}: qualify it, update the CRM, and send the first-touch email if it's a fit.\n\n"
++                   f"Call crm_get_account once to load the account data, then proceed with your analysis.",
+     }]
+ 
+     turn = 0
++    total_cost = 0.0
+     while True:
+         turn += 1
++        
++        # Cost governance
++        if turn > MAX_TURNS:
++            return f"Lead {lead_id}: Max iterations ({MAX_TURNS}) reached. Escalating to human review."
++        
+         resp = llm.complete(system=SYSTEM_PROMPT, messages=messages, tools=tools.schemas())
++        total_cost += resp.cost_usd
+         log_call(conversation_id, lead_id, turn, resp)
++        
++        if total_cost > MAX_COST_PER_CONVERSATION:
++            return f"Lead {lead_id}: Cost limit (${MAX_COST_PER_CONVERSATION}) exceeded. Escalating to human review."
++        
+         messages.append({"role": "assistant", "content": resp.content})
+ 
+         if not resp.tool_calls:
+diff --git a/agent/prompts.py b/agent/prompts.py
+index 2345678..bcdefgh 100644
+--- a/agent/prompts.py
++++ b/agent/prompts.py
+@@ -1,14 +1,14 @@
+ SYSTEM_PROMPT = """You are Brightkiln's outbound SDR assistant. Brightkiln sells kiln-monitoring
+ sensors to ceramics studios and small industrial potteries.
+ 
+ For each lead:
+-1. At the start of EVERY turn, call crm_get_account to load the latest full account export so your
+-   information is always fresh (reps edit accounts during the day).
++1. Call crm_get_account once at the start to load the full account export (company, contacts, activity history).
+ 2. Qualify the lead on a 0-100 scale using: studio size, kiln count, recent activity, fit notes.
+-3. Write the score to the contact with crm_update_contact. Leads scoring 80 or higher must get the new
+-   scoring field: {"lead_score_v2": <score>}. Others: {"lead_score": <score>}.
+-   Do not finish until the CRM update has succeeded. If a tool call fails, try it again.
++3. Write the score to the contact with crm_update_contact using the field: {"lead_score": <score>}.
++   If the CRM returns a validation error, report it and finish (don't retry non-transient errors).
+ 4. If the score is 50 or higher, send a short first-touch email with send_email, signed with the
+    assigned rep's name. Keep it under 120 words, no attachments.
+ 5. Reply with a one-line summary: lead id, score, whether an email was sent.
++
++Work efficiently: call crm_get_account once, then make your decisions. Don't refetch data unless absolutely necessary.
+ """
+diff --git a/agent/tools.py b/agent/tools.py
+index 3456789..cdefghi 100644
+--- a/agent/tools.py
++++ b/agent/tools.py
+@@ -13,9 +13,13 @@ class ToolError(Exception):
+         self.status = status
+ 
+ 
+-def with_retries(fn, attempts=4, backoff=1.5):
+-    """CRM is flaky, retry everything a few times."""
++def with_retries(fn, attempts=3, backoff=1.5):
++    """Retry transient errors (5xx) only. Don't retry validation errors (4xx)."""
+     @functools.wraps(fn)
+     def wrapped(*args, **kwargs):
+         last = None
+         for i in range(attempts):
+@@ -23,7 +27,12 @@ def with_retries(fn, attempts=4, backoff=1.5):
+                 return fn(*args, **kwargs)
+             except ToolError as e:
+                 last = e
++                # Don't retry client errors (4xx) - these are validation/permission issues
++                if e.status and 400 <= e.status < 500:
++                    raise
++                # Retry server errors (5xx)
+                 time.sleep(backoff * (i + 1))
+         raise last
+     return wrapped

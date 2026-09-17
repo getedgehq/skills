@@ -1,0 +1,155 @@
+FINBOT DATA FLOW - ROOT CAUSE VISUALIZATION
+============================================
+
+THE PROBLEM: Finbot is querying the wrong table for revenue questions
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ USER QUESTION: "What was Q2 2026 revenue?"                                  │
+└────────────────────────────────┬────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ FINBOT (LLM: Claude Sonnet 4-5)                                             │
+│ • Understands: Need Q2 revenue number                                       │
+│ • Generates SQL query                                                       │
+└────────────────────────────────┬────────────────────────────────────────────┘
+                                 │
+                                 ▼
+              ┌──────────────────┴──────────────────┐
+              │                                     │
+              ▼                                     ▼
+    ┌──────────────────┐                 ┌──────────────────┐
+    │  WRONG PATH ❌   │                 │  RIGHT PATH ✅   │
+    │                  │                 │                  │
+    │  orders table    │                 │ revenue_recog-   │
+    │                  │                 │ nized table      │
+    │  • created_at    │                 │                  │
+    │  • amount        │                 │ • recognized_on  │
+    │  • All orders    │                 │ • net_amount     │
+    │    (including    │                 │ • Only recognized│
+    │     cancelled)   │                 │   revenue        │
+    │                  │                 │                  │
+    │  = BOOKINGS      │                 │  = GAAP REVENUE  │
+    └─────────┬────────┘                 └─────────┬────────┘
+              │                                     │
+              ▼                                     ▼
+    ┌──────────────────┐                 ┌──────────────────┐
+    │  $4,138,212      │                 │  $3,638,336      │
+    │  (Finbot used)   │                 │  (Finance uses)  │
+    └─────────┬────────┘                 └─────────┬────────┘
+              │                                     │
+              └──────────────┬──┬──────────────────┘
+                             │ │
+                             ▼ ▼
+                    ┌──────────────────┐
+                    │  $499,876 diff   │
+                    │  DISCREPANCY     │
+                    └──────────────────┘
+
+
+WHAT'S IN EACH TABLE
+====================
+
+ORDERS TABLE (Bookings/Cash View)                 
+┏━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━┓
+┃ order_id┃ created_at ┃  amount ┃  status  ┃
+┣━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━╋━━━━━━━━━━┫
+┃ 102269  ┃ 2026-04-01 ┃ 1039.66 ┃completed ┃ ✓ Included in $4.1M
+┃ 102273  ┃ 2026-04-01 ┃ 3059.38 ┃refunded  ┃ ✓ Included at full amount
+┃ 102301  ┃ 2026-04-02 ┃ 2287.80 ┃cancelled ┃ ✓ Included (shouldn't be!)
+┃ 104331  ┃ 2026-06-23 ┃ 3413.68 ┃completed ┃ ✓ Included in Q2
+┗━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━━┛
+                               SUM = $4,138,212
+
+
+REVENUE_RECOGNIZED TABLE (GAAP/Accrual View)
+┏━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━┓
+┃ order_id┃ recognized ┃   gross   ┃  refund   ┃   net   ┃
+┃         ┃     _on    ┃  _amount  ┃  _amount  ┃ _amount ┃
+┣━━━━━━━━━╋━━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━┫
+┃ 102269  ┃ 2026-04-08 ┃  1039.66  ┃    0.00   ┃ 1039.66 ┃ ✓ In Q2 revenue
+┃ 102273  ┃ 2026-04-01 ┃  3059.38  ┃ 3059.38   ┃    0.00 ┃ ✓ Net = 0 (refunded)
+┃ 102301  ┃     -      ┃     -     ┃     -     ┃    -    ┃ ✗ Not in table (cancelled)
+┃ 104331  ┃ 2026-07-02 ┃  3413.68  ┃    0.00   ┃ 3413.68 ┃ ✗ In Q3 revenue (not Q2)
+┗━━━━━━━━━┻━━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━┛
+                                          SUM(net) = $3,638,336
+
+
+THE FIX
+=======
+
+CURRENT PROMPT (causes the issue):
+┌─────────────────────────────────────────────────────────┐
+│ "Tables you can use:                                    │
+│  - customers                                            │
+│  - orders                                               │  ← No guidance on
+│  - refunds                                              │    when to use which!
+│  - revenue_recognized                                   │
+│  - daily_kpis"                                          │
+└─────────────────────────────────────────────────────────┘
+                        │
+                        │ LLM picks "orders" because it
+                        │ sounds related to revenue
+                        ▼
+                    ❌ WRONG TABLE
+
+
+UPDATED PROMPT (fixes the issue):
+┌─────────────────────────────────────────────────────────┐
+│ "When users ask about 'revenue', use revenue_recognized │
+│  table (GAAP basis), NOT orders table (bookings).      │
+│                                                         │
+│  revenue_recognized = recognized revenue (correct)      │
+│  orders = bookings (when placed, not when earned)      │
+│                                                         │
+│  For revenue: use revenue_recognized.net_amount        │
+│  For bookings: use orders.amount"                      │
+└─────────────────────────────────────────────────────────┘
+                        │
+                        │ LLM now knows to use
+                        │ revenue_recognized for revenue
+                        ▼
+                    ✅ CORRECT TABLE
+
+
+TIMELINE VISUALIZATION
+======================
+
+Why Q2 orders ≠ Q2 revenue:
+
+March    April  │  May  │  June   July
+────────────────┼───────┼────────────────
+Q1              │     Q2        │  Q3
+────────────────┼───────┼────────────────
+                │       │
+Order           │       │       Revenue
+101980 ●─────────────────●       recognized (Q2)
+placed Q1       │       │
+                │       │
+        Order   │       │       Revenue
+        104331  ●───────────────●recognized (Q3)
+        placed Q2│      │
+                │       │
+                │       │
+        Order   │       │       Never
+        102301  ●───────X       recognized
+        cancelled│      │       (cancelled)
+
+
+KEY INSIGHT
+===========
+
+The model is working PERFECTLY. It just needs to know:
+  "revenue" = revenue_recognized table
+  "bookings" = orders table
+
+This is COMPANY-SPECIFIC KNOWLEDGE that no LLM has by default.
+
+GPT-6, Opus, or any other model would need the same instruction.
+
+This is not a model capability problem.
+This is a documentation problem.
+
+Solution: Update the prompt ✅
+Cost: $0 ✅
+Time: 30 minutes ✅
