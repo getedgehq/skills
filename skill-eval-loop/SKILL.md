@@ -120,6 +120,11 @@ AgentWallet first, as `anthropic/oauth-token/claude-code`, which is where a long
 in `~/.claude/.credentials.json` and refreshes by itself, so a host where nobody can finish
 a browser login still runs. That file is only ever read; an expired token is treated as no
 token, because the alternative is an opaque failure deep inside the container.
+`FORGE_AGENT=codex` turns `CODEX_FORCE_AUTH_JSON` on the same way and stops if
+`~/.codex/auth.json` is unreadable, rather than letting Harbor quietly fall back to an
+`OPENAI_API_KEY`: that fallback does not error, it bills a key or runs unauthenticated and
+resurfaces as a task failure that reads like the skill's fault. Set `CODEX_FORCE_AUTH_JSON=0`
+to choose the API key deliberately.
 The runner reads the token into the process and exports it, never passes it as an
 argument, and under `sudo` names the variables that may cross rather than using `-E`.
 This saves the API bill; it does not raise the weekly cap, which is the limit the loop

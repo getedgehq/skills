@@ -107,6 +107,23 @@ if [[ "$AGENT" == "claude" && -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]]; then
   exit 1
 fi
 
+# Codex authenticates by file, not by token: CODEX_FORCE_AUTH_JSON makes Harbor
+# upload auth.json into the container. Default it on for the same reason
+# CLAUDE_FORCE_OAUTH defaults on, and fail here if the file is missing rather
+# than let Harbor fall back to an OPENAI_API_KEY we do not have. That fallback
+# is the dangerous one: it would not error, it would bill an API key or run
+# unauthenticated deep inside a container and surface as a task failure that
+# looks like the skill's fault.
+CODEX_AUTH="${CODEX_AUTH:-$HOME/.codex/auth.json}"
+if [[ "$AGENT" == "codex" ]]; then
+  export CODEX_FORCE_AUTH_JSON="${CODEX_FORCE_AUTH_JSON:-1}"
+  if [[ "$CODEX_FORCE_AUTH_JSON" == "1" && ! -r "$CODEX_AUTH" ]]; then
+    echo "no readable $CODEX_AUTH. Log the Codex CLI in on this host, or set" >&2
+    echo "CODEX_FORCE_AUTH_JSON=0 to use an API key instead." >&2
+    exit 1
+  fi
+fi
+
 RUN=("$HARBOR")
 if [[ "${FORGE_HARBOR_SUDO:-}" == "1" ]]; then
   # Pass the auth through sudo explicitly rather than with -E: -E would carry
