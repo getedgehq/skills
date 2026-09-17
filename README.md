@@ -1,34 +1,19 @@
-# skills
+# GetEdge Skills
 
-Twenty Skills for agents, published by GetEdge. Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; two are companies' own Skills: `pay-per-call-apis` is Monid's, published unchanged apart from its name, and `cv-job-match` is Rocketlist's, published by GetEdge; seven were written directly for this repository: `people-search`, `agent-evals`, `harness-first`, and the four Skills of the self-improvement loop described below. `harness-first` is the only one measured so far: it ships an evaluation of itself in [`harness-first/EVALS.md`](harness-first/EVALS.md).
-
-A Skill is a folder with a `SKILL.md` at its root: a short front matter block naming the Skill and saying when to invoke it, then the instructions themselves. Agents that support Skills read the front matter to decide when a Skill applies, and the body once it does. Some of these carry scripts the instructions call.
-
-## Installing one
+Twenty Agent Skills, and a loop that works out which of them are actually worth keeping.
 
 ```
-npx skills add getedgehq/skills --skill workplan
+npx skills add getedgehq/skills --skill skill-miner
 ```
 
-`--list` shows everything available without installing. Each Skill is also a plain folder, so copying it into wherever your agent reads Skills from works just as well:
+`--list` shows everything without installing. A Skill is just a folder with a `SKILL.md` at its root, so cloning and copying works too:
 
 ```
 git clone https://github.com/getedgehq/skills
 cp -r skills/workplan ~/.claude/skills/workplan
 ```
 
-
-### Renamed Skills
-
-Skill names describe what a Skill does, not whose it is. On 2026-09-17 three were renamed; the old install names still work:
-
-| Old name | New name | Creator |
-| --- | --- | --- |
-| `opendraft` | `autonomous-research` | OpenDraft |
-| `rocketlist` | `cv-job-match` | Rocketlist |
-| `monid` | `pay-per-call-apis` | Monid |
-
-`npx skills add getedgehq/skills --skill opendraft` installs the same files as `--skill autonomous-research`, under the old name. Each old-name folder holds only a SKILL.md with the old `name:` and `metadata.internal: true` (so it stays out of `--list`) and symlinks to everything else in the renamed folder. `.github/scripts/derivation_gate.py` fails if an alias drifts from its Skill. Symlinks need a checkout that supports them, so on Windows use the new name.
+Catalogue and write-ups: **[getedge.cc](https://getedge.cc)**
 
 ## The self-improvement loop
 
@@ -51,7 +36,61 @@ The loop was developed on one person's own session logs, so these numbers are ev
 - **Skills that carry the user's own rules did.** Where the theme was knowledge the agent could not have had (a reply format the user wants, their writing voice, their outreach register, which operational decisions to make without asking), six Skills won their blind comparisons, five of them 3-0 and one 2-0 with one sample invalid. Those six were adopted.
 - **Two briefs were thrown out, not scored.** When both arms fail the deterministic check in every sample, the check is wrong, not the Skill. The brief writer now self-tests its check against a short good answer, a thorough good answer and a bad one before any eval runs.
 
+## Start here
+
+| If you want to | Install |
+| --- | --- |
+| Find what your agent keeps getting wrong | `skill-miner` |
+| Prove a Skill helps before you keep it | `skill-eval-loop` |
+| Fix hooks that block your agent silently | `agent-infra-fixer` |
+| Watch the whole loop in a browser | `skill-cockpit` |
+| Debug a slow or unreliable agent | `harness-first` |
+| Keep long work alive across context loss | `workplan` |
+
+## The twenty
+
+| Skill | What it does |
+| --- | --- |
+| `agent-evals` | Builds evals for a working agent: yes/no tasks and verifiers, resettable environments, then a loop that turns production traces into new tasks. |
+| `agent-infra-fixer` | Finds guard hooks that block legitimate work or hide their reason from the agent, replays every past block through the current hooks, and fixes stdout blocks so the agent sees why. |
+| `autonomous-research` | Turns one topic line into a research-paper draft: eighteen agent prompts, keyless Crossref and OpenAlex lookup, and a citation-integrity gate that fails the run instead of shipping a broken bibliography. |
+| `cli-ux-review` | Scores a command-line tool against a fixed rubric and writes the before/after fix for each failure. |
+| `cv-job-match` | Reads a CV, works out what the person can actually do, and returns live startup roles from Rocketlist's public board with published salary, the evidence for the fit and an apply link. Rocketlist's own Skill. |
+| `generate-image` | Generates images through the Codex CLI, billed to a ChatGPT subscription rather than a per-image API key. |
+| `harness-first` | Diagnoses an unreliable or expensive agent by auditing its harness, traces, tools and context first, and refuses to recommend a model swap without evidence. Measured in [`harness-first/EVALS.md`](harness-first/EVALS.md). |
+| `http-error-triage` | Separates a real credential problem from a CDN block, a wrong endpoint or a signature ban, before anyone concludes "the key is dead". |
+| `linkedin-media-prep` | Converts, crops and compresses images and video to what LinkedIn actually accepts. |
+| `pay-per-call-apis` | Gives an agent one install for hundreds of data and scraping tools: discover an endpoint, inspect its schema, run it, and report the per-call cost against a Monid balance. Monid's own Skill, not Apache-2.0. |
+| `people-search` | Plans a people search, ranks supplied or public-source candidates against a brief, and discloses exactly which filters a connected provider can and can't support, without implying built-in LinkedIn access it doesn't have. |
+| `product-launch-video` | Turns a product URL or launch brief into an editable, reviewed launch film using HyperFrames or Remotion with remocn primitives. |
+| `security-audit-checklist` | Audits app code, cloud config, containers, CI and IaC, with three bundled scanners. |
+| `shadcn-first` | Builds UI from shadcn blocks and components instead of hand-written markup. |
+| `skill-cockpit` | A local browser cockpit for the self-improvement loop: mined themes, running evals, per-sample verdicts and the adoption ledger. |
+| `skill-eval-loop` | Runs blind A/B evals of a Skill on your own tasks, three samples each, and adopts it only on a majority win with a passing deterministic check. |
+| `skill-miner` | Mines Claude Code, Codex and OpenCode session logs for corrections, frustration, token burn and failures, and drafts or finds a Skill for each theme. |
+| `strip-image-ai-metadata` | Strips C2PA and AI-generation metadata so platforms stop labelling an image. |
+| `top-down-comms` | Structures a client-facing artifact the way MBB consultants do: governing thought first. |
+| `workplan` | Creates, updates and closes a work plan so multi-step work survives losing context. |
+
+### Renamed Skills
+
+Skill names describe what a Skill does, not whose it is. On 2026-09-17 three were renamed; the old install names still work:
+
+| Old name | New name | Creator |
+| --- | --- | --- |
+| `opendraft` | `autonomous-research` | OpenDraft |
+| `rocketlist` | `cv-job-match` | Rocketlist |
+| `monid` | `pay-per-call-apis` | Monid |
+
+`npx skills add getedgehq/skills --skill opendraft` installs the same files as `--skill autonomous-research`, under the old name. Each old-name folder holds only a SKILL.md with the old `name:` and `metadata.internal: true` (so it stays out of `--list`) and symlinks to everything else in the renamed folder. `.github/scripts/derivation_gate.py` fails if an alias drifts from its Skill. Symlinks need a checkout that supports them, so on Windows use the new name.
+
+## How a Skill is put together
+
+A Skill is a folder with a `SKILL.md` at its root: a short front matter block naming the Skill and saying when to invoke it, then the instructions themselves. Agents that support Skills read the front matter to decide when a Skill applies, and the body once it does. Some of these carry scripts the instructions call.
+
 ## Every one of these is a derived copy, and each says how it was derived
+
+Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; two are companies' own Skills: `pay-per-call-apis` is Monid's, published unchanged apart from its name, and `cv-job-match` is Rocketlist's, published by GetEdge; seven were written directly for this repository: `people-search`, `agent-evals`, `harness-first`, and the four Skills of the loop above. `harness-first` is the only one measured so far: it ships an evaluation of itself in [`harness-first/EVALS.md`](harness-first/EVALS.md).
 
 Nine of them started in Federico's own working set. The original was read, never modified. What is published is a copy, edited so that it is useful to a stranger rather than only to the person who wrote it.
 
@@ -90,28 +129,3 @@ Before their recorded licence dates these copies carried no licence file at all,
 With one exception, no comparative model evaluation has been run against any of these Skills themselves, and no general quality or safety state is asserted. The exception is `harness-first`: [`harness-first/EVALS.md`](harness-first/EVALS.md) reports a single run comparing the same agent with and without that Skill loaded, on three tasks, with the confidence interval and the one task where it did not help stated there. That is evidence about those three tasks, not a general quality bar. The loop results above measure the Skills the loop produced for one user, not the four loop Skills. These are working instructions, published because they were useful in practice. Package-level tests and gates are documented separately from evaluations.
 
 Several call out to tools that must already be on your machine: `generate-image` drives the Codex CLI, `linkedin-media-prep` and `strip-image-ai-metadata` use ffmpeg and Python imaging libraries, and `security-audit-checklist` bundles three Python scanners. Read a Skill's instructions and its scripts before you run it, the same as any other code you install.
-
-## The twenty
-
-| Skill | What it does |
-| --- | --- |
-| `agent-evals` | Builds evals for a working agent: yes/no tasks and verifiers, resettable environments, then a loop that turns production traces into new tasks. |
-| `agent-infra-fixer` | Finds guard hooks that block legitimate work or hide their reason from the agent, replays every past block through the current hooks, and fixes stdout blocks so the agent sees why. |
-| `autonomous-research` | Turns one topic line into a research-paper draft: eighteen agent prompts, keyless Crossref and OpenAlex lookup, and a citation-integrity gate that fails the run instead of shipping a broken bibliography. |
-| `cli-ux-review` | Scores a command-line tool against a fixed rubric and writes the before/after fix for each failure. |
-| `cv-job-match` | Reads a CV, works out what the person can actually do, and returns live startup roles from Rocketlist's public board with published salary, the evidence for the fit and an apply link. Rocketlist's own Skill. |
-| `generate-image` | Generates images through the Codex CLI, billed to a ChatGPT subscription rather than a per-image API key. |
-| `harness-first` | Diagnoses an unreliable or expensive agent by auditing its harness, traces, tools and context first, and refuses to recommend a model swap without evidence. Measured in [`harness-first/EVALS.md`](harness-first/EVALS.md). |
-| `http-error-triage` | Separates a real credential problem from a CDN block, a wrong endpoint or a signature ban, before anyone concludes "the key is dead". |
-| `linkedin-media-prep` | Converts, crops and compresses images and video to what LinkedIn actually accepts. |
-| `pay-per-call-apis` | Gives an agent one install for hundreds of data and scraping tools: discover an endpoint, inspect its schema, run it, and report the per-call cost against a Monid balance. Monid's own Skill, not Apache-2.0. |
-| `people-search` | Plans a people search, ranks supplied or public-source candidates against a brief, and discloses exactly which filters a connected provider can and can't support — without implying built-in LinkedIn access it doesn't have. |
-| `product-launch-video` | Turns a product URL or launch brief into an editable, reviewed launch film using HyperFrames or Remotion with remocn primitives. |
-| `security-audit-checklist` | Audits app code, cloud config, containers, CI and IaC, with three bundled scanners. |
-| `shadcn-first` | Builds UI from shadcn blocks and components instead of hand-written markup. |
-| `skill-cockpit` | A local browser cockpit for the self-improvement loop: mined themes, running evals, per-sample verdicts and the adoption ledger. |
-| `skill-eval-loop` | Runs blind A/B evals of a Skill on your own tasks, three samples each, and adopts it only on a majority win with a passing deterministic check. |
-| `skill-miner` | Mines Claude Code, Codex and OpenCode session logs for corrections, frustration, token burn and failures, and drafts or finds a Skill for each theme. |
-| `strip-image-ai-metadata` | Strips C2PA and AI-generation metadata so platforms stop labelling an image. |
-| `top-down-comms` | Structures a client-facing artifact the way MBB consultants do: governing thought first. |
-| `workplan` | Creates, updates and closes a work plan so multi-step work survives losing context. |
