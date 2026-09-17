@@ -33,8 +33,20 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-eval_brief() {  # eval_brief <brief> <skill-dir>: N samples, blind judge each, majority, gate
+eval_brief() {  # eval_brief <brief> <skill-dir>: predict, N samples, blind judge each, majority, gate
   local brief="$1" skill="$2" s
+  # Predict before spending, on the skill that is actually about to be evaluated.
+  # score.py used to see only the matched registry candidates, and a matched
+  # candidate is used only when it scores >= 0.5, so the skill that reached the
+  # gate was almost always a draft nobody had predicted: 8 predictions on record,
+  # 21 decisions, and no pair between them however many evals ran. The prediction
+  # is recorded, not acted on. Acting on it needs calibrate.py --check to first
+  # say these numbers separate winners from losers, which is the thing this makes
+  # possible to ask.
+  if [[ "${FORGE_SKIP_SCORE:-}" != 1 ]]; then
+    python3 "$MINER/score.py" "$brief" --skill-dir "$skill" \
+      || echo "scoring failed, evaluating anyway (no prediction recorded)" >&2
+  fi
   for s in $(seq 1 "$SAMPLES"); do
     FORGE_SAMPLE=$s bash "$HERE/run_eval.sh" "$brief" without ""
     FORGE_SAMPLE=$s bash "$HERE/run_eval.sh" "$brief" with "$skill"
