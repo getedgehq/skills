@@ -1,6 +1,6 @@
 ---
 name: agent-infra-fixer
-description: Fix the agent's own environment when skill-miner surfaces infra-class failures - broken or over-broad hooks, permission-mode denials, wrappers, sandboxing, expired CLI auth. Use when session mining shows hook errors ("No stderr output", repeated "BLOCKED" on legitimate commands), denied permissions, or environment breakage that no skill could fix. The rule: infra failures get fixed in the environment, never worked around with skills.
+description: Fix the agent's own environment when skill-miner surfaces infra-class failures - broken or over-broad hooks, permission-mode denials, wrappers, sandboxing, expired CLI auth. Use when session mining shows hook errors ("No stderr output", repeated "BLOCKED" on legitimate commands), denied permissions, or environment breakage that no skill could fix. The rule is that infra failures get fixed in the environment, never worked around with skills.
 ---
 
 # agent-infra-fixer
