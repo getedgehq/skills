@@ -13,6 +13,9 @@ Decision rule (deliberately conservative):
   and revokes the skill if the failure rate did not drop.
   Everything else is REJECT. Ties without --probation are rejections - a skill
   that does not demonstrably improve the task is context debt, not an asset.
+  Neither decision is available on fewer than MIN_VALID valid samples, whatever
+  the winner says: the majority rule counts valid samples, so a run whose others
+  were thrown out is one run, and one run is an anecdote.
 
 On ADOPT: copies the skill into --adopt-dir and appends to ledger.jsonl. Both adopt
 and probation rows carry a baseline failure rate and a recheck date (14 days for an
@@ -25,6 +28,13 @@ import os
 import shutil
 import sys
 import time
+
+# Samples that actually decided something. Three samples exist so that one lucky run
+# cannot adopt a skill, and dropping the invalid ones can quietly undo that: a 2-1
+# adoption on record survived losing both samples where the with-arm never loaded the
+# skill, leaving one run holding an adoption the majority rule was written to prevent.
+# The majority is over valid samples, so the floor has to be too.
+MIN_VALID = 2
 
 
 def main():
@@ -47,13 +57,17 @@ def main():
 
     skill_name = os.path.basename(os.path.normpath(args.skill_dir))
     errors = v.get("tool_errors", {})
-    if v.get("invalid"):
+    # An older verdict has no valid_samples; treat its own sample count as the answer
+    # rather than refusing every pre-fix verdict on a field it could not have written.
+    n_valid = v.get("valid_samples", v.get("samples", MIN_VALID))
+    thin = n_valid < MIN_VALID
+    if v.get("invalid") or thin:
         adopt = False
     else:
         adopt = (v["winner_arm"] == "with" and v["verify"].get("with") == 0
                  and errors.get("with", 0) <= errors.get("without", 0))
     probation = False
-    if not adopt and args.probation:
+    if not adopt and args.probation and not thin:
         # Probation bar: eval didn't discriminate (tie) but the skill is harmless
         # in eval (verify passed) and the production failure is documented.
         probation = (not v.get("invalid") and v["winner_arm"] in ("tie", "with")
@@ -69,6 +83,12 @@ def main():
         "invalid": bool(v.get("invalid")),
         "invalid_reason": v.get("invalid_reason"),
         "winner_arm": v["winner_arm"],
+        "valid_samples": n_valid,
+        # How often the model reached for this skill in its own eval, where it was
+        # installed and the task was the one it is for. recheck.py asks the same
+        # question of real sessions weeks later and keeps finding zero; this is the
+        # earliest the loop can see it coming, on the row the recheck already reads.
+        "eval_skill_loads": v.get("skill_loads"),
         "verify": v["verify"],
         "tool_errors": v.get("tool_errors"),
         "reasons": v["verdict"].get("reasons", []),
@@ -95,6 +115,10 @@ def main():
         shutil.copytree(args.skill_dir, dest)
         tag = "ADOPTED" if adopt else "PROBATION (recheck due %s)" % entry["recheck_due"]
         print(f"{tag} {skill_name} -> {dest}")
+    elif thin:
+        print(f"REJECTED {skill_name}: {n_valid} valid sample(s), and one run is an "
+              f"anecdote. Fix whatever invalidated the others and rerun the brief "
+              f"(winner={v['winner_arm']}, verify={v['verify']})")
     else:
         print(f"REJECTED {skill_name} (winner={v['winner_arm']}, verify={v['verify']})")
     print(f"ledger: {ledger}")

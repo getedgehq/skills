@@ -16,6 +16,11 @@ inside the arm's own dot-directories and dropped from the file manifest, whichev
 runner installed it; an arm that names the skill in its final message makes the pair
 invalid rather than a win. And a verdict the judge did not state readably is refused
 by name: recorded as a tie it would be enough to adopt a skill on probation.
+
+The arm is also checked for having used the skill at all. Installing it does not load
+it - the model still has to choose it from its description, exactly as in production -
+and when it does not, the two arms are one run twice and whatever the judge preferred
+it was not the skill.
 """
 import argparse
 import json
@@ -108,6 +113,63 @@ def tool_error_count(meta):
     except OSError:
         pass
     return n
+
+
+def skills_loaded(meta, agent="claude"):
+    """(skills this arm loaded, whether its runner records skill calls at all).
+
+    A with-arm that never loaded the skill is not a with-arm. Both arms then ran the
+    same task with the same tools and the same model, and whichever the judge preferred
+    it was preferring one run over another, not a skill over its absence. Recorded as a
+    win it is worse than no verdict: it credits a skill that never executed, which is
+    the same defect the production recheck fixed on its own side, still live here. It
+    has already happened three times in 39 real arms, in both briefs whose skill was
+    adopted, and in one of them it left a 2-1 adoption resting on a single valid sample.
+
+    Read per runner, off real transcripts, because each spells the call its own way and
+    guessing has now produced the same bug three times: Claude Code emits a tool_use
+    named `Skill` with the name in `skill`, OpenCode a part with tool `skill` and the
+    name in `state.input.name`, and Codex records no skill call whatever. So a Codex
+    zero is not evidence and the caller is told as much by the second return value -
+    withholding that distinction would invalidate every Codex sample the loop ever runs.
+    """
+    if agent == "codex":
+        return set(), False
+    got = set()
+    try:
+        fh = open(os.path.join(meta, "transcript.jsonl"), errors="replace")
+    except OSError:
+        return got, True
+    for line in fh:
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        part = d.get("part") if isinstance(d, dict) else None
+        if isinstance(part, dict) and part.get("tool") == "skill":
+            name = ((part.get("state") or {}).get("input") or {}).get("name")
+            if name:
+                got.add(name.split(":")[-1])  # a plugin skill is invoked as plugin:skill
+            continue
+        msg = d.get("message")
+        if isinstance(msg, dict) and isinstance(msg.get("content"), list):
+            for b in msg["content"]:
+                if isinstance(b, dict) and b.get("type") == "tool_use" \
+                        and (b.get("name") or "").lower() == "skill":
+                    name = (b.get("input") or {}).get("skill") or (b.get("input") or {}).get("name")
+                    if name:
+                        got.add(name.split(":")[-1])
+    return got, True
+
+
+def never_used_its_skill(arm):
+    """True when this arm had a skill, its runner would have said so, and it did not.
+
+    All three conditions matter and each has a way of being wrong on its own: an arm
+    with no skill installed is the baseline and is supposed to load nothing, and an arm
+    whose runner records no skill call has an unknowable zero rather than an empty one.
+    """
+    return bool(arm["skills"]) and arm["loads_knowable"] and not arm["loaded"]
 
 
 def skill_trees(workdir):
@@ -220,6 +282,8 @@ def main():
             open(final_path, "w").write(final)
         code, vout = run_verify(brief, workdir, final_path)
         trees = skill_trees(workdir)
+        run = json.load(open(os.path.join(meta, "run.json")))
+        used, knowable = skills_loaded(meta, run.get("agent", "claude"))
         arms[arm] = {
             "verify_exit": code,
             "verify_out": vout,
@@ -227,7 +291,9 @@ def main():
             "final": final[-3000:],
             "files": manifest(workdir, hide=trees.values()),
             "skills": sorted(trees),
-            "run": json.load(open(os.path.join(meta, "run.json"))),
+            "loaded": sorted(used & set(trees)),
+            "loads_knowable": knowable,
+            "run": run,
         }
 
     # Blind: random slot assignment, persisted privately, never reshuffled.
@@ -276,8 +342,17 @@ def main():
         "verify": {a: arms[a]["verify_exit"] for a in arms},
         "tool_errors": {a: arms[a]["tool_errors"] for a in arms},
         "skills_installed": {a: arms[a]["skills"] for a in arms},
+        "skills_loaded": {a: arms[a]["loaded"] for a in arms},
+        "loads_knowable": {a: arms[a]["loads_knowable"] for a in arms},
         "run": {a: arms[a]["run"] for a in arms},
     }
+    # The with-arm had a skill and its runner would have recorded the call, and there
+    # is no call: the two arms were the same run twice, so this pair is not a
+    # comparison. Ordered after a broken brief, because a gate nothing passes is the
+    # bigger problem, and before the blindness check, which cannot fire on an arm that
+    # never read the skill it would have to name.
+    w = arms["with"]
+    never_loaded = never_used_its_skill(w)
     if both_failed:
         result["invalid"] = True
         # Two invalid samples are not the same kind of problem, and the caller has to
@@ -287,6 +362,14 @@ def main():
         # but an hour each. The one below is chance, and the next sample may be clean.
         result["invalid_code"] = "both_arms_failed_verify"
         result["invalid_reason"] = "both arms failed verify - fix the brief, not the loop"
+        result["winner_arm"] = "invalid"
+    elif never_loaded:
+        result["invalid"] = True
+        result["invalid_code"] = "skill_never_loaded"
+        result["invalid_reason"] = ("the with-arm never loaded "
+                                    f"{', '.join(w['skills'])}, so both arms ran the "
+                                    "same task without it and this pair compares two "
+                                    "runs, not a skill")
         result["winner_arm"] = "invalid"
     elif spoken:
         result["invalid"] = True
