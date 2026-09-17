@@ -136,14 +136,19 @@ that prose is long and ordinary: matched against real sessions those signatures 
 and permanently. `theme.py` looks for the theme where it actually lives, in the
 corrections themselves: seed from the skill, pull the episodes those seeds match, rank
 the words those episodes keep returning to, then check the result is narrow, still on
-the skill's subject, and has a baseline before the adoption date.
+the skill's subject, has a baseline before the adoption date, and is not the same
+matcher another skill already has.
 
 Expect it to refuse. Against 136 real correction episodes it derived nothing for seven
 adopted skills, each for a different stated reason, and that is the finding rather than
 a bug: a voice skill is corrected in words too ordinary to separate from every other
-correction. More correction history fixes that; a looser matcher only returns a number
-about the vocabulary. Three things it took to get there, all pinned in
-`tests/test_theme.py`:
+correction.
+
+More correction history looked like the fix, so it was tried: a corpus of 340 episodes
+across 296 sessions, two and a half times the size. It derived nothing there either,
+and on the way it exposed two bugs the smaller corpus had hidden. So the answer does
+not turn on corpus size, and a looser matcher would only return a number about the
+vocabulary. Six things it took to get here, all pinned in `tests/test_theme.py`:
 
 - **Ranking by lift is the textbook answer and carries zero information here.** In a
   136-episode corpus almost every content word inside a 30-episode subset appears
@@ -157,6 +162,25 @@ about the vocabulary. Three things it took to get there, all pinned in
 - **A corpus-driven theme can drift off the skill entirely.** For a skill about reusing
   existing assets it derived a real, coherent topic cluster about one website's pages.
   The derived words now have to overlap what the skill says it is about.
+- **Overlapping the description is not enough, and the same case proves it.** A
+  description names its subject once and spends the rest on context, so "find", "posts"
+  and "visuals" were all in it while "reuse", "existing" and "assets" appeared 0-1 times
+  in the whole corpus. Rarity cannot separate those either: at 136 episodes every seed
+  word sits under the rare threshold. The overlap now has to include the thing the skill
+  is *named* after, matched on a shared prefix so `german-umlauts` still matches the
+  corpus word "umlaute".
+- **A floor set as a share of the seed gets worse as the corpus grows.** Tripling the
+  corpus took one skill's seed from 58 episodes to 135, so a 20% floor moved from 11 to
+  27 while its most distinctive word only moved from 6 to 15: the theme word was
+  discarded for being outnumbered by a seed that was too broad to begin with. The floor
+  is now absolute, and the breadth it was standing in for is refused directly, one step
+  earlier, by `MAX_SEED_SHARE`.
+- **Two skills can pass every check and be one matcher.** On the 340-episode corpus four
+  of them returned the same share and the same before/after counts to the episode,
+  because all four were matching one generic cluster of content work. Comparing the
+  signatures word by word misses it - two of the four shared 3 words out of 17, a
+  Jaccard of 0.18 - because synonyms read as distinct vocabularies. Compared on the
+  sessions each one actually matches, the same pair overlaps 74% and both are refused.
 
 `--apply` writes the signature tagged `derived_from: corrections:<n> episodes`, so it
 is never mistaken for a hand-written one, and the recheck still applies every one of
