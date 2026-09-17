@@ -1,6 +1,6 @@
 # skills
 
-Sixteen Skills for agents, published by GetEdge. Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; one, `monid`, is Monid's own Skill, published unchanged; four, `people-search`, `agent-evals`, `rocketlist` and `harness-first`, were written directly for this repository. `harness-first` is the only one measured so far: it ships an evaluation of itself in [`harness-first/EVALS.md`](harness-first/EVALS.md).
+Sixteen Skills for agents, published by GetEdge. Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; two are companies' own Skills: `monid` is Monid's, published unchanged, and `rocketlist` is Rocketlist's, published by GetEdge; three, `people-search`, `agent-evals` and `harness-first`, were written directly for this repository. `harness-first` is the only one measured so far: it ships an evaluation of itself in [`harness-first/EVALS.md`](harness-first/EVALS.md).
 
 A Skill is a folder with a `SKILL.md` at its root: a short front matter block naming the Skill and saying when to invoke it, then the instructions themselves. Agents that support Skills read the front matter to decide when a Skill applies, and the body once it does. Some of these carry scripts the instructions call.
 
@@ -27,7 +27,7 @@ Nine of them started in Federico's own working set. The original was read, never
 
 `agent-evals` was also written directly for this repository. Its structure follows a public evals masterclass by Alex Lieberman with Viv of LangChain, credited in the Skill and in its `DERIVATION.json`; no transcript or video material is included.
 
-`rocketlist` was written for this repository too, against the live public rocketlist.ai job board; its `DERIVATION.json` records when each URL pattern and field name was checked.
+`rocketlist` is Rocketlist's own Skill, published here by GetEdge. It works over Rocketlist's public job board at rocketlist.ai, and its `DERIVATION.json` records when each URL pattern and field name was checked against the live site.
 
 `harness-first` was written for this repository too. Its method comes from a public post by Mark Ajzenstadt (@mardehaym), credited in the Skill and in its `DERIVATION.json`; the post is linked, not quoted at length, and he did not review the Skill or its evaluation.
 
@@ -41,7 +41,9 @@ These copies are Apache-2.0. The root `LICENSE` carries the full terms, and each
 
 `monid` is the exception. It is Monid's work, not a GetEdge copy, so the Apache-2.0 grant does not cover it: it is redistributed unmodified, in partnership with Monid, under Monid's own terms. The canonical copy is [monid.ai/SKILL.md](https://monid.ai/SKILL.md), and the Skill itself tells your agent to update from there when the Monid CLI and the Skill disagree on version. Its `DERIVATION.json` records the fetch date and SHA-256.
 
-The copyright holder named in those licence appendices is **Floom**, which is where these copies were first published and licensed: nine on 2026-09-07, and the paper bundle on 2026-09-09, republished in full as `opendraft` on 2026-09-10. GetEdge publishes this repository; it did not relicense the bundles, and rewriting a dated copyright line would both misstate who granted the licence and invalidate the SHA-256 records in each `DERIVATION.json`. The licence text is upstream Apache-2.0 unmodified except for that appendix copyright line, which is what the Apache appendix instructs a licensor to fill in. `opendraft` also retains the MIT licence and copyright notice for the OpenDraft-derived material in `THIRD_PARTY_NOTICES.md`.
+Apart from `rocketlist`, the copyright holder named in those licence appendices is **Floom**, which is where these copies were first published and licensed: nine on 2026-09-07, and the paper bundle on 2026-09-09, republished in full as `opendraft` on 2026-09-10. GetEdge publishes this repository; it did not relicense the bundles, and rewriting a dated copyright line would both misstate who granted the licence and invalidate the SHA-256 records in each `DERIVATION.json`. The licence text is upstream Apache-2.0 unmodified except for that appendix copyright line, which is what the Apache appendix instructs a licensor to fill in. `opendraft` also retains the MIT licence and copyright notice for the OpenDraft-derived material in `THIRD_PARTY_NOTICES.md`.
+
+`rocketlist` is Apache-2.0 like the rest, but it is Rocketlist's own Skill, so its licence appendix names **Rocketlist** as the copyright holder. Until 2026-09-16 that line read Floom; its `DERIVATION.json` records the change and the new SHA-256.
 
 You may use, modify and redistribute these, subject to the licence's attribution requirement. The grant applies from the version it appears on and cannot be withdrawn from a version already fetched.
 
@@ -67,7 +69,7 @@ Several call out to tools that must already be on your machine: `generate-image`
 | `opendraft` | Turns one topic line into a research-paper draft: eighteen agent prompts, keyless Crossref and OpenAlex lookup, and a citation-integrity gate that fails the run instead of shipping a broken bibliography. |
 | `people-search` | Plans a people search, ranks supplied or public-source candidates against a brief, and discloses exactly which filters a connected provider can and can't support — without implying built-in LinkedIn access it doesn't have. |
 | `product-launch-video` | Turns a product URL or launch brief into an editable, reviewed launch film using HyperFrames or Remotion with remocn primitives. |
-| `rocketlist` | Reads a CV, works out what the person can actually do, and returns live startup roles from Rocketlist's public board with published salary, the evidence for the fit and an apply link. |
+| `rocketlist` | Reads a CV, works out what the person can actually do, and returns live startup roles from Rocketlist's public board with published salary, the evidence for the fit and an apply link. Rocketlist's own Skill. |
 | `security-audit-checklist` | Audits app code, cloud config, containers, CI and IaC, with three bundled scanners. |
 | `shadcn-first` | Builds UI from shadcn blocks and components instead of hand-written markup. |
 | `strip-image-ai-metadata` | Strips C2PA and AI-generation metadata so platforms stop labelling an image. |
