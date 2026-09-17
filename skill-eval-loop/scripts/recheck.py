@@ -20,7 +20,11 @@ Three rules keep a recheck from confirming a skill on no evidence:
     signature nothing can match a fresh cluster, so a "rate of 0.0" would mean
     "we cannot look", not "the failure stopped";
   - a knowledge-gap entry with fewer than 10 sessions on either side of the adoption
-    is SKIPPED until there are enough to compare.
+    is SKIPPED until there are enough to compare, and so is one whose sessions since
+    adoption span less than MIN_AFTER_DAYS days;
+  - signature words that are common across all corrections are dropped before
+    matching. A theme described in ordinary words ("post", "reply", "status") would
+    otherwise match nearly every correction and return noise as a measurement.
 
 --dry-run prints every decision and touches nothing: no ledger row, no uninstall.
 Run it once before the timer fires on a machine where skills are installed.
@@ -58,6 +62,9 @@ def uninstall(skill, root, dry):
     return done or ["not installed"]
 
 
+MIN_AFTER_DAYS = 5  # a skill adopted this morning has no production record yet
+MAX_THEME_TOKENS = 20  # a matcher this wide stops being about one theme
+
 STOP = set("the a an and or of to in on for with is are was were be been it its this that "
            "not no never always too very more less than as at by from into out up down i you "
            "he she they we my your his her their our me him them us do does did done make makes "
@@ -68,7 +75,32 @@ def tokens(text):
     return {w for w in re.findall(r"[a-z][a-z0-9]{2,}", (text or "").lower()) if w not in STOP}
 
 
-def kg_rate(episodes, sig_tokens, sessions, since, until):
+def distinctive(sig_tokens, episodes, ceiling=0.25):
+    """Drop signature tokens that are common across all corrections.
+
+    A theme signature taken from a skill description is long and mostly ordinary
+    words: "post", "message", "review", "status". Matching on any two of those
+    marks almost every correction as being about this theme, which turns the
+    before/after comparison into noise dressed as a measurement. Keep only tokens
+    that appear in fewer than `ceiling` of correction episodes.
+
+    Returns (keep, rare). A token in `rare` is distinctive enough on its own:
+    "umlaut" or "mdash" appearing in a correction is about this theme and nothing
+    else, and demanding a second matching word would miss most real episodes.
+    """
+    if not episodes:
+        return sig_tokens, set()
+    df = {}
+    for e in episodes:
+        for w in tokens(e.get("corr", "")) & sig_tokens:
+            df[w] = df.get(w, 0) + 1
+    cut = max(1, int(len(episodes) * ceiling))
+    rare_cut = max(1, int(len(episodes) * ceiling / 2))
+    keep = {w for w in sig_tokens if df.get(w, 0) <= cut}
+    return keep, {w for w in keep if 0 < df.get(w, 0) <= rare_cut}
+
+
+def kg_rate(episodes, sig_tokens, sessions, since, until, rare=frozenset()):
     """Session-rate of corrections about this theme in a time window.
 
     One matcher, both windows: a knowledge-gap skill has no tool-error signature to
@@ -82,7 +114,9 @@ def kg_rate(episodes, sig_tokens, sessions, since, until):
     for e in episodes:
         if e.get("session") not in ids:
             continue
-        if len(sig_tokens & tokens(e.get("corr", ""))) >= 2:
+        shared = sig_tokens & tokens(e.get("corr", ""))
+        # Two ordinary theme words, or one word that only this theme uses.
+        if len(shared) >= 2 or (shared & rare):
             hit.add(e["session"])
     return len(hit) / len(ids), len(ids), len(hit)
 
@@ -98,8 +132,21 @@ def recheck_kg(entry, corr, dry):
     eps, sess = corr.get("episodes", []), corr.get("session_index", [])
     if not sess:
         return None, "no session index in the corrections run"
-    before, n_before, hits_before = kg_rate(eps, sig_tokens, sess, 0, t_adopt)
-    after, n_after, hits_after = kg_rate(eps, sig_tokens, sess, t_adopt, time.time() + 86400)
+    after_span = (max((s.get("ts", 0) for s in sess), default=0) - t_adopt) / 86400
+    if after_span < MIN_AFTER_DAYS:
+        return None, (f"only {after_span:.1f} days of sessions since adoption, "
+                      f"need {MIN_AFTER_DAYS}: a day of work cannot show a rate change")
+    sig_tokens, rare = distinctive(sig_tokens, eps)
+    if len(sig_tokens) < 2:
+        return None, ("every word in this theme is common across corrections, "
+                      "so nothing distinguishes a session about it")
+    if len(sig_tokens) > MAX_THEME_TOKENS:
+        # A signature pasted from a whole skill body matches a bit of everything.
+        # Whatever rate that produces is about the vocabulary, not about the theme.
+        return None, (f"signature matches on {len(sig_tokens)} distinct words, more than "
+                      f"{MAX_THEME_TOKENS}: too broad to be about one theme")
+    before, n_before, hits_before = kg_rate(eps, sig_tokens, sess, 0, t_adopt, rare)
+    after, n_after, hits_after = kg_rate(eps, sig_tokens, sess, t_adopt, time.time() + 86400, rare)
     if n_after < 10 or n_before < 10:
         return None, f"not enough sessions to compare ({n_before} before, {n_after} after adoption)"
     if hits_before < 2:
@@ -143,6 +190,8 @@ def main():
     is_kg = lambda r: (r.get("failure") or {}).get("kind") == "correction"  # noqa: E731
 
     fresh, corr = None, None
+    # A fresh $FORGE_ROOT has no mined/ yet; the miner writes into it, not around it.
+    os.makedirs(os.path.join(root, "mined"), exist_ok=True)
     if any(not is_kg(r) for r in due):
         tmp = os.path.join(root, "mined", "recheck-failures.json")
         subprocess.run([sys.executable, os.path.join(miner, "mine.py"), "--sessions", str(args.sessions),

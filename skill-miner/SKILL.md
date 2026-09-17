@@ -64,6 +64,24 @@ python3 scripts/score.py candidates.json failures.json --index 0
   `--context FILE` (accepted examples, past eval losses). Generic best practice never
   beats a frontier model, so a draft that quotes no user rule is a weak candidate.
 
+## Check the scorer against what the evals decided
+
+```bash
+python3 scripts/calibrate.py            # adoption rates per bucket, or "too few to call"
+python3 scripts/calibrate.py --check    # did high scores actually predict adoption?
+```
+
+`score.py` predicts before any eval is spent, and nothing was checking those
+predictions. `calibrate.py` reads the ledger and reports the adoption rate per bucket
+(failure kind, skill source, retries of a skill that already lost), reporting any bucket
+under four decided evals as "too few to call" rather than as a rate - a 1-of-1 bucket is
+noise, and a prior stated with false confidence is worse than no prior. `--check` joins
+recorded predictions to outcomes and prints the gap between adopted and rejected
+candidates: if it is not positive, the scoring prompt is not earning its cost.
+
+The first run on 18 real decisions: correction-derived skills 3 of 6 adopted,
+tool-error-derived 0 of 3, and every retry of a skill that already lost was rejected.
+
 ## Rules
 
 - Infra-class clusters go to **agent-infra-fixer** (fix the hook/permission/wrapper,
