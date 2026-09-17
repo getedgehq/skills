@@ -1,8 +1,5 @@
 ---
-name: opendraft
-metadata:
-  internal: true
-  alias_of: autonomous-research
+name: autonomous-research
 description: An 18-agent pipeline that turns one topic line into a drafted
   research paper, literature review, or thesis chapter. Finds real sources at
   Crossref and OpenAlex, drafts each section against them, attacks its own draft

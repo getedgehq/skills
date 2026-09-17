@@ -20,6 +20,14 @@ It checks BOTH directions on purpose. Hashing only the listed files misses the o
 mode we actually hit: `people-search/tests/fixtures/people.csv` is on disk and shipping while
 absent from `copy_files` entirely, so a one-directional gate calls that bundle clean.
 
+Alias folders. A renamed Skill keeps its old install name working (`npx skills add
+getedgehq/skills --skill <old>` resolves by the front-matter `name:`, not the folder). An alias
+folder holds a SKILL.md whose front matter adds `metadata: {internal: true, alias_of: <slug>}`
+and whose `name:` is the old one, plus a relative symlink for every other entry of the
+canonical bundle except .gitignore. It carries no record of its own; the gate checks instead that it is exactly
+that: same bytes as the canonical SKILL.md apart from those front-matter lines, and every other
+entry a symlink into the canonical bundle, nothing missing and nothing extra.
+
 `source_files` is deliberately not checked. It records the private original at
 the author's private skills directory, which is historical provenance about where a file came from, not a
 claim about the bytes in the repo. Recomputing it from repo bytes would fabricate provenance.
@@ -28,6 +36,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import sys
 
 # Standard library only, so it runs in CI with no dependencies and no credentials.
@@ -93,6 +102,41 @@ def audit(bundle):
     return bad
 
 
+ALIAS_RE = re.compile(r"\Aname: (?P<old>[a-z0-9-]+)\nmetadata:\n  internal: true\n  alias_of: (?P<new>[a-z0-9-]+)\n")
+
+
+def alias_target(bundle):
+    """Return the canonical slug when bundle is an alias folder, else None."""
+    text = open(os.path.join(bundle, "SKILL.md"), encoding="utf-8").read()
+    m = ALIAS_RE.match(text[4:]) if text.startswith("---\n") else None
+    return m.group("new") if m else None
+
+
+def audit_alias(bundle, target):
+    bad = []
+    slug = os.path.basename(bundle)
+    canonical = os.path.join(ROOT, target)
+    if not os.path.isfile(os.path.join(canonical, "SKILL.md")) or alias_target(canonical):
+        return [f"alias_of {target} is not a canonical bundle"]
+    want = open(os.path.join(canonical, "SKILL.md"), encoding="utf-8").read()
+    head = f"---\nname: {target}\n"
+    expected = want.replace(head, f"---\nname: {slug}\nmetadata:\n  internal: true\n  alias_of: {target}\n", 1)
+    if not want.startswith(head) or open(os.path.join(bundle, "SKILL.md"), encoding="utf-8").read() != expected:
+        bad.append(f"SKILL.md differs from {target}/SKILL.md beyond the alias front matter")
+    for entry in sorted(set(os.listdir(canonical)) | set(os.listdir(bundle))):
+        # git will not read a .gitignore through a symlink, and an ignore file is not Skill content.
+        if entry in ("SKILL.md", ".gitignore") or entry in SKIP_DIRS:
+            continue
+        p = os.path.join(bundle, entry)
+        if not os.path.lexists(p):
+            bad.append(f"missing symlink: {entry}")
+        elif not os.path.islink(p) or os.readlink(p) != f"../{target}/{entry}":
+            bad.append(f"not a symlink to ../{target}/{entry}: {entry}")
+        elif not os.path.exists(os.path.join(canonical, entry)):
+            bad.append(f"symlink to nothing: {entry}")
+    return bad
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("slugs", nargs="*", help="bundles to check (default: every top-level SKILL.md directory)")
@@ -107,6 +151,17 @@ def main():
     for slug in slugs:
         bundle = os.path.join(skills, slug)
         if not os.path.isdir(bundle):
+            continue
+        target = alias_target(bundle)
+        if target:
+            bad = audit_alias(bundle, target)
+            if bad:
+                failed += 1
+                print(f"FAIL {slug} (alias of {target})")
+                for b in bad:
+                    print(f"       {b}")
+            elif not args.quiet:
+                print(f"ok   {slug} (alias of {target})")
             continue
         if not os.path.exists(os.path.join(bundle, "DERIVATION.json")):
             print(f"FAIL {slug}: no DERIVATION.json")

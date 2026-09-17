@@ -1,8 +1,5 @@
 ---
-name: rocketlist
-metadata:
-  internal: true
-  alias_of: cv-job-match
+name: cv-job-match
 description: Turn a CV into a shortlist of live startup roles from Rocketlist's public job board, including adjacent job titles the person would never have searched for, each with its published salary, the evidence for the fit, and a direct apply link. Use for "find roles I would be a strong fit for", career pivots, remote or VC-backed job hunts, and salary-visible role discovery.
 ---
 
