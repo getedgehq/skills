@@ -113,8 +113,13 @@ each one knows its own install path. That is the knowledge `run_eval.sh` had to 
 and got wrong.
 
 **Tokens come from a subscription, not an API key.** Harbor drops `ANTHROPIC_API_KEY`
-when `CLAUDE_FORCE_OAUTH` is truthy and uses `CLAUDE_CODE_OAUTH_TOKEN` from
-`claude setup-token`; Codex takes the ChatGPT login through `CODEX_FORCE_AUTH_JSON=1`.
+when `CLAUDE_FORCE_OAUTH` is truthy and uses `CLAUDE_CODE_OAUTH_TOKEN`; Codex takes the
+ChatGPT login through `CODEX_FORCE_AUTH_JSON=1`. The runner looks for the Claude token in
+AgentWallet first, as `anthropic/oauth-token/claude-code`, which is where a long-lived
+`claude setup-token` belongs. Failing that it reads the access token the CLI already keeps
+in `~/.claude/.credentials.json` and refreshes by itself, so a host where nobody can finish
+a browser login still runs. That file is only ever read; an expired token is treated as no
+token, because the alternative is an opaque failure deep inside the container.
 The runner reads the token into the process and exports it, never passes it as an
 argument, and under `sudo` names the variables that may cross rather than using `-E`.
 This saves the API bill; it does not raise the weekly cap, which is the limit the loop
