@@ -87,8 +87,18 @@ def main():
     if args.name:
         text = re.sub(r"(name:\s*)[\w-]+", r"\g<1>" + args.name, text, count=1)
     dest = os.path.join(out_root, name)
-    if os.path.exists(dest):
+    if os.path.exists(dest) and args.name:
         sys.exit(f"refusing to overwrite {dest}")
+    if os.path.exists(dest):
+        # the model reused a name an earlier draft (often a rejected one) already holds: never
+        # overwrite that evidence, and never fail an unattended run over a name
+        n = 2
+        while os.path.exists(os.path.join(out_root, f"{name}-{n}")):
+            n += 1
+        text = re.sub(r"(name:\s*)[\w-]+", r"\g<1>" + f"{name}-{n}", text, count=1)
+        name = f"{name}-{n}"
+        dest = os.path.join(out_root, name)
+        print(f"  (name taken, drafted as {name})", file=sys.stderr)
     os.makedirs(dest)
     open(os.path.join(dest, "SKILL.md"), "w").write(text.strip() + "\n")
     meta = {"drafted": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
