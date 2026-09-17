@@ -1203,5 +1203,296 @@ class TestNumberProvenance(unittest.TestCase):
         self.assertIn("corpus not found", result.stderr)
 
 
+# --- the brief's own numbers ------------------------------------------------
+
+def _draft(body_words, refs=2, abstract_words=None, sections=(), ref_words=0):
+    """A compiled draft with a controlled main-text length and reference count.
+
+    Shaped the way stage 18 leaves one: a single level-1 title, the abstract
+    under its own heading, body sections under theirs, references last.
+    """
+    out = ["# Test Draft", ""]
+    if abstract_words is not None:
+        out += ["## Abstract", "", " ".join(["summary"] * abstract_words), ""]
+    # Every bibliography entry is cited, because the gate already checks that
+    # and an uncited entry would fail these drafts for the wrong reason.
+    cited = " ".join(f"A claim (Author{i}, {2020 + i})." for i in range(refs))
+    names = list(sections) or ["Body"]
+    per, extra = divmod(max(body_words, 0), len(names))
+    for i, name in enumerate(names):
+        count = per + (extra if i == 0 else 0)
+        prose = " ".join(["word"] * count)
+        if i == 0 and cited:
+            prose = (prose + " " + cited).strip()
+        out += [f"## {name}", "", prose, ""]
+    out += ["## References", ""]
+    padding = (" " + " ".join(["subtitle"] * ref_words)) if ref_words else ""
+    for i in range(refs):
+        out.append(f"Author{i}, A. ({2020 + i}). A title number {i}.{padding} *Venue*.")
+        out.append("")
+    return "\n".join(out)
+
+
+class SectionParsingTests(unittest.TestCase):
+    def test_a_heading_inside_a_fenced_block_is_not_a_section(self):
+        text = "# Title\n\n```\n# not a heading\n```\n\n## Real\n\nBody.\n"
+        titles = [t for _l, t, _s, _e in INTEGRITY.sections(text)]
+        self.assertEqual(titles, ["Title", "Real"])
+
+    def test_a_section_ends_at_the_next_heading_of_the_same_level(self):
+        text = "## One\n\nA.\n\n### Deeper\n\nB.\n\n## Two\n\nC.\n"
+        spans = {t: (s, e) for _l, t, s, e in INTEGRITY.sections(text)}
+        self.assertEqual(spans["One"][1], spans["Two"][0])
+        self.assertEqual(spans["Deeper"][1], spans["Two"][0])
+
+
+class AbstractLocationTests(unittest.TestCase):
+    def test_a_summary_heading_is_the_same_section_as_an_abstract(self):
+        found = INTEGRITY.find_abstract("## Summary\n\nOne two three.\n")
+        self.assertIsNotNone(found)
+        self.assertEqual(found[0], "Summary")
+
+    def test_a_german_zusammenfassung_counts_as_one(self):
+        found = INTEGRITY.find_abstract("## Zusammenfassung\n\nEin Satz hier.\n")
+        self.assertIsNotNone(found)
+
+    def test_a_draft_with_no_abstract_returns_none(self):
+        self.assertIsNone(INTEGRITY.find_abstract("# Title\n\n## Introduction\n\nX.\n"))
+
+
+class MainTextCountTests(unittest.TestCase):
+    def test_the_bibliography_is_not_main_text(self):
+        # Same body, same citations, a bibliography ten times the size: the
+        # main-text count does not move.
+        short = INTEGRITY.count_main_text_words(_draft(100, refs=8))
+        long = INTEGRITY.count_main_text_words(_draft(100, refs=8, ref_words=40))
+        self.assertEqual(short, long)
+
+    def test_the_abstract_is_not_main_text(self):
+        # A brief that caps the main text and the abstract separately is
+        # counting them separately.
+        plain = INTEGRITY.count_main_text_words(_draft(100))
+        with_abstract = INTEGRITY.count_main_text_words(_draft(100, abstract_words=200))
+        self.assertEqual(plain, with_abstract)
+
+    def test_reference_entries_are_counted_one_per_entry(self):
+        self.assertEqual(INTEGRITY.count_reference_entries(_draft(50, refs=7)), 7)
+
+    def test_a_draft_with_no_bibliography_has_no_entries(self):
+        self.assertEqual(INTEGRITY.count_reference_entries("# T\n\nBody.\n"), 0)
+
+
+class BriefWordRangeTests(unittest.TestCase):
+    def test_a_draft_inside_the_range_passes(self):
+        self.assertEqual(INTEGRITY.check_word_range(_draft(300), 250, 350), [])
+
+    def test_a_draft_over_the_cap_fails_and_says_by_how_much(self):
+        failures = INTEGRITY.check_word_range(_draft(500), 100, 200)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("Cut", failures[0])
+
+    def test_a_draft_under_the_floor_fails(self):
+        failures = INTEGRITY.check_word_range(_draft(50), 400, 600)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("under", failures[0])
+
+    def test_no_range_checks_nothing(self):
+        self.assertEqual(INTEGRITY.check_word_range(_draft(9000), None, None), [])
+
+
+class BriefReferenceCountTests(unittest.TestCase):
+    def test_meeting_the_minimum_passes(self):
+        self.assertEqual(INTEGRITY.check_reference_count(_draft(50, refs=24), 24), [])
+
+    def test_falling_short_fails_and_says_to_search_further(self):
+        failures = INTEGRITY.check_reference_count(_draft(50, refs=10), 24)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("10", failures[0])
+        self.assertIn("stage 1", failures[0])
+
+    def test_no_minimum_checks_nothing(self):
+        self.assertEqual(INTEGRITY.check_reference_count(_draft(50, refs=1), None), [])
+
+
+class BriefAbstractTests(unittest.TestCase):
+    def test_an_abstract_inside_the_cap_passes(self):
+        self.assertEqual(INTEGRITY.check_abstract(_draft(200, abstract_words=150), 250), [])
+
+    def test_a_missing_abstract_fails_when_the_brief_asks_for_one(self):
+        failures = INTEGRITY.check_abstract(_draft(200), 250)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("no abstract", failures[0])
+
+    def test_an_over_long_abstract_fails(self):
+        failures = INTEGRITY.check_abstract(_draft(200, abstract_words=400), 250)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("over", failures[0])
+
+    def test_an_empty_abstract_heading_is_not_an_abstract(self):
+        failures = INTEGRITY.check_abstract("# T\n\n## Abstract\n\n## Introduction\n\nX.\n", 250)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("empty", failures[0])
+
+    def test_no_cap_checks_nothing(self):
+        self.assertEqual(INTEGRITY.check_abstract(_draft(200), None), [])
+
+
+class BriefRequiredSectionTests(unittest.TestCase):
+    def test_every_named_section_present_passes(self):
+        text = _draft(200, sections=("Introduction", "Methodology", "Conclusion"))
+        self.assertEqual(
+            INTEGRITY.check_required_sections(
+                text, ["Introduction", "Methodology", "Conclusion", "References"]), [])
+
+    def test_a_missing_section_is_named_in_the_failure(self):
+        text = _draft(200, sections=("Introduction",))
+        failures = INTEGRITY.check_required_sections(text, ["Introduction", "Methodology"])
+        self.assertEqual(len(failures), 1)
+        self.assertIn("Methodology", failures[0])
+
+    def test_matching_ignores_case_and_surrounding_words(self):
+        text = _draft(200, sections=("2. Methodology and Data",))
+        self.assertEqual(INTEGRITY.check_required_sections(text, ["methodology"]), [])
+
+    def test_no_named_sections_checks_nothing(self):
+        self.assertEqual(INTEGRITY.check_required_sections(_draft(50), []), [])
+
+
+class BriefFileTests(unittest.TestCase):
+    def _write(self, payload):
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        path = Path(d.name) / "brief.json"
+        path.write_text(payload, encoding="utf-8")
+        return path
+
+    def test_a_word_range_pair_becomes_a_min_and_a_max(self):
+        brief = INTEGRITY.normalise_brief({"word_range": [2700, 3300]})
+        self.assertEqual((brief["words_min"], brief["words_max"]), (2700, 3300))
+
+    def test_an_unknown_key_is_an_error_rather_than_an_omission(self):
+        # A misspelt key that is silently ignored turns a stated requirement
+        # into an unchecked one.
+        with self.assertRaises(INTEGRITY.BriefError) as caught:
+            INTEGRITY.normalise_brief({"min_refrences": 24})
+        self.assertIn("min_refrences", str(caught.exception))
+
+    def test_a_non_integer_number_is_an_error(self):
+        with self.assertRaises(INTEGRITY.BriefError):
+            INTEGRITY.normalise_brief({"min_references": "twenty-four"})
+
+    def test_a_malformed_word_range_is_an_error(self):
+        with self.assertRaises(INTEGRITY.BriefError):
+            INTEGRITY.normalise_brief({"word_range": [3000]})
+
+    def test_required_sections_have_to_be_strings(self):
+        with self.assertRaises(INTEGRITY.BriefError):
+            INTEGRITY.normalise_brief({"required_sections": [1, 2]})
+
+    def test_an_empty_brief_states_nothing_and_checks_nothing(self):
+        brief = INTEGRITY.normalise_brief({})
+        self.assertEqual(INTEGRITY.run_checks(CLEAN_APA, brief=brief),
+                         INTEGRITY.run_checks(CLEAN_APA))
+
+    def test_a_brief_file_loads_from_disk(self):
+        path = self._write('{"min_references": 12, "abstract_max_words": 200}')
+        brief = INTEGRITY.load_brief(path)
+        self.assertEqual(brief["min_references"], 12)
+        self.assertEqual(brief["abstract_max_words"], 200)
+
+    def test_invalid_json_is_a_brief_error(self):
+        with self.assertRaises(INTEGRITY.BriefError):
+            INTEGRITY.load_brief(self._write("{not json"))
+
+
+class BriefFlagTests(unittest.TestCase):
+    def _args(self, argv):
+        return INTEGRITY._build_parser().parse_args(argv)
+
+    def test_flags_alone_build_a_brief(self):
+        brief = INTEGRITY.brief_from_args(self._args(
+            ["d.md", "--word-range", "1200-1500", "--min-references", "8",
+             "--abstract-max", "150", "--require-section", "Methodology"]))
+        self.assertEqual((brief["words_min"], brief["words_max"]), (1200, 1500))
+        self.assertEqual(brief["min_references"], 8)
+        self.assertEqual(brief["abstract_max_words"], 150)
+        self.assertEqual(brief["required_sections"], ["Methodology"])
+
+    def test_repeating_require_section_accumulates(self):
+        brief = INTEGRITY.brief_from_args(self._args(
+            ["d.md", "--require-section", "Introduction", "--require-section", "Conclusion"]))
+        self.assertEqual(brief["required_sections"], ["Introduction", "Conclusion"])
+
+    def test_a_backwards_range_is_rejected(self):
+        with self.assertRaises(INTEGRITY.BriefError):
+            INTEGRITY.brief_from_args(self._args(["d.md", "--word-range", "1500-1200"]))
+
+    def test_a_range_that_is_not_a_range_is_rejected(self):
+        with self.assertRaises(INTEGRITY.BriefError):
+            INTEGRITY.brief_from_args(self._args(["d.md", "--word-range", "about 1500"]))
+
+
+class BriefGateTests(unittest.TestCase):
+    """The gate itself: the checks run, and they decide the exit code."""
+
+    def _run(self, text, extra, brief_json=None):
+        with tempfile.TemporaryDirectory() as d:
+            draft = Path(d) / "draft.md"
+            draft.write_text(text, encoding="utf-8")
+            argv = [sys.executable, str(SCRIPT), str(draft)] + extra
+            if brief_json is not None:
+                brief = Path(d) / "brief.json"
+                brief.write_text(brief_json, encoding="utf-8")
+                argv += ["-b", str(brief)]
+            return subprocess.run(argv, check=False, capture_output=True, text=True)
+
+    def test_a_draft_short_of_the_reference_minimum_fails_the_gate(self):
+        result = self._run(_draft(400, refs=3), [], '{"min_references": 24}')
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("reference list has 3", result.stdout + result.stderr)
+
+    def test_a_draft_meeting_every_stated_number_passes(self):
+        text = _draft(400, refs=6, abstract_words=120,
+                      sections=("Introduction", "Conclusion"))
+        result = self._run(text, [], json.dumps({
+            "word_range": [300, 500], "min_references": 6,
+            "abstract_max_words": 250,
+            "required_sections": ["Introduction", "Conclusion", "References"]}))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_a_missing_brief_file_is_reported_not_ignored(self):
+        with tempfile.TemporaryDirectory() as d:
+            draft = Path(d) / "draft.md"
+            draft.write_text(CLEAN_APA, encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), str(draft), "-b", "/nonexistent/brief.json"],
+                check=False, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("brief not found", result.stderr)
+
+    def test_a_bad_brief_file_is_rejected_before_the_draft_is_read(self):
+        result = self._run(_draft(400), [], '{"min_refrences": 24}')
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("unknown key", result.stderr)
+
+    def test_flags_override_the_file(self):
+        result = self._run(_draft(400, refs=3), ["--min-references", "3"],
+                           '{"min_references": 24}')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_stats_prints_the_numbers_and_checks_nothing(self):
+        # A draft that would fail the gate still exits 0 under --stats, because
+        # --stats is for counting a draft while it is still being written.
+        result = self._run(_draft(400, refs=2, abstract_words=90), ["--stats"])
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("main text words:", result.stdout)
+        self.assertIn("abstract words:    90", result.stdout)
+        self.assertIn("reference entries: 2", result.stdout)
+
+    def test_stats_says_so_when_there_is_no_abstract(self):
+        result = self._run(_draft(400), ["--stats"])
+        self.assertIn("no abstract section", result.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

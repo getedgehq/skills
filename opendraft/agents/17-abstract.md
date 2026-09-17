@@ -2,7 +2,7 @@
 
 Writes the paper's abstract from its finished content. This is the only thing this stage touches: it does not edit the introduction, body, conclusion, or references, and it does not add citations.
 
-**Reads:** `full_draft.md`, `outline_formatted.md`
+**Reads:** `full_draft.md`, `outline_formatted.md`, `research/brief.json`
 **Writes:** the abstract, prepended to `full_draft.md`
 
 ## Scope
@@ -17,6 +17,10 @@ Stage 6 recorded the target venue's requirements in a `## Venue format` block at
 - `Keywords` is how many keyword terms to supply, commonly 3 to 6.
 
 Use the numbers below only as a fallback, and only when `outline_formatted.md` is missing or its venue format block does not carry the key. When you fall back, say which key was missing in your output to the user, so the omission surfaces at stage 6 rather than at submission.
+
+Where the user's own brief stated a cap, that cap outranks both. Stage 6 copied it into the `abstract_max_words` key of `research/brief.json`, so read that file before writing and treat its number as the ceiling: a brief that says "an abstract of at most 200 words" has asked for at most 200 words, and a 280-word abstract written to this file's fallback has not answered it. When the recorded venue range and the brief's cap disagree, write to the brief's cap and note the difference in your output to the user.
+
+Then count, rather than judging by eye. `python3 scripts/integrity.py full_draft.md --stats` prints an `abstract words` line for the block as it now stands in the file, and a run of it after prepending the abstract is what turns "about 200 words" into a number you can compare against the cap. Compress and re-count until the figure is inside the range; the gate at the end of the pipeline counts the same way, so a block that is over here is over there too.
 
 The structure below stays the same at every length. At a shorter recorded range, keep all four labelled parts and compress each to one or two sentences rather than dropping a part; at the fallback range, two to three sentences each is right.
 
@@ -94,11 +98,12 @@ Write in the draft's own language, taken from the `Language` key of the venue fo
 
 Do not write in first person ("we," "our," "I"). Do not add a `{cite_<doi>}` placeholder or any citation; an abstract summarizes the paper's own claims and does not cite the paper's own sources. Do not copy sentences verbatim from the body. Do not use an abbreviation before defining it. Write the abstract under a single `## Abstract` heading. That heading is the only markup it gets: the bolded paragraph labels are not headings, and the keywords line is not a section of its own. Do not add frontmatter, a title, or any other section. The heading level is stated here because it is the one piece of markup this stage has to agree on with the stages after it. Stage 18 prepends the title above this block as the document's only level-1 heading, and `scripts/export.py` reads the first level-1 heading as the exported document's title, so an abstract that arrives under a `#` heading of its own takes that slot and titles the finished paper "Abstract". Do not add a meta-comment like "Here is the abstract." Do not describe the paper as a systematic review, a meta-analysis, or a PRISMA-screened review; write "narrative review" or "scoping review," whichever the draft's own methodology section states, and use "search strategy" and "source selection" for how sources were found. Do not state a number, a count of studies or projects, or a finding that does not already appear in the body.
 
-Do not exceed the recorded `Abstract length` range. When falling back because no range was recorded, do not exceed 350 words or fall under 200.
+Do not exceed the recorded `Abstract length` range, and never exceed the brief's own `abstract_max_words` cap where one was stated. When falling back because no range was recorded and the brief stated no cap, do not exceed 350 words or fall under 200. Do not skip this stage: every paper this pipeline produces opens with an abstract, and a draft that reaches the gate without one is missing its first section rather than running a leaner pipeline.
 
 ## Done when
 
 - The output is exactly four bolded-label paragraphs plus one keywords line, inside the `Abstract length` range recorded in `outline_formatted.md`, or 250-300 words (200-350 acceptable) when no range was recorded and the fallback was used.
+- The brief's `abstract_max_words` cap, where `research/brief.json` records one, is not exceeded, and the figure was checked by running `python3 scripts/integrity.py full_draft.md --stats` rather than estimated.
 - The keyword count matches the recorded `Keywords` key, or is 3 to 6 when the fallback was used.
 - Any venue format key that was missing, and therefore fell back to this file's own numbers, is named in the output to the user.
 - Paragraph 3 uses the numbered `(1) (2) (3)` form.

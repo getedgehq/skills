@@ -91,6 +91,24 @@ Error: Refusing to render citation(s) whose DOI is not resolved at Crossref or D
 
 So leaving an entry at `unknown` does not quietly degrade the paper later, it blocks the gate. Deal with it here. Never edit a `verified` value by hand to get past that error: the field records what an agency answered, and typing `resolved` into it makes the database assert something no agency said.
 
+## Count what survived, and go back for more if it is short
+
+Verification takes sources out. That is what it is for, and it is also why this stage is where a review quietly becomes too small to be one. The pool that looked ample at stage 1 is the pool before the 404s, the malformed strings and the DOIs no agency would answer for; the pool this paper can actually cite is whatever `verify` reports as `resolved`, and the gap between the two is routinely a third of the list.
+
+So count it, and compare the count against a number rather than against a feeling:
+
+```bash
+python3 scripts/citations.py verify -d research/citations.json
+```
+
+It prints `resolved=N absent=... unknown=... invalid=...`. The floor for N is whichever is higher of the `min_references` recorded in `research/brief.json` and the per-type floor in `references/paper-types.md` under "Scale: matching pipeline depth and source count to what was asked". If N is below that floor, this stage is not finished and stage 7 does not start.
+
+What to do instead is go back to stage 1 and search again, with different queries rather than the same ones run harder. The pool came up short because the query set ran out of angles, so take the angles from the material itself: the sub-questions the topic decomposes into, the outcome measures by their own names, the populations and settings the brief names, the adjacent literature that would cite this work, the review articles and their reference lists, the contrarian position. Merge the new records into `research/sources.json` exactly as stage 1 specifies, re-run `build`, re-run `verify`, and count again. Repeat until N clears the floor or until a round of genuinely new queries returns nothing new.
+
+Two ways out, and only two. Meet the floor, or tell the user: say how many sources verified, what the searching covered, and why the literature would not yield more, in the run report and in the paper's own limitations section. What is never a way out is quietly shipping the short list. A reference list that fell from fifty found to eighteen verified and says nothing about it does not read as a careful paper, it reads as a thin one, and the care that produced it is invisible to everyone but the person who did it.
+
+Nor is padding. Do not add sources the paper never cites to make the count, do not enter one work twice under a preprint DOI and a published DOI, and do not relax the `resolved` requirement for the last few entries. Each of those meets the number by making the list untrue, which is worse than missing the number.
+
 ## The judgement work: what goes in `research/citation-notes.md`
 
 This is the file you write by hand. It exists as a separate file precisely so that a hand-written annotation can never corrupt a generated database: nothing here is ever pasted into `research/citations.json`.
@@ -186,3 +204,4 @@ Hand-writing or hand-editing `research/citations.json` instead of building it; p
 - `research/citation-notes.md` exists with all four headings present, and every no-DOI source, unconverted mention, review item and removal is a row in it.
 - Nothing in either file was reconstructed, approximated, or invented. No DOI in the database was typed by a model rather than returned by a tool.
 - Every claim that lost its source is either re-sourced or gone from the draft, not left pointing at a placeholder that no longer resolves.
+- The `resolved` count has been compared against the floor, not estimated. It meets the floor, or a further round of new queries returned nothing new and the shortfall is written down for the limitations section with the number in it.

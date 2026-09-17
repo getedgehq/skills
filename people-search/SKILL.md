@@ -34,4 +34,12 @@ For adapter behavior and result contracts, read [references/provider-contract.md
 
 ## Deterministic runner
 
-Use `scripts/people_search.py` for plan-only, CSV import/ranking, and provider-canary execution. Provider credentials must enter through the named environment variable at process scope; never pass a token as an argument.
+Use `scripts/people_search.py` for plan-only, CSV import/ranking, and provider execution. Provider credentials must enter through the named environment variable at process scope; never pass a token as an argument.
+
+Hard filters are field-scoped: `--locations` matches the `location` field only, `--titles` the `current_title`, `--companies` the `current_company`, `--industries` the `industry`. Only `--must-keywords` and `--exclude-keywords` scan several fields, and those are reported as approximated. Exclusions are first-class: `--exclude-companies`, `--exclude-titles`, `--exclude-keywords`, `--exclude-profile-urls`.
+
+Every requested filter appears exactly once in `filters`, sorted into `applied`, `approximated`, `dropped`, or `unsupported`, with the fields it matched and the reason for its status. A filter whose target field is missing from the data is dropped and not enforced, so the result set is wider than the brief and says so. Report that ledger to the user; do not restate the brief as if all of it ran.
+
+Provider runs are staged. `--provider-run canary` is the default: a preview request capped by `--canary-limit` (5), never a complete result set. `--provider-run full` sends `preview: false` and the real `--limit`, and requires `--max-cost-usd`. Add `--cost-per-result-usd` so the cap is checked before the request instead of after the invoice; without it `cost.cap_enforced` is false. A provider-reported cost above the cap comes back in `warnings`.
+
+Read `ok` before `results`. On success `ok` is true, `results_valid` is true, and `results` is a list that may legitimately be empty, in which case `zero_result_note` and `diagnostics.rejected_by_filter` explain what removed the candidates. On failure the runner exits 2, writes the reason to stderr, and emits `ok: false` with `results: null`, never an empty list, so a missing credential or an HTTP 402 cannot be read as "there are no such people".

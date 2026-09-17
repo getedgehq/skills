@@ -2,8 +2,8 @@
 
 Applies a concrete academic style and submission structure to the Architect's outline: format family, section numbering, citation style, table/figure numbering, and length targets. A structurally sound outline still reads as unsubmittable without this pass.
 
-**Reads:** `outline.md`, `research/citations.json`
-**Writes:** `outline_formatted.md`
+**Reads:** `outline.md`, `research/citations.json`, the user's own brief
+**Writes:** `outline_formatted.md`, `research/brief.json`
 
 ## Supported formats
 
@@ -47,6 +47,30 @@ Three later stages need decisions that only this stage makes, and they have no w
 ```
 
 Write every key every time, even when the answer is a default, because a stage reading this block cannot tell a considered default from an omission. Where no venue was named and no limit applies, write the value you are choosing anyway ("Title limit: none specified, keep under about 100 characters"), not a blank. A stage that finds a key missing falls back to its own built-in number, which is the outcome this block exists to avoid.
+
+## `research/brief.json`: the same decisions, in the form the gate can read
+
+The venue format block above is prose for the stages that follow. `research/brief.json` is the machine half of the same job, and it exists because the block cannot be checked: a stage that quietly drafts to the wrong length still produces a file whose `## Venue format` header reads correctly. Write both.
+
+This file records what the user asked for, and only that. Every value in it comes from a sentence in the brief, or, where the brief left the choice open, from the document type's own skeleton in `references/paper-types.md`. Omit any key the brief does not settle; each one is checked only when it is present, and an invented requirement fails a correct paper exactly as loudly as a real one fails a wrong paper.
+
+```json
+{
+  "word_range": [2700, 3300],
+  "min_references": 24,
+  "abstract_max_words": 250,
+  "required_sections": ["Introduction", "Methodology", "Discussion", "Conclusion", "References"]
+}
+```
+
+How to read a brief into those four keys:
+
+- **`word_range`** is the main text, abstract and reference list excluded, because a brief that caps them separately is counting them separately. "About 3,000 words" becomes a band around three thousand; ten percent either side matches the tolerance `scripts/integrity.py` has always applied to `--target`. "1200-1500 words" is already a band, so copy it. "Caps the main text at 6,000" is a ceiling, so record the ceiling and a floor low enough not to invent a length nobody asked for.
+- **`min_references`** is whichever is higher of the number the brief states and the per-type floor under "Reference URLs: cite the actual source, not the tool you found it with" below. "A couple of dozen sources at least" is 24. "Thirty or more works" is 30. Record the number as stated; it is not adjusted later to match what the searching happened to yield.
+- **`abstract_max_words`** is the cap the venue or the brief states ("the abstract at 200"), and otherwise the upper end of the `Abstract length` key you just recorded in the venue format block. The two always agree, because they are the same decision written twice.
+- **`required_sections`** is the sections the brief names. Some briefs name them as sections; more name them as questions ("the questions members keep asking: does it push traffic onto boundary roads, what happens to air quality"). A question the user says they need answered is a section the paper needs to contain, and the honest way to record it is under the heading the paper will actually use.
+
+Check the file parses before moving on: `python3 -c "import json;print(json.load(open('research/brief.json')))"`.
 
 ## The main claim carries forward unchanged
 
@@ -172,4 +196,5 @@ Data availability statement, conflict of interest statement, author contribution
 - Manuscript specifications (font, spacing, margins) are recorded as the actual values chosen, not left blank.
 - The content quality checks have been run section by section, not assumed from correct formatting.
 - The reference pool's shape (recent versus foundational, self-citation share) is recorded alongside its minimum count.
+- `research/brief.json` exists, parses, and carries a key for every number the brief actually stated and no key for anything it did not. Its `abstract_max_words` agrees with the `Abstract length` key in the venue format block, and its `min_references` is at or above the per-type floor.
 - Whoever drafts from this outline has been told to use `{cite_MISSING: ...}`, never `[UNVERIFIED: ...]`, for a real claim a genuine search could not source.

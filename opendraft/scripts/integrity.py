@@ -36,15 +36,34 @@ Checks:
      is present in the database with verified == "resolved". Skipped, and
      said so in the failure report, when -d is not given.
 
+The brief's own numbers (only with -b/--brief, or the equivalent flags). Each
+of these is a requirement the person asking for the paper stated in words, not
+a house preference of this pipeline, which is why none of them has a default:
+absent a stated number nothing is checked.
+ 11. Main text inside the word range they asked for. Main text means the body:
+     the compiled reference list and the abstract are both excluded, because a
+     brief that caps "the main text at 6,000 words and the abstract at 200"
+     is counting them separately and so is this.
+ 12. The reference list carries at least the number of entries they asked for.
+ 13. An abstract (or the summary a document type calls instead) is present and
+     inside its stated cap.
+ 14. Every section they named by name exists as a heading.
+
 Advisory, reported but never fatal:
- 10. (only with -c/--corpus) every number in the draft that appears nowhere in
+ 15. (only with -c/--corpus) every number in the draft that appears nowhere in
      research/summaries.md. This is the half of check 8 that check 8 cannot
      reach: a bracketed slot left unfilled is caught there, a slot quietly
      replaced with an invented number is caught by nothing. It does not exit
      nonzero, because a number legitimately derived from the corpus also
      appears nowhere in it, and this script cannot tell the two apart.
+
+--stats prints the four numbers checks 11 to 14 measure and exits 0 without
+checking anything, so a draft can be counted while it is still being written.
+An estimate of a word count is not a word count; this is the command that
+turns "about the right length" into a number before delivery, not after.
 """
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -420,6 +439,222 @@ def check_word_count(text, target, tolerance):
         return [f"word count {words} is outside target {target} +/-{tolerance:.0%} "
                 f"(allowed range {int(lo)}-{int(hi)})"]
     return []
+
+
+# --- the brief's own numbers ------------------------------------------------
+#
+# Everything below this line checks the draft against what the person asked
+# for, rather than against anything this pipeline decided on its own. A word
+# range, a reference minimum, an abstract cap and a list of sections are all
+# things a brief states in ordinary words ("about 3,000 words", "a couple of
+# dozen sources at least", "the abstract at 200"). Nothing here has a default,
+# and a number that was never stated is never checked: the point is to hold the
+# draft to the request, not to invent a house style and enforce that instead.
+
+_HEADING = re.compile(r"^(#{1,6})\s+(.*\S)\s*$")
+
+# The heading that carries the paper's own summary. Which word a document uses
+# for it is a matter of type and language, not of substance: a journal article
+# has an abstract, a committee paper has a summary, a German draft has a
+# Zusammenfassung. All three are the same section and the same cap applies.
+ABSTRACT_TITLE = re.compile(
+    r"^(?:abstract|summary|executive\s+summary|key\s+findings|"
+    r"zusammenfassung|kurzfassung|r[ée]sum[ée])\b", re.IGNORECASE)
+
+
+def sections(text):
+    """[(level, title, start, end)] for every markdown heading, 0-indexed.
+
+    `start` is the heading's own line; `end` is one past the last line of what
+    the heading governs, which runs to the next heading of the same level or
+    shallower. Fenced code is skipped, so a `#` comment inside a shell block is
+    not a section.
+    """
+    lines = text.splitlines()
+    heads = []
+    in_fence = False
+    for i, line in enumerate(lines):
+        if FENCE_RE.match(line):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        m = _HEADING.match(line)
+        if m:
+            heads.append((len(m.group(1)), m.group(2).strip(), i))
+
+    out = []
+    for idx, (level, title, start) in enumerate(heads):
+        end = len(lines)
+        for next_level, _t, next_start in heads[idx + 1:]:
+            if next_level <= level:
+                end = next_start
+                break
+        out.append((level, title, start, end))
+    return out
+
+
+def find_abstract(text):
+    """(title, lineno, body) for the draft's abstract, or None.
+
+    lineno is 1-indexed, for the failure messages; body is the prose under the
+    heading, heading line excluded.
+    """
+    lines = text.splitlines()
+    for _level, title, start, end in sections(text):
+        if ABSTRACT_TITLE.match(title):
+            return title, start + 1, "\n".join(lines[start + 1:end])
+    return None
+
+
+def count_main_text_words(text):
+    """Prose words of the main text: bibliography and abstract both dropped.
+
+    A brief that caps the main text and the abstract separately is counting
+    them separately, and folding a 200-word abstract into a 1,200-word cap
+    fails a correct draft by a sixth of its length.
+    """
+    body, _, _ = _extract_body_and_bib(text)
+    lines = body.splitlines()
+    for _level, title, start, end in sections(body):
+        if ABSTRACT_TITLE.match(title):
+            lines = lines[:start] + lines[end:]
+            break
+    return count_prose_words("\n".join(lines))
+
+
+def count_reference_entries(text):
+    """Entries in the compiled reference list.
+
+    `citations.py compile` writes one entry per line, blank-line separated, so
+    an entry is a non-empty bibliography line that opens the way an entry opens:
+    with its number, in a numeric style, or with a surname in an author-year
+    one. A line opening with neither is a continuation or a note, and is not
+    counted as a second reference.
+    """
+    _body, bib_lines, bib_first_lineno = _extract_body_and_bib(text)
+    if bib_first_lineno is None:
+        return 0
+    return sum(1 for line in bib_lines
+               if line.strip()
+               and (NUMERIC_BIB_LINE.match(line) or BIB_SURNAME.match(line)))
+
+
+def check_word_range(text, low, high):
+    """Main text inside the range the brief asked for."""
+    if low is None and high is None:
+        return []
+    words = count_main_text_words(text)
+    asked = (f"{low} to {high}" if low is not None and high is not None
+             else f"at least {low}" if low is not None else f"at most {high}")
+    if low is not None and words < low:
+        return [f"main text is {words} words, under the {asked} words the brief "
+                f"asks for. Expand it against the sources, do not pad it."]
+    if high is not None and words > high:
+        return [f"main text is {words} words, over the {asked} words the brief "
+                f"asks for. Cut {words - high} words."]
+    return []
+
+
+def check_reference_count(text, minimum):
+    """The reference list meets the minimum the brief stated."""
+    if minimum is None:
+        return []
+    found = count_reference_entries(text)
+    if found < minimum:
+        return [f"the reference list has {found} entries; the brief asks for at "
+                f"least {minimum}. Go back to stage 1, search further, verify "
+                f"what comes back, and cite it. Do not lower the number."]
+    return []
+
+
+def check_abstract(text, max_words):
+    """An abstract is present, is not empty, and is inside its stated cap."""
+    if max_words is None:
+        return []
+    found = find_abstract(text)
+    if found is None:
+        return [f"no abstract found. The brief asks for one of at most "
+                f"{max_words} words, and no Abstract or Summary heading is in "
+                f"the draft."]
+    title, lineno, body = found
+    words = count_prose_words(body)
+    if words == 0:
+        return [f"line {lineno}: the {title!r} heading is present but empty"]
+    if words > max_words:
+        return [f"line {lineno}: the {title!r} section runs {words} words, over "
+                f"the {max_words}-word cap the brief states. Cut "
+                f"{words - max_words} words."]
+    return []
+
+
+def check_required_sections(text, names):
+    """Every section the brief named by name exists as a heading."""
+    if not names:
+        return []
+    titles = [title.lower() for _level, title, _s, _e in sections(text)]
+    failures = []
+    for name in names:
+        wanted = name.strip().lower()
+        if not any(wanted in title for title in titles):
+            failures.append(
+                f"the brief asks for a {name!r} section and no heading in the "
+                f"draft matches it")
+    return failures
+
+
+BRIEF_KEYS = ("words_min", "words_max", "word_range", "min_references",
+              "abstract_max_words", "required_sections")
+
+
+class BriefError(Exception):
+    pass
+
+
+def normalise_brief(data):
+    """A brief file's contents as {words_min, words_max, min_references, ...}.
+
+    Unknown keys are an error rather than an omission: a brief is written by
+    hand from what the user said, and a misspelt key that is silently ignored
+    turns a stated requirement into an unchecked one, which is the exact
+    failure this file exists to stop.
+    """
+    if not isinstance(data, dict):
+        raise BriefError("a brief file has to be a JSON object with keys from: "
+                         + ", ".join(BRIEF_KEYS))
+    unknown = sorted(set(data) - set(BRIEF_KEYS))
+    if unknown:
+        raise BriefError(f"unknown key(s) in the brief file: {', '.join(unknown)}. "
+                         f"Accepted keys: {', '.join(BRIEF_KEYS)}")
+
+    brief = {"words_min": data.get("words_min"), "words_max": data.get("words_max")}
+    if "word_range" in data:
+        pair = data["word_range"]
+        if not (isinstance(pair, (list, tuple)) and len(pair) == 2):
+            raise BriefError('"word_range" has to be a two-element array, '
+                             'for example [2700, 3300]')
+        brief["words_min"], brief["words_max"] = pair
+
+    for key in ("words_min", "words_max", "min_references", "abstract_max_words"):
+        value = brief.get(key, data.get(key))
+        if value is not None and not isinstance(value, int):
+            raise BriefError(f'"{key}" has to be a whole number, not {value!r}')
+        brief[key] = value
+
+    sections_asked = data.get("required_sections") or []
+    if not isinstance(sections_asked, list) or any(
+            not isinstance(s, str) for s in sections_asked):
+        raise BriefError('"required_sections" has to be an array of strings')
+    brief["required_sections"] = sections_asked
+    return brief
+
+
+def load_brief(path):
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        raise BriefError(f"{path} is not valid JSON: {e}") from e
+    return normalise_brief(data)
 
 
 def check_template_text(text):
@@ -891,7 +1126,7 @@ def check_database_cross_check(text, database):
     return failures
 
 
-def run_checks(text, target=None, tolerance=0.1, database=None):
+def run_checks(text, target=None, tolerance=0.1, database=None, brief=None):
     failures = []
     failures += check_missing_sources(text)
     failures += check_placeholders(text)
@@ -902,7 +1137,24 @@ def run_checks(text, target=None, tolerance=0.1, database=None):
     failures += check_bracket_slots(text)
     if database is not None:
         failures += check_database_cross_check(text, database)
+    if brief:
+        failures += check_word_range(text, brief.get("words_min"),
+                                     brief.get("words_max"))
+        failures += check_reference_count(text, brief.get("min_references"))
+        failures += check_abstract(text, brief.get("abstract_max_words"))
+        failures += check_required_sections(text, brief.get("required_sections"))
     return failures
+
+
+def stats(text):
+    """The four numbers the brief checks measure, whether or not one was given."""
+    abstract = find_abstract(text)
+    return {
+        "main_text_words": count_main_text_words(text),
+        "abstract_words": count_prose_words(abstract[2]) if abstract else None,
+        "reference_entries": count_reference_entries(text),
+        "sections": [title for _l, title, _s, _e in sections(text)],
+    }
 
 
 def _build_parser():
@@ -928,7 +1180,55 @@ def _build_parser():
     parser.add_argument("--target", type=int, default=None, help="Target word count")
     parser.add_argument("--tolerance", type=float, default=0.1,
                          help="Allowed fractional deviation from --target (default 0.1 = 10%%)")
+    parser.add_argument("-b", "--brief", default=None,
+                         help="Path to research/brief.json, the requirements the user actually "
+                              "stated: word range, reference minimum, abstract cap and named "
+                              "sections. Each one is checked only if it is there; nothing in it "
+                              "has a default, because every value in it came from the brief "
+                              "rather than from this pipeline. The flags below override it.")
+    parser.add_argument("--word-range", default=None, metavar="LO-HI",
+                         help="Main-text word range the brief asked for, e.g. 1200-1500. The "
+                              "reference list and the abstract are counted separately and are "
+                              "not included in this number.")
+    parser.add_argument("--min-references", type=int, default=None,
+                         help="Fewest reference entries the brief asks for")
+    parser.add_argument("--abstract-max", type=int, default=None, metavar="N",
+                         help="Word cap on the abstract the brief asks for. Passing it also "
+                              "requires that an abstract is there at all.")
+    parser.add_argument("--require-section", action="append", default=None,
+                         metavar="NAME",
+                         help="A section the brief names, matched against the draft's headings. "
+                              "Repeat the flag once per section.")
+    parser.add_argument("--stats", action="store_true",
+                         help="Print the main-text word count, the abstract word count, the "
+                              "reference count and the section headings, then exit 0 without "
+                              "checking anything. For counting a draft while it is still being "
+                              "written, so a trim or an expansion runs against a number rather "
+                              "than an impression.")
     return parser
+
+
+_WORD_RANGE = re.compile(r"^\s*(\d+)\s*(?:-|to|\.\.)\s*(\d+)\s*$")
+
+
+def brief_from_args(args):
+    """The brief file, if any, with the command-line flags layered over it."""
+    brief = load_brief(args.brief) if args.brief else normalise_brief({})
+    if args.word_range:
+        m = _WORD_RANGE.match(args.word_range)
+        if not m:
+            raise BriefError(f"--word-range {args.word_range!r} is not a range; "
+                             f"write it as LO-HI, for example 1200-1500")
+        brief["words_min"], brief["words_max"] = int(m.group(1)), int(m.group(2))
+        if brief["words_min"] > brief["words_max"]:
+            raise BriefError(f"--word-range {args.word_range!r} runs backwards")
+    if args.min_references is not None:
+        brief["min_references"] = args.min_references
+    if args.abstract_max is not None:
+        brief["abstract_max_words"] = args.abstract_max
+    if args.require_section:
+        brief["required_sections"] = (brief.get("required_sections") or []) + list(args.require_section)
+    return brief
 
 
 def main(argv=None):
@@ -951,6 +1251,15 @@ def main(argv=None):
             print(f"Error: {e}", file=sys.stderr)
             return 1
 
+    if args.brief and not Path(args.brief).exists():
+        print(f"Error: brief not found: {args.brief}", file=sys.stderr)
+        return 1
+    try:
+        brief = brief_from_args(args)
+    except BriefError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
     corpus_text = None
     if args.corpus:
         corpus_path = Path(args.corpus)
@@ -960,7 +1269,18 @@ def main(argv=None):
         corpus_text = corpus_path.read_text(encoding="utf-8")
 
     text = draft_path.read_text(encoding="utf-8")
-    failures = run_checks(text, target=args.target, tolerance=args.tolerance, database=database)
+
+    if args.stats:
+        counted = stats(text)
+        abstract = counted["abstract_words"]
+        print(f"main text words:   {counted['main_text_words']}")
+        print(f"abstract words:    {abstract if abstract is not None else 'no abstract section'}")
+        print(f"reference entries: {counted['reference_entries']}")
+        print(f"sections:          {', '.join(counted['sections']) or 'none'}")
+        return 0
+
+    failures = run_checks(text, target=args.target, tolerance=args.tolerance,
+                          database=database, brief=brief)
 
     # Printed whether or not the gate passes, and never changes the exit code.
     # Silent without --corpus, so the default invocation keeps its contract of
