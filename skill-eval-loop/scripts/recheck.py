@@ -222,6 +222,65 @@ def loads(skill, sessions, since, until):
     return n
 
 
+def installed(skill, roots=None):
+    """The roots this process can see the skill installed in, newest definition of
+    "installed" being the same two directories uninstall() would clear.
+
+    Zero loads has two causes that look identical in the count and need opposite fixes,
+    and the loop spent an afternoon telling them apart by hand: either the skill is
+    installed where the sessions ran and the model never chose it, which is a discovery
+    problem in the description, or it is not installed in a root those sessions could
+    reach at all, which is a plumbing problem and says nothing about the skill. On the
+    live machine that was not hypothetical: all seven adopted skills existed only under
+    root's home, so every session mined from the user's own home reported zero loads for
+    a reason that had nothing to do with any of them.
+
+    A negative here is weaker than a positive: the recheck sees its own roots, not the
+    roots of whoever typed the sessions, so an empty list means "not reachable from
+    here", never "nowhere on this machine". That is why it only ever colours a SKIP
+    message and never decides one.
+    """
+    if roots is None:
+        roots = (os.path.expanduser("~/.agents/skills"), os.path.expanduser("~/.claude/skills"))
+    return [d for d in roots if os.path.exists(os.path.join(d, skill))]
+
+
+def usage_report(entries, sessions, roots=None):
+    """One line per open entry: sessions since adoption, and how many loaded the skill.
+
+    The verdict guard can only withhold a confirmation once the window has already
+    passed. This is the same measurement asked early, while a zero is still fixable,
+    and it exists because reading it by hand off the ledger and a session index is what
+    turned up the finding that six of seven adopted skills had never once been loaded -
+    in a corpus where twenty other skills were loaded forty times between them, so the
+    zero was about those six and not about whether loads get recorded at all.
+
+    Sorted by loads so the zeros come first, which is the only row worth acting on.
+    """
+    now = time.time()
+    rows = []
+    for e in entries:
+        adopted = e.get("adopted_at") or e.get("ts")
+        try:
+            t = time.mktime(time.strptime(adopted, "%Y-%m-%dT%H:%M:%SZ")) - time.timezone
+        except (TypeError, ValueError):
+            continue
+        after = sum(1 for s in sessions if t <= s.get("ts", 0) < now)
+        rows.append((loads(e["skill"], sessions, t, now), after, e["skill"],
+                     ", ".join(installed(e["skill"], roots)) or "not installed here"))
+    if not rows:
+        return "no open entries with a readable adoption time"
+    rows.sort()
+    out = [f"{'skill':34s} {'loads':>5s} {'sessions since':>14s}  installed in"]
+    out += [f"{s:34s} {n:5d} {a:14d}  {w}" for n, a, s, w in rows]
+    silent = [r for r in rows if r[0] == 0]
+    if silent:
+        out.append(f"\n{len(silent)} of {len(rows)} were never loaded once since adoption. A rate "
+                   "that moves in those windows moved for some other reason, and recheck.py "
+                   "will refuse to confirm them.")
+    return "\n".join(out)
+
+
 def kg_rate(episodes, sig_tokens, sessions, since, until, rare=frozenset()):
     """Session-rate of corrections about this theme in a time window.
 
@@ -326,6 +385,8 @@ def main():
     ap.add_argument("--sessions", type=int, default=40)
     ap.add_argument("--sources", default=None)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--usage", action="store_true",
+                    help="report loads since adoption for every open entry and exit")
     args = ap.parse_args()
 
     root = os.environ.get("FORGE_ROOT", os.path.expanduser("~/skill-forge"))
@@ -338,6 +399,13 @@ def main():
            and r.get("recheck_due", "9999") <= today]
     already = {r.get("skill") for r in rows if r.get("decision") in ("adopt-confirmed", "revoked")}
     due = [r for r in due if r["skill"] not in already]
+    if args.usage:
+        # Every open entry, not just the ones a date has come due for: the question this
+        # answers - is anything actually loading this skill - is most worth asking in the
+        # weeks before the verdict, while there is still time to fix a description or an
+        # install path. Reports and exits; no ledger row, no uninstall, whatever it finds.
+        due = [r for r in rows if r.get("decision") in ("probation", "adopt")
+               and r["skill"] not in already]
     if not due:
         print("no rechecks due")
         return
@@ -357,13 +425,17 @@ def main():
         subprocess.run([sys.executable, os.path.join(miner, "mine.py"), "--sessions", str(args.sessions),
                         "--projects", args.projects, "--out", tmp] + src, check=True)
         fresh = json.load(open(tmp))
-    if any(is_kg(r) for r in due):
+    if any(is_kg(r) for r in due) or args.usage:
         # --no-llm: episode extraction only. A recheck must never depend on a model call.
         tmp = os.path.join(root, "mined", "recheck-corrections.json")
         subprocess.run([sys.executable, os.path.join(miner, "corrections.py"), "--sessions",
                         str(args.sessions), "--max-episodes", "2000", "--per-session", "20",
                         "--projects", args.projects, "--no-llm", "--out", tmp] + src, check=True)
         corr = json.load(open(tmp))
+
+    if args.usage:
+        print(usage_report(due, corr.get("session_index", [])))
+        return
 
     for entry in due:
         skill = entry["skill"]
@@ -408,9 +480,16 @@ def main():
             # window that does load it can decide. This is the one verdict the rate alone
             # gets backwards, and it gets it backwards in the direction that writes down a
             # win - which is how a loop that measures itself starts believing its own press.
+            where = installed(skill)
+            why = ("it is installed in " + ", ".join(where) + ", so the sessions could reach it "
+                   "and did not choose it: the description is not matching the moment"
+                   ) if where else (
+                   "it is not installed in any root this recheck can see, so those sessions "
+                   "could not have loaded it whatever its description says: install it where "
+                   "the work happens, or recheck on the machine that has it")
             print(f"SKIP {skill}: correction rate fell {baseline:.2%} -> {rate_now:.2%}, but the "
                   f"skill was never loaded in the {measured['sessions_after']} sessions since "
-                  "adoption, so the drop is not evidence about it")
+                  f"adoption, so the drop is not evidence about it. {why}")
             continue
         verdict = {
             "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
