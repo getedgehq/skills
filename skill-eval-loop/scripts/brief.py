@@ -232,6 +232,10 @@ def main():
         root = os.environ.get("FORGE_ROOT", os.path.expanduser("~/skill-forge"))
         brief = synth_kg(cluster, args.model, os.path.join(root, "fixtures"))
         brief["source_failure"] = {k: cluster[k] for k in ("kind", "signature", "count", "session_count")}
+        # recheck.py matches later corrections against these words, so carry them into the ledger
+        brief["source_failure"]["user_rules"] = cluster.get("user_rules", [])[:6]
+        brief["source_failure"]["sessions_scanned"] = data.get("sources") and sum(
+            (data.get("sources") or {}).values()) or data.get("sessions_scanned")
         brief["generated"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     else:
         brief = synth(cluster, args.model)

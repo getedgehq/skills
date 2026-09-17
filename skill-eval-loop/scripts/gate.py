@@ -14,7 +14,9 @@ Decision rule (deliberately conservative):
   Everything else is REJECT. Ties without --probation are rejections - a skill
   that does not demonstrably improve the task is context debt, not an asset.
 
-On ADOPT: copies the skill into --adopt-dir and appends to ledger.jsonl.
+On ADOPT: copies the skill into --adopt-dir and appends to ledger.jsonl. Both adopt
+and probation rows carry a baseline failure rate and a recheck date (14 days for an
+adoption, 7 for probation), so recheck.py can demote either one later.
 On REJECT: appends to ledger.jsonl so we never re-eval the same pairing.
 """
 import argparse
@@ -72,17 +74,22 @@ def main():
         "reasons": v["verdict"].get("reasons", []),
         "failure": brief.get("source_failure"),
     }
-    if probation:
+    if adopt or probation:
+        # An adopted skill gets a production recheck too, just a later one: winning a
+        # rebuilt eval task is not the same as reducing failures in real sessions.
         entry["baseline_failure_rate"] = args.failure_rate
         entry["recheck_due"] = time.strftime(
-            "%Y-%m-%d", time.gmtime(time.time() + 7 * 86400))
+            "%Y-%m-%d", time.gmtime(time.time() + (7 if probation else 14) * 86400))
     ledger = os.path.join(root, "ledger.jsonl")
     with open(ledger, "a") as fh:
         fh.write(json.dumps(entry) + "\n")
 
     if adopt or probation:
         dest = os.path.join(args.adopt_dir, skill_name)
-        if os.path.exists(dest):
+        if os.path.islink(dest):
+            print(f"note: {dest} is a symlink, replacing it")
+            os.unlink(dest)
+        elif os.path.exists(dest):
             print(f"note: {dest} already exists, refreshing")
             shutil.rmtree(dest)
         shutil.copytree(args.skill_dir, dest)

@@ -20,7 +20,7 @@ for n in 1 2 3; do
 done
 python3 scripts/aggregate.py <brief.json>                              # strict majority
 python3 scripts/gate.py <brief.json> <skill> [--adopt-dir DIR] [--probation --failure-rate R]
-python3 scripts/recheck.py --sources claude,opencode,codex             # weekly probation review
+python3 scripts/recheck.py --sources claude,opencode,codex --dry-run  # weekly review, decides nothing
 ```
 
 Or hands-free end to end:
@@ -69,10 +69,27 @@ or on your own cloud box. To watch and drive it in a browser, use **skill-cockpi
 
 ## recheck.py (weekly)
 
-Re-mines recent sessions and compares each probationary skill's failure
-session-rate against its adoption baseline. Dropped >=30% -> `adopt-confirmed`.
-No drop -> the skill is REMOVED from the fleet and the ledger records `revoked`.
-Context-rot skills are measured in production, not sandboxes.
+Re-mines recent sessions and compares each skill's failure session-rate against its
+adoption baseline. Dropped >=30% -> `adopt-confirmed`. No drop -> the skill is
+uninstalled (symlinks unlinked, the copy moved to `$FORGE_ROOT/revoked/`) and the ledger
+records `revoked`. Adopted skills get a 14-day recheck, probation 7: winning a rebuilt
+eval task is not the same as reducing failures in real sessions.
+
+Knowledge-gap skills have no tool-error signature to count, so they are measured on the
+user's own corrections: `corrections.py --no-llm` re-extracts correction episodes and the
+rate of corrections about that theme is compared on both sides of the adoption date, with
+one matcher. A recheck never needs a model call.
+
+Run `--dry-run` first on any machine where skills are installed: it prints every decision
+and uninstalls nothing. Run it where the user actually types - a box that only runs
+headless agents has no corrections to count, and the recheck will say so rather than
+guess.
+
+**A recheck never confirms or revokes on absent evidence.** No baseline, no recorded
+signature, a baseline of zero, or too few sessions on either side of the adoption all
+produce SKIP. The first version read "no signature" as a 0% failure rate and would have
+confirmed three skills that had never been measured; the inverse bug would have
+uninstalled six working skills because a rate of zero cannot drop by 30%.
 
 ## Hard rules (all learned from real eval failures)
 
