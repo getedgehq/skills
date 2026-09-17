@@ -77,6 +77,7 @@ def episodes_from(sessions, max_corr=400, max_asst=300):
                     continue
                 if 15 < len(text) < max_corr and prev_user and prev_asst and CUE.search(text):
                     out.append({"id": f"E{len(out)}", "session": s.id, "kind": s.kind,
+                                "ts": s.mtime,  # recheck.py splits episodes before/after an adoption
                                 "asst": " ".join(prev_asst.split())[-max_asst:],
                                 "corr": " ".join(text.split())})
                 prev_user = text
@@ -128,6 +129,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--sources", default=None, help="comma list; default all available")
     ap.add_argument("--sessions", type=int, default=400)
+    ap.add_argument("--projects", default=None,
+                    help="Claude projects dir to scan instead of ~/.claude/projects "
+                         "(recheck.py runs where the user actually types)")
     ap.add_argument("--memory", default=None, help="dir of the user's saved rule/memory .md files")
     ap.add_argument("--max-episodes", type=int, default=250)
     ap.add_argument("--per-session", type=int, default=6)
@@ -137,19 +141,26 @@ def main():
     ap.add_argument("--model", default=os.environ.get("FORGE_BRIEF_MODEL", "claude-opus-5"))
     args = ap.parse_args()
 
+    session_index = []
     if args.episodes:
         prev = json.load(open(args.episodes))
         eps, src_counts = prev["episodes"], prev.get("sources", {})
+        session_index = prev.get("session_index", [])
     else:
         kinds = args.sources.split(",") if args.sources else sources.available_kinds()
-        sess = sources.list_sessions(kinds, args.sessions)
+        sess = sources.list_sessions(kinds, args.sessions,
+                                     {"claude": args.projects} if args.projects else None)
         eps = spread(episodes_from(sess), args.max_episodes, args.per_session)
         src_counts = {k: sum(1 for s in sess if s.kind == k) for k in kinds}
+        # every scanned session, not just the ones with episodes: recheck.py needs the
+        # denominator on both sides of an adoption date, including quiet sessions
+        session_index = [{"id": s.id, "kind": s.kind, "ts": s.mtime} for s in sess]
     print(f"sessions {src_counts}, {len(eps)} candidate correction episodes", file=sys.stderr)
 
     report = {"generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
               "sources": src_counts,
-              "episode_count": len(eps), "episodes": eps, "clusters": []}
+              "episode_count": len(eps), "episodes": eps,
+              "session_index": session_index, "clusters": []}
     if not args.no_llm and eps:
         mem_rows = memory_index(args.memory) if args.memory else []
         mem_names = {n for n, _ in mem_rows}
