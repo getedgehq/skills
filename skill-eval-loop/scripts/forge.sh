@@ -50,7 +50,19 @@ eval_brief() {  # eval_brief <brief> <skill-dir>: predict, N samples, blind judg
   for s in $(seq 1 "$SAMPLES"); do
     FORGE_SAMPLE=$s bash "$HERE/run_eval.sh" "$brief" without ""
     FORGE_SAMPLE=$s bash "$HERE/run_eval.sh" "$brief" with "$skill"
-    python3 "$HERE/judge.py" "$brief" --sample "$s"
+    # Stop sampling a brief whose own gate nothing can pass. Both arms failing verify
+    # is a fact about the brief, not about this pair, so samples 2 and 3 will fail the
+    # same way and cost the same half hour each to say so. The first real one cost
+    # three hours of queue time to learn twice over. The other invalid verdict is left
+    # alone: an arm naming the skill is chance, and the next sample may well be blind.
+    # Through a file rather than a pipe into grep: under pipefail a judge that died
+    # would make the condition merely false, and the loop would carry on evaluating
+    # against no verdict instead of stopping the way it does today.
+    python3 "$HERE/judge.py" "$brief" --sample "$s" | tee "$FORGE_ROOT/.judge-out.json"
+    if grep -q '"invalid_code": "both_arms_failed_verify"' "$FORGE_ROOT/.judge-out.json"; then
+      echo "brief $(basename "$brief") has an unpassable verify: stopping after sample $s" >&2
+      break
+    fi
   done
   python3 "$HERE/aggregate.py" "$brief"
   python3 "$HERE/gate.py" "$brief" "$skill" --adopt-dir "${FORGE_ADOPT_DIR:-$HOME/.agents/skills}" ${PROB[@]+"${PROB[@]}"}
