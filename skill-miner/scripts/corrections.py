@@ -63,23 +63,65 @@ For each theme with at least 2 episodes return:
 Return STRICT JSON only: {{"themes": [ ... ]}}"""
 
 
+def skill_loaded(event):
+    """The skill name an event loaded, or None.
+
+    Every source reports tool calls through the same `tool_call` event, but each spells
+    the call its own way, and both spellings had to be read off real sessions rather than
+    assumed: Claude Code calls the tool `Skill` and names the skill in `skill`, OpenCode
+    calls it `skill` and names it in `name`. Reading only Claude's spelling returns None
+    for every OpenCode load, which does not look like a bug downstream - it looks like a
+    skill nobody used. Codex records no skill call at all, so it can only under-count.
+
+    The input arrives as a JSON string truncated to sources.MAX_INPUT; a skill call is a
+    few dozen bytes, so it parses, and a name is read out of the raw string if it ever
+    does not.
+    """
+    if event.get("type") != "tool_call" or event.get("name", "").lower() != "skill":
+        return None
+    raw = event.get("input") or ""
+    got = None
+    try:
+        arg = json.loads(raw)
+        got = arg.get("skill") or arg.get("name")
+    except ValueError:
+        pass
+    if not got:
+        m = re.search(r'"(?:skill|name)"\s*:\s*"([^"]+)"', raw)
+        got = m.group(1) if m else None
+    # A plugin skill is invoked as plugin:skill but installed, adopted and revoked
+    # under the bare name, which is what the ledger and the recheck join on.
+    return got.split(":")[-1] if got else None
+
+
 def episodes_from(sessions, max_corr=400, max_asst=300):
-    """Returns (episodes, turns_by_session).
+    """Returns (episodes, turns_by_session, skills_by_session).
 
     The turn count is the number of user messages the human actually typed, after the
     harness-injected ones are dropped - the same messages the episode rule below reads.
     recheck.py needs it for its denominator: an episode requires a previous user message
     and a previous assistant message, so a session with fewer than two of these turns
     cannot produce one, and counting it dilutes a rate rather than measuring it.
+
+    The skills are the ones each session actually loaded. recheck.py needs those for a
+    different reason: a correction rate that fell in a window where the skill was never
+    once loaded fell for some other reason, and confirming the skill on it would record
+    a win the skill had no part in. Collected here because these sessions are already
+    being walked event by event, so it costs one comparison per event and no second pass.
     """
-    out, turns = [], {}
+    out, turns, skills = [], {}, {}
     for s in sessions:
         prev_user, prev_asst = None, ""
         typed = 0
+        loaded = skills.setdefault(s.id, set())
         for e in sources.iter_events(s):
             t = e.get("type")
             if t == "assistant_text":
                 prev_asst = e["text"]
+            elif t == "tool_call":
+                name = skill_loaded(e)
+                if name:
+                    loaded.add(name)
             elif t == "user_text":
                 text = e["text"]
                 if not text or SYSTEMISH.search(text) or sources.is_injected(text):
@@ -92,7 +134,7 @@ def episodes_from(sessions, max_corr=400, max_asst=300):
                                 "corr": " ".join(text.split())})
                 prev_user = text
         turns[s.id] = typed
-    return out, turns
+    return out, turns, {k: sorted(v) for k, v in skills.items()}
 
 
 def spread(eps, limit, per_session):
@@ -161,14 +203,17 @@ def main():
         kinds = args.sources.split(",") if args.sources else sources.available_kinds()
         sess = sources.list_sessions(kinds, args.sessions,
                                      {"claude": args.projects} if args.projects else None)
-        found, turns = episodes_from(sess)
+        found, turns, loaded = episodes_from(sess)
         eps = spread(found, args.max_episodes, args.per_session)
         src_counts = {k: sum(1 for s in sess if s.kind == k) for k in kinds}
         # every scanned session, not just the ones with episodes: recheck.py needs the
         # denominator on both sides of an adoption date, including quiet sessions - and
-        # the turn count, so it can drop the ones that could not have carried an episode
+        # the turn count, so it can drop the ones that could not have carried an episode,
+        # and the skills each session loaded, so it can tell a skill that earned its
+        # improvement from one that was never once loaded while the rate moved anyway
         session_index = [{"id": s.id, "kind": s.kind, "ts": s.mtime,
-                          "turns": turns.get(s.id, 0)} for s in sess]
+                          "turns": turns.get(s.id, 0),
+                          "skills": loaded.get(s.id, [])} for s in sess]
     print(f"sessions {src_counts}, {len(eps)} candidate correction episodes", file=sys.stderr)
 
     report = {"generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),

@@ -38,7 +38,7 @@ def ts(offset_days):
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() + offset_days * DAY))
 
 
-def sessions(n, first_day, last_day, turns=8, prefix="s"):
+def sessions(n, first_day, last_day, turns=8, prefix="s", skills=("x",)):
     """n sessions spread evenly between two offsets from now, in days.
 
     `turns` is what the miner records for each: the number of turns the human typed.
@@ -46,10 +46,13 @@ def sessions(n, first_day, last_day, turns=8, prefix="s"):
     session length gets a corpus that is uniform in it and cannot trip the guard.
     `prefix` keeps two windows built by two calls from sharing session ids, which would
     otherwise credit one window's corrections to the other.
+    `skills` is what each session loaded, defaulting to the skill every fixture here is
+    named after, so a test about rates is testing rates: the usage guard only has
+    something to say when a test deliberately empties it.
     """
     step = (last_day - first_day) / max(1, n - 1)
     return [{"id": f"{prefix}{i}", "ts": time.time() + (first_day + i * step) * DAY,
-             "turns": turns} for i in range(n)]
+             "turns": turns, "skills": list(skills)} for i in range(n)]
 
 
 class KgRecheck(unittest.TestCase):
@@ -119,6 +122,69 @@ class KgRecheck(unittest.TestCase):
                                 signature="em dash in written output")
         self.assertIsNone(measured)
         self.assertIn("no baseline signal", why)
+
+
+class SkillActuallyRan(unittest.TestCase):
+    """A rate that fell while the skill was never loaded is not about the skill.
+
+    Every other guard in recheck.py asks whether the rate moved. None of them asked
+    whether the thing under test ever ran, and a skill only reaches the model when it is
+    loaded - so the one verdict the rate alone gets backwards is the one that writes
+    down a win. On this machine all seven adopted skills had zero production loads on
+    the day they were adopted, and the only Skill calls naming them were the eval arms.
+    """
+
+    def kg(self, sess, eps, skill="x"):
+        entry = {"skill": skill, "decision": "adopt", "ts": ts(-30),
+                 "failure": {"kind": "correction", "signature": "em dash in written output",
+                             "user_rules": ["never use an em dash"]}}
+        return recheck.recheck_kg(entry, {"episodes": eps, "session_index": sess}, True)
+
+    def corpus(self, skills):
+        """The clean drop from test_measures_a_real_drop, with usage varied."""
+        sess = sessions(40, -60, -31, skills=("x",)) + sessions(20, -29, 0, prefix="a", skills=skills)
+        before = [s for s in sess if s["ts"] < time.time() - 30 * DAY]
+        eps = [{"session": s["id"], "corr": "you used an em dash in the newsletter blurb"}
+               for s in before[:6]]
+        noise = ["the deploy script failed again", "wrong render host for this job",
+                 "check the port before starting a server", "that number is not measured"]
+        eps += [{"session": s["id"], "corr": noise[i % len(noise)]}
+                for i, s in enumerate(sess * 2)]
+        return sess, eps
+
+    def test_counts_only_loads_inside_the_window(self):
+        sess = sessions(6, -60, -31) + sessions(4, -29, 0, prefix="a")
+        self.assertEqual(recheck.loads("x", sess, time.time() - 30 * DAY, time.time() + DAY), 4)
+
+    def test_a_skill_the_window_never_loaded_counts_zero(self):
+        sess = sessions(4, -29, 0, skills=("something-else",))
+        self.assertEqual(recheck.loads("x", sess, time.time() - 30 * DAY, time.time() + DAY), 0)
+
+    def test_the_count_rides_on_a_measurement_that_was_taken(self):
+        sess, eps = self.corpus(("x",))
+        measured, why = self.kg(sess, eps)
+        self.assertIsNone(why)
+        self.assertEqual(measured["loads_after"], 20)
+
+    def test_a_drop_with_no_loads_is_not_confirmed(self):
+        sess, eps = self.corpus(("something-else",))
+        measured, why = self.kg(sess, eps)
+        # The measurement still happens - the rate really did fall - and the refusal to
+        # call it a win belongs to main(), which is what the next test checks.
+        self.assertIsNone(why)
+        self.assertEqual(measured["loads_after"], 0)
+        self.assertLess(measured["current_failure_rate"],
+                        measured["baseline_failure_rate"] * recheck.IMPROVED)
+
+    def test_an_index_without_the_usage_field_is_refused_rather_than_read_as_zero(self):
+        # Read as zero, an old index would block every confirmation instead of the ones
+        # that deserve it, which is the same mistake in the opposite direction.
+        sess, eps = self.corpus(("x",))
+        for s in sess:
+            del s["skills"]
+        measured, why = self.kg(sess, eps)
+        self.assertIsNone(measured)
+        self.assertIn("predates the skill-usage index", why)
 
 
 class SessionLength(unittest.TestCase):
@@ -297,6 +363,36 @@ class MainDecisions(unittest.TestCase):
         del row["baseline_failure_rate"]
         out = self.run_recheck([row])
         self.assertIn("SKIP", out)
+
+    def kg_corpus(self, skills):
+        sess = sessions(40, -60, -31, skills=("kg",)) + sessions(20, -29, 0, prefix="a", skills=skills)
+        before = [s for s in sess if s["ts"] < time.time() - 30 * DAY]
+        eps = [{"session": s["id"], "corr": "you used an em dash in the newsletter blurb"}
+               for s in before[:6]]
+        noise = ["the deploy script failed again", "wrong render host for this job",
+                 "check the port before starting a server", "that number is not measured"]
+        eps += [{"session": s["id"], "corr": noise[i % len(noise)]}
+                for i, s in enumerate(sess * 2)]
+        return {"episodes": eps, "session_index": sess}
+
+    def kg_row(self):
+        return self.row("kg", failure={"kind": "correction",
+                                       "signature": "em dash in written output",
+                                       "user_rules": ["never use an em dash"]})
+
+    def test_a_drop_confirms_when_the_skill_was_actually_loaded(self):
+        self.stub_miner(corrections=self.kg_corpus(("kg",)))
+        out = self.run_recheck([self.kg_row()])
+        self.assertIn("KEEP", out)
+
+    def test_the_same_drop_does_not_confirm_when_the_skill_never_loaded(self):
+        # Same corpus, same drop, same threshold. The only difference is that nothing in
+        # the window loaded the skill, and that alone has to be enough to withhold a win.
+        self.stub_miner(corrections=self.kg_corpus(("something-else",)))
+        out = self.run_recheck([self.kg_row()])
+        self.assertIn("never loaded", out)
+        self.assertNotIn("KEEP", out)
+        self.assertNotIn("REVOKE", out, "a skill that never ran has had no chance, not a failure")
 
     def test_nothing_due_runs_no_miner(self):
         self.stub_miner()

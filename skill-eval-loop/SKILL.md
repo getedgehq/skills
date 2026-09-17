@@ -208,10 +208,37 @@ of giving it a threshold of its own is deliberate - it fires exactly when the co
 big enough to produce the verdict. On the real corpus the shipped denominator shifts
 2.5-3.5x depending on the adoption date, and the floored one 1.1-1.2x.
 
+**A rate that improved while the skill was never loaded confirms nothing.** Every guard
+above asks whether the rate moved; none of them asked whether the thing under test ever
+ran. A skill only reaches the model when it is loaded, so a drop across a window that
+never loaded it is a drop with some other cause - a quiet week, the theme not coming up,
+the work moving on - and writing `adopt-confirmed` on it records a win the skill had no
+part in. The session index now carries the skills each session loaded, and a drop with
+zero loads is a SKIP. Not a revoke: a skill that never ran has not failed, it has had no
+chance, so the entry stays due for a window that does load it. Every verdict carries the
+count either way, because a confirmation that says how many times the skill actually ran
+is evidence and one that cannot is a rate with a story attached.
+
+This is not hypothetical here. Across 300 real sessions (98 Claude, 68 OpenCode, 134
+Codex) the seven skills adopted on 17 Sep were loaded **zero** times; the only `Skill`
+calls naming them were the eval arms, which the harness filter correctly drops. Without
+this guard the 1 Oct recheck could have confirmed all seven on a rate that moved for
+reasons none of them touched.
+
+The count reads low rather than high when it is wrong, which is the right way round for
+something that can only withhold a confirmation. Codex transcripts record no skill call
+at all, so a window that is mostly Codex reads zero however much the skill ran, and that
+costs a SKIP and a later recheck, never a revoke. Both other spellings had to be read off
+real sessions rather than assumed: Claude Code calls the tool `Skill` and names the skill
+in `skill`, OpenCode calls it `skill` and names it in `name`. The first version of the
+parser read only Claude's, and downstream that does not look like a parse bug - it looks
+like a skill nobody used.
+
 `tests/test_recheck.py` pins all of it down on fixtures - stdlib only, no model calls,
 no network - including the symlinked uninstall, both zero-evidence skips, the recency
-guard, the length floor and shift guard, and a real drop. Every case in it is a bug that
-reached real data first.
+guard, the length floor and shift guard, a real drop, and the same drop withheld when
+nothing loaded the skill. `../skill-miner/tests/test_corrections.py` pins every spelling
+the loads are read from. Every case in both is a bug that reached real data first.
 
 ## backfill.py
 
