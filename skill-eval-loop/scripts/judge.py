@@ -280,16 +280,24 @@ def main():
     }
     if both_failed:
         result["invalid"] = True
+        # Two invalid samples are not the same kind of problem, and the caller has to
+        # tell them apart to know whether running the next sample is worth anything.
+        # This one is a property of the brief: its gate was unpassable this time and
+        # will be unpassable the next two times, so the remaining samples buy nothing
+        # but an hour each. The one below is chance, and the next sample may be clean.
+        result["invalid_code"] = "both_arms_failed_verify"
         result["invalid_reason"] = "both arms failed verify - fix the brief, not the loop"
         result["winner_arm"] = "invalid"
     elif spoken:
         result["invalid"] = True
+        result["invalid_code"] = "skill_named_in_final"
         result["invalid_reason"] = ("an arm named the skill under test in its final message "
                                     f"({', '.join(spoken)}), so this pair was not judged blind")
         result["winner_arm"] = "invalid"
     path = os.path.join(runs, "verdict.json")
     json.dump(result, open(path, "w"), indent=1)
-    print(json.dumps({k: result[k] for k in ("brief", "winner_arm", "verify")}, indent=1))
+    keys = ("brief", "winner_arm", "verify") + (("invalid_code",) if result.get("invalid") else ())
+    print(json.dumps({k: result[k] for k in keys}, indent=1))
     print(f"-> {path}")
 
 

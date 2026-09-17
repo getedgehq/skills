@@ -13,6 +13,7 @@ import json
 import os
 import subprocess
 import sys
+import shutil
 import tempfile
 import unittest
 
@@ -156,6 +157,65 @@ class Aggregation(unittest.TestCase):
             self.assertEqual(got["valid_samples"], 2)
             self.assertEqual(got["winner_arm"], "with")
 
+
+
+class UnpassableBrief(unittest.TestCase):
+    """A brief whose own gate nothing can pass should cost one sample, not three.
+
+    The first real one cost three hours of queue time: a design brief whose verify
+    demanded a perfect final message failed both arms on sample 1, and the loop went on
+    to spend the same half hour per arm twice more to reach the same verdict. Both arms
+    failing verify is a property of the brief, so the remaining samples are already
+    decided before they run.
+    """
+
+    FORGE = os.path.join(SCRIPTS, "forge.sh")
+
+    def build(self, tmp, invalid_code):
+        """A copy of forge.sh next to stubs, so the real loop body runs on fake spend."""
+        here = os.path.join(tmp, "scripts")
+        os.makedirs(here)
+        shutil.copy(self.FORGE, os.path.join(here, "forge.sh"))
+        counter = os.path.join(tmp, "runs.txt")
+        open(os.path.join(here, "run_eval.sh"), "w").write(
+            f'#!/usr/bin/env bash\necho "$2" >> {counter}\n')
+        body = json.dumps({"brief": "b1", "winner_arm": "invalid", "verify": {"with": 1},
+                           "invalid_code": invalid_code} if invalid_code else
+                          {"brief": "b1", "winner_arm": "with", "verify": {"with": 0}})
+        open(os.path.join(here, "judge.py"), "w").write(
+            "#!/usr/bin/env python3\nprint(%r)\n" % body)
+        for stub in ("aggregate.py", "gate.py"):
+            open(os.path.join(here, stub), "w").write("#!/usr/bin/env python3\n")
+        brief = os.path.join(tmp, "brief.json")
+        json.dump({"id": "b1", "prompt": "p", "verify": "true"}, open(brief, "w"))
+        skill = os.path.join(tmp, "skill")
+        os.makedirs(skill)
+        return here, brief, skill, counter
+
+    def samples_run(self, invalid_code):
+        with tempfile.TemporaryDirectory() as tmp:
+            here, brief, skill, counter = self.build(tmp, invalid_code)
+            env = dict(os.environ, FORGE_ROOT=os.path.join(tmp, "forge"),
+                       FORGE_SKIP_SCORE="1", PYTHONDONTWRITEBYTECODE="1")
+            out = subprocess.run(["bash", os.path.join(here, "forge.sh"), "--brief", brief,
+                                  "--skill-dir", skill], env=env, capture_output=True, text=True)
+            self.assertEqual(out.returncode, 0, out.stderr)
+            arms = open(counter).read().split() if os.path.exists(counter) else []
+            return len(arms) // 2, out.stderr
+
+    def test_an_unpassable_verify_stops_after_the_first_sample(self):
+        n, err = self.samples_run("both_arms_failed_verify")
+        self.assertEqual(n, 1, "samples 2 and 3 were already decided by the brief")
+        self.assertIn("unpassable verify", err)
+
+    def test_a_pair_that_was_not_blind_does_not_stop_the_run(self):
+        # Chance, not a property of the brief: the next sample may well be blind.
+        n, _ = self.samples_run("skill_named_in_final")
+        self.assertEqual(n, 3)
+
+    def test_a_normal_verdict_runs_every_sample(self):
+        n, _ = self.samples_run(None)
+        self.assertEqual(n, 3)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
