@@ -104,6 +104,18 @@ decorative:
   path, so bucketing it raw produced one n=1 bucket per draft - a dimension that could
   never say anything. Paths now class into drafted by the loop / already installed
   locally / found in a registry.
+- **The prediction is about the skill that gets evaluated.** Writing predictions down
+  is worth nothing if they are about other skills. `score.py` only ever saw the
+  candidates `match.py` found, and a matched candidate is used only when it scores at
+  least 0.5, so the skill that reached the gate was nearly always a draft nobody had
+  scored: 8 predictions, 21 decisions, and no pair between them however many evals ran.
+  That is not a wiring bug to wait out, it is a design that could not close. `score.py
+  <brief> --skill-dir <dir>` scores exactly the skill about to be run, under the
+  basename the ledger records it by, from the cluster the brief already carries in
+  `source_failure`. `forge.sh` calls it once per eval, so every decision from here on
+  has one prediction to pair with. The prediction is recorded, not acted on: skipping
+  an eval on a low score needs `--check` to first say these numbers separate winners
+  from losers, which is the question this makes askable.
 
 On the live ledger that turns sixteen unusable buckets into one real number: skills
 the loop drafted itself pass the gate 9 of 16 (56%), corrections 7 of 10 (70%),

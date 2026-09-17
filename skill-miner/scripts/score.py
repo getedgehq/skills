@@ -165,19 +165,55 @@ def record(path, rows):
         print(f"  (predictions not recorded: {e})", file=sys.stderr)
 
 
+def cluster_from(data, index):
+    """The failure cluster, from a mined file, a bare cluster, or a brief.
+
+    A brief carries the cluster it was built from under source_failure, which is
+    what lets the skill about to be evaluated be scored without the caller
+    having to find its way back to the mined file and remember the index.
+    """
+    if "source_failure" in data:
+        return data["source_failure"]
+    return data["clusters"][index] if "clusters" in data else data
+
+
+def candidates_from(args):
+    """The candidates to score: a matched list, or the one skill being evaluated.
+
+    --skill-dir names a directory rather than a registry entry, and is how the
+    thing that actually goes through the gate gets a prediction. Without it only
+    matched candidates were ever scored, and a candidate that scores high enough
+    to be used is by definition never the drafted one, so predictions.jsonl
+    filled up with skills no eval would ever decide.
+    """
+    if args.skill_dir:
+        path = os.path.abspath(args.skill_dir.rstrip("/"))
+        # The ledger records a decision under the directory's basename, and
+        # calibrate.py --check joins on that name. Anything else here records a
+        # prediction that can never pair with its own outcome.
+        return [{"name": os.path.basename(path), "pool": args.pool, "path": path}]
+    return json.load(open(args.candidates))["candidates"][:args.top]
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("candidates")
+    ap.add_argument("candidates", nargs="?")
     ap.add_argument("source")
     ap.add_argument("--index", type=int, default=0)
     ap.add_argument("--top", type=int, default=5)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--skill-dir", default=None,
+                    help="score this one local skill instead of a candidates file")
+    ap.add_argument("--pool", default="drafted",
+                    help="provenance recorded with a --skill-dir prediction")
     args = ap.parse_args()
+    if not args.candidates and not args.skill_dir:
+        ap.error("give a candidates file or --skill-dir")
 
     root = os.environ.get("FORGE_ROOT", os.path.expanduser("~/skill-forge"))
-    cands = json.load(open(args.candidates))["candidates"][:args.top]
+    cands = candidates_from(args)
     data = json.load(open(args.source))
-    cluster = data["clusters"][args.index] if "clusters" in data else data
+    cluster = cluster_from(data, args.index)
     ledger = load_ledger(root)
     priors = priors_block(ledger)
 
@@ -191,7 +227,7 @@ def main():
         hist = relevant_ledger(ledger, c["name"], cluster["signature"])
         prompt = SCORE_PROMPT.format(
             kind=cluster["kind"], signature=cluster["signature"],
-            count=cluster["count"], session_count=cluster["session_count"],
+            count=cluster.get("count", "?"), session_count=cluster.get("session_count", "?"),
             evidence="\n".join(f"- {e}" for e in cluster.get("evidence", [])),
             name=c["name"], pool=c.get("pool", "?"), installs=c.get("installs", "n/a"),
             content=content or "(content unavailable - score from name/description only)",
@@ -229,7 +265,16 @@ def main():
     # "the model looked at this and saw no potential", which is the one thing that did
     # not happen, and would quietly retire a candidate over a parse error.
     scored.sort(key=lambda c: (c["potential"] is not None, c["potential"] or 0), reverse=True)
-    out = args.out or os.path.join(root, "mined", "scored.json")
+    # A --skill-dir pass runs after the matched candidates have already been
+    # scored in the same forge run, so it must not land on their file: the
+    # matched scores are what chose the skill, and overwriting them loses the
+    # record of that choice.
+    default = "scored-skill.json" if args.skill_dir else "scored.json"
+    out = args.out or os.path.join(root, "mined", default)
+    # forge.sh creates mined/ before it calls this, but SKILL.md documents running
+    # score.py by hand, and that crashed here after the prediction was already
+    # written: a recorded prediction and a non-zero exit is the worst of both.
+    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     json.dump({"failure": {k: cluster[k] for k in ("kind", "signature")},
                "scored": scored}, open(out, "w"), indent=1)
     print(f"-> {out}")

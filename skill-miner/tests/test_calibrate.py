@@ -182,5 +182,70 @@ class Record(unittest.TestCase):
         score.record(os.path.join(blocker, "predictions.jsonl"), [{"skill": "a"}])
 
 
+class PredictWhatIsEvaluated(unittest.TestCase):
+    """Whatever reaches the gate has to be what got a prediction.
+
+    The scorer only ever saw candidates match.py had found, and a matched
+    candidate is used only if it scores at least 0.5, so the skill that reached
+    the gate was nearly always a draft that had never been scored. That is how
+    the log ended up with 8 predictions, the ledger with 21 decisions, and
+    --check with nothing to pair: not a wiring bug, a design that could not close
+    however long it ran.
+    """
+
+    def args(self, **kw):
+        base = {"candidates": None, "source": None, "index": 0, "top": 5,
+                "out": None, "skill_dir": None, "pool": "drafted"}
+        base.update(kw)
+        return type("A", (), base)
+
+    def test_a_skill_dir_is_named_the_way_the_ledger_names_it(self):
+        # calibrate.py --check joins on the skill name, and the gate writes the
+        # directory's basename. Any other name records a prediction that cannot
+        # pair with its own outcome, which is the bug this fixes, restated.
+        got = score.candidates_from(self.args(skill_dir="/home/u/skill-forge/drafts/tldr-replies/"))
+        self.assertEqual(got[0]["name"], "tldr-replies")
+        self.assertEqual(calibrate.norm(got[0]["name"]), calibrate.norm("tldr-replies"))
+
+    def test_the_prediction_pairs_with_the_decision_that_follows_it(self):
+        tmp = tempfile.mkdtemp()
+        preds = os.path.join(tmp, "predictions.jsonl")
+        cand = score.candidates_from(self.args(skill_dir=os.path.join(tmp, "drafts", "brand-visual-check")))
+        score.record(preds, [{"skill": cand[0]["name"], "potential": 0.7}])
+        ledger = [row("brand-visual-check", "adopt")]
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            calibrate.check(ledger, preds)
+        self.assertIn("paired 1 prediction", buf.getvalue())
+
+    def test_the_provenance_recorded_is_the_one_the_priors_bucket_by(self):
+        got = score.candidates_from(self.args(skill_dir="/x/find-existing-assets-first"))
+        self.assertEqual(got[0]["pool"], "drafted")
+
+    def test_a_brief_carries_the_cluster_so_the_caller_need_not(self):
+        # forge.sh --brief has no mined file and no index in hand; the brief it
+        # was handed already holds the cluster it was built from.
+        brief = {"id": "voltbike", "source_failure": {"kind": "correction",
+                                                      "signature": "review artifacts are text-heavy"}}
+        self.assertEqual(score.cluster_from(brief, 0)["signature"],
+                         "review artifacts are text-heavy")
+
+    def test_a_mined_file_still_resolves_by_index(self):
+        mined = {"clusters": [{"signature": "first"}, {"signature": "second"}]}
+        self.assertEqual(score.cluster_from(mined, 1)["signature"], "second")
+
+    def test_a_bare_cluster_is_taken_as_itself(self):
+        self.assertEqual(score.cluster_from({"signature": "lone"}, 0)["signature"], "lone")
+
+    def test_a_skill_dir_pass_does_not_overwrite_the_matched_scores(self):
+        # Both run in one forge pass. The matched file is the record of why this
+        # skill was the one evaluated, so landing on it loses that.
+        self.assertIn("scored-skill.json", open(os.path.join(SCRIPTS, "score.py")).read())
+
+    def test_one_of_the_two_inputs_is_required(self):
+        out = os.popen(f"python3 {os.path.join(SCRIPTS, 'score.py')} 2>&1").read()
+        self.assertIn("error:", out)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
