@@ -18,6 +18,9 @@ preferences:
   posted_recently: null
 exclusions:
   companies: []
+  titles: []
+  keywords: []
+  profile_urls: []
   people: []
 limits:
   requested_results: 20
@@ -29,3 +32,5 @@ inputs:
 ```
 
 Omit unknown fields; do not invent them. Explain which criteria are hard filters and which affect ranking. A Sales Navigator URL is an input artifact, not proof the agent can read LinkedIn.
+
+`scripts/people_search.py` compiles a subset of this schema: `must_have.locations|current_titles|current_companies|industries|keywords`, `preferences.keywords`, and `exclusions.companies|titles|keywords|profile_urls`. Criteria outside that subset stay in the written plan and are not silently treated as executed filters.
