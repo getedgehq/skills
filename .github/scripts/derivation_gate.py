@@ -24,7 +24,7 @@ Alias folders. A renamed Skill keeps its old install name working (`npx skills a
 getedgehq/skills --skill <old>` resolves by the front-matter `name:`, not the folder). An alias
 folder holds a SKILL.md whose front matter adds `metadata: {internal: true, alias_of: <slug>}`
 and whose `name:` is the old one, plus a relative symlink for every other entry of the
-canonical bundle. It carries no record of its own; the gate checks instead that it is exactly
+canonical bundle except .gitignore. It carries no record of its own; the gate checks instead that it is exactly
 that: same bytes as the canonical SKILL.md apart from those front-matter lines, and every other
 entry a symlink into the canonical bundle, nothing missing and nothing extra.
 
@@ -124,7 +124,8 @@ def audit_alias(bundle, target):
     if not want.startswith(head) or open(os.path.join(bundle, "SKILL.md"), encoding="utf-8").read() != expected:
         bad.append(f"SKILL.md differs from {target}/SKILL.md beyond the alias front matter")
     for entry in sorted(set(os.listdir(canonical)) | set(os.listdir(bundle))):
-        if entry == "SKILL.md" or entry in SKIP_DIRS:
+        # git will not read a .gitignore through a symlink, and an ignore file is not Skill content.
+        if entry in ("SKILL.md", ".gitignore") or entry in SKIP_DIRS:
             continue
         p = os.path.join(bundle, entry)
         if not os.path.lexists(p):
