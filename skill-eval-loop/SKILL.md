@@ -81,6 +81,56 @@ the skill: an unreadable reply could adopt something nothing had judged. The rep
 also parsed to the end of the first complete object, so a judge that answers and then
 keeps talking still parses (the same defect `score.py` lost two real scores to).
 
+## Optional: run the arms in containers (Harbor)
+
+`run_eval.sh` runs both arms in directories on this machine. `run_eval_harbor.sh` takes
+the same three arguments and writes the same layout, but hands each arm to
+[Harbor](https://github.com/harbor-framework/harbor), which builds a container per trial
+and injects the skill with `--skill`. `judge.py`, `aggregate.py` and `gate.py` read
+either runner unchanged.
+
+```bash
+uv tool install harbor                      # once
+FORGE_HARBOR_SUDO=1 \                       # where the docker socket needs root
+  scripts/run_eval_harbor.sh brief.json with ~/.claude/skills/li-post-fede
+```
+
+**It buys the blind, not the budget.** In the without arm no skill is injected, so
+Harbor creates no skills directory and the container never receives the files. Probed on
+a real run with the token-free `oracle` agent: the with arm's container holds
+`/harbor/skills/<skill>/SKILL.md`, the without arm's has no `SKILL.md` and no directory
+named `skill*` anywhere on its filesystem. The local runner instead put both arms under
+one host tree and relied on the manifest to hide the skill, which is the thing that
+leaked. Two properties of the generated task keep that true and `tests/test_harbor_task.py`
+pins both: `environment.skills_dir` is never set (setting it creates the directory in
+*both* arms, so the without arm gets an empty one the with arm has content in), and the
+instruction is the brief's prompt verbatim, so it cannot say what Harbor's own
+`hello-skills` example says: "You have a skill installed called ...".
+
+**It also buys a second runner.** Twenty-four Harbor agents declare
+`capabilities.skills`, including `codex`, `opencode`, `gemini-cli` and `cursor-cli`, and
+each one knows its own install path. That is the knowledge `run_eval.sh` had to hardcode
+and got wrong.
+
+**Tokens come from a subscription, not an API key.** Harbor drops `ANTHROPIC_API_KEY`
+when `CLAUDE_FORCE_OAUTH` is truthy and uses `CLAUDE_CODE_OAUTH_TOKEN` from
+`claude setup-token`; Codex takes the ChatGPT login through `CODEX_FORCE_AUTH_JSON=1`.
+The runner reads the token into the process and exports it, never passes it as an
+argument, and under `sudo` names the variables that may cross rather than using `-E`.
+This saves the API bill; it does not raise the weekly cap, which is the limit the loop
+actually hits.
+
+**Keep it on local Docker.** `CODEX_FORCE_AUTH_JSON` uploads a live `auth.json` into the
+sandbox and the OAuth token rides in the container environment, so Harbor's cloud
+providers (Daytona, Modal, Blaxel) would ship a working credential to a third party.
+Parallelism is the one Harbor feature this loop should not take.
+
+**The objective gate stays on the host.** The generated task's verifier writes reward 0,
+meaning "not scored"; the brief's `verify` is run by `judge.py` in the arm's workdir, the
+same way it is for a local arm. A skill proven under Harbor has to be comparable to the
+ten already adopted under the local runner, and two implementations of the gate would
+make the two corpora measure different things.
+
 ## Three-tier gate
 
 - **ADOPT** - with-arm wins the strict majority of blind samples AND passes verify AND
