@@ -48,11 +48,29 @@ class KgRecheck(unittest.TestCase):
     """recheck_kg decides only when the corrections can actually answer the question."""
 
     def kg(self, entry_days_ago, eps, sess, rules=("never post without the list format",),
-           signature="drafting a linkedin post for federico"):
+           signature="drafting a linkedin post for federico", derived_from=None):
+        failure = {"kind": "correction", "signature": signature, "user_rules": list(rules)}
+        if derived_from:
+            failure["derived_from"] = derived_from
         entry = {"skill": "x", "decision": "adopt", "ts": ts(-entry_days_ago),
-                 "failure": {"kind": "correction", "signature": signature,
-                             "user_rules": list(rules)}}
+                 "failure": failure}
         return recheck.recheck_kg(entry, {"episodes": eps, "session_index": sess}, True)
+
+    def test_refuses_a_signature_lifted_from_the_skills_own_description(self):
+        # Same corpus and the same clean drop as test_measures_a_real_drop below. The
+        # only difference is where the signature came from, and that alone has to be
+        # enough: extending the stopword list narrowed real skill_md signatures from
+        # 35-42 words to 18-20, under the width cap, so width can no longer catch them.
+        sess = sessions(40, -60, 0)
+        before = [s for s in sess if s["ts"] < time.time() - 30 * DAY]
+        eps = [{"session": s["id"], "corr": "you used an em dash in the newsletter blurb"}
+               for s in before[:6]]
+        eps += [{"session": s["id"], "corr": "the deploy script failed again"} for s in sess]
+        measured, why = self.kg(30, eps, sess, rules=("never use an em dash",),
+                                signature="em dash in written output",
+                                derived_from="skill_md:/home/u/.agents/skills/x/SKILL.md")
+        self.assertIsNone(measured, "a prose-derived matcher must never carry a verdict")
+        self.assertIn("lifted from the skill's own description", why)
 
     def test_refuses_a_skill_adopted_today(self):
         eps = [{"session": "s0", "corr": "linkedin post format is wrong"}]

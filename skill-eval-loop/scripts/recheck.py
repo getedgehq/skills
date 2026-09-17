@@ -24,7 +24,12 @@ Three rules keep a recheck from confirming a skill on no evidence:
     adoption span less than MIN_AFTER_DAYS days;
   - signature words that are common across all corrections are dropped before
     matching. A theme described in ordinary words ("post", "reply", "status") would
-    otherwise match nearly every correction and return noise as a measurement.
+    otherwise match nearly every correction and return noise as a measurement;
+  - a signature lifted from the skill's own description is SKIPPED on sight, however
+    narrow it looks. It describes the skill, not the mistake, and width alone cannot
+    tell the two apart: extending the stopword list pulled three such signatures from
+    35-42 distinct words down to 18-20, under the cap, without making a single one of
+    them more about one theme. Mine a real one with theme.py instead.
 
 --dry-run prints every decision and touches nothing: no ledger row, no uninstall.
 Run it once before the timer fires on a machine where skills are installed.
@@ -147,8 +152,19 @@ def kg_rate(episodes, sig_tokens, sessions, since, until, rare=frozenset()):
 
 def recheck_kg(entry, corr, dry):
     """Compare correction rates on this theme before and after the adoption timestamp."""
-    sig_tokens = tokens((entry.get("failure") or {}).get("signature", ""))
-    sig_tokens |= tokens(" ".join((entry.get("failure") or {}).get("user_rules", []) or []))
+    failure = entry.get("failure") or {}
+    if str(failure.get("derived_from", "")).startswith("skill_md:"):
+        # Lifted from the skill's own description, which describes the skill rather than
+        # the mistake. Such a matcher can pass every width and share check and still be
+        # measuring vocabulary: extending the stopword list shrank three of these from
+        # 35-42 distinct words to 18-20, under the cap, without making any of them more
+        # about one theme. A verdict from one would uninstall a working skill on the
+        # strength of its own prose. theme.py mines a real theme; until it does, skip.
+        return None, ("signature was lifted from the skill's own description, which "
+                      "measures its vocabulary rather than the mistake: mine a theme "
+                      "with theme.py before this skill can be rechecked")
+    sig_tokens = tokens(failure.get("signature", ""))
+    sig_tokens |= tokens(" ".join(failure.get("user_rules", []) or []))
     if len(sig_tokens) < 3:
         return None, "theme signature too thin to match corrections"
     adopted = entry.get("adopted_at") or entry.get("ts")
