@@ -38,10 +38,18 @@ def ts(offset_days):
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() + offset_days * DAY))
 
 
-def sessions(n, first_day, last_day):
-    """n sessions spread evenly between two offsets from now, in days."""
+def sessions(n, first_day, last_day, turns=8, prefix="s"):
+    """n sessions spread evenly between two offsets from now, in days.
+
+    `turns` is what the miner records for each: the number of turns the human typed.
+    The default is well over recheck.MIN_TURNS, so a test that does not care about
+    session length gets a corpus that is uniform in it and cannot trip the guard.
+    `prefix` keeps two windows built by two calls from sharing session ids, which would
+    otherwise credit one window's corrections to the other.
+    """
     step = (last_day - first_day) / max(1, n - 1)
-    return [{"id": f"s{i}", "ts": time.time() + (first_day + i * step) * DAY} for i in range(n)]
+    return [{"id": f"{prefix}{i}", "ts": time.time() + (first_day + i * step) * DAY,
+             "turns": turns} for i in range(n)]
 
 
 class KgRecheck(unittest.TestCase):
@@ -111,6 +119,84 @@ class KgRecheck(unittest.TestCase):
                                 signature="em dash in written output")
         self.assertIsNone(measured)
         self.assertIn("no baseline signal", why)
+
+
+class SessionLength(unittest.TestCase):
+    """The denominator holds only sessions that could have carried a correction.
+
+    Found by measuring, not by reading: across the real adoption date the share of
+    single-turn sessions fell from 70% of the window to 6%, taking the raw correction
+    rate from 22% to 75% with no skill involved. The shipped verdict would have read
+    that as every adopted skill making the agent worse.
+    """
+
+    def test_a_session_too_short_to_hold_an_episode_is_not_in_the_denominator(self):
+        short = sessions(4, -10, -1, turns=1)
+        long = sessions(4, -10, -1, turns=9)
+        kept = recheck.eligible(short + long)
+        self.assertEqual([s["id"] for s in kept], [s["id"] for s in long])
+
+    def test_an_index_without_turns_is_refused_rather_than_guessed(self):
+        sess = [{"id": s["id"], "ts": s["ts"]} for s in sessions(40, -60, 0)]
+        eps = [{"session": s["id"], "corr": "you used an em dash in the blurb"} for s in sess[:6]]
+        entry = {"skill": "x", "decision": "adopt", "ts": ts(-30),
+                 "failure": {"kind": "correction", "signature": "em dash in written output",
+                             "user_rules": ["never use an em dash"]}}
+        measured, why = recheck.recheck_kg(entry, {"episodes": eps, "session_index": sess}, True)
+        self.assertIsNone(measured)
+        self.assertIn("predates the session-length control", why)
+
+    def shift(self, before, after, eps):
+        t = time.time() - 30 * DAY
+        return recheck.length_shift(before + after, eps, t, time.time() + DAY)
+
+    def test_windows_of_the_same_shape_do_not_shift(self):
+        before = sessions(30, -60, -31, turns=9)
+        after = sessions(10, -29, 0, turns=9, prefix="a")
+        eps = [{"session": s["id"], "corr": "wrong"} for s in (before + after)[::3]]
+        self.assertAlmostEqual(self.shift(before, after, eps), 1.0, places=6)
+
+    def test_a_window_that_got_longer_shifts_and_is_refused(self):
+        # The real pattern: short exchanges for weeks, then a day of deep work. Both
+        # windows clear the floor, so this is the residue the floor does not remove.
+        before = sessions(30, -60, -31, turns=2)
+        after = sessions(10, -29, 0, turns=30, prefix="a")
+        eps = [{"session": s["id"], "corr": "wrong"} for s in before[:6] + after[:9]]
+        shift = self.shift(before, after, eps)
+        self.assertGreater(shift, 1 / recheck.IMPROVED,
+                           "length alone explains the whole rate change here")
+
+    def test_a_before_window_with_no_signal_is_unbounded_not_comparable(self):
+        # 0.0 expected before and a real rate after is the widest shift there is. Reading
+        # a zero denominator as "no shift" would wave through exactly the worst case.
+        before = sessions(30, -60, -31, turns=2)
+        after = sessions(10, -29, 0, turns=30, prefix="a")
+        eps = [{"session": s["id"], "corr": "wrong"} for s in after]
+        self.assertEqual(self.shift(before, after, eps), float("inf"))
+        self.assertEqual(self.shift(before, after, []), 1.0,
+                         "two quiet windows are comparable, they are just both quiet")
+
+    def test_the_guard_refuses_through_recheck_kg(self):
+        # Both windows clear the floor and both are large enough to compare, so the only
+        # thing left to refuse on is the shape: short exchanges before, deep work after.
+        before = sessions(30, -60, -31, turns=2)
+        after = sessions(14, -29, 0, turns=30, prefix="a")
+        sess = before + after
+        eps = [{"session": s["id"], "corr": "you used an em dash in the blurb"}
+               for s in before[:6]]
+        eps += [{"session": s["id"], "corr": "the deploy script failed again"}
+                for s in after[:12]]
+        entry = {"skill": "x", "decision": "adopt", "ts": ts(-30),
+                 "failure": {"kind": "correction", "signature": "em dash in written output",
+                             "user_rules": ["never use an em dash"]}}
+        measured, why = recheck.recheck_kg(entry, {"episodes": eps, "session_index": sess}, True)
+        self.assertIsNone(measured, "a verdict here would be about the shape of the work")
+        self.assertIn("shape of the work", why)
+
+    def test_the_guard_is_tied_to_the_verdict_threshold(self):
+        # Not an independent tunable: the guard allows exactly what the verdict cannot
+        # turn on, so raising one without the other is impossible by construction.
+        self.assertEqual(recheck.IMPROVED, 0.7)
 
 
 class Uninstall(unittest.TestCase):

@@ -64,9 +64,18 @@ Return STRICT JSON only: {{"themes": [ ... ]}}"""
 
 
 def episodes_from(sessions, max_corr=400, max_asst=300):
-    out = []
+    """Returns (episodes, turns_by_session).
+
+    The turn count is the number of user messages the human actually typed, after the
+    harness-injected ones are dropped - the same messages the episode rule below reads.
+    recheck.py needs it for its denominator: an episode requires a previous user message
+    and a previous assistant message, so a session with fewer than two of these turns
+    cannot produce one, and counting it dilutes a rate rather than measuring it.
+    """
+    out, turns = [], {}
     for s in sessions:
         prev_user, prev_asst = None, ""
+        typed = 0
         for e in sources.iter_events(s):
             t = e.get("type")
             if t == "assistant_text":
@@ -75,13 +84,15 @@ def episodes_from(sessions, max_corr=400, max_asst=300):
                 text = e["text"]
                 if not text or SYSTEMISH.search(text) or sources.is_injected(text):
                     continue
+                typed += 1
                 if 15 < len(text) < max_corr and prev_user and prev_asst and CUE.search(text):
                     out.append({"id": f"E{len(out)}", "session": s.id, "kind": s.kind,
                                 "ts": s.mtime,  # recheck.py splits episodes before/after an adoption
                                 "asst": " ".join(prev_asst.split())[-max_asst:],
                                 "corr": " ".join(text.split())})
                 prev_user = text
-    return out
+        turns[s.id] = typed
+    return out, turns
 
 
 def spread(eps, limit, per_session):
@@ -150,11 +161,14 @@ def main():
         kinds = args.sources.split(",") if args.sources else sources.available_kinds()
         sess = sources.list_sessions(kinds, args.sessions,
                                      {"claude": args.projects} if args.projects else None)
-        eps = spread(episodes_from(sess), args.max_episodes, args.per_session)
+        found, turns = episodes_from(sess)
+        eps = spread(found, args.max_episodes, args.per_session)
         src_counts = {k: sum(1 for s in sess if s.kind == k) for k in kinds}
         # every scanned session, not just the ones with episodes: recheck.py needs the
-        # denominator on both sides of an adoption date, including quiet sessions
-        session_index = [{"id": s.id, "kind": s.kind, "ts": s.mtime} for s in sess]
+        # denominator on both sides of an adoption date, including quiet sessions - and
+        # the turn count, so it can drop the ones that could not have carried an episode
+        session_index = [{"id": s.id, "kind": s.kind, "ts": s.mtime,
+                          "turns": turns.get(s.id, 0)} for s in sess]
     print(f"sessions {src_counts}, {len(eps)} candidate correction episodes", file=sys.stderr)
 
     report = {"generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),

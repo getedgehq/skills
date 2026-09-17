@@ -26,6 +26,13 @@ so generic-failure evals tie, while a skill carrying the user's rules wins.
   all found). `--per-session` caps marathon sessions so one session cannot fill the budget.
 - `--no-llm` extracts episodes only (free, used by the nightly timer); `--episodes FILE`
   clusters a saved extraction later.
+- The `session_index` lists **every** scanned session, not just the ones with episodes,
+  and records how many turns the human typed in each. The recheck divides by that index,
+  and an episode needs a previous user turn and a previous assistant turn, so a session
+  under two typed turns belongs in neither half of the fraction: on real logs those are
+  two thirds of all sessions, they carry no episodes, and their share of a window swings
+  wildly week to week. Without the count there is no way to drop them, and the rate ends
+  up measuring the shape of the work.
 
 ## Mine tool errors, anger and spend
 

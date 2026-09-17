@@ -114,9 +114,29 @@ real theme with theme.py instead.
 A single theme word is enough to count an episode when that word is rare in the corpus
 (under an eighth of episodes); otherwise two must match.
 
+**The denominator holds only sessions that could have carried a correction.** An episode
+needs a previous user turn and a previous assistant turn, so a one-shot question cannot
+produce one however badly it went. Counting those measures the window's mix of work
+instead of the skill, and that mix moves: across the real adoption date the share of
+single-turn sessions fell from 70% of the window to 6%, which by itself took the raw rate
+from 22% to 75%. The verdict reads a rise like that as the skill making the agent worse,
+so the shipped denominator was one week away from revoking ten working skills over a
+change in what the days looked like. The floor is the extractor's own, not a tuned one,
+and on two independently mined corpora it discarded no session that carried an episode.
+
+The floor does not make what is left comparable, because the rate keeps climbing with
+length past it - 0% at two turns, 92% past twelve. So each window's expected rate is read
+off session lengths alone and the two are compared **using the same factor the verdict
+turns on**: if length by itself can move the rate that far, there is nothing left for the
+skill to be measured by, and the recheck says so. Tying the guard to that factor instead
+of giving it a threshold of its own is deliberate - it fires exactly when the confound is
+big enough to produce the verdict. On the real corpus the shipped denominator shifts
+2.5-3.5x depending on the adoption date, and the floored one 1.1-1.2x.
+
 `tests/test_recheck.py` pins all of it down on fixtures - stdlib only, no model calls,
 no network - including the symlinked uninstall, both zero-evidence skips, the recency
-guard and a real drop. Every case in it is a bug that reached real data first.
+guard, the length floor and shift guard, and a real drop. Every case in it is a bug that
+reached real data first.
 
 ## backfill.py
 

@@ -29,7 +29,16 @@ Three rules keep a recheck from confirming a skill on no evidence:
     narrow it looks. It describes the skill, not the mistake, and width alone cannot
     tell the two apart: extending the stopword list pulled three such signatures from
     35-42 distinct words down to 18-20, under the cap, without making a single one of
-    them more about one theme. Mine a real one with theme.py instead.
+    them more about one theme. Mine a real one with theme.py instead;
+  - and the denominator holds only sessions that could have carried a correction. A
+    correction episode needs a previous user turn and a previous assistant turn, so a
+    one-shot question cannot produce one; counting it measures the window's mix of work
+    instead of the skill. On the real corpus that mix moved from 70% single-turn sessions
+    before the adoptions to 6% after, which by itself took the rate from 22% to 75% - a
+    verdict of "ten skills made the agent worse" from a change in what the days looked
+    like. After the floor the same windows read 74% and 80%. A second guard catches what
+    the floor leaves: each window's expected rate is read off session lengths alone, and
+    the comparison is refused when those differ by as much as the verdict threshold.
 
 --dry-run prints every decision and touches nothing: no ledger row, no uninstall.
 Run it once before the timer fires on a machine where skills are installed.
@@ -69,6 +78,9 @@ def uninstall(skill, root, dry):
 
 MIN_AFTER_DAYS = 5  # a skill adopted this morning has no production record yet
 MAX_THEME_TOKENS = 20  # a matcher this wide stops being about one theme
+IMPROVED = 0.7  # the drop a rate must show to confirm a skill; also what the guard below allows
+MIN_TURNS = 2  # below this a session cannot contain a correction episode at all
+TURN_EDGES = (2, 4, 8, 20)  # buckets for reading a window's expected rate off its lengths
 
 # Corrections are typed in a hurry, so they are mostly function words. Anything left
 # here turns up in a third of every user's corrections and can only dilute a theme:
@@ -129,6 +141,57 @@ def distinctive(sig_tokens, episodes, ceiling=0.25):
     return keep, {w for w in keep if 0 < df.get(w, 0) <= rare_cut}
 
 
+def eligible(sessions):
+    """The sessions that could have carried a correction at all.
+
+    corrections.py only emits an episode where it has both a previous user message and a
+    previous assistant message, so a session with fewer than MIN_TURNS typed turns cannot
+    contribute to the numerator whatever happened in it. Leaving those in the denominator
+    is not conservative, it makes the rate a measure of how many one-shot questions the
+    window happened to hold: on the real corpus 188 of 296 sessions were single-turn, none
+    of them carried an episode, and their share fell from 70% of the window before the
+    adoptions to 6% after. That alone moved the raw rate from 22% to 75%, which the verdict
+    would have read as ten skills making the agent worse. Dropping them discards no session
+    that actually carried a correction, at this floor or any lower one.
+    """
+    return [s for s in sessions if s.get("turns", 0) >= MIN_TURNS]
+
+
+def bucket(session):
+    n = session.get("turns", 0)
+    return max([i for i, edge in enumerate(TURN_EDGES) if n >= edge] or [0])
+
+
+def length_shift(sessions, episodes, t_adopt, until):
+    """How far the two windows' session lengths can move the rate on their own.
+
+    The floor above removes the sessions that could not contribute; it does not make what
+    is left comparable, because the correction rate keeps climbing with length well past
+    it - 0% at two turns, 92% past twelve. So each window's expected rate is read off the
+    pooled corpus by length alone, and the two are compared using the same factor the
+    verdict uses. Tying the guard to IMPROVED rather than to a threshold of its own is the
+    point: it refuses exactly when length by itself could produce the verdict, and stays
+    quiet when it could not. Measured this way the shipped denominator shifted 3.11x across
+    the real adoption date and the floored one 1.10x.
+    """
+    hit = {e.get("session") for e in episodes}
+    base = {}
+    for i in range(len(TURN_EDGES)):
+        grp = [s for s in sessions if bucket(s) == i]
+        base[i] = len([s for s in grp if s["id"] in hit]) / len(grp) if grp else 0.0
+    rates = []
+    for since, stop in ((0, t_adopt), (t_adopt, until)):
+        win = [s for s in sessions if since <= s.get("ts", 0) < stop]
+        rates.append(sum(base[bucket(s)] for s in win) / len(win) if win else 0.0)
+    before, after = rates
+    if before:
+        return after / before
+    # Nothing in the before window was the kind of session that carries a correction.
+    # Treating that as "comparable" would wave through the widest shift there is, so it
+    # is the opposite: unbounded unless the after window is the same way.
+    return 1.0 if not after else float("inf")
+
+
 def kg_rate(episodes, sig_tokens, sessions, since, until, rare=frozenset()):
     """Session-rate of corrections about this theme in a time window.
 
@@ -172,10 +235,19 @@ def recheck_kg(entry, corr, dry):
     eps, sess = corr.get("episodes", []), corr.get("session_index", [])
     if not sess:
         return None, "no session index in the corrections run"
+    if any("turns" not in s for s in sess):
+        # An index mined before the length control cannot say which of its sessions could
+        # have carried a correction, so its denominator counts sessions that never could.
+        return None, ("this corrections run predates the session-length control and its "
+                      "denominator cannot be trusted: re-mine before rechecking")
     after_span = (max((s.get("ts", 0) for s in sess), default=0) - t_adopt) / 86400
     if after_span < MIN_AFTER_DAYS:
         return None, (f"only {after_span:.1f} days of sessions since adoption, "
                       f"need {MIN_AFTER_DAYS}: a day of work cannot show a rate change")
+    sess = eligible(sess)
+    if not sess:
+        return None, (f"no scanned session ran to {MIN_TURNS} typed turns, so none of them "
+                      "could have carried a correction either way")
     sig_tokens, rare = distinctive(sig_tokens, eps)
     if len(sig_tokens) < 2:
         return None, ("every word in this theme is common across corrections, "
@@ -185,10 +257,16 @@ def recheck_kg(entry, corr, dry):
         # Whatever rate that produces is about the vocabulary, not about the theme.
         return None, (f"signature matches on {len(sig_tokens)} distinct words, more than "
                       f"{MAX_THEME_TOKENS}: too broad to be about one theme")
+    until = time.time() + 86400
     before, n_before, hits_before = kg_rate(eps, sig_tokens, sess, 0, t_adopt, rare)
-    after, n_after, hits_after = kg_rate(eps, sig_tokens, sess, t_adopt, time.time() + 86400, rare)
+    after, n_after, hits_after = kg_rate(eps, sig_tokens, sess, t_adopt, until, rare)
     if n_after < 10 or n_before < 10:
         return None, f"not enough sessions to compare ({n_before} before, {n_after} after adoption)"
+    shift = length_shift(sess, eps, t_adopt, until)
+    if not IMPROVED <= shift <= 1 / IMPROVED:
+        return None, (f"session length alone moves the correction rate {shift:.2f}x across the "
+                      f"adoption date, as far as the {IMPROVED:.0%} the verdict turns on: this "
+                      "window measures the shape of the work, not the skill")
     if hits_before < 2:
         # Nothing to improve on. A rate that was already zero cannot drop, and reading
         # that as "no improvement" would uninstall a working skill on no evidence.
@@ -197,7 +275,8 @@ def recheck_kg(entry, corr, dry):
     return {"baseline_failure_rate": round(before, 4), "current_failure_rate": round(after, 4),
             "sessions_scanned": n_before + n_after, "sessions_before": n_before,
             "sessions_after": n_after, "matching_before": hits_before,
-            "matching_after": hits_after, "metric": "correction_rate"}, None
+            "matching_after": hits_after, "length_shift": round(shift, 3),
+            "metric": "correction_rate"}, None
 
 
 def main():
@@ -280,7 +359,7 @@ def main():
             measured = {"baseline_failure_rate": baseline, "current_failure_rate": round(rate_now, 4),
                         "sessions_scanned": total, "metric": "tool_failure_rate"}
             detail = f"{total} sessions"
-        improved = rate_now < baseline * 0.7
+        improved = rate_now < baseline * IMPROVED
         verdict = {
             "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "skill": skill,
