@@ -219,11 +219,40 @@ chance, so the entry stays due for a window that does load it. Every verdict car
 count either way, because a confirmation that says how many times the skill actually ran
 is evidence and one that cannot is a rate with a story attached.
 
-This is not hypothetical here. Across 300 real sessions (98 Claude, 68 OpenCode, 134
-Codex) the seven skills adopted on 17 Sep were loaded **zero** times; the only `Skill`
-calls naming them were the eval arms, which the harness filter correctly drops. Without
-this guard the 1 Oct recheck could have confirmed all seven on a rate that moved for
-reasons none of them touched.
+This is not hypothetical here, and measuring it properly took two passes. The first read
+300 sessions from the user's own home and found the seven skills adopted on 17 Sep loaded
+**zero** times, which turned out to be the wrong corpus: those skills are installed only
+under root's home, so nothing in that corpus could have loaded them whatever their
+descriptions said. Re-measured on root's own 300 sessions, where they are installed and
+where the recheck timer actually runs, the zero mostly holds and now means something. Six
+of the seven have not been loaded once in the 16 to 20 sessions since adoption; the
+seventh, which existed before the loop adopted it, was loaded once. In the same corpus
+twenty other skills were loaded forty times between them, so the zero is about those six
+and not about whether loads get recorded at all. Without this guard the 1 Oct recheck
+could have confirmed all of them on a rate that moved for reasons none of them touched.
+
+**Which is why a zero says which kind of zero it is.** Nothing loaded it has two causes
+that look identical in the count and need opposite fixes: the skill is installed where
+the sessions ran and the model passed it over, which is a description problem, or it is
+not installed in a root those sessions could reach, which is plumbing and says nothing
+about the skill. `installed()` checks the same two roots `uninstall()` would clear and
+the SKIP message names which case it is. A negative there is weaker than a positive, since
+the recheck sees its own roots and not those of whoever typed the sessions, so it only
+ever colours the message and never decides one.
+
+The descriptions turned out not to be the obvious culprit either: all six name task
+triggers rather than the error they prevent, which is the failure mode this loop already
+warns about. What three of them share instead is that their trigger is the agent's own
+closing message, and a model does not stop to look for a skill before replying. That is a
+live question, not a conclusion.
+
+```bash
+python3 scripts/recheck.py --usage    # loads since adoption, per open entry, decides nothing
+```
+
+`--usage` asks the load question early, while a zero is still fixable, and covers every
+open entry rather than only the ones a date has come due for. It is the hand measurement
+above turned into a command, sorted so the zeros come first.
 
 The count reads low rather than high when it is wrong, which is the right way round for
 something that can only withhold a confirmation. Codex transcripts record no skill call
@@ -236,8 +265,9 @@ like a skill nobody used.
 
 `tests/test_recheck.py` pins all of it down on fixtures - stdlib only, no model calls,
 no network - including the symlinked uninstall, both zero-evidence skips, the recency
-guard, the length floor and shift guard, a real drop, and the same drop withheld when
-nothing loaded the skill. `../skill-miner/tests/test_corrections.py` pins every spelling
+guard, the length floor and shift guard, a real drop, the same drop withheld when
+nothing loaded the skill, and each kind of zero naming itself.
+`../skill-miner/tests/test_corrections.py` pins every spelling
 the loads are read from. Every case in both is a bug that reached real data first.
 
 ## backfill.py

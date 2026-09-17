@@ -296,6 +296,54 @@ class Uninstall(unittest.TestCase):
         self.assertTrue(os.path.islink(self.link))
         self.assertTrue(os.path.isfile(os.path.join(self.real, "SKILL.md")))
 
+    def test_installed_finds_both_a_real_directory_and_a_symlink(self):
+        self.assertEqual(len(recheck.installed("demo")), 2)
+
+    def test_installed_is_empty_for_a_skill_that_is_not_there(self):
+        # The two causes of zero loads: this one is plumbing, and reads differently in
+        # the SKIP message than a skill the sessions could reach and passed over.
+        self.assertEqual(recheck.installed("never-installed"), [])
+
+
+class UsageReport(unittest.TestCase):
+    """--usage asks the load question early, while a zero is still fixable."""
+
+    def entry(self, skill, day=-20):
+        return {"skill": skill, "decision": "adopt", "ts": ts(day)}
+
+    def test_counts_loads_only_after_the_adoption(self):
+        sess = sessions(10, -40, -21, skills=("s",)) + sessions(4, -10, 0, prefix="a", skills=("s",))
+        out = recheck.usage_report([self.entry("s")], sess, roots=())
+        self.assertIn("s ", out)
+        # the ten before adoption loaded it too and none of them count
+        self.assertRegex(out, r"\bs\s+4\s+4\b")
+
+    def test_a_skill_nothing_loaded_is_reported_as_zero_not_dropped(self):
+        sess = sessions(6, -10, 0, skills=("other",))
+        out = recheck.usage_report([self.entry("quiet")], sess, roots=())
+        self.assertRegex(out, r"\bquiet\s+0\s+6\b")
+        self.assertIn("never loaded once", out)
+
+    def test_the_zeros_sort_first(self):
+        sess = sessions(6, -10, 0, skills=("busy",))
+        out = recheck.usage_report([self.entry("busy"), self.entry("quiet")], sess, roots=())
+        body = [l for l in out.splitlines() if l.startswith(("busy", "quiet"))]
+        self.assertEqual(body[0].split()[0], "quiet")
+
+    def test_an_entry_with_no_readable_adoption_time_is_left_out(self):
+        sess = sessions(6, -10, 0, skills=("s",))
+        out = recheck.usage_report([{"skill": "undated", "decision": "adopt"}], sess, roots=())
+        self.assertIn("no open entries", out)
+
+    def test_the_report_names_the_root_the_skill_is_installed_in(self):
+        sess = sessions(6, -10, 0, skills=("s",))
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        os.makedirs(os.path.join(tmp, "demo"))
+        out = recheck.usage_report([self.entry("demo"), self.entry("absent")], sess, roots=(tmp,))
+        self.assertIn(f"{tmp}", out)
+        self.assertIn("not installed here", out)
+
 
 class MainDecisions(unittest.TestCase):
     """The tool-error path, through main(), on a ledger of fixture rows."""
@@ -316,11 +364,11 @@ class MainDecisions(unittest.TestCase):
             json.dump(data or {}, open(src, "w"))
             open(os.path.join(self.miner, name), "w").write(STUB.format(src=src))
 
-    def run_recheck(self, rows, *args):
+    def run_recheck(self, rows, *args, **envkw):
         with open(os.path.join(self.root, "ledger.jsonl"), "w") as fh:
             for r in rows:
                 fh.write(json.dumps(r) + "\n")
-        env = dict(os.environ, FORGE_ROOT=self.root, MINER_SCRIPTS=self.miner)
+        env = dict(os.environ, FORGE_ROOT=self.root, MINER_SCRIPTS=self.miner, **envkw)
         out = subprocess.run([sys.executable, os.path.join(SCRIPTS, "recheck.py"),
                               "--dry-run", *args], capture_output=True, text=True, env=env)
         self.assertEqual(out.returncode, 0, out.stderr)
@@ -393,6 +441,40 @@ class MainDecisions(unittest.TestCase):
         self.assertIn("never loaded", out)
         self.assertNotIn("KEEP", out)
         self.assertNotIn("REVOKE", out, "a skill that never ran has had no chance, not a failure")
+
+    def test_a_zero_that_is_really_an_install_path_says_so(self):
+        # Zero loads for a skill no root here carries says nothing about the skill. On the
+        # live machine every adopted skill sat under root's home while the sessions being
+        # measured were the user's, so the count was reporting a path, not a description.
+        self.stub_miner(corrections=self.kg_corpus(("something-else",)))
+        home = os.path.join(self.tmp, "empty-home")
+        os.makedirs(home)
+        out = self.run_recheck([self.kg_row()], HOME=home)
+        self.assertIn("not installed in any root", out)
+
+    def test_a_zero_with_the_skill_installed_points_at_the_description(self):
+        self.stub_miner(corrections=self.kg_corpus(("something-else",)))
+        home = os.path.join(self.tmp, "full-home")
+        os.makedirs(os.path.join(home, ".agents", "skills", "kg"))
+        out = self.run_recheck([self.kg_row()], HOME=home)
+        self.assertIn("description is not matching", out)
+        self.assertNotIn("not installed in any root", out)
+        self.assertNotIn("REVOKE", out)
+
+    def test_usage_reports_without_deciding_anything(self):
+        self.stub_miner(corrections=self.kg_corpus(("something-else",)))
+        out = self.run_recheck([self.kg_row()], "--usage")
+        self.assertIn("never loaded once", out)
+        for verdict in ("KEEP", "REVOKE", "SKIP"):
+            self.assertNotIn(verdict, out)
+
+    def test_usage_covers_entries_no_date_has_come_due_for(self):
+        self.stub_miner(corrections=self.kg_corpus(("something-else",)))
+        row = self.kg_row()
+        row["recheck_due"] = "2099-01-01"
+        out = self.run_recheck([row], "--usage")
+        self.assertNotIn("no rechecks due", out)
+        self.assertIn("kg", out)
 
     def test_nothing_due_runs_no_miner(self):
         self.stub_miner()
