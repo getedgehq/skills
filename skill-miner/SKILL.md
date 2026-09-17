@@ -86,6 +86,13 @@ decorative:
 - **Every prediction is written down.** Each scored candidate appends a row to
   `predictions.jsonl`, which is what `--check` joins to the decisions. A failed model
   call records nothing: a failure is not a prediction of 0, it is no prediction.
+- **And an unreadable reply is a failed call, not a zero.** Reading the verdict by
+  slicing from the first `{` to the last `}` breaks on a model that answers with the
+  object and then keeps going: the slice is valid JSON followed by more, `json.loads`
+  rejects all of it, and two real candidates scored 0.00 in a live pass for a judgement
+  the model never made. The reply is now parsed to the end of the first complete object,
+  and a candidate that still cannot be read is carried as unscored and sorts last,
+  rather than being quietly retired at the 0.5 threshold.
 - **Provenance is a class, not a path.** The ledger stores `skill_src` as a filesystem
   path, so bucketing it raw produced one n=1 bucket per draft - a dimension that could
   never say anything. Paths now class into drafted by the loop / already installed
