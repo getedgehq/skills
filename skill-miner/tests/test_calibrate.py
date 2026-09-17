@@ -1,0 +1,160 @@
+#!/usr/bin/env python3
+"""Tests for the scoring feedback loop: priors in, predictions out.
+
+The loop spent three weeks scoring candidates with a prompt nothing ever checked.
+Two things close that: calibrate.py states the base rates the evals actually
+produced, and score.py writes down what it predicted so the two can be joined.
+
+Both have the same failure mode, which is why these tests exist: reporting a
+number from too little evidence. A bucket of one, a prediction log with no
+matching decision, or a scoring pass whose model call failed all have to come
+out as "cannot say", not as a rate.
+
+Run: python3 tests/test_calibrate.py   (stdlib only, no network, no model calls)
+"""
+import io
+import json
+import os
+import sys
+import tempfile
+import unittest
+from contextlib import redirect_stdout
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+SCRIPTS = os.path.join(HERE, "..", "scripts")
+sys.path.insert(0, SCRIPTS)
+import calibrate  # noqa: E402
+import score  # noqa: E402
+
+
+def row(skill, decision, kind="correction", src="/home/u/skill-forge/drafts/" , **kw):
+    r = {"skill": skill, "decision": decision, "skill_src": src + skill,
+         "failure": {"kind": kind, "signature": f"{skill} went wrong"}}
+    r.update(kw)
+    return r
+
+
+class Provenance(unittest.TestCase):
+    """The ledger stores a path; the scorer needs a class it can generalize over."""
+
+    def test_classes(self):
+        cases = {
+            "/home/u/skill-forge/drafts/li-post-fede": "drafted by the loop",
+            "/root/.agents/skills/fede-voice": "already installed locally",
+            "/home/u/.claude/skills/x": "already installed locally",
+            "getedgehq/skills@skill-miner": "found in a registry",
+            "https://example.com/s": "found in a registry",
+            None: "unknown",
+            "": "unknown",
+        }
+        for src, want in cases.items():
+            self.assertEqual(calibrate.provenance(src), want, src)
+
+    def test_drafts_do_not_split_into_one_bucket_each(self):
+        rows = [row(f"s{i}", "adopt") for i in range(5)]
+        srcs = [k for k in calibrate.buckets(rows) if k[0] == "skill source"]
+        self.assertEqual(srcs, [("skill source", "drafted by the loop")],
+                         "one bucket per draft path can never reach min-n")
+
+
+class Priors(unittest.TestCase):
+    def test_states_a_rate_only_above_min_n(self):
+        rows = [row(f"a{i}", "adopt") for i in range(3)] + [row(f"r{i}", "reject") for i in range(3)]
+        rows += [row("lonely", "adopt", kind="tool_error")]
+        text = calibrate.priors_text(rows, min_n=4)
+        self.assertIn("failure kind = correction: 3 of 6 passed the gate (50%)", text)
+        self.assertIn("failure kind = tool_error: 1/1", text)
+        self.assertIn("Too few decided evals to call", text)
+        self.assertNotIn("tool_error: 1 of 1 passed", text)
+
+    def test_only_eval_outcomes_count(self):
+        rows = [row("a", "adopt"), {"skill": "h", "decision": "infra-fix"},
+                {"skill": "k", "decision": "revoked"}, row("bad", "reject", invalid=True)]
+        self.assertEqual([r["skill"] for r in calibrate.decided(rows)], ["a"])
+
+    def test_score_states_no_priors_on_a_thin_ledger(self):
+        text = score.priors_block([row("a", "adopt"), row("b", "reject")])
+        self.assertIn("too few to state a base rate", text)
+        self.assertNotIn("passed the gate", text)
+
+    def test_score_passes_measured_priors_through(self):
+        rows = [row(f"a{i}", "adopt") for i in range(6)] + [row(f"r{i}", "reject") for i in range(4)]
+        text = score.priors_block(rows)
+        self.assertTrue(text.startswith("MEASURED PRIORS from"))
+        self.assertIn("6 of 10 passed the gate (60%)", text)
+
+    def test_priors_reach_the_prompt(self):
+        prompt = score.SCORE_PROMPT.format(
+            kind="correction", signature="s", count=1, session_count=1, evidence="-",
+            name="n", pool="p", installs=0, content="c", ledger="(none)",
+            priors="MEASURED PRIORS from this user's own past evals:\n- x: 1 of 2")
+        self.assertIn("MEASURED PRIORS", prompt)
+
+
+class Check(unittest.TestCase):
+    """--check joins predictions to outcomes, or says why it cannot."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.preds = os.path.join(self.tmp, "predictions.jsonl")
+
+    def write(self, preds):
+        with open(self.preds, "w") as fh:
+            for p in preds:
+                fh.write(json.dumps(p) + "\n")
+
+    def run_check(self, rows):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            calibrate.check(calibrate.decided(rows), self.preds)
+        return buf.getvalue()
+
+    def test_no_prediction_log_is_not_a_verdict(self):
+        out = self.run_check([row("a", "adopt")])
+        self.assertIn("no predictions recorded yet", out)
+
+    def test_predictions_about_other_skills_do_not_pair(self):
+        self.write([{"skill": "somethingelse", "potential": 0.9}])
+        out = self.run_check([row("a", "adopt")])
+        self.assertIn("nothing to calibrate yet", out)
+
+    def test_separating_scores_report_signal(self):
+        self.write([{"skill": "winner", "potential": 0.8, "ts": "2026-09-01T00:00:00Z"},
+                    {"skill": "loser", "potential": 0.3, "ts": "2026-09-01T00:00:00Z"}])
+        out = self.run_check([row("winner", "adopt"), row("loser", "reject")])
+        self.assertIn("scores carry signal", out)
+
+    def test_scores_that_do_not_separate_say_so(self):
+        self.write([{"skill": "winner", "potential": 0.5, "ts": "2026-09-01T00:00:00Z"},
+                    {"skill": "loser", "potential": 0.7, "ts": "2026-09-01T00:00:00Z"}])
+        out = self.run_check([row("winner", "adopt"), row("loser", "reject")])
+        self.assertIn("no usable signal", out)
+
+    def test_the_latest_prediction_for_a_skill_wins(self):
+        self.write([{"skill": "winner", "potential": 0.1, "ts": "2026-08-01T00:00:00Z"},
+                    {"skill": "winner", "potential": 0.9, "ts": "2026-09-01T00:00:00Z"},
+                    {"skill": "loser", "potential": 0.2, "ts": "2026-09-01T00:00:00Z"}])
+        out = self.run_check([row("winner", "adopt"), row("loser", "reject")])
+        self.assertIn("mean predicted potential, passed the gate: 0.90", out)
+
+
+class Record(unittest.TestCase):
+    def test_creates_the_log_and_appends(self):
+        tmp = tempfile.mkdtemp()
+        path = os.path.join(tmp, "nested", "predictions.jsonl")
+        score.record(path, [{"skill": "a", "potential": 0.5}])
+        score.record(path, [{"skill": "b", "potential": 0.6}])
+        with open(path) as fh:
+            rows = [json.loads(l) for l in fh]
+        self.assertEqual([r["skill"] for r in rows], ["a", "b"])
+
+    def test_an_unwritable_log_does_not_stop_a_scoring_pass(self):
+        tmp = tempfile.mkdtemp()
+        blocker = os.path.join(tmp, "blocked")
+        with open(blocker, "w") as fh:
+            fh.write("not a directory")
+        score.record(os.path.join(blocker, "predictions.jsonl"), [{"skill": "a"}])
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

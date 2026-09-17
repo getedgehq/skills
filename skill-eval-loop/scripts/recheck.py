@@ -65,10 +65,34 @@ def uninstall(skill, root, dry):
 MIN_AFTER_DAYS = 5  # a skill adopted this morning has no production record yet
 MAX_THEME_TOKENS = 20  # a matcher this wide stops being about one theme
 
-STOP = set("the a an and or of to in on for with is are was were be been it its this that "
-           "not no never always too very more less than as at by from into out up down i you "
-           "he she they we my your his her their our me him them us do does did done make makes "
-           "made get gets got use uses used agent claude user".split())
+# Corrections are typed in a hurry, so they are mostly function words. Anything left
+# here turns up in a third of every user's corrections and can only dilute a theme:
+# a derived signature of "but can dont have" passed every statistical check before
+# these words were removed, which is the exact failure this whole matcher guards against.
+STOP = set("the a an and or of to in on for with is are was were be been being am it its "
+           "this that these those there here what which who whom whose why how when where "
+           "not no never always too very more less than as at by from into out up down off "
+           "over under again just only also else still even really actually maybe "
+           "i you he she they we my your his her their our me him them us mine yours ours "
+           "do does did done doing dont doesnt didnt cant cannot couldnt wont wouldnt "
+           "shouldnt isnt arent wasnt werent havent hasnt hadnt aint "
+           "can could will would shall should may might must have has had "
+           "make makes made get gets got give gives gave take takes took put puts "
+           "use uses used using say says said tell tells told see sees saw seen look looks "
+           "go goes went going come comes came know knows knew think thinks thought "
+           "want wants need needs let lets like likes please thanks thank ok okay yes yeah "
+           "one two three first last next then now thing things way ways time times "
+           "some any all both each every other another same such own but so if because "
+           "much many few lot lots bit still yet already back around about into "
+           "agent claude user "
+           # The user corrects in German as often as in English, and "nicht" landed in a
+           # derived signature the same way "dont" did.
+           "der die das den dem des ein eine einen einem eines und oder aber auch noch "
+           "nicht kein keine nur schon mal bitte danke ist sind war waren sein ich du wir "
+           "ihr sie er es mit für auf aus bei von zum zur nach vor über unter wie was wo "
+           "wann warum wenn dass dann doch mehr weniger sehr immer nie hier dort jetzt "
+           "haben hat hatte werden wird wurde kann kannst koennen soll sollte muss "
+           "machen macht gemacht bitte mach".split())
 
 
 def tokens(text):

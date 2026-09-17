@@ -71,16 +71,32 @@ python3 scripts/calibrate.py            # adoption rates per bucket, or "too few
 python3 scripts/calibrate.py --check    # did high scores actually predict adoption?
 ```
 
-`score.py` predicts before any eval is spent, and nothing was checking those
-predictions. `calibrate.py` reads the ledger and reports the adoption rate per bucket
-(failure kind, skill source, retries of a skill that already lost), reporting any bucket
-under four decided evals as "too few to call" rather than as a rate - a 1-of-1 bucket is
-noise, and a prior stated with false confidence is worse than no prior. `--check` joins
-recorded predictions to outcomes and prints the gap between adopted and rejected
-candidates: if it is not positive, the scoring prompt is not earning its cost.
+`calibrate.py` reads the ledger and reports the adoption rate per bucket - failure
+kind, skill provenance, retries of a skill that already lost - and any bucket under
+four decided evals comes out as "too few to call" rather than as a rate. A 1-of-1
+bucket is noise, and a prior stated with false confidence is worse than no prior.
 
-The first run on 18 real decisions: correction-derived skills 3 of 6 adopted,
-tool-error-derived 0 of 3, and every retry of a skill that already lost was rejected.
+Both ends of that are now wired up, so the prediction is checkable instead of
+decorative:
+
+- **The priors reach the prompt.** `score.py` pastes `calibrate.py`'s measured block
+  into its own scoring prompt, so the scorer reasons from this user's base rates
+  instead of a general impression of what a good skill looks like. Under eight decided
+  evals in total it states that there are too few and scores from the evidence alone.
+- **Every prediction is written down.** Each scored candidate appends a row to
+  `predictions.jsonl`, which is what `--check` joins to the decisions. A failed model
+  call records nothing: a failure is not a prediction of 0, it is no prediction.
+- **Provenance is a class, not a path.** The ledger stores `skill_src` as a filesystem
+  path, so bucketing it raw produced one n=1 bucket per draft - a dimension that could
+  never say anything. Paths now class into drafted by the loop / already installed
+  locally / found in a registry.
+
+On the live ledger that turns sixteen unusable buckets into one real number: skills
+the loop drafted itself pass the gate 9 of 16 (56%), corrections 7 of 10 (70%),
+unlabelled failures 3 of 5 (60%); retries, tool errors and registry finds all still
+report as too few to call. `tests/test_calibrate.py` covers both halves on fixtures -
+stdlib only, no model calls - including that a thin ledger states no priors at all and
+that an unwritable prediction log never stops a scoring pass.
 
 ## Rules
 
