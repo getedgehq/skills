@@ -47,21 +47,30 @@ eval_brief() {  # eval_brief <brief> <skill-dir>: predict, N samples, blind judg
     python3 "$MINER/score.py" "$brief" --skill-dir "$skill" \
       || echo "scoring failed, evaluating anyway (no prediction recorded)" >&2
   fi
+  local failed=0
   for s in $(seq 1 "$SAMPLES"); do
     FORGE_SAMPLE=$s bash "$HERE/run_eval.sh" "$brief" without ""
     FORGE_SAMPLE=$s bash "$HERE/run_eval.sh" "$brief" with "$skill"
-    # Stop sampling a brief whose own gate nothing can pass. Both arms failing verify
-    # is a fact about the brief, not about this pair, so samples 2 and 3 will fail the
-    # same way and cost the same half hour each to say so. The first real one cost
-    # three hours of queue time to learn twice over. The other invalid verdict is left
-    # alone: an arm naming the skill is chance, and the next sample may well be blind.
+    # Stop a brief that keeps failing its own gate, but not on one sample. Both arms
+    # failing verify can be a property of the brief, and then samples 2 and 3 cost
+    # half an hour per arm to repeat it; it can equally be one bad pair under a strict
+    # but passable gate, and stopping there throws away the verdict the next sample
+    # would have produced. One sample cannot tell those apart, so the run continues
+    # and two in a row is what stops it. The other invalid verdict never stops
+    # anything: an arm naming the skill is chance, and the next pair may well be blind.
     # Through a file rather than a pipe into grep: under pipefail a judge that died
     # would make the condition merely false, and the loop would carry on evaluating
     # against no verdict instead of stopping the way it does today.
     python3 "$HERE/judge.py" "$brief" --sample "$s" | tee "$FORGE_ROOT/.judge-out.json"
     if grep -q '"invalid_code": "both_arms_failed_verify"' "$FORGE_ROOT/.judge-out.json"; then
-      echo "brief $(basename "$brief") has an unpassable verify: stopping after sample $s" >&2
-      break
+      failed=$((failed + 1))
+      if [[ $failed -ge 2 ]]; then
+        echo "brief $(basename "$brief") failed its own verify in both arms twice running:" \
+             "stopping after sample $s" >&2
+        break
+      fi
+    else
+      failed=0
     fi
   done
   python3 "$HERE/aggregate.py" "$brief"
