@@ -111,7 +111,7 @@ A single theme word is enough to count an episode when that word is rare in the 
 no network - including the symlinked uninstall, both zero-evidence skips, the recency
 guard and a real drop. Every case in it is a bug that reached real data first.
 
-## backfill.py and deploy.sh
+## backfill.py
 
 `backfill.py` gives already-adopted skills something to be measured by: skills forged
 from hand-written briefs carry no failure record, so the recheck would skip them
@@ -120,6 +120,43 @@ description plus the user's own quoted corrections - and writes it onto the ledg
 tagged `derived_from: skill_md:<path>`. That is a matcher, never a measurement, and the
 recheck's guards still decide whether it is good enough to use. `--apply` backs the
 ledger up first; `--redo` re-derives signatures it wrote before.
+
+## theme.py: when the skill has no theme worth measuring
+
+`backfill.py` lifts a theme out of a skill's own prose, and for voice and format skills
+that prose is long and ordinary: matched against real sessions those signatures claimed
+33-43% of every correction the user ever made, so the recheck refuses them, correctly
+and permanently. `theme.py` looks for the theme where it actually lives, in the
+corrections themselves: seed from the skill, pull the episodes those seeds match, rank
+the words those episodes keep returning to, then check the result is narrow, still on
+the skill's subject, and has a baseline before the adoption date.
+
+Expect it to refuse. Against 136 real correction episodes it derived nothing for seven
+adopted skills, each for a different stated reason, and that is the finding rather than
+a bug: a voice skill is corrected in words too ordinary to separate from every other
+correction. More correction history fixes that; a looser matcher only returns a number
+about the vocabulary. Three things it took to get there, all pinned in
+`tests/test_theme.py`:
+
+- **Ranking by lift is the textbook answer and carries zero information here.** In a
+  136-episode corpus almost every content word inside a 30-episode subset appears
+  nowhere else, so every candidate scored the identical lift of n_all/n_seed. Ranking
+  now uses within-theme document frequency, which the corpus can actually support.
+- **Statistics cannot tell filler from subject.** The first signatures out of the new
+  ranking were "but can dont have", then "post real" - each passing every check while
+  being about nothing. Fixed by extending the recheck's stopword list with English and
+  German function words (the user corrects in both) and requiring at least four
+  recurring words.
+- **A corpus-driven theme can drift off the skill entirely.** For a skill about reusing
+  existing assets it derived a real, coherent topic cluster about one website's pages.
+  The derived words now have to overlap what the skill says it is about.
+
+`--apply` writes the signature tagged `derived_from: corrections:<n> episodes`, so it
+is never mistaken for a hand-written one, and the recheck still applies every one of
+its own refusals to whatever comes out. A signature that passes the statistics and
+fails inspection does not get applied.
+
+## deploy.sh
 
 `deploy.sh [--to host]` copies these skills from a checkout to an install root and
 verifies each tree by digest. The loop forges skills for other tasks and had no way to

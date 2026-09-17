@@ -31,17 +31,23 @@ import re
 
 DECIDED = {"adopt": 1, "probation": 1, "reject": 0, "reject-final": 0}
 
+# Below this many decided evals in total, score.py states no priors at all rather
+# than a handful of buckets each small enough to be noise. Per-bucket --min-n still
+# applies above it.
+MIN_TOTAL_FOR_PRIORS = 8
+
 
 def load(path):
     rows = []
-    for line in open(path):
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            rows.append(json.loads(line))
-        except ValueError:
-            pass
+    with open(path) as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except ValueError:
+                pass
     return rows
 
 
@@ -55,13 +61,32 @@ def rate(bucket):
     return wins, len(bucket), (wins / len(bucket) if bucket else None)
 
 
+def provenance(src):
+    """Where the skill came from, as a class.
+
+    The ledger stores a path, so bucketing on it raw produces one bucket per draft,
+    every one of them n=1 and therefore reported as too few to call: a dimension that
+    can never say anything. What the scorer actually needs to know is whether skills
+    the loop writes itself beat ones it finds already installed or in a registry.
+    """
+    if not src:
+        return "unknown"
+    s = str(src)
+    if "/drafts/" in s:
+        return "drafted by the loop"
+    if "/.agents/skills/" in s or "/.claude/skills/" in s:
+        return "already installed locally"
+    if "@" in s or s.startswith(("http://", "https://")) or (not s.startswith("/") and "/" in s):
+        return "found in a registry"
+    return "unknown"
+
+
 def buckets(rows):
     out = {}
     for r in rows:
         kind = (r.get("failure") or {}).get("kind") or "unlabelled"
         out.setdefault(("failure kind", kind), []).append(r)
-        src = r.get("skill_src") or "unknown"
-        out.setdefault(("skill source", src), []).append(r)
+        out.setdefault(("skill source", provenance(r.get("skill_src"))), []).append(r)
     # A skill that already lost once: does trying it again pay off?
     seen, repeats = set(), []
     for r in rows:
