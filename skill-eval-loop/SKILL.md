@@ -152,6 +152,14 @@ make the two corpora measure different things.
 - **REJECT** - everything else. Losers are recorded in `ledger.jsonl` and never
   re-evaled.
 
+Neither adoption is available on fewer than two valid samples, whatever the winner
+says. Three samples exist so that one lucky run cannot adopt a skill, and dropping the
+invalid ones can quietly undo that: the majority is counted over valid samples, so a
+brief that loses two of three to an invalid verdict is deciding on one run. That is not
+hypothetical. `run-to-publishable-result` was adopted 2-1, and two of those three
+samples were pairs whose with-arm never loaded the skill. Strip them and the adoption
+rests on a single sample, which the majority rule was written to prevent.
+
 ## recheck.py (weekly)
 
 Re-mines recent sessions and compares each skill's failure session-rate against its
@@ -368,6 +376,29 @@ fired, with `unrecognized arguments: --sources`.
   next sample under the second is a verdict that stopping would have thrown away.
   `invalid_code` separates the two invalid verdicts, because the other one is
   chance and the next pair may well be blind, so it never stops anything.
+- **A with-arm that never loaded the skill is not a with-arm.** Installing a skill in
+  the arm does not load it; the model still chooses it from its description, exactly as
+  in production. When it does not choose it, both arms ran the same task with the same
+  model and the same tools, and whatever the judge preferred it was one run over
+  another. Scored as a win it credits a skill that never executed, which is precisely
+  the defect the production recheck fixed on its own side while this side kept doing
+  it: three of 39 real with-arms, in both of the briefs whose skill was then adopted.
+  The pair is marked `invalid` with `invalid_code: skill_never_loaded`, and it stops
+  nothing - the next sample may well load it.
+- **A zero load is only evidence where the runner records loads.** Claude Code emits a
+  `Skill` tool call with the name in `skill`, OpenCode a `skill` part with the name in
+  `state.input.name`, and Codex records nothing at all. Enforcing on a Codex zero would
+  invalidate every Codex sample the loop ever runs, so the check carries whether the
+  zero is knowable and declines to fire when it is not. Guessing at these spellings has
+  produced the same bug three times here, most recently in the measurement that found
+  this one: a first pass over the archive reported six silent arms and three of them
+  were OpenCode arms that had loaded the skill under a spelling the grep did not know.
+- **The eval's own load rate rides on the ledger row.** `skill_loads` counts how often
+  the model reached for the skill when it had it, over every sample rather than the
+  valid ones - a sample thrown out *for* never loading it is the clearest instance of
+  the thing being counted. It decides nothing. It is the eval-side answer to the
+  question `recheck.py --usage` asks of real sessions weeks later, available at
+  adoption instead of on the recheck date.
 - **Evals need headroom and pressure.** Toy tasks don't reproduce real failures.
   But note the one-shot ceiling: recoverable single-turn errors never show skill
   value - only silent-wrong-output and knowledge-gap failures discriminate.

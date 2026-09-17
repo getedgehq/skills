@@ -38,6 +38,17 @@ def main():
             sys.exit(f"{os.path.relpath(p, runs)} has winner_arm {v['winner_arm']!r}, "
                      "which is not with, without or tie: rejudge that sample")
         wins[v["winner_arm"]] += 1
+    # How often the model chose the skill when it had it, counted over every sample and
+    # not just the valid ones: a sample thrown out *for* never loading the skill is the
+    # clearest evidence of exactly this, and dropping it would report a load rate of
+    # 100% on the samples that happened to load. Samples whose runner records no skill
+    # call are left out of both halves rather than counted as misses. Recorded, not
+    # acted on: it is the eval side of the question the production recheck asks weeks
+    # later, and a skill the model rarely picks in its own eval is one to expect a zero
+    # from - which is a thing to know at adoption, not on 1 Oct.
+    knowable = [v for v in vs if v.get("loads_knowable", {}).get("with", True)]
+    loads = {"loaded": sum(1 for v in knowable if v.get("skills_loaded", {}).get("with")),
+             "of": len(knowable)}
     passes = {a: sum(1 for v in valid if v["verify"].get(a) == 0) for a in ("with", "without")}
     errors = {a: sum(v.get("tool_errors", {}).get(a, 0) for v in valid) for a in ("with", "without")}
 
@@ -55,6 +66,7 @@ def main():
         "samples": len(vs),
         "valid_samples": n,
         "wins": wins,
+        "skill_loads": loads,
         "verify_pass": passes,
         "winner_arm": winner,
         # gate.py reads verify as exit codes: 0 = passed in a majority of samples
@@ -72,7 +84,8 @@ def main():
         result["invalid_reason"] = "every sample was invalid: " + "; ".join(why)
     out = os.path.join(runs, "verdict.json")
     json.dump(result, open(out, "w"), indent=1)
-    print(json.dumps({k: result[k] for k in ("brief", "valid_samples", "wins", "verify_pass", "winner_arm")}))
+    print(json.dumps({k: result[k] for k in
+                      ("brief", "valid_samples", "wins", "skill_loads", "verify_pass", "winner_arm")}))
     print(f"-> {out}")
 
 

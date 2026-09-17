@@ -157,6 +157,160 @@ class Aggregation(unittest.TestCase):
             self.assertEqual(got["valid_samples"], 2)
             self.assertEqual(got["winner_arm"], "with")
 
+    def test_the_load_rate_counts_the_samples_that_did_not_load(self):
+        # Over valid samples only this would read 1 of 1: the sample thrown out *for*
+        # never loading the skill is the one the number exists to report.
+        with tempfile.TemporaryDirectory() as tmp:
+            missed = self.sample("invalid", invalid=True, invalid_code="skill_never_loaded",
+                                 skills_loaded={"with": []})
+            hit = self.sample("with", skills_loaded={"with": ["li-post-fede"]})
+            out, got = self.run_aggregate(tmp, [missed, hit])
+            self.assertEqual(out.returncode, 0, out.stderr)
+            self.assertEqual(got["skill_loads"], {"loaded": 1, "of": 2})
+
+    def test_a_codex_sample_is_left_out_of_the_load_rate_entirely(self):
+        # Not counted as a miss: Codex records no skill call, so counting its zero
+        # would report a discovery problem that is only a transcript format.
+        with tempfile.TemporaryDirectory() as tmp:
+            blind = self.sample("with", skills_loaded={"with": []},
+                                loads_knowable={"with": False})
+            hit = self.sample("with", skills_loaded={"with": ["li-post-fede"]})
+            out, got = self.run_aggregate(tmp, [blind, hit])
+            self.assertEqual(got["skill_loads"], {"loaded": 1, "of": 1})
+
+
+class GateFloor(unittest.TestCase):
+    """Dropping invalid samples must not quietly undo the majority rule.
+
+    Three samples exist so one lucky run cannot adopt a skill. A real 2-1 adoption on
+    record survived losing both samples whose with-arm never loaded the skill, which
+    left one run holding it - a majority of one.
+    """
+
+    GATE = os.path.join(SCRIPTS, "gate.py")
+
+    def decide(self, verdict, *args):
+        with tempfile.TemporaryDirectory() as tmp:
+            brief = os.path.join(tmp, "brief.json")
+            json.dump({"id": "b1", "prompt": "p", "verify": "true"}, open(brief, "w"))
+            runs = os.path.join(tmp, "runs", "b1")
+            os.makedirs(runs)
+            json.dump(verdict, open(os.path.join(runs, "verdict.json"), "w"))
+            skill = os.path.join(tmp, "demo-skill")
+            os.makedirs(skill)
+            open(os.path.join(skill, "SKILL.md"), "w").write("---\nname: demo-skill\n---\n")
+            env = dict(os.environ, FORGE_ROOT=tmp, PYTHONDONTWRITEBYTECODE="1")
+            out = subprocess.run([sys.executable, self.GATE, brief, skill,
+                                  "--adopt-dir", os.path.join(tmp, "adopted"), *args],
+                                 env=env, capture_output=True, text=True)
+            self.assertEqual(out.returncode, 0, out.stderr)
+            row = json.loads(open(os.path.join(tmp, "ledger.jsonl")).read().strip())
+            return out.stdout, row
+
+    def won(self, **kw):
+        v = {"brief": "b1", "winner_arm": "with", "verify": {"with": 0, "without": 1},
+             "tool_errors": {"with": 0, "without": 0}, "verdict": {"reasons": []},
+             "samples": 3, "valid_samples": 3}
+        v.update(kw)
+        return v
+
+    def test_a_win_on_one_valid_sample_is_not_adopted(self):
+        out, row = self.decide(self.won(valid_samples=1))
+        self.assertEqual(row["decision"], "reject")
+        self.assertIn("one run is an anecdote", out)
+
+    def test_the_same_win_on_two_valid_samples_is_adopted(self):
+        out, row = self.decide(self.won(valid_samples=2))
+        self.assertEqual(row["decision"], "adopt")
+
+    def test_probation_is_refused_on_a_thin_verdict_too(self):
+        # Probation installs the skill, so the floor has to hold on this path as well.
+        out, row = self.decide(self.won(winner_arm="tie", valid_samples=1), "--probation")
+        self.assertEqual(row["decision"], "reject")
+
+    def test_a_verdict_written_before_the_field_existed_still_decides(self):
+        v = self.won()
+        del v["valid_samples"]
+        out, row = self.decide(v)
+        self.assertEqual(row["decision"], "adopt")
+
+    def test_the_eval_load_rate_reaches_the_ledger(self):
+        # The recheck asks this of production weeks later; the row it reads now carries
+        # the eval's own answer, which is the earliest a zero can be seen coming.
+        out, row = self.decide(self.won(skill_loads={"loaded": 2, "of": 3}))
+        self.assertEqual(row["eval_skill_loads"], {"loaded": 2, "of": 3})
+
+
+
+class SkillActuallyLoaded(unittest.TestCase):
+    """Installing a skill in an arm is not the same as the arm using it.
+
+    Three of 39 real with-arms never called the skill they were given, in both of the
+    briefs whose skill went on to be adopted. Those samples were scored as with-arm
+    results; one of them was a win credited to a skill that never executed, and dropping
+    the two bad samples from that brief leaves a 2-1 adoption resting on one run.
+    """
+
+    def transcript(self, tmp, lines, agent="claude"):
+        meta = os.path.join(tmp, "with.meta")
+        os.makedirs(meta)
+        with open(os.path.join(meta, "transcript.jsonl"), "w") as fh:
+            for obj in lines:
+                fh.write(json.dumps(obj) + "\n")
+        json.dump({"agent": agent}, open(os.path.join(meta, "run.json"), "w"))
+        return meta
+
+    def claude_call(self, name):
+        return {"message": {"role": "assistant", "content": [
+            {"type": "tool_use", "name": "Skill", "input": {"skill": name}}]}}
+
+    def opencode_call(self, name):
+        return {"part": {"type": "tool", "tool": "skill",
+                         "state": {"status": "completed", "input": {"name": name}}}}
+
+    def test_claude_and_opencode_spellings_are_both_read(self):
+        # Read off real transcripts, not assumed: the same guess has produced the same
+        # bug three times in this loop, most recently in the measurement that found it.
+        for call in (self.claude_call, self.opencode_call):
+            with tempfile.TemporaryDirectory() as tmp:
+                meta = self.transcript(tmp, [call("li-post-fede")])
+                self.assertEqual(judge.skills_loaded(meta), ({"li-post-fede"}, True))
+
+    def test_a_plugin_invocation_counts_as_the_bare_name(self):
+        # Installed, adopted and revoked under the bare name, so that is what it joins on.
+        with tempfile.TemporaryDirectory() as tmp:
+            meta = self.transcript(tmp, [self.claude_call("floom:li-post-fede")])
+            self.assertEqual(judge.skills_loaded(meta)[0], {"li-post-fede"})
+
+    def test_an_arm_that_loaded_nothing_reads_empty(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            meta = self.transcript(tmp, [{"message": {"role": "assistant", "content": [
+                {"type": "tool_use", "name": "Bash", "input": {"command": "ls"}}]}}])
+            self.assertEqual(judge.skills_loaded(meta), (set(), True))
+
+    def arm(self, skills=("li-post-fede",), loaded=(), knowable=True):
+        return {"skills": list(skills), "loaded": list(loaded), "loads_knowable": knowable}
+
+    def test_a_with_arm_that_skipped_its_skill_invalidates_the_pair(self):
+        self.assertTrue(judge.never_used_its_skill(self.arm()))
+
+    def test_an_arm_that_used_its_skill_is_a_real_arm(self):
+        self.assertFalse(judge.never_used_its_skill(self.arm(loaded=("li-post-fede",))))
+
+    def test_the_baseline_arm_is_not_faulted_for_loading_nothing(self):
+        # The without-arm is supposed to have no skill; reading it the same way would
+        # mark every single pair invalid.
+        self.assertFalse(judge.never_used_its_skill(self.arm(skills=())))
+
+    def test_an_unknowable_zero_does_not_invalidate_the_pair(self):
+        self.assertFalse(judge.never_used_its_skill(self.arm(knowable=False)))
+
+    def test_a_codex_zero_is_reported_as_unknowable(self):
+        # Codex records no skill call at all, so enforcing on its zero would invalidate
+        # every Codex sample the loop ever runs and quietly delete the second runner.
+        with tempfile.TemporaryDirectory() as tmp:
+            meta = self.transcript(tmp, [self.claude_call("li-post-fede")], agent="codex")
+            self.assertEqual(judge.skills_loaded(meta, "codex"), (set(), False))
 
 
 class UnpassableBrief(unittest.TestCase):
