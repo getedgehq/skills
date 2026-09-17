@@ -27,8 +27,17 @@ def main():
     valid = [v for v in vs if not v.get("invalid")]
     n = len(valid)
     wins = {"with": 0, "without": 0, "tie": 0}
-    for v in valid:
-        wins[v["winner_arm"] if v["winner_arm"] in wins else "tie"] += 1
+    for p, v in zip(samples, vs):
+        if v.get("invalid"):
+            continue
+        if v["winner_arm"] not in wins:
+            # Counting an unreadable winner as a tie is not caution, it is an invented
+            # verdict: a tie is enough to adopt a skill on probation. judge.py refuses
+            # one at the source now, so reaching here means a hand-edited or pre-fix
+            # sample, and guessing at it is what the gate must never do.
+            sys.exit(f"{os.path.relpath(p, runs)} has winner_arm {v['winner_arm']!r}, "
+                     "which is not with, without or tie: rejudge that sample")
+        wins[v["winner_arm"]] += 1
     passes = {a: sum(1 for v in valid if v["verify"].get(a) == 0) for a in ("with", "without")}
     errors = {a: sum(v.get("tool_errors", {}).get(a, 0) for v in valid) for a in ("with", "without")}
 
@@ -56,7 +65,11 @@ def main():
     }
     if n == 0:
         result["invalid"] = True
-        result["invalid_reason"] = "every sample was invalid (both arms failed verify) - fix the brief"
+        # Carry the samples' own reasons: "both arms failed verify" and "an arm named
+        # the skill" need different fixes, and one blanket sentence sent the brief back
+        # for a rewrite it did not need.
+        why = sorted({v.get("invalid_reason", "no reason recorded") for v in vs})
+        result["invalid_reason"] = "every sample was invalid: " + "; ".join(why)
     out = os.path.join(runs, "verdict.json")
     json.dump(result, open(out, "w"), indent=1)
     print(json.dumps({k: result[k] for k in ("brief", "valid_samples", "wins", "verify_pass", "winner_arm")}))

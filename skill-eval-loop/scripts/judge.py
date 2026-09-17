@@ -10,10 +10,17 @@ Usage: judge.py <brief.json> [--sample N] [--model M]
 
 Verdict JSON: {"winner": "A"|"B"|"tie", "reasons": [...], "per_criterion": {...}}
 The judge only ever sees slot letters - arm identity stays on disk, private.
+
+Blindness is enforced, not assumed. The skill under test is found by its SKILL.md
+inside the arm's own dot-directories and dropped from the file manifest, whichever
+runner installed it; an arm that names the skill in its final message makes the pair
+invalid rather than a win. And a verdict the judge did not state readably is refused
+by name: recorded as a tie it would be enough to adopt a skill on probation.
 """
 import argparse
 import json
 import os
+import re
 import secrets
 import subprocess
 import sys
@@ -103,15 +110,89 @@ def tool_error_count(meta):
     return n
 
 
-def manifest(workdir):
-    skip = {".claude"}
+def skill_trees(workdir):
+    """Where the skill under test was installed in this arm, and what it is called.
+
+    run_eval.sh drops it in a different place per runner: .claude/skills for Claude
+    Code, .agents/skills for Codex, .opencode/skill for OpenCode. manifest() used to
+    skip the Claude path by name, so a Codex or OpenCode arm handed the judge
+    ".agents/skills/li-post-fede/SKILL.md (2114b)" in its file list and the blind
+    named the arm. Skipping the three paths by name would leak again the day a fourth
+    runner is added, so the skill is found by its SKILL.md instead, and only inside a
+    dot-directory: an agent asked to WRITE a SKILL.md puts it in the work it produced,
+    which is the deliverable and stays in the manifest.
+    """
+    out = {}
+    for entry in sorted(os.listdir(workdir)) if os.path.isdir(workdir) else []:
+        if not entry.startswith("."):
+            continue
+        for root, dirs, names in os.walk(os.path.join(workdir, entry)):
+            if "SKILL.md" in names:
+                out[os.path.basename(root)] = root
+                dirs[:] = []
+    return out
+
+
+def manifest(workdir, hide=()):
     files = []
     for root, dirs, names in os.walk(workdir):
-        dirs[:] = [d for d in dirs if d not in skip]
+        if any(root == h or root.startswith(h + os.sep) for h in hide):
+            dirs[:] = []
+            continue
         for n in names:
             p = os.path.relpath(os.path.join(root, n), workdir)
             files.append(f"{p} ({os.path.getsize(os.path.join(root, n))}b)")
     return "\n".join(sorted(files)[:80]) or "(no files)"
+
+
+def named_skills(text, names):
+    """Skill names an arm said out loud in its final message.
+
+    Hiding the files is only half of it: an agent that writes "following the
+    li-post-fede skill" has told the judge which arm it is reading. That verdict is
+    not a blind one and is worth less than no verdict, so it is marked invalid rather
+    than recorded as a win. Checked against all 45 real sample verdicts on AX41: not
+    one arm ever named a skill, so this refuses nothing that has already happened.
+    """
+    return sorted(n for n in names
+                  if re.search(r"(?<![\w-])" + re.escape(n) + r"(?![\w-])", text, re.I))
+
+
+def first_object(text):
+    """The first complete JSON object in a model reply, or None.
+
+    Slicing from the first '{' to the last '}' breaks on a reply that answers with the
+    object and then keeps talking: the slice is valid JSON followed by prose, and
+    json.loads rejects all of it. score.py lost two real candidate scores to exactly
+    that (PR #22).
+    """
+    dec = json.JSONDecoder()
+    for i, ch in enumerate(text):
+        if ch != "{":
+            continue
+        try:
+            obj, _ = dec.raw_decode(text[i:])
+        except ValueError:
+            continue
+        if isinstance(obj, dict):
+            return obj
+    return None
+
+
+def winner_slot(verdict):
+    """The slot the judge picked, or None if it did not say so readably.
+
+    "A", "B" and "tie" are the only answers the mapping can be read with. A reply of
+    "Run A" or "a" used to fall through slots.get(..., "tie") and be recorded as a
+    tie, which is not a missing verdict but a wrong one: with --probation a tie is
+    enough to adopt, so an unreadable reply could install a skill nothing had judged.
+    Obvious wrappers are normalized, and anything left is refused by name.
+    """
+    w = (verdict.get("winner") or "").strip().strip('"').lower()
+    w = re.sub(r"^(run|arm|slot)\s+", "", w)
+    if w in ("a", "b"):
+        return w.upper()
+    return "tie" if w in ("tie", "draw", "neither", "equal") else None
 
 
 def main():
@@ -138,12 +219,14 @@ def main():
         if not os.path.exists(final_path):
             open(final_path, "w").write(final)
         code, vout = run_verify(brief, workdir, final_path)
+        trees = skill_trees(workdir)
         arms[arm] = {
             "verify_exit": code,
             "verify_out": vout,
             "tool_errors": tool_error_count(meta),
             "final": final[-3000:],
-            "files": manifest(workdir),
+            "files": manifest(workdir, hide=trees.values()),
+            "skills": sorted(trees),
             "run": json.load(open(os.path.join(meta, "run.json"))),
         }
 
@@ -162,6 +245,10 @@ def main():
     # skill. A model verdict over two broken runs is noise - mark invalid.
     both_failed = all(a["verify_exit"] != 0 for a in arms.values())
 
+    # A verdict is only worth recording if the judge could not tell the arms apart.
+    installed = sorted({n for a in arms.values() for n in a["skills"]})
+    spoken = sorted({n for a in arms.values() for n in named_skills(a["final"], installed)})
+
     prompt = JUDGE_PROMPT.format(
         prompt=brief["prompt"], rubric=brief.get("rubric", "correctness; completeness; brief adherence"),
         va=arms[slots["A"]]["verify_exit"], vb=arms[slots["B"]]["verify_exit"],
@@ -172,24 +259,33 @@ def main():
     import forge_llm
     text, engine = forge_llm.call_model(prompt, args.model)
     print(f"  (judged by {engine})", file=sys.stderr)
-    start, end = text.find("{"), text.rfind("}")
-    if start == -1:
-        sys.exit(f"no JSON in judge output: {text[:300]}")
-    verdict = json.loads(text[start:end + 1])
+    verdict = first_object(text)
+    if verdict is None:
+        sys.exit(f"no JSON object in judge output: {text[:300]}")
+    slot = winner_slot(verdict)
+    if slot is None:
+        # Not a tie: a tie is a verdict, and this is the absence of one.
+        sys.exit(f"judge did not name a readable winner: {verdict.get('winner')!r}")
 
     result = {
         "brief": brief["id"],
         "slots": slots,
-        "winner_slot": verdict.get("winner"),
-        "winner_arm": slots.get(verdict.get("winner"), "tie"),
+        "winner_slot": slot,
+        "winner_arm": "tie" if slot == "tie" else slots[slot],
         "verdict": verdict,
         "verify": {a: arms[a]["verify_exit"] for a in arms},
         "tool_errors": {a: arms[a]["tool_errors"] for a in arms},
+        "skills_installed": {a: arms[a]["skills"] for a in arms},
         "run": {a: arms[a]["run"] for a in arms},
     }
     if both_failed:
         result["invalid"] = True
         result["invalid_reason"] = "both arms failed verify - fix the brief, not the loop"
+        result["winner_arm"] = "invalid"
+    elif spoken:
+        result["invalid"] = True
+        result["invalid_reason"] = ("an arm named the skill under test in its final message "
+                                    f"({', '.join(spoken)}), so this pair was not judged blind")
         result["winner_arm"] = "invalid"
     path = os.path.join(runs, "verdict.json")
     json.dump(result, open(path, "w"), indent=1)
