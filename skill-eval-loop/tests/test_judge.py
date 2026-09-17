@@ -312,6 +312,260 @@ class SkillActuallyLoaded(unittest.TestCase):
             meta = self.transcript(tmp, [self.claude_call("li-post-fede")], agent="codex")
             self.assertEqual(judge.skills_loaded(meta, "codex"), (set(), False))
 
+    def test_a_baseline_holding_a_rival_is_held_to_the_same_bar(self):
+        # Under --rival the baseline arm is the skill already installed for this
+        # trigger. A rival that was never loaded makes the baseline an empty machine
+        # again, and the ledger would record a head-to-head that did not happen.
+        self.assertTrue(judge.never_used_its_skill(self.arm(skills=("fede-linkedin-post",))))
+
+    def test_a_baseline_that_loaded_its_rival_is_a_real_baseline(self):
+        self.assertFalse(judge.never_used_its_skill(
+            self.arm(skills=("fede-linkedin-post",), loaded=("fede-linkedin-post",))))
+
+
+class RivalBaseline(unittest.TestCase):
+    """What the win was against has to be read off the run, not off the flag.
+
+    Every arm the loop has ever run had exactly one skill installed on the with side
+    and none on the without side, while adoption puts the skill into a fleet of 314
+    where several others answer the same trigger. --rival makes the baseline the
+    incumbent; these pin down that a row cannot claim that comparison unless it
+    happened.
+    """
+
+    GATE = os.path.join(SCRIPTS, "gate.py")
+
+    def run_gate(self, verdict, *args):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp)
+        brief = os.path.join(tmp, "brief.json")
+        json.dump({"id": "b1", "prompt": "p", "verify": "true"}, open(brief, "w"))
+        runs = os.path.join(tmp, "runs", "b1")
+        os.makedirs(runs)
+        json.dump(verdict, open(os.path.join(runs, "verdict.json"), "w"))
+        skill = os.path.join(tmp, "demo-skill")
+        os.makedirs(skill)
+        open(os.path.join(skill, "SKILL.md"), "w").write("---\nname: demo-skill\n---\n")
+        env = dict(os.environ, FORGE_ROOT=tmp, PYTHONDONTWRITEBYTECODE="1")
+        out = subprocess.run([sys.executable, self.GATE, brief, skill,
+                              "--adopt-dir", os.path.join(tmp, "adopted"), *args],
+                             env=env, capture_output=True, text=True)
+        ledger = os.path.join(tmp, "ledger.jsonl")
+        row = (json.loads(open(ledger).read().strip())
+               if os.path.exists(ledger) and open(ledger).read().strip() else None)
+        return out, row
+
+    def won(self, **kw):
+        v = {"brief": "b1", "winner_arm": "with", "verify": {"with": 0, "without": 1},
+             "tool_errors": {"with": 0, "without": 0}, "verdict": {"reasons": []},
+             "samples": 3, "valid_samples": 3}
+        v.update(kw)
+        return v
+
+    def test_a_rival_that_never_reached_the_arm_stops_the_gate(self):
+        out, row = self.run_gate(self.won(), "--rival", "fede-linkedin-post")
+        self.assertNotEqual(out.returncode, 0)
+        self.assertIn("ran with no skill installed", out.stderr)
+        self.assertIsNone(row)
+
+    def test_the_rival_the_baseline_really_had_reaches_the_ledger(self):
+        out, row = self.run_gate(
+            self.won(skills_installed={"with": ["demo-skill"], "without": ["fede-linkedin-post"]}),
+            "--rival", "fede-linkedin-post")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(row["baseline_skills"], ["fede-linkedin-post"])
+        self.assertIn("over fede-linkedin-post", out.stdout)
+
+    def test_an_empty_baseline_is_recorded_as_empty_and_said_out_loud(self):
+        # The honest reading of every row written before the field existed. A reader
+        # who sees "ADOPTED" with nothing beside it would otherwise assume a contest.
+        out, row = self.run_gate(self.won())
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(row["baseline_skills"], [])
+        self.assertIn("over an empty baseline", out.stdout)
+        self.assertIn("beats nothing", out.stdout)
+
+    def test_a_baseline_skill_is_recorded_even_without_the_flag(self):
+        # The row describes the run, so the field follows what was installed rather
+        # than what was asked for; a caller who forgets the flag still gets the truth.
+        out, row = self.run_gate(
+            self.won(skills_installed={"with": ["demo-skill"], "without": ["fede-linkedin-post"]}))
+        self.assertEqual(row["baseline_skills"], ["fede-linkedin-post"])
+        self.assertNotIn("beats nothing", out.stdout)
+
+
+class SilentArm(unittest.TestCase):
+    """The never-loaded check runs on whichever arm had a skill, candidate or rival.
+
+    End to end through judge.py with a stub model, because the rule that matters lives
+    in main(): a rival the baseline never loaded turns the head-to-head the ledger is
+    about to record back into the walkover --rival exists to replace.
+    """
+
+    JUDGE = os.path.join(SCRIPTS, "judge.py")
+
+    def arm_files(self, runs, arm, skill=None, loaded=None):
+        work = os.path.join(runs, arm)
+        meta = work + ".meta"
+        os.makedirs(work)
+        os.makedirs(meta)
+        open(os.path.join(work, "post.md"), "w").write("the agent's output\n")
+        if skill:
+            sk = os.path.join(work, ".claude", "skills", skill)
+            os.makedirs(sk)
+            open(os.path.join(sk, "SKILL.md"), "w").write("---\nname: %s\n---\n" % skill)
+        lines = [{"message": {"role": "assistant", "content": [{"type": "text", "text": "done"}]}}]
+        if loaded:
+            lines.insert(0, {"message": {"role": "assistant", "content": [
+                {"type": "tool_use", "name": "Skill", "input": {"skill": loaded}}]}})
+        with open(os.path.join(meta, "transcript.jsonl"), "w") as fh:
+            for obj in lines:
+                fh.write(json.dumps(obj) + "\n")
+        json.dump({"agent": "claude", "exit": 0}, open(os.path.join(meta, "run.json"), "w"))
+
+    def judge_pair(self, without_skill=None, without_loaded=None):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp)
+        stub = os.path.join(tmp, "stub")
+        os.makedirs(stub)
+        open(os.path.join(stub, "forge_llm.py"), "w").write(
+            "def call_model(prompt, model=None):\n"
+            "    return '{\"winner\": \"A\", \"reasons\": []}', 'stub'\n")
+        brief = os.path.join(tmp, "brief.json")
+        json.dump({"id": "b1", "prompt": "p", "verify": "true"}, open(brief, "w"))
+        runs = os.path.join(tmp, "runs", "b1", "s1")
+        self.arm_files(runs, "with", skill="demo-skill", loaded="demo-skill")
+        self.arm_files(runs, "without", skill=without_skill, loaded=without_loaded)
+        env = dict(os.environ, FORGE_ROOT=tmp, PYTHONPATH=stub, PYTHONDONTWRITEBYTECODE="1")
+        out = subprocess.run([sys.executable, self.JUDGE, brief, "--sample", "1"],
+                             env=env, capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return json.load(open(os.path.join(runs, "verdict.json")))
+
+    def test_an_empty_baseline_is_still_a_valid_pair(self):
+        v = self.judge_pair()
+        self.assertFalse(v.get("invalid"), v.get("invalid_reason"))
+
+    def test_a_baseline_that_never_loaded_its_rival_invalidates_the_pair(self):
+        v = self.judge_pair(without_skill="fede-linkedin-post")
+        self.assertEqual(v["invalid_code"], "skill_never_loaded")
+        self.assertIn("the without-arm never loaded fede-linkedin-post", v["invalid_reason"])
+        self.assertEqual(v["winner_arm"], "invalid")
+
+    def test_a_baseline_that_loaded_its_rival_is_a_real_comparison(self):
+        v = self.judge_pair(without_skill="fede-linkedin-post",
+                            without_loaded="fede-linkedin-post")
+        self.assertFalse(v.get("invalid"), v.get("invalid_reason"))
+        self.assertEqual(v["skills_installed"]["without"], ["fede-linkedin-post"])
+
+
+class ArmInstall(unittest.TestCase):
+    """Which arm gets a skill is decided by what it was handed, not by its name.
+
+    The baseline arm was hardcoded to install nothing, so every verdict the loop has
+    ever written compares a candidate against an empty machine. A stub agent on PATH
+    stands in for the CLI: nothing here spends a model call.
+    """
+
+    RUN = os.path.join(SCRIPTS, "run_eval.sh")
+
+    def run_arm(self, arm, skill_dir="", skill="fede-linkedin-post"):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp)
+        bin_ = os.path.join(tmp, "bin")
+        os.makedirs(bin_)
+        stub = os.path.join(bin_, "claude")
+        open(stub, "w").write("#!/usr/bin/env bash\nexit 0\n")
+        os.chmod(stub, 0o755)
+        if skill_dir:
+            skill_dir = os.path.join(tmp, skill_dir)
+            os.makedirs(skill_dir)
+            open(os.path.join(skill_dir, "SKILL.md"), "w").write("---\nname: %s\n---\n" % skill)
+        brief = os.path.join(tmp, "brief.json")
+        json.dump({"id": "b1", "prompt": "p", "verify": "true"}, open(brief, "w"))
+        root = os.path.join(tmp, "forge")
+        env = dict(os.environ, FORGE_ROOT=root, FORGE_SAMPLE="1",
+                   PATH=bin_ + os.pathsep + os.environ["PATH"], PYTHONDONTWRITEBYTECODE="1")
+        out = subprocess.run(["bash", self.RUN, brief, arm, skill_dir],
+                             env=env, capture_output=True, text=True)
+        return out, os.path.join(root, "runs", "b1", "s1", arm, ".claude", "skills")
+
+    def test_a_baseline_handed_a_rival_installs_it(self):
+        out, skills = self.run_arm("without", "rival")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertTrue(os.path.exists(os.path.join(skills, "rival", "SKILL.md")))
+
+    def test_a_baseline_handed_nothing_stays_empty(self):
+        out, skills = self.run_arm("without")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertFalse(os.path.exists(skills))
+
+    def test_a_with_arm_still_refuses_to_run_without_a_skill(self):
+        # The one asymmetry that survives: a candidate arm with no candidate in it is
+        # not a cheaper eval, it is a pair of identical runs scored as a comparison.
+        out, _ = self.run_arm("with")
+        self.assertNotEqual(out.returncode, 0)
+        self.assertIn("with-arm needs a skill dir", out.stderr)
+
+    def test_a_skill_dir_that_does_not_exist_stops_the_arm(self):
+        out, _ = self.run_arm("without", skill_dir="")  # baseline with nothing is fine
+        self.assertEqual(out.returncode, 0)
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp)
+        brief = os.path.join(tmp, "brief.json")
+        json.dump({"id": "b1", "prompt": "p", "verify": "true"}, open(brief, "w"))
+        env = dict(os.environ, FORGE_ROOT=os.path.join(tmp, "forge"), FORGE_SAMPLE="1",
+                   PYTHONDONTWRITEBYTECODE="1")
+        out = subprocess.run(["bash", self.RUN, brief, "without", os.path.join(tmp, "gone")],
+                             env=env, capture_output=True, text=True)
+        self.assertNotEqual(out.returncode, 0)
+        self.assertIn("no such skill dir", out.stderr)
+
+
+class RivalPlumbing(unittest.TestCase):
+    """--rival has to reach both the baseline arm and the ledger, or it is decoration."""
+
+    FORGE = os.path.join(SCRIPTS, "forge.sh")
+
+    def run_forge(self, *extra):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp)
+        here = os.path.join(tmp, "scripts")
+        os.makedirs(here)
+        shutil.copy(self.FORGE, os.path.join(here, "forge.sh"))
+        arms = os.path.join(tmp, "arms.txt")
+        gate = os.path.join(tmp, "gate.txt")
+        open(os.path.join(here, "run_eval.sh"), "w").write(
+            '#!/usr/bin/env bash\necho "$2|${3:-}" >> %s\n' % arms)
+        open(os.path.join(here, "judge.py"), "w").write(
+            "#!/usr/bin/env python3\nprint('%s')\n"
+            % json.dumps({"brief": "b1", "winner_arm": "with", "verify": {"with": 0}}))
+        open(os.path.join(here, "aggregate.py"), "w").write("#!/usr/bin/env python3\n")
+        open(os.path.join(here, "gate.py"), "w").write(
+            "#!/usr/bin/env python3\nimport sys\n"
+            "open(%r, 'w').write(' '.join(sys.argv[1:]))\n" % gate)
+        brief = os.path.join(tmp, "brief.json")
+        json.dump({"id": "b1", "prompt": "p", "verify": "true"}, open(brief, "w"))
+        skill = os.path.join(tmp, "demo-skill")
+        os.makedirs(skill)
+        env = dict(os.environ, FORGE_ROOT=os.path.join(tmp, "forge"),
+                   FORGE_SKIP_SCORE="1", PYTHONDONTWRITEBYTECODE="1")
+        out = subprocess.run(["bash", os.path.join(here, "forge.sh"), "--brief", brief,
+                              "--skill-dir", skill, "--samples", "1", *extra],
+                             env=env, capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return open(arms).read().split(), open(gate).read(), skill
+
+    def test_without_a_rival_the_baseline_arm_is_handed_nothing(self):
+        armlog, gateargs, skill = self.run_forge()
+        self.assertEqual(armlog, ["without|", "with|" + skill])
+        self.assertNotIn("--rival", gateargs)
+
+    def test_a_rival_reaches_the_baseline_arm_and_the_gate(self):
+        armlog, gateargs, skill = self.run_forge("--rival", "/skills/incumbent")
+        self.assertEqual(armlog, ["without|/skills/incumbent", "with|" + skill])
+        self.assertIn("--rival /skills/incumbent", gateargs)
+
 
 class UnpassableBrief(unittest.TestCase):
     """A brief that keeps failing its own gate should not cost the full three samples.

@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 # forge.sh - the full loop: mine -> brief -> match -> eval(with/without) -> judge -> gate
 # Usage: forge.sh [--mode errors|corrections] [--sessions N] [--cluster-index I]
-#                 [--memory DIR] [--samples N] [--skill-dir PATH] [--brief FILE] [--probation] [--dry-run]
+#                 [--memory DIR] [--samples N] [--skill-dir PATH] [--rival PATH]
+#                 [--brief FILE] [--probation] [--dry-run]
+# --rival PATH  install this skill in the baseline arm instead of leaving it empty.
+#   Without it the verdict says the candidate beats an empty machine. A skill is
+#   adopted into a fleet that already has one installed for the same trigger, and
+#   there the model picks between them - measured here, the seven skills adopted
+#   so far load 18 of 21 times in their own evals, where they are the only skill
+#   installed, and once in 189 real sessions, where they are one of 314.
 # --mode corrections (recommended) mines the moments the user corrected the agent and
 #   builds knowledge-gap briefs; errors mines tool-error clusters (generic, often ties).
 # --memory DIR  the user's saved rule files; mapped to themes and fed to brief + draft.
@@ -17,7 +24,7 @@ export FORGE_ROOT="${FORGE_ROOT:-$HOME/skill-forge}"
 PROJECTS="${FORGE_PROJECTS:-$HOME/.claude/projects}"
 mkdir -p "$FORGE_ROOT"/{mined,briefs,runs}
 
-SESSIONS=40; IDX=0; SKILL_DIR=""; DRY=0; MODE=errors; MEMORY=""; SAMPLES=3; BRIEF=""; PROB=()
+SESSIONS=40; IDX=0; SKILL_DIR=""; RIVAL=""; DRY=0; MODE=errors; MEMORY=""; SAMPLES=3; BRIEF=""; PROB=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --mode) MODE="$2"; shift 2;;
@@ -27,6 +34,7 @@ while [[ $# -gt 0 ]]; do
     --sessions) SESSIONS="$2"; shift 2;;
     --cluster-index) IDX="$2"; shift 2;;
     --skill-dir) SKILL_DIR="$2"; shift 2;;
+    --rival) RIVAL="$2"; shift 2;;
     --dry-run) DRY=1; shift;;
     --probation) PROB=(--probation); shift;;
     *) echo "unknown arg $1" >&2; exit 1;;
@@ -49,7 +57,7 @@ eval_brief() {  # eval_brief <brief> <skill-dir>: predict, N samples, blind judg
   fi
   local failed=0
   for s in $(seq 1 "$SAMPLES"); do
-    FORGE_SAMPLE=$s bash "$HERE/run_eval.sh" "$brief" without ""
+    FORGE_SAMPLE=$s bash "$HERE/run_eval.sh" "$brief" without "$RIVAL"
     FORGE_SAMPLE=$s bash "$HERE/run_eval.sh" "$brief" with "$skill"
     # Stop a brief that keeps failing its own gate, but not on one sample. Both arms
     # failing verify can be a property of the brief, and then samples 2 and 3 cost
@@ -74,7 +82,9 @@ eval_brief() {  # eval_brief <brief> <skill-dir>: predict, N samples, blind judg
     fi
   done
   python3 "$HERE/aggregate.py" "$brief"
-  python3 "$HERE/gate.py" "$brief" "$skill" --adopt-dir "${FORGE_ADOPT_DIR:-$HOME/.agents/skills}" ${PROB[@]+"${PROB[@]}"}
+  local R=(); [[ -n "$RIVAL" ]] && R=(--rival "$RIVAL")
+  python3 "$HERE/gate.py" "$brief" "$skill" --adopt-dir "${FORGE_ADOPT_DIR:-$HOME/.agents/skills}" \
+    ${R[@]+"${R[@]}"} ${PROB[@]+"${PROB[@]}"}
 }
 
 if [[ -n "$BRIEF" ]]; then

@@ -13,6 +13,7 @@ environment.skills_dir, and the instruction text.
 """
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -150,6 +151,54 @@ class RunnerContract(unittest.TestCase):
         self.assertIn("sudo -n env", self.text)
         self.assertNotIn("sudo -nE", self.text)
         self.assertNotIn("sudo -E", self.text)
+
+
+class RivalArm(unittest.TestCase):
+    """--skill follows what the arm was handed, not the arm's name.
+
+    The two runners have to agree about this or a rival baseline silently becomes an
+    empty one on Harbor. A stub harbor records its argv; nothing here starts a
+    container or spends a token.
+    """
+
+    def harbor_argv(self, arm, skill=None):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp)
+        bin_ = os.path.join(tmp, "bin")
+        os.makedirs(bin_)
+        log = os.path.join(tmp, "argv.txt")
+        stub = os.path.join(bin_, "harbor")
+        open(stub, "w").write('#!/usr/bin/env bash\nprintf "%s\\n" "$@" > ' + log + "\nexit 1\n")
+        os.chmod(stub, 0o755)
+        task = os.path.join(tmp, "task")
+        os.makedirs(task)
+        if skill:
+            skill = os.path.join(tmp, skill)
+            os.makedirs(skill)
+            open(os.path.join(skill, "SKILL.md"), "w").write("---\nname: rival\n---\n")
+        brief = os.path.join(tmp, "brief.json")
+        json.dump({"id": "b1", "prompt": "p", "verify": "true"}, open(brief, "w"))
+        # opencode: the claude path reaches for a subscription token before it ever
+        # builds the argv, and this test is about the argv.
+        env = dict(os.environ, FORGE_ROOT=os.path.join(tmp, "forge"), FORGE_TASK_DIR=task,
+                   FORGE_SAMPLE="1", FORGE_AGENT="opencode",
+                   PATH=bin_ + os.pathsep + os.environ["PATH"], PYTHONDONTWRITEBYTECODE="1")
+        out = subprocess.run(["bash", RUNNER, brief, arm, skill or ""],
+                             env=env, capture_output=True, text=True)
+        self.assertTrue(os.path.exists(log),
+                        "harbor was never invoked, so the argv proves nothing: "
+                        + out.stderr)
+        return open(log).read().split()
+
+    def test_a_baseline_handed_a_rival_gets_the_skill_flag(self):
+        argv = self.harbor_argv("without", "incumbent")
+        self.assertIn("--skill", argv)
+        self.assertTrue(any(a.endswith("/incumbent") for a in argv), argv)
+
+    def test_a_baseline_handed_nothing_still_gets_no_skill_flag(self):
+        # This is what keeps the Harbor blind: no flag, no skills directory in the
+        # container, nothing for the agent to notice.
+        self.assertNotIn("--skill", self.harbor_argv("without"))
 
 
 if __name__ == "__main__":

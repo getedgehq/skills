@@ -15,6 +15,8 @@ the user's own machine, own agent CLI, own models, own tasks.
 python3 scripts/brief.py <clusters.json> --index 0 [--knowledge-gap]   # theme -> eval brief
 for n in 1 2 3; do
   FORGE_SAMPLE=$n bash scripts/run_eval.sh <brief.json> without ""     # baseline arm
+  #   ...or <incumbent> instead of "" to make the baseline the skill already
+  #   installed for this trigger, which is what adoption competes with
   FORGE_SAMPLE=$n bash scripts/run_eval.sh <brief.json> with <skill>   # candidate arm
   python3 scripts/judge.py <brief.json> --sample $n                    # blind A/B + verify
 done
@@ -29,6 +31,7 @@ Or hands-free end to end:
 bash scripts/forge.sh --mode corrections --memory ~/.claude/projects/<proj>/memory   # recommended
 bash scripts/forge.sh --mode corrections --dry-run          # stop before eval spend
 bash scripts/forge.sh --brief briefs/x.json --skill-dir drafts/y --samples 3   # eval only
+bash scripts/forge.sh --brief briefs/x.json --skill-dir drafts/y --rival ~/.claude/skills/z
 ```
 
 `forge.sh`: mine -> brief -> match -> score -> (draft) -> N samples per arm -> judge ->
@@ -95,7 +98,7 @@ FORGE_HARBOR_SUDO=1 \                       # where the docker socket needs root
   scripts/run_eval_harbor.sh brief.json with ~/.claude/skills/li-post-fede
 ```
 
-**It buys the blind, not the budget.** In the without arm no skill is injected, so
+**It buys the blind, not the budget.** In a without arm handed no skill none is injected, so
 Harbor creates no skills directory and the container never receives the files. Probed on
 a real run with the token-free `oracle` agent: the with arm's container holds
 `/harbor/skills/<skill>/SKILL.md`, the without arm's has no `SKILL.md` and no directory
@@ -385,6 +388,22 @@ fired, with `unrecognized arguments: --sources`.
   it: three of 39 real with-arms, in both of the briefs whose skill was then adopted.
   The pair is marked `invalid` with `invalid_code: skill_never_loaded`, and it stops
   nothing - the next sample may well load it.
+- **A win over an empty machine is not the comparison adoption rests on.** Every arm
+  the loop has run had one skill installed on the with side and none on the without
+  side; the skill is then adopted into a fleet of 314 where several others answer the
+  same trigger, and there the model picks between them. The gap is measurable: the
+  seven skills adopted so far load 18 of 21 times in their own evals, where each is the
+  only skill on the machine, and once in 189 real sessions. On the same subject,
+  `fede-linkedin-post` was loaded 8 times in 1041 recent sessions while `li-post-fede`,
+  installed in the same two roots, was loaded 0. `--rival PATH` installs the incumbent
+  in the baseline arm, which is the head-to-head the adoption actually needs.
+  The baseline is then held to the same bar as the candidate: a rival the model never
+  loaded makes the pair `invalid_code: skill_never_loaded` naming that arm, because a
+  baseline that ignored its skill is the empty machine again. Every ledger row carries
+  `baseline_skills`, read off the run rather than off the flag, and `--rival` against a
+  baseline that installed nothing stops the gate rather than recording a contest that
+  did not happen. An empty list is the honest reading of every row written before the
+  field existed, and the adopt line says "over an empty baseline" out loud.
 - **A zero load is only evidence where the runner records loads.** Claude Code emits a
   `Skill` tool call with the name in `skill`, OpenCode a `skill` part with the name in
   `state.input.name`, and Codex records nothing at all. Enforcing on a Codex zero would
