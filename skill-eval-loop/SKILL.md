@@ -56,6 +56,31 @@ subscription or API key and your own session logs. Works on
 macOS (falls back to `gtimeout` or a perl alarm when `timeout` is missing) and Linux,
 or on your own cloud box. To watch and drive it in a browser, use **skill-cockpit**.
 
+## The blind is enforced, not assumed
+
+`judge.py` sees two anonymous slots, a random mapping kept on disk, each arm's final
+message and its file list. Three things keep the arm identity out of that prompt, and
+`tests/test_judge.py` pins all three on fixtures.
+
+**The skill is found, not skipped by path.** Every runner installs the candidate
+somewhere different (`.claude/skills`, `.agents/skills`, `.opencode/skill`), and the
+manifest skipped the Claude path by name, so a Codex or OpenCode arm listed
+`.agents/skills/<skill>/SKILL.md` in the judge's own prompt. The skill is now located by
+its `SKILL.md` inside the arm's dot-directories and its whole subtree is dropped, so a
+fourth runner cannot leak the same way. A `SKILL.md` the agent wrote as its deliverable
+is not in a dot-directory and stays in the manifest.
+
+**An arm that names the skill makes the pair invalid.** Hiding the files does nothing if
+the agent writes "following the li-post-fede skill". That is not a blind verdict, so it
+is recorded as invalid rather than as a win. None of the 45 real sample verdicts on the
+live corpus ever named a skill, so this refuses nothing that has already been decided.
+
+**A verdict the judge did not state readably is refused by name.** `"Run A (with the
+skill)"` used to fall through to a tie, and a tie is enough for `--probation` to install
+the skill: an unreadable reply could adopt something nothing had judged. The reply is
+also parsed to the end of the first complete object, so a judge that answers and then
+keeps talking still parses (the same defect `score.py` lost two real scores to).
+
 ## Three-tier gate
 
 - **ADOPT** - with-arm wins the strict majority of blind samples AND passes verify AND
