@@ -1,0 +1,161 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║                    FINBOT INVESTIGATION - START HERE                     ║
+║                                                                          ║
+║  Question: "Is finbot hallucinating? Do we need a better model?"        ║
+║  Answer:   No. Bot used wrong table. Fix: deploy data dictionary.       ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+THE PROBLEM
+───────────
+FinBot told board deck team: Q2 revenue = $4.1M
+Finance says:                Q2 revenue = $3.6M
+Error: $500k (14% overstatement)
+
+
+ROOT CAUSE
+──────────
+Bot queried 'orders' table (includes cancelled orders, doesn't subtract refunds)
+Should have queried 'revenue_recognized' table (finance source of truth)
+No data dictionary told bot which table to use → bot guessed wrong
+
+
+CRITICAL SECURITY ISSUE
+────────────────────────
+🔴 Bot has WRITE access to production warehouse
+   Can execute DELETE, UPDATE, DROP tables
+   Must fix before next use
+
+
+NOT A MODEL PROBLEM
+───────────────────
+✓ Model executed SQL correctly
+✓ Model generated valid query logic
+✗ Query targeted wrong table (no guidance existed)
+
+This is like blaming the engine when the car has no steering wheel.
+
+
+READ THESE FIRST (in order)
+────────────────────────────
+
+1. EXECUTIVE_SUMMARY.md  →  One page for Daniel (CEO)
+2. QUICK_START.md        →  Deploy checklist for Jonas (bot owner)
+3. query_comparison.txt  →  Visual comparison (wrong vs correct query)
+
+
+FULL DOCUMENTATION
+──────────────────
+
+4. FINDINGS_SUMMARY.txt      →  Complete findings (this document + details)
+5. REPORT.md                 →  Full technical report
+6. agent_harness_analysis.md →  Code audit
+7. INDEX.txt                 →  File directory
+8. README.md                 →  Overview of deliverables
+
+
+FIXES TO DEPLOY
+───────────────
+
+CRITICAL (do before next use):
+  ✅ agent_v2.py          → Read-only DB, iteration limits, tracing
+  ✅ prompt_v2.md         → Data dictionary embedded in prompt
+
+TEST SUITE:
+  ✅ golden_set.jsonl     → 5 test cases with expected answers
+  ✅ eval_judge.py        → Automated test runner
+
+REFERENCE:
+  ✅ data_dictionary.md   → Complete warehouse data dictionary
+
+
+THE NUMBERS
+───────────
+
+Wrong query (orders table):
+  completed:             $3,269,511
+  partially_refunded:    $  318,719
+  cancelled:             $  360,039  ← shouldn't count
+  refunded:              $  189,943  ← shouldn't count
+                         ──────────
+  TOTAL:                 $4,138,212  ← what finbot said
+
+Correct query (revenue_recognized table):
+  Gross:                 $3,970,863
+  Refunds:              -$  332,528
+                         ──────────
+  Net:                   $3,638,336  ← what finance says
+
+Difference: $499,876 (matches the error ✓)
+
+
+WHAT TO DO MONDAY
+─────────────────
+
+Jonas (bot owner):
+  1. cd output/
+  2. Read QUICK_START.md
+  3. Deploy agent_v2.py (fixes security issue)
+  4. Deploy prompt_v2.md (adds data dictionary)
+  5. Test: python agent.py "what was our Q2 2026 revenue?"
+     Should return ~$3.6M (not $4.1M)
+  6. Run: python eval_judge.py
+     Should show PASS ✓
+
+Daniel/Marta:
+  7. Correct board pre-read: Q2 = $3.6M (not $4.1M)
+
+
+MODEL SWAP DECISION
+───────────────────
+
+❌ Don't switch models yet
+
+Why:
+  • Current model is fine with proper guidance
+  • Deploy harness first (data dictionary + tests)
+  • Then test current vs new models with golden set
+  • Measure quality improvement vs cost increase
+
+Prediction: 0% → 80% pass rate with just prompt fix
+
+
+FILES DELIVERED
+───────────────
+
+Documentation (7 files):
+  • EXECUTIVE_SUMMARY.md - for Daniel
+  • QUICK_START.md - deploy steps
+  • REPORT.md - full analysis
+  • FINDINGS_SUMMARY.txt - complete findings
+  • agent_harness_analysis.md - code audit
+  • query_comparison.txt - visual comparison
+  • INDEX.txt, README.md, START_HERE.txt - navigation
+
+Fixes (5 files):
+  • agent_v2.py - hardened agent (read-only DB, limits, tracing)
+  • prompt_v2.md - improved prompt with data dictionary
+  • data_dictionary.md - warehouse reference
+  • golden_set.jsonl - test suite (5 cases)
+  • eval_judge.py - automated judge
+
+Total: 13 files ready for deployment
+
+
+BOTTOM LINE
+───────────
+
+✓ Root cause identified: wrong table, no data dictionary
+✓ Security issue found: write access to production DB
+✓ Harness built: tests + dictionary + safety limits
+✓ Not a model problem: model is fine, scaffolding was missing
+✓ Deploy time: ~1 hour
+✓ No model changes needed
+
+
+Questions? Read the files in order above.
+
+Investigation complete: 2026-09-15
+All files in: /home/user/work/output/
+

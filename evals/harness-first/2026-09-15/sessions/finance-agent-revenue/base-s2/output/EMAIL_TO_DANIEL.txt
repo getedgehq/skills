@@ -1,0 +1,162 @@
+From: Investigation Team
+To: Daniel Kurz (CEO)
+Date: September 15, 2026
+Re: FinBot Q2 Revenue Discrepancy ($4.1M vs $3.6M)
+
+Daniel,
+
+You asked whether finbot is hallucinating and if we need a smarter model. Here's what I found:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+THE ANSWER: No hallucination. No model upgrade needed. It's a fixable prompt issue.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+WHAT HAPPENED
+─────────────────────────────────────────────────────────────────────────────
+
+• Priya asked finbot for Q2 revenue on Sept 11
+• FinBot returned $4,138,212 (~$4.1M)
+• Finance's official close is $3,638,336 (~$3.6M)
+• Discrepancy: $499,876 (14% overstatement)
+
+The $4.1M made it into the board pre-read.
+
+
+ROOT CAUSE
+─────────────────────────────────────────────────────────────────────────────
+
+FinBot queried the wrong database table:
+
+  ❌ What finbot did:     Sum all orders in Q2
+                          Result: $4.1M
+                          Problem: Includes cancelled ($360K) + refunded ($190K)
+
+  ✅ What finance does:   Use revenue_recognized table
+                          Result: $3.6M
+                          Correct: Official accounting, refunds netted out
+
+Why? The system prompt lists both tables but doesn't say which to use for revenue.
+The model made a reasonable guess. It guessed wrong.
+
+
+IS THIS A MODEL PROBLEM?
+─────────────────────────────────────────────────────────────────────────────
+
+No. Here's what the model did:
+
+  ✅ Generated perfect SQL syntax
+  ✅ Understood "Q2 revenue" correctly
+  ✅ Returned accurate data from the table it queried
+  ❌ BUT picked the wrong table
+
+Even GPT-6 or Claude Opus would likely pick the same wrong table without explicit
+guidance. The model doesn't know your accounting rules. That has to be in the prompt.
+
+Think of it like asking a new hire "what was Q2 revenue?" without telling them
+which system to check. They'd guess. A senior hire would guess too - just more
+expensively.
+
+
+THE FIX
+─────────────────────────────────────────────────────────────────────────────
+
+Update the system prompt to specify: "For revenue, use revenue_recognized table."
+
+Time to deploy:  5 minutes
+Time to test:    10 minutes
+Cost:           $0
+
+The updated prompt is ready at: output/prompt_FIXED.md
+
+
+SHOULD WE UPGRADE TO OPUS/GPT-6?
+─────────────────────────────────────────────────────────────────────────────
+
+No. It won't help. The model is already generating perfect SQL. The issue is
+that we haven't told it which table represents the official source of truth.
+
+That's a prompt engineering problem, not an intelligence problem.
+
+
+IMPACT
+─────────────────────────────────────────────────────────────────────────────
+
+Confirmed:
+  • Board deck Q2 number (needs correction)
+  • Board deck Q1 number also wrong ($4.1M → should be $3.3M)
+
+Potential:
+  • Anyone who asked finbot about revenue since March 2026
+  • Investor updates, planning docs, exec reviews
+  
+Need to audit #ask-finance Slack history.
+
+
+IMMEDIATE ACTION (Before Board Meeting)
+─────────────────────────────────────────────────────────────────────────────
+
+1. Correct board deck:
+   • Q2 revenue: $3.6M (not $4.1M)
+   • Q1 revenue: $3.3M (not $4.1M)
+   • Q2 vs Q1: -11% (not flat)
+
+2. Deploy prompt fix:
+   • Replace prompt.md with output/prompt_FIXED.md
+   • Test: python agent.py "what was Q2 2026 revenue?"
+   • Verify returns ~$3.6M
+
+3. Audit Slack:
+   • Search #ask-finance for revenue queries
+   • Check where else numbers might have been used
+
+
+THIS WEEK
+─────────────────────────────────────────────────────────────────────────────
+
+• Review Q1/Q2 investor materials
+• Check internal planning documents  
+• Set up validation: monthly spot-check finbot vs finance
+
+
+THE GOOD NEWS
+─────────────────────────────────────────────────────────────────────────────
+
+• We caught this before the board meeting
+• The fix is simple and fast
+• The model itself is working fine
+• This won't happen again once the prompt is fixed
+
+
+BOTTOM LINE
+─────────────────────────────────────────────────────────────────────────────
+
+This is a 5-minute prompt fix, not a "we need better AI" problem.
+
+The bot worked exactly as designed. We just didn't design it with enough domain
+knowledge about which database tables to use for official reporting.
+
+
+DELIVERABLES
+─────────────────────────────────────────────────────────────────────────────
+
+All analysis is in output/:
+
+  output/EXEC_SUMMARY.md       ← One-pager with full details
+  output/prompt_FIXED.md       ← Deploy this to fix the issue
+  output/root_cause_analysis.md ← Full technical investigation
+  output/test_finbot_fix.py     ← Verification script
+  output/audit_checklist.md     ← What else to check
+
+See output/README.md for a guide to all files.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RECOMMENDATION: Deploy the prompt fix today. No model upgrade needed.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Questions? See the detailed analysis files or reach out.

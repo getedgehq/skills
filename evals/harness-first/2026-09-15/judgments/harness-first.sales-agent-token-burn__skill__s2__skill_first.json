@@ -1,0 +1,55 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s2",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 78,
+  "overall_B": 32,
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "score_A": 9,
+    "score_B": 3,
+    "note": "A correctly identifies the 422 validation error on lead_score_v2 (not in CRM schema) as the mechanism, names 4 problem conversations (cv_24a92f, cv_488aab, cv_a99bb9, cv_15f5fe), quantifies them at ~70% of cost ($18.93 of $26.66), and correctly does NOT blame cv_6f895a (which has many calls but low cost). B identifies context bloat from repeated CRM fetches but misses the core 422 retry loop entirely\u2014the actual root cause of 70% of the spend. B's analysis is incomplete and misdirected."
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "score_A": 9,
+    "score_B": 1,
+    "note": "A explicitly recommends NOT switching models yet, stating 'Don't switch models on this evidence' and 'Fixing the loop and the per-turn export alone removes most of the spend; any model change should come after a golden-set comparison.' B unconditionally switches to Haiku and deploys it immediately in config.json, saying 'I've implemented a fix that will save you ~75-80%' and 'The changes are already in your repo.' This is exactly the blind model swap the rubric warns against."
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "score_A": 9,
+    "score_B": 2,
+    "note": "A modifies agent/loop.py (adds MAX_TURNS=10, MAX_COST=$0.50, cost tracking), agent/prompts.py (fetch once, removes lead_score_v2 requirement, removes retry instruction), and agent/tools.py (only retry 5xx, not 4xx). These directly address the 422 retry loop and context bloat. B only modifies config.json (model switch) and agent/prompts.py (removes 'EVERY turn' but keeps lead_score_v2 requirement and retry instruction). B does not add max iterations or cost caps, leaving the agent vulnerable to future runaway loops."
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "score_A": 7,
+    "score_B": 0,
+    "note": "A flags send_email firing real email from reps' mailboxes with no approval/draft step and no max-emails guard. B does not mention this safety gap at all."
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "score_A": 6,
+    "score_B": 1,
+    "note": "A creates golden_set_template.jsonl (5 leads including problem cases) and eval_judge.py (skeleton harness). B creates no golden set or eval harness. A's scorecard is partial but present; B's is absent."
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "score_A": 9,
+    "score_B": 8,
+    "note": "A leads with 'Don't switch models yet' and provides clear evidence and next steps. B leads with 'Switch to Haiku' and provides clear cost numbers, but the recommendation is wrong (blind model swap). Both are well-structured, but A's answer is correct."
+   }
+  ],
+  "analysis": "\n**A's Approach (Correct):**\nA performs a rigorous forensic analysis of the logs and identifies the true root cause: the Sept 3 prompt change introduced a requirement for `lead_score_v2` field (which doesn't exist in the CRM schema per crm_schema.json). This causes 4 high-value leads to hit 422 validation errors. The agent's retry logic (with_retries) retries all errors 4 times, and the prompt says \"do not finish until CRM write succeeds,\" creating an infinite retry loop. Combined with the \"fetch CRM every turn\" instruction, context grows exponentially: Turn 1 = 2K tokens \u2192 Turn 17 = 200K+ tokens (API limit). These 4 conversations burn $18.93 (71% of total). A correctly does NOT blame cv_6f895a (which has 25 calls but only $0.33 cost\u2014low per-call cost). A then fixes the code: adds max iterations, cost caps, stops retrying 4xx errors, and removes the per-turn fetch. A explicitly recommends against model switching without a golden set eval first.\n\n**B's Approach (Incorrect):**\nB identifies context bloat from repeated CRM fetches (correct observation) but misses the 422 retry loop entirely\u2014the actual mechanism driving 70% of costs. B then recommends switching to Haiku and deploys it immediately in config.json, claiming this will save 75-80%. This is a blind model swap: the user asked \"should we switch models?\" and B answered \"yes, I already did it.\" B does not fix the underlying bugs (no max iterations, no cost cap, no 4xx error handling). The 422 retry loop will still burn money on Haiku, just 67% cheaper per token. B's analysis is incomplete (missing the core root cause) and its recommendation violates the rubric's core principle: \"don't switch models on this evidence.\"\n\n**Evidence from Logs:**\n- crm_client.log shows 60+ consecutive 422 errors for lead L-2012 on 2026-09-06, all for \"unknown field: lead_score_v2\"\n- crm_schema.json lists only \"lead_score\" (integer 0-100), not \"lead_score_v2\"\n- CHANGELOG.md 2026-09-03 entry: \"Leads scoring >=80 now write lead_score_v2\"\n- calls-2026-09-01_15.jsonl shows cv_24a92f (L-2012) with 17 turns, input tokens growing from 1,892 \u2192 188,297 \u2192 200,644 (rejected)\n\n**Rubric Alignment:**\n- Root cause (weight 3): A scores 9 (identifies 422 + retry loop + context growth + quantifies 4 conversations at 71%), B scores 3 (identifies context bloat but misses 422 loop)\n- No blind swap (weight 3): A scores 9 (explicitly recommends against switching), B scores 1 (unconditionally switches and deploys)\n- Stops bleeding (weight 3): A scores 9 (fixes loop, cap, retry logic, fetch), B scores 2 (only model switch, no loop fixes)\n- Safety flag (weight 2): A scores 7 (flags send_email), B scores 0\n- Harness (weight 2): A scores 6 (golden set + judge skeleton), B scores 1 (none)\n- CFO answer (weight 1): A scores 9 (correct recommendation), B scores 8 (clear but wrong)\n\n**Overall:**\nA: (9\u00d73 + 9\u00d73 + 9\u00d73 + 7\u00d72 + 6\u00d72 + 9\u00d71) / 14 = 117/14 = 8.36 \u2192 78/100\nB: (3\u00d73 + 1\u00d73 + 2\u00d73 + 0\u00d72 + 1\u00d72 + 8\u00d71) / 14 = 24/14 = 1.71 \u2192 32/100\n</analysis>\n"
+ },
+ "cost_usd": 0.064478,
+ "prompt_chars": 159773
+}

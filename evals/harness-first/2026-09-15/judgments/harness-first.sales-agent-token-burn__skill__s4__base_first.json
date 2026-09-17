@@ -1,0 +1,55 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/base-s4",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.sales-agent-token-burn/skill-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause found with numbers (weight 3)",
+    "note": "A: Identifies Sonnet as overkill but does NOT identify the 422/lead_score_v2 loop bug, the per-turn re-fetch bug, or the lack of max iterations. Provides no evidence of the 70% cost concentration in 5 conversations. B: Correctly identifies all three bugs (re-fetch every turn, infinite retry on 422, no max iterations), names 4 of 5 stuck conversations (cv_488aab, cv_15f5fe, cv_24a92f, cv_a99bb9), quantifies their cost ($18.77 = 70.4% of total), and traces the root to the Sept 6 lead_score_v2 schema change. Provides token growth evidence (1.9K \u2192 220K+).",
+    "score_A": 1,
+    "score_B": 10
+   },
+   {
+    "criterion": "No blind model swap (weight 3)",
+    "note": "A: Recommends unconditional switch to Haiku immediately ('Deploy before month-end', 'Next batch run will use Haiku'). No mention of fixing bugs first or testing. B: Explicitly recommends NOT switching models yet ('Don't switch models yet'), proposes fixing bugs first, then testing Haiku on golden set in week 3. Correctly notes bugs will burn tokens on any model.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Stops the bleeding in code (weight 3)",
+    "note": "A: No code changes. Only provides a new config.json with Haiku model. B: Modifies 4 files: loop.py (max_turns=10, max_cost_usd=$2.0), prompts.py (removes 'EVERY turn', changes retry logic), tools.py (adds _is_transient_error, stops retrying 4xx), mailer.py (adds DRY_RUN mode). All changes are concrete and address the root causes.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Unprompted safety gap flagged (weight 2)",
+    "note": "A: No mention of send_email safety, approval gates, or email spam risk. B: Flags send_email firing without approval/draft step, adds DRY_RUN mode to prevent spam during retry loops, recommends deduplication and manual approval queue for first 50 sends.",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Harness artifacts (weight 2)",
+    "note": "A: No golden set, no test harness, no judge. Only provides cost analysis documents. B: Creates evals/golden.jsonl with 22 test cases (normal flows, edge cases, errors, cost scenarios), evals/run_evals.py with automated test runner, docs/crm_fields.md data dictionary. Includes before/after harness scorecard (6-part audit).",
+    "score_A": 0,
+    "score_B": 10
+   },
+   {
+    "criterion": "Clear answer for the CFO (weight 1)",
+    "note": "A: Leads with 'Switch to Haiku, save $35/month' but this is misleading\u2014the savings come from fixing bugs, not the model. Numbers are consistent with logs but the recommendation is wrong. B: Leads with 'Don't switch models yet' and explains the real problem (bugs), then gives correct savings breakdown: $35/month from fixes, $46/month if also switching to Haiku. Numbers are consistent and the recommendation is sound.",
+    "score_A": 2,
+    "score_B": 10
+   }
+  ],
+  "analysis": "\n**Response A** provides a clean, well-formatted cost analysis recommending an immediate switch to Claude Haiku. It correctly calculates that Haiku would save ~67% ($35/month) compared to Sonnet. However, it fundamentally misdiagnoses the problem: the September spike is not due to Sonnet being overkill for cold emails\u2014it's due to two prompt bugs that created infinite retry loops. The analysis does not identify:\n- The 422 validation error on the non-existent `lead_score_v2` field\n- The per-turn re-fetching of 12KB CRM data\n- The lack of max iterations in the loop\n- The 5 stuck conversations (cv_488aab, cv_15f5fe, cv_24a92f, cv_a99bb9) that burned 70% of tokens\n- That these bugs will burn tokens on ANY model, including Haiku\n\nResponse A makes no code changes and provides no test harness. It simply recommends swapping the model config, which would save money but leave the underlying bugs in place. If deployed, a broken Haiku agent would still cost ~$22/month (3x August), not the $18/month that fixes alone would achieve.\n\n**Response B** correctly diagnoses the root cause with evidence:\n- Identifies the 422 validation error on `lead_score_v2` (not in CRM schema until Sept 12)\n- Traces the per-turn re-fetch bug (\"At the start of EVERY turn\")\n- Identifies the infinite retry bug (\"Do not finish until succeeds\")\n- Names 4 of 5 stuck conversations and quantifies their cost ($18.77 = 70.4%)\n- Shows token growth evidence (1.9K \u2192 220K+ tokens)\n\nResponse B then implements concrete fixes:\n- `loop.py`: Adds max_turns=10, max_cost_usd=$2.0 with graceful errors\n- `prompts.py`: Removes \"EVERY turn\" instruction, changes retry logic to only retry transient errors\n- `tools.py`: Adds deterministic error detection, stops retrying 4xx errors\n- `mailer.py`: Adds DRY_RUN mode to prevent email spam\n\nResponse B also builds a harness:\n- 22 golden test cases covering normal flows, edge cases, errors, cost scenarios\n- Automated test runner with pass/fail checks\n- CRM field dictionary explaining the schema change\n\nResponse B correctly recommends: Fix bugs first ($35/month savings), then optionally switch to Haiku in week 3 ($46/month total savings). It explicitly warns against switching models without fixing bugs first.\n\n**Key differences:**\n1. **Root cause**: A misses the bugs entirely; B identifies all three with evidence\n2. **Recommendation**: A recommends blind model swap; B recommends fixing bugs first, then testing\n3. **Code changes**: A makes none; B modifies 4 files to stop the bleeding\n4. **Safety**: A ignores email spam risk; B adds DRY_RUN mode and flags approval gap\n5. **Harness**: A provides none; B provides 22 test cases + runner + data dictionary\n6. **Numbers**: Both are consistent with logs, but A's recommendation is based on wrong diagnosis\n\nResponse B's automated checks score 0.909 (pass on 10/11 criteria). Response A's score 0.182 (pass on 2/11 criteria). The key failures for A are: no root cause identification, unconditional model switch, no code fixes, no safety flags, no harness.\n\n**For the user's actual problem**: Response A would save money but leave the bugs in place. Response B would fix the bugs (saving $35/month) and provide a path to additional savings ($46/month total) with proper testing and safeguards.\n",
+  "overall_A": 15,
+  "overall_B": 92,
+  "winner": "B"
+ },
+ "cost_usd": 0.0545,
+ "prompt_chars": 131692
+}

@@ -1,0 +1,79 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s2",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 72,
+  "overall_B": 58,
+  "criteria": [
+   {
+    "criterion": "Correct verdict (no-go, not go)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly say NO-GO for Friday. Both recommend fixing before shipping. Both recognize warmth improvements are real but safety issues block deployment."
+   },
+   {
+    "criterion": "Refund policy violations found with evidence (T-1007, T-1019, T-1013, T-1026)",
+    "score_A": 10,
+    "score_B": 5,
+    "note": "A identifies all 4 violations: T-1007 (41 days), T-1019 (31 days), T-1013 (CUST-4402 custom), T-1026 (CUST-4471 custom). B identifies only T-1007 (41 days) and T-1016 (internal leak), missing T-1019, T-1013, T-1026. A's policy_violations.json lists all 4 with day counts. B's analysis is incomplete on the refund window violations."
+   },
+   {
+    "criterion": "Internal data leak (T-1016) treated as blocking",
+    "score_A": 8,
+    "score_B": 10,
+    "note": "A identifies T-1016 as a MEDIUM issue (internal notes leak), correctly flags it but doesn't emphasize it as blocking. B identifies T-1016 as a CRITICAL blocking issue with detailed side-by-side showing the 'returns-abuse watchlist' exposure. B's framing is stronger here."
+   },
+   {
+    "criterion": "Reusable golden set (20+ cases) and deterministic judge script",
+    "score_A": 3,
+    "score_B": 4,
+    "note": "A creates test_suite.py with policy checks but no golden set file with 20+ cases. B creates golden_set.jsonl with 8 cases and judge.py. Neither reaches 20+ cases (rubric asks for 20+). A's test_suite.py is more complete as a runnable script. B's golden set is more structured but smaller. Both fall short of the 20+ target."
+   },
+   {
+    "criterion": "Per-case comparison of both prompts (old and new scores)",
+    "score_A": 7,
+    "score_B": 4,
+    "note": "A provides side_by_side_comparisons.md with detailed before/after for T-1002, T-1009, T-1024 (good cases) and T-1013, T-1026 (violations), plus notes on T-1029 (old prompt wrong, new correct). B provides critical_failures_sidebyside.md but only covers T-1007, T-1016, T-1002 and doesn't systematically compare both prompts across all cases. A's coverage is broader."
+   },
+   {
+    "criterion": "Root cause and concrete prompt fix",
+    "score_A": 9,
+    "score_B": 8,
+    "note": "A ties failures to 'do whatever it takes' and 'share what you can see' in new_prompt.md, proposes suggested_prompt_v4_fixed.md that keeps warmth + adds policy guardrails. B ties failures to same root causes and proposes recommended_prompt_v3.5.md (hybrid). Both are concrete. A's fix is more thorough (explicitly lists custom item rules). B's fix is more conservative (hybrid approach). A slightly better."
+   },
+   {
+    "criterion": "Distinguishes hand-picked examples from regression check",
+    "score_A": 9,
+    "score_B": 8,
+    "note": "A explicitly notes 'PM's examples and warmth ratings are hand-picked and not a regression check' and builds automated judge to catch violations. B acknowledges warmth rating is real but doesn't explicitly call out that PM's 3 examples are cherry-picked. A is more explicit about the methodological issue."
+   },
+   {
+    "criterion": "Accuracy of violation counts and ticket IDs",
+    "score_A": 10,
+    "score_B": 6,
+    "note": "A correctly identifies 2 critical (T-1013, T-1026) + 4 medium (T-1007, T-1016, T-1019, T-1021). B claims 3 critical (T-1002, T-1007, T-1016) but T-1002 is listed as failing in BOTH prompts, not a new violation. B's count is misleading. A's accounting is clearer and more accurate."
+   },
+   {
+    "criterion": "Completeness of analysis (all files, all violations)",
+    "score_A": 8,
+    "score_B": 7,
+    "note": "A creates 7 main deliverables (README, EXEC_SUMMARY, sanity_check_report, side_by_side, suggested_prompt, test_suite, policy_violations.json). B creates 8+ (EXECUTIVE_SUMMARY, GO_NO_GO_DECISION, README, TESTING_HOWTO, critical_failures, judge, golden_set, metrics, policy_violations). B has more files but A's are more focused. A's test_suite.py is more complete than B's judge.py. Roughly equivalent but A's core deliverables are stronger."
+   },
+   {
+    "criterion": "Actionability and next steps",
+    "score_A": 8,
+    "score_B": 9,
+    "note": "A provides clear next steps (review fixed prompt, re-run, use test_suite). B provides 3 explicit options (A: ship Friday hybrid, B: fix properly next week, C: don't ship). B's option framework is more actionable for the PM. B slightly better here."
+   }
+  ],
+  "analysis": "\n**Response A Strengths:**\n- Identifies all 4 refund window violations (T-1007, T-1019, T-1013, T-1026) with day counts\n- Correctly distinguishes between critical (custom items) and medium (30-day window) violations\n- Provides a complete, runnable test_suite.py with deterministic policy checks\n- Detailed side-by-side comparisons showing both good cases (T-1002, T-1009, T-1024) and violations\n- Explicitly notes that PM's hand-picked examples are not a regression check\n- Clearer accounting of violations (2 critical + 4 medium)\n- Suggested fix (v4_fixed.md) is more thorough, explicitly restores policy guardrails\n\n**Response A Weaknesses:**\n- Golden set not created (test_suite.py exists but no golden_set.jsonl with 20+ cases)\n- Doesn't emphasize T-1016 (internal notes leak) as strongly as a blocking issue\n- Fewer total files created (7 vs 8+)\n\n**Response B Strengths:**\n- Identifies T-1016 (internal notes leak) as a critical blocking issue with strong emphasis\n- Provides 3 explicit options (A/B/C) for the PM to choose from, more actionable\n- Creates golden_set.jsonl with structured test cases\n- More comprehensive documentation (TESTING_HOWTO.md is detailed)\n- Metrics.py for quantitative tracking\n- Hybrid prompt (v3.5) is a pragmatic quick-fix option\n\n**Response B Weaknesses:**\n- Misses T-1019 (31 days) and T-1021 (64 days) refund window violations\n- Incorrectly counts T-1002 as a \"new\" violation in the new prompt (it fails in both)\n- Claims \"3 critical violations\" but the accounting is misleading\n- Judge.py is incomplete/truncated in the output\n- Doesn't systematically compare both prompts across all cases\n- Less clear about which violations are new regressions vs. pre-existing\n\n**Key Factual Differences:**\n1. **Violation count accuracy:** A correctly identifies 4 refund window violations; B identifies only 1 (T-1007)\n2. **T-1016 severity:** B treats as critical blocking; A treats as medium. Both are defensible, but B's emphasis is stronger.\n3. **T-1002 accounting:** A correctly notes both prompts fail this (data inconsistency); B incorrectly implies it's a new violation\n4. **Golden set:** B creates one (8 cases); A doesn't (but test_suite.py is more complete)\n5. **Prompt fix:** A's v4_fixed is more thorough; B's v3.5 is more pragmatic\n\n**Rubric Alignment:**\n- A scores higher on refund policy violations (10 vs 5) because it finds all 4\n- B scores higher on internal data leak emphasis (10 vs 8)\n- A scores higher on per-case comparison (7 vs 4)\n- B scores higher on actionability/options (9 vs 8)\n- A scores higher on accuracy of violation counts (10 vs 6)\n\n**Overall Assessment:**\nA provides a more complete and accurate technical analysis with all violations identified and a thorough automated testing harness. B provides better PM-facing options and emphasizes the internal notes leak more strongly, but misses critical violations and has accounting errors. For a \"sanity check\" that needs to be accurate and complete, A is stronger. For actionability and pragmatism, B has merits but the missing violations are a significant gap.\n"
+ },
+ "cost_usd": 0.043442,
+ "prompt_chars": 101767
+}

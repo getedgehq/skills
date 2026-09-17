@@ -1,0 +1,70 @@
+{
+ "attempt_id": "harness-first.sales-agent-token-burn:skill:s2",
+ "task_id": "harness-first.sales-agent-token-burn",
+ "skill": "harness-first",
+ "arm": "skill",
+ "sample": 2,
+ "status": "done",
+ "turns": 36,
+ "cost_usd": 0.9916535999999999,
+ "usage": {
+  "inputTokens": 217,
+  "outputTokens": 25485,
+  "cacheReadInputTokens": 811267,
+  "cacheWriteInputTokens": 97426
+ },
+ "skill_read": true,
+ "skill_file_reads": [
+  {
+   "tool": "read_file",
+   "args": "{\"path\": \"/home/user/.skills/harness-first/SKILL.md\"}"
+  }
+ ],
+ "tool_calls": 40,
+ "tool_errors": 1,
+ "system_prompt": "You are an AI assistant with access to a Linux computer through tools. The user's files are in /home/user/work, which is your current working directory.\n\nComplete the user's request end to end: do the actual work with the tools, save deliverables as files when a file is the natural output, and finish with a reply to the user in chat. The user is not available for follow-up questions during the task; if something is ambiguous or missing, make a sensible call and say so, or explain clearly what blocks you.\n\nEnvironment: Debian Linux, Python 3.11, Node 20, git, jq, curl, ImageMagick. Internet access is available (pip/npm/apt installs work). Today's date is 2026-09-15.\n\n<available_skills>\n<skill>\n<name>harness-first</name>\n<description>Diagnose and fix an unreliable, expensive, or unsafe LLM agent by auditing its harness (golden set, judge, cost caps, data layer, action approvals, tracing) before blaming or swapping the model. Use when someone says an agent is \"burning tokens\", \"hallucinating\", \"brittle\", gives inconsistent answers, asks whether to switch to a cheaper/better model, or wants to ship an agent or prompt change to customers.</description>\n<location>/home/user/.skills/harness-first/SKILL.md</location>\n</skill>\n</available_skills>\n\nSkills are folders of expert instructions, scripts, and resources. When a user's request matches a skill's description, read that skill's SKILL.md with read_file before starting, then follow it, using any bundled files it references.",
+ "sandbox_id": "[SANDBOX]",
+ "setup_s": 12.2,
+ "followups": [],
+ "max_prompt_tokens": 51321,
+ "stop": "end_turn",
+ "final_message": "Perfect! Everything is complete. Let me create one final user-friendly summary:\n\n---\n\n## Summary\n\n**Don't switch models yet.** Your agent isn't using the wrong model\u2014it has 3 code bugs that burned 92% of the September budget ($24.54 of $26.66).\n\n### What I Found\n\nFrom analyzing your logs (245 API calls, 46 conversations Sept 1-15):\n\n1. **Retry loop on validation errors (71% of cost, $18.93):** 4 leads with scores \u226580 hit CRM validation errors because `lead_score_v2` field doesn't exist. The agent retried 14-16 times each, eventually hitting the 200K token limit.\n\n2. **Excessive CRM fetching (21% of cost, $5.61):** Prompt says \"fetch CRM data EVERY turn.\" Each fetch is 30-40KB (~10K tokens). This caused exponential token growth.\n\n3. **No max iterations (8% of cost, $2.12):** Unbounded `while True` loop with no cost cap.\n\nAll three bugs came from the Sept 3 prompt changes in your `CHANGELOG.md`.\n\n### What I Fixed\n\n**\u2705 Already fixed your code** in `agent/loop.py`, `agent/prompts.py`, and `agent/tools.py`:\n\n- Added max 10 turns per conversation\n- Added $0.50 cost cap per conversation\n- Only retry 5xx server errors, not 4xx validation errors\n- Changed prompt to fetch CRM once (not every turn)\n- Removed `lead_score_v2` requirement until CRM schema is updated\n\n### Expected Savings\n\n| Period | Before Fix | After Fix | Savings |\n|--------|-----------|-----------|---------|\n| Sept 1-15 | $26.66 | $3.08 | $23.58 (88%) |\n| Monthly | $53.32 | $6.16 | $47.16 (88%) |\n\n**You'll be back to August costs (~$6-7/month) with the same model.**\n\n### About Switching Models\n\nOnce fixes are deployed, here's what different models would cost:\n\n- **claude-sonnet-4-5** (current): $7.24/month\n- **claude-haiku-4-5** (drop-in): $2.41/month (-67%)\n- **gpt-5-mini**: $1.13/month (-84%, needs new SDK)\n\n**Recommendation:** Deploy these fixes first. Then, if you want to save another $5/month, build a golden evaluation set and test Haiku vs Sonnet quality before switching.\n\n### Files for You\n\nEverything is in `output/`:\n\n**Start here:**\n- `EXECUTIVE_SUMMARY.txt` - Formal report (5 min)\n- `QUICK_ANSWER.md` - Direct answer to your question (2 min)\n- `cost_breakdown.txt` - Visual breakdown (3 min)\n\n**Details:**\n- `cost_analysis.md` - Complete forensics with evidence\n- `fixes_applied.md` - Code changes explained\n- `agent_fixes.patch` - Git diff\n\n**Testing:**\n- `golden_set_template.jsonl` - Starter eval set\n- `eval_judge.py` - Eval harness skeleton\n\n### Next Steps\n\n1. **Review and deploy** the fixes (code is already updated in `agent/`)\n2. **Test with problem leads:** L-2012, L-3419, L-3032, L-2437 should now fail gracefully instead of burning $4+ each\n3. **Fix CRM schema:** Either add `lead_score_v2` field or keep using `lead_score` for all leads\n4. **Monitor for a week:** Daily costs should drop from ~$1.75 to ~$0.40\n\nThen, if you want to optimize further with Haiku, build a proper eval set first.",
+ "agent_wall_s": 1312.9,
+ "model_wait_s": 1303.4,
+ "tool_s": 9.5,
+ "changed_files": [
+  "agent/loop.py",
+  "agent/prompts.py",
+  "agent/tools.py",
+  "output/EXECUTIVE_SUMMARY.txt",
+  "output/FILE_INDEX.md",
+  "output/QUICK_ANSWER.md",
+  "output/README.md",
+  "output/agent_fixes.patch",
+  "output/cost_analysis.md",
+  "output/cost_breakdown.txt",
+  "output/eval_judge.py",
+  "output/fixes_applied.md",
+  "output/golden_set_template.jsonl"
+ ],
+ "deleted_files": [],
+ "total_wall_s": 1327.8,
+ "check": {
+  "pass": false,
+  "score": 0.727,
+  "details": [
+   "PASS retry-loop mechanism on the 422 / lead_score_v2 write identified",
+   "PASS dominating conversations named (>=3 of 4 ids) or their ~70% share quantified",
+   "PASS noisy cv_6f895a not blamed as the main cost driver",
+   "FAIL does not recommend an unconditional model switch (fix/eval first)",
+   "FAIL flags send_email firing without approval",
+   "PASS max-iterations / cost cap enforced (behavioral={'calls': 3, 'terminated': True, 'inconclusive': False, 'exc': None})",
+   "PASS root field named: lead_score_v2 not in CRM schema",
+   "PASS per-conversation numbers for the loop conversations (>=3)",
+   "PASS full account export re-sent every turn identified",
+   "PASS stops retrying non-transient errors (retry only 429/5xx)",
+   "FAIL golden set with >=10 cases written",
+   "unconditional switch: ['You asked about switching to a cheaper model.']"
+  ]
+ }
+}

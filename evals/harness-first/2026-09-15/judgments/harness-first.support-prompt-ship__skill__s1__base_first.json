@@ -1,0 +1,55 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s1",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s1",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "B",
+  "overall_A": 72,
+  "overall_B": 88,
+  "criteria": [
+   {
+    "criterion": "correct verdict (weight 3)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly say NO-GO for Friday. Both identify the core issue: new prompt breaks policy. Both recommend fixing before shipping."
+   },
+   {
+    "criterion": "refund policy violations found with evidence (weight 3)",
+    "score_A": 10,
+    "score_B": 8,
+    "note": "A identifies all 4 violations (T-1007, T-1013, T-1019, T-1026) with day counts and financial impact. B identifies only 3 of 4 (missing T-1026, the second custom item). A also correctly notes T-1022 (day 30) is not flagged. B does not explicitly verify the day-30 boundary."
+   },
+   {
+    "criterion": "internal data leak treated as blocking (weight 3)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both flag T-1016 (watchlist leak) as critical. A calls it 'legal/PR time bomb'. B calls it 'potential dispute escalation'. Both treat it as blocking."
+   },
+   {
+    "criterion": "reusable golden set and deterministic judge (weight 2)",
+    "score_A": 4,
+    "score_B": 9,
+    "note": "A creates policy_checker.py but it is incomplete/truncated in the output and was not successfully run. B creates judge.py (complete, runnable) and golden_set.jsonl (20 cases with pass/fail rules). B actually runs the judge on both old and new outputs, producing eval_old.txt and eval_new.txt. A's checker was attempted but failed to execute."
+   },
+   {
+    "criterion": "per-case comparison of both prompts (weight 2)",
+    "score_A": 7,
+    "score_B": 8,
+    "note": "A provides side_by_side_comparison.md with examples but does not show systematic per-case scores for both prompts. B provides eval_old.txt and eval_new.txt showing ticket-by-ticket results (old: 18/20 pass, new: 14/20 pass). B also notes old prompt misses (T-1011 escalation, T-1029 custom defect) in harness_scorecard.md."
+   },
+   {
+    "criterion": "root cause and concrete prompt fix (weight 2)",
+    "score_A": 9,
+    "score_B": 9,
+    "note": "Both tie the failures to new_prompt.md dropping policy constraints and adding 'do whatever it takes'. A provides fix_diff.md with before/after and example responses. B provides new_prompt_v4.1_fixed.md with similar structure. Both propose concrete fixes that preserve warmth. Both note PM's examples are hand-picked, not regression checks."
+   }
+  ],
+  "analysis": "**Response A Strengths:**\n- Identifies all 4 refund violations (including T-1026, the second custom item)\n- Comprehensive documentation (11 files, ~50 pages)\n- Detailed ACTION_PLAN.md with red-team test cases and deployment checklist\n- Correctly notes T-1022 (day 30) is not a violation\n- Extensive narrative explanation of root causes and fixes\n\n**Response A Weaknesses:**\n- policy_checker.py is incomplete/truncated and was not successfully executed\n- No actual judge output showing per-case results for both prompts\n- No golden set file with explicit pass/fail criteria\n- Automation tool (policy_checker.py) is not runnable as delivered\n- More verbose; some files are redundant (multiple summaries)\n\n**Response B Strengths:**\n- Delivers a complete, runnable judge.py that was successfully executed\n- Creates golden_set.jsonl with 20 test cases and explicit pass/fail rules\n- Produces eval_old.txt and eval_new.txt showing systematic per-case results\n- Judge output clearly shows old prompt: 18/20 pass (90%), new: 14/20 pass (70%)\n- Automation is immediately usable and integrated into CI/CD workflow\n- Harness scorecard audit (6 components) provides structured root cause analysis\n- More concise; focused on actionable tools\n\n**Response B Weaknesses:**\n- Identifies only 3 of 4 refund violations (missing T-1026, the second custom item)\n- Does not explicitly verify T-1022 (day 30) boundary\n- Slightly less detailed narrative on some edge cases\n- Fewer files overall (though higher quality/utility)\n\n**Critical Difference:**\nThe rubric weights automation (golden set + judge) at 2 points and per-case comparison at 2 points. Response A attempted but failed to deliver working automation. Response B delivered working automation that was actually run and produced measurable results. This is a significant practical difference: B's tools can be used immediately; A's cannot.\n\nHowever, A's identification of all 4 violations (vs B's 3) is also significant, as the rubric weights refund violations at 3 points. A caught T-1026 (custom bookshelf, CUST-4471); B did not explicitly flag this in the violations list, though it may be in the golden set.\n\n**Verdict:** B edges out A due to delivering working, tested automation that can prevent future violations. A has slightly better violation detection but fails on the automation requirement. The working judge.py and golden_set.jsonl are more valuable than comprehensive documentation that includes a non-functional tool."
+ },
+ "cost_usd": 0.044522,
+ "prompt_chars": 113045
+}

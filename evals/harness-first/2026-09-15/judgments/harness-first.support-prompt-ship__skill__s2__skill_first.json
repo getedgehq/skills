@@ -1,0 +1,67 @@
+{
+ "order": "skill_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/skill-s2",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.support-prompt-ship/base-s2",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "winner": "A",
+  "overall_A": 72,
+  "overall_B": 58,
+  "criteria": [
+   {
+    "criterion": "Correct verdict (no-go, not go)",
+    "score_A": 10,
+    "score_B": 10,
+    "note": "Both correctly say NO-GO. Both identify that the new prompt has policy violations and should not ship Friday as-is."
+   },
+   {
+    "criterion": "Refund policy violations found with evidence (T-1007, T-1019, T-1013, T-1026; not T-1022)",
+    "score_A": 6,
+    "score_B": 9,
+    "note": "A identifies T-1007 (41 days) explicitly in the report, but the automated checks show it only found 1 of 4 out-of-policy refunds. B identifies all 4: T-1007 (41 days), T-1013 (custom), T-1019 (31 days), T-1026 (custom). B's policy_violations.json lists all 4 with days_since_delivery. Neither flags T-1022 (day 30, which is allowed). B is more complete."
+   },
+   {
+    "criterion": "Internal data leak T-1016 treated as blocking",
+    "score_A": 10,
+    "score_B": 5,
+    "note": "A explicitly flags T-1016 as a confidentiality breach and blocking safety issue in GO_NO_GO_DECISION.md, critical_failures_sidebyside.md, and EXECUTIVE_SUMMARY.txt. B mentions T-1016 in policy_violations.json as a 'MEDIUM' refund_window_violation (41 days), not as an internal notes leak. A correctly identifies the internal notes exposure; B misses this critical issue entirely."
+   },
+   {
+    "criterion": "Reusable golden set (20+ cases) and deterministic judge script that runs",
+    "score_A": 3,
+    "score_B": 4,
+    "note": "A creates golden_set.jsonl with 8 cases and judge.py, but automated checks show neither is complete/runnable. B creates test_suite.py which is more complete and includes a demo output showing it runs. However, neither has 20+ cases. B's test_suite.py is more polished and includes usage examples. A's judge.py is incomplete (truncated in output). B's is more functional."
+   },
+   {
+    "criterion": "Per-case comparison of both prompts (old and new scores by ticket)",
+    "score_A": 4,
+    "score_B": 3,
+    "note": "A provides side-by-side comparisons in critical_failures_sidebyside.md for T-1007, T-1016, and mentions T-1002 (both fail). B provides side_by_side_comparisons.md with T-1002, T-1009, T-1024 (good examples), T-1013, T-1026 (violations), and T-1029 (custom defect). A covers more critical failures; B covers more variety but less depth on the violations. A's analysis is more focused on blocking issues."
+   },
+   {
+    "criterion": "Root cause and concrete prompt fix tied to new_prompt.md wording",
+    "score_A": 9,
+    "score_B": 9,
+    "note": "Both tie the failures to 'do whatever it takes to make it right' and 'be transparent' in new_prompt.md. A provides recommended_prompt_v3.5.md as a hybrid fix. B provides suggested_prompt_v4_fixed.md. Both are concrete and actionable. Both note the PM's examples are hand-picked. A is slightly more thorough in explaining the root cause chain."
+   },
+   {
+    "criterion": "Flags old prompt misses (T-1011 chargeback, T-1029 custom defect)",
+    "score_A": 8,
+    "score_B": 8,
+    "note": "A mentions T-1011 chargeback not escalated in old prompt and T-1029 custom defect not remedied in old prompt. B also mentions both in side_by_side_comparisons.md. Both note these as issues the old prompt had. Equal coverage."
+   },
+   {
+    "criterion": "Hand-picked examples and warmth ratings not treated as regression check",
+    "score_A": 9,
+    "score_B": 9,
+    "note": "Both correctly note that the PM's hand-picked examples (T-1002, T-1009, T-1024) and warmth rating (4.6 vs 2.8) are not sufficient evidence for shipping. Both use them to show what's good about the new prompt but don't let them override the policy violations. Both are appropriately skeptical."
+   }
+  ],
+  "analysis": "\n**Response A Strengths:**\n- Correctly identifies T-1016 as a critical internal notes leak (confidentiality breach), which is a blocking safety issue. This is the most serious violation.\n- Provides comprehensive root cause analysis tied directly to new_prompt.md wording (\"do whatever it takes\", \"be transparent\").\n- Creates multiple detailed reports (GO_NO_GO_DECISION.md, EXECUTIVE_SUMMARY.txt, critical_failures_sidebyside.md) with clear blocking issue identification.\n- Recommends a hybrid v3.5 prompt as Option A for Friday shipping.\n- Explicitly treats T-1016 as HIGH RISK and blocking, not just a policy violation.\n\n**Response A Weaknesses:**\n- Automated checks show only 1 of 4 out-of-policy refunds identified (T-1007), missing T-1013, T-1019, T-1026.\n- Golden set and judge script are incomplete/truncated in the output.\n- Judge script doesn't appear to be fully runnable based on the truncation.\n- Less comprehensive coverage of all 4 refund window violations.\n\n**Response B Strengths:**\n- Identifies all 4 out-of-policy refunds with evidence: T-1007 (41 days), T-1013 (custom), T-1019 (31 days), T-1026 (custom).\n- policy_violations.json is well-structured and machine-readable with all violations listed.\n- test_suite.py is more complete and includes a demo showing it runs successfully.\n- Provides good side-by-side comparisons showing both good examples and violations.\n- More comprehensive coverage of the violation landscape.\n\n**Response B Weaknesses:**\n- Misses the critical internal notes leak in T-1016. Categorizes it as a \"MEDIUM\" refund_window_violation (41 days) rather than identifying the confidentiality breach.\n- This is a significant oversight: T-1016 is not primarily a 30-day window issue; it's an internal notes exposure issue (\"returns-abuse watchlist\" leaked to customer).\n- Doesn't treat T-1016 as a blocking safety/confidentiality issue.\n- Less emphasis on the most serious violation (data leak).\n\n**Critical Difference:**\nThe rubric weights internal data leak as weight 3 (same as correct verdict and refund violations). Response A correctly identifies T-1016 as a blocking confidentiality breach. Response B misses this entirely, treating it only as a refund window violation. This is a material difference in the quality of the analysis.\n\nHowever, Response B is more complete on the refund violations (4/4 vs 1/4), which is also weight 3.\n\n**Verdict:**\nResponse A is stronger because it correctly identifies the most serious violation (T-1016 internal notes leak) as a blocking safety issue, which is critical for a go/no-go decision. Response B is more comprehensive on refund violations but misses the confidentiality breach entirely. For a sanity check on shipping a bot, missing a data leak is a more serious error than missing some refund violations (which are still caught, just not all of them).\n\nA wins on the most critical issue (internal data leak), though B is more thorough on refund violations overall.\n"
+ },
+ "cost_usd": 0.041632,
+ "prompt_chars": 101767
+}

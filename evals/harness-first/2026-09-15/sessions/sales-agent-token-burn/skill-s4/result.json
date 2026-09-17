@@ -1,0 +1,73 @@
+{
+ "attempt_id": "harness-first.sales-agent-token-burn:skill:s4",
+ "task_id": "harness-first.sales-agent-token-burn",
+ "skill": "harness-first",
+ "arm": "skill",
+ "sample": 4,
+ "status": "done",
+ "turns": 40,
+ "cost_usd": 1.03676775,
+ "usage": {
+  "inputTokens": 240,
+  "outputTokens": 30230,
+  "cacheReadInputTokens": 770705,
+  "cacheWriteInputTokens": 93703
+ },
+ "skill_read": true,
+ "skill_file_reads": [
+  {
+   "tool": "read_file",
+   "args": "{\"path\": \"/home/user/.skills/harness-first/SKILL.md\"}"
+  }
+ ],
+ "tool_calls": 44,
+ "tool_errors": 1,
+ "system_prompt": "You are an AI assistant with access to a Linux computer through tools. The user's files are in /home/user/work, which is your current working directory.\n\nComplete the user's request end to end: do the actual work with the tools, save deliverables as files when a file is the natural output, and finish with a reply to the user in chat. The user is not available for follow-up questions during the task; if something is ambiguous or missing, make a sensible call and say so, or explain clearly what blocks you.\n\nEnvironment: Debian Linux, Python 3.11, Node 20, git, jq, curl, ImageMagick. Internet access is available (pip/npm/apt installs work). Today's date is 2026-09-15.\n\n<available_skills>\n<skill>\n<name>harness-first</name>\n<description>Diagnose and fix an unreliable, expensive, or unsafe LLM agent by auditing its harness (golden set, judge, cost caps, data layer, action approvals, tracing) before blaming or swapping the model. Use when someone says an agent is \"burning tokens\", \"hallucinating\", \"brittle\", gives inconsistent answers, asks whether to switch to a cheaper/better model, or wants to ship an agent or prompt change to customers.</description>\n<location>/home/user/.skills/harness-first/SKILL.md</location>\n</skill>\n</available_skills>\n\nSkills are folders of expert instructions, scripts, and resources. When a user's request matches a skill's description, read that skill's SKILL.md with read_file before starting, then follow it, using any bundled files it references.",
+ "sandbox_id": "[SANDBOX]",
+ "setup_s": 8.3,
+ "followups": [],
+ "max_prompt_tokens": 49283,
+ "stop": "end_turn",
+ "final_message": "Perfect! Now let me create a final summary for the user:\n\n---\n\n## Done! Here's what I found and fixed:\n\n**TL;DR: Don't switch models yet.** Your September spike isn't a model problem\u2014it's two prompt bugs that caused 5 conversations (11% of volume) to burn 70% of your tokens in infinite retry loops. I've fixed the bugs and built a test harness. **Deploy these fixes first and you'll save $35/month (67%). Then consider switching to Haiku for another $11/month.**\n\n---\n\n### The Root Cause (with evidence)\n\nI analyzed your Sept 1-15 trace logs (241 model calls, 46 conversations, $26.66):\n\n**Bug #1:** Your prompt says *\"At the start of EVERY turn, call crm_get_account\"*  \n\u2192 Agent re-fetches 12KB CRM data each turn, growing context linearly: 2K \u2192 15K \u2192 28K \u2192 40K tokens\n\n**Bug #2:** Your prompt says *\"Do not finish until the CRM update has succeeded. If a tool call fails, try it again.\"*  \n\u2192 Agent retries 422 validation errors (permanent failures) infinitely\n\n**Bug #3:** No max iterations in `loop.py`  \n\u2192 Conversations run until model gives up or hits 200K context limit\n\n**Trigger:** Sept 6 CRM added `lead_score_v2` field but didn't provision it until Sept 12  \n\u2192 Result: 236 failed writes with 422 errors, each triggering infinite retries\n\n**Impact:** 5 stuck conversations cost $18.77 (70% of total), with 15-26 turns each instead of normal 3-4 turns.\n\n---\n\n### What I Fixed\n\n**Modified your code (4 files in agent/):**\n1. **`loop.py`** - Added max 10 turns, $2 cost cap per conversation, graceful errors\n2. **`prompts.py`** - Changed \"EVERY turn\" \u2192 \"call once\", removed infinite retry instruction  \n3. **`tools.py`** - 4xx errors (permanent) don't retry, only 5xx/429 (transient)\n4. **`mailer.py`** - Added DRY_RUN mode to prevent email spam during testing\n\n**Built test harness (new files):**\n5. **`evals/golden.jsonl`** - 22 test cases from your real Sept incidents\n6. **`evals/run_evals.py`** - Automated test runner with pass/fail checks\n7. **`docs/crm_fields.md`** - CRM field dictionary explaining the Sept 6 change\n\n**Created documentation (in output/):**\n- `executive_summary.md` - One-page for leadership\n- `quick_fixes.md` - Step-by-step deploy guide\n- `cost_analysis.md` - Full technical analysis with evidence\n- `harness_scorecard.md` - Six-part harness audit\n- `sept_cost_breakdown.txt` - Detailed cost numbers\n\n---\n\n### The Numbers\n\n| Scenario | Est. Sept Cost | Savings |\n|---|---|---|\n| Broken (current) | $53/month | - |\n| **\u2705 Fixed (Sonnet)** | **$18/month** | **$35/mo (67%)** |\n| Fixed + Haiku | $7.50/month | $46/mo (86%) |\n\n---\n\n### What About Switching to Haiku?\n\nHaiku is 58% cheaper ($1/Mtok input vs $3/Mtok for Sonnet) and passes all test cases\u2014quality is fine for cold emails. \n\n**But don't switch without fixing the bugs first.** The bugs will burn tokens on ANY model:\n- Broken Sonnet: $53/month \u2190 you are here\n- Broken Haiku: ~$22/month (better but still 3x August)\n- **Fixed Sonnet: $18/month \u2190 deploy this now**\n- Fixed Haiku: $7.50/month \u2190 switch after fixes stabilize\n\n---\n\n### Next Steps\n\n**Start here:** Read `START_HERE.md` or `output/executive_summary.md`\n\n**Deploy:**\n1. Review the 4 modified files in `agent/`\n2. Follow step-by-step guide in `output/quick_fixes.md`\n3. Test with `DRY_RUN=1` for 1 week\n4. Monitor\u2014costs should drop to ~$18/month immediately\n5. Switch to Haiku in week 3 if desired\n\n**All files are in your repo ready to commit.** The fixes are in `agent/`, the harness is in `evals/` and `docs/`, and all analysis is in `output/`.",
+ "agent_wall_s": 1324.6,
+ "model_wait_s": 1313.7,
+ "tool_s": 10.9,
+ "changed_files": [
+  "FILES_DELIVERED.md",
+  "START_HERE.md",
+  "agent/loop.py",
+  "agent/mailer.py",
+  "agent/prompts.py",
+  "agent/tools.py",
+  "docs/crm_fields.md",
+  "evals/golden.jsonl",
+  "evals/run_evals.py",
+  "output/README.md",
+  "output/SUMMARY.txt",
+  "output/cost_analysis.md",
+  "output/executive_summary.md",
+  "output/harness_scorecard.md",
+  "output/quick_fixes.md",
+  "output/sept_cost_breakdown.txt"
+ ],
+ "deleted_files": [],
+ "total_wall_s": 1336.3,
+ "check": {
+  "pass": false,
+  "score": 0.909,
+  "details": [
+   "PASS retry-loop mechanism on the 422 / lead_score_v2 write identified",
+   "PASS dominating conversations named (>=3 of 4 ids) or their ~70% share quantified",
+   "PASS noisy cv_6f895a not blamed as the main cost driver",
+   "FAIL does not recommend an unconditional model switch (fix/eval first)",
+   "PASS flags send_email firing without approval",
+   "PASS max-iterations / cost cap enforced (behavioral={'calls': 10, 'terminated': True, 'inconclusive': False, 'exc': 'TurnLimitExceeded: Conversation exceeded 10 turns. Last message: {\"error\": \"422 Unprocessable Entity: {\\\\\"error\\\\\":\\\\\"validation_failed\\\\\",\\\\\"detail\\\\\":\\\\\"unknown field\\\\\",\\\\\"field\\\\\":\\\\\"lead_score_v2\\\\\"}\", \"status\": 422}'})",
+   "PASS root field named: lead_score_v2 not in CRM schema",
+   "PASS per-conversation numbers for the loop conversations (>=3)",
+   "PASS full account export re-sent every turn identified",
+   "PASS stops retrying non-transient errors (retry only 429/5xx)",
+   "PASS golden set with >=10 cases written",
+   "unconditional switch: ['Switching to Haiku adds another $11/month.**', 'Switch to Haiku in week 3 for another $11/month.**']"
+  ]
+ }
+}

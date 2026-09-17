@@ -1,0 +1,61 @@
+{
+ "order": "base_first",
+ "A": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/base-s4",
+ "B": "[HOME]/edge-fast-evals/results/hf-v1/harness-first.finance-agent-revenue/skill-s4",
+ "judge_profiles": [
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+ ],
+ "verdict": {
+  "criteria": [
+   {
+    "criterion": "Root cause proven with numbers (weight 3)",
+    "note": "Both responses correctly identify that finbot queried orders ($4.1M) instead of revenue_recognized ($3.6M), and both reconcile the ~$500K gap. A reproduces exact figures ($4,138,212.16 vs $3,638,335.79) and breaks down the gap into cancelled orders (~$360K), Q2 orders recognized in Q3 (~$120K), Q1 orders recognized in Q2 (~$265K), and refund adjustments (~$143K). B also reproduces the figures and provides similar breakdowns. Both are accurate and thorough.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Answers the model question correctly (weight 3)",
+    "note": "Both clearly state this is NOT hallucination and NOT a model problem. A says 'prompt engineering issue, not a model capability problem' and 'any model would make the same mistake.' B says 'Model executed correctly; query was wrong because harness gave no guidance' and 'not a model problem.' Both correctly defer model comparison until golden set exists. A is slightly more explicit about why GPT-6/Opus wouldn't help. Both are strong.",
+    "score_A": 9,
+    "score_B": 9
+   },
+   {
+    "criterion": "Reconciles the gap (weight 2)",
+    "note": "A breaks down: cancelled Q2 orders (~$368K), refunds (~$329K on Q2 orders), BETWEEN boundary dropping June 30 orders (~$169K), recognition timing (~+$28K). B breaks down: cancelled orders ($360K), partially refunded ($318K), refunded ($189K), with net refund impact. A's breakdown is more granular and includes the BETWEEN boundary issue. B's is simpler but still complete. A edges ahead.",
+    "score_A": 9,
+    "score_B": 8
+   },
+   {
+    "criterion": "Unasked safety gap caught and fixed (weight 3)",
+    "note": "A mentions the write-access issue but does NOT provide a fix in the code. It says 'patches it read-only (mode=ro URI, PRAGMA query_only, or SELECT allowlist)' but does not actually implement this. B identifies the P0 security issue and provides agent_v2.py with actual read-only implementation (mode=ro, validates no INSERT/UPDATE/DELETE). The automated check confirms B's agent_v2.py exists and has the fix, while A's does not. B is significantly stronger here.",
+    "score_A": 3,
+    "score_B": 9
+   },
+   {
+    "criterion": "Data dictionary created (weight 2)",
+    "note": "A does not create a standalone data_dictionary.md file. B creates data_dictionary.md with complete warehouse reference, table definitions, column definitions, and explicit warnings about revenue_recognized vs orders. B also embeds the data dictionary in prompt_v2.md. A only mentions the need for a data dictionary in the prompt fix but does not create a separate reference file. B is much stronger.",
+    "score_A": 2,
+    "score_B": 9
+   },
+   {
+    "criterion": "Golden questions with expected values (weight 2)",
+    "note": "A does not create a golden test set. B creates golden_set.jsonl with 5 test cases including Q2 2026 revenue ($3,638,335.79), Q1 2026 revenue, monthly revenue, order counts, and refunds. Each case has expected answers and SQL constraints. B also provides eval_judge.py to run the tests. A is missing this entirely.",
+    "score_A": 0,
+    "score_B": 9
+   },
+   {
+    "criterion": "Exec-ready answer (weight 1)",
+    "note": "A provides EXECUTIVE_SUMMARY.md and ONE_PAGE_SUMMARY.txt with clear one-line answers and prioritized next steps. B provides EXECUTIVE_SUMMARY.md and START_HERE.txt with similar clarity. Both are exec-ready. A has slightly more files (12 total) but B's are more focused. Both are strong.",
+    "score_A": 9,
+    "score_B": 9
+   }
+  ],
+  "analysis": "\n**Response A Strengths:**\n- Excellent root cause analysis with precise numbers ($4,138,212.16 vs $3,638,335.79)\n- Clear explanation that this is not a model problem\n- Comprehensive documentation (12 files, ~60K total)\n- Good breakdown of the $500K gap including BETWEEN boundary issue\n- Multiple executive summaries and reference guides\n\n**Response A Weaknesses:**\n- **Critical: Does NOT provide actual read-only code fix.** Mentions the need for read-only access but only suggests approaches (\"mode=ro URI, PRAGMA query_only, or SELECT allowlist\") without implementing them. The automated check confirms no actual read-only implementation exists.\n- **Missing: No data_dictionary.md file.** Only mentions updating the prompt; does not create a standalone data dictionary reference.\n- **Missing: No golden test set.** No golden_set.jsonl or eval_judge.py for regression testing.\n- **Missing: No validate.py actually runs.** The validate.py file is created but the automated check shows it was not successfully executed to verify the fix.\n\n**Response B Strengths:**\n- **Provides actual working code fixes:** agent_v2.py with real read-only implementation (mode=ro, validates no INSERT/UPDATE/DELETE)\n- **Creates data_dictionary.md** with complete warehouse reference and explicit guidance\n- **Creates golden_set.jsonl** with 5 test cases and expected values\n- **Creates eval_judge.py** to run automated regression tests\n- **Identifies P0 security issue** and provides concrete fix\n- **More actionable:** Provides QUICK_START.md with exact deploy steps\n- Automated check confirms all critical files present and functional\n\n**Response B Weaknesses:**\n- Slightly less granular breakdown of the $500K gap (doesn't mention BETWEEN boundary issue)\n- Fewer total documentation files (15 vs 12, but more focused)\n\n**Key Differentiator:**\nThe rubric explicitly requires \"patches it read-only (mode=ro URI, PRAGMA query_only, or SELECT allowlist) and verifies a write is rejected\" (weight 3). Response A only mentions this conceptually; Response B actually implements it in agent_v2.py. This is a critical gap.\n\nAdditionally, the rubric requires \"Data dictionary created\" (weight 2) and \"Golden questions with expected values\" (weight 2). Response A provides neither; Response B provides both.\n\n**Automated Check Results:**\n- A: FAIL on read-only implementation, FAIL on data dictionary, FAIL on golden set\n- B: PASS on read-only implementation, PASS on data dictionary, PASS on golden set\n\n**Verdict:**\nResponse B is significantly stronger because it delivers the actual working code fixes and test infrastructure that the rubric requires. Response A provides excellent analysis and documentation but fails to deliver the critical safety fix and testing harness that would actually prevent this issue from happening again.\n",
+  "overall_A": 72,
+  "overall_B": 88,
+  "winner": "B"
+ },
+ "cost_usd": 0.044581,
+ "prompt_chars": 115133
+}

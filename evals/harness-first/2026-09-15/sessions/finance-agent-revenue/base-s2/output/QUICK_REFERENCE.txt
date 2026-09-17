@@ -1,0 +1,114 @@
+┌─────────────────────────────────────────────────────────────────────┐
+│                    FINBOT Q2 REVENUE ISSUE                          │
+│                        QUICK REFERENCE                              │
+└─────────────────────────────────────────────────────────────────────┘
+
+THE PROBLEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  FinBot told Priya:  Q2 revenue = $4.1M
+  Finance says:       Q2 revenue = $3.6M
+  Discrepancy:        $500K (14% overstatement)
+
+THE ROOT CAUSE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ❌ FinBot queried: orders table (includes cancelled/refunded)
+  ✅ Should query:   revenue_recognized table (official accounting)
+  
+  Why? The prompt doesn't specify which table to use.
+
+THE VERDICT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✅ Bot is NOT hallucinating
+  ✅ Model is working correctly
+  ❌ Prompt is missing domain knowledge
+  
+  → This is a DATA ENGINEERING issue, not an AI issue
+
+THE FIX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Replace prompt.md with output/prompt_FIXED.md
+  2. Test: python agent.py "what was Q2 2026 revenue?"
+  3. Verify: Should return ~$3.6M
+  
+  Time: 5 minutes to deploy, 10 minutes to test
+
+DO WE NEED OPUS/GPT-6?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ❌ NO
+  
+  Even the most expensive model would make the same mistake
+  without explicit guidance about which table to use.
+  
+  This is like asking an employee to check revenue without
+  telling them which system is the source of truth.
+
+IMPACT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Known:
+    • Board deck (Q2 = $3.6M, not $4.1M)
+    • Q1 is also wrong ($3.3M, not $4.1M)
+  
+  Unknown:
+    • Other Slack queries since March 2026
+    • Investor updates, planning docs, exec reviews
+    
+  → Need to audit #ask-finance history
+
+THE NUMBERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Quarter  │ FinBot Said │ Finance Says │ Difference
+  ─────────┼─────────────┼──────────────┼────────────
+  Q1 2026  │   $4.1M     │    $3.3M     │  +$0.9M (26%)
+  Q2 2026  │   $4.1M     │    $3.6M     │  +$0.5M (14%)
+
+WHAT FINBOT COUNTED (WRONG)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✅ Completed orders:        $3.27M
+  ✅ Partially refunded:      $0.32M
+  ❌ Cancelled orders:        $0.36M  ← Should NOT count
+  ❌ Refunded orders:         $0.19M  ← Should NOT count
+  ────────────────────────────────────
+     TOTAL (wrong):           $4.14M
+
+WHAT FINANCE COUNTS (CORRECT)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Gross revenue:              $3.97M
+  Minus refunds:              $0.33M
+  ────────────────────────────────────
+  Net revenue:                $3.64M
+
+NEXT STEPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TODAY (before board meeting):
+    □ Deploy prompt fix
+    □ Test the fix
+    □ Correct board deck
+  
+  THIS WEEK:
+    □ Audit Slack history
+    □ Check other documents
+    □ Set up validation process
+
+FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  START HERE:
+    output/EXEC_SUMMARY.md         One-page summary for Daniel
+    output/README.md                Overview of all files
+  
+  THE FIX:
+    output/prompt_FIXED.md         Updated prompt (deploy this)
+    output/test_finbot_fix.py      Test script to verify
+  
+  ANALYSIS:
+    output/root_cause_analysis.md  Full technical breakdown
+    output/verification_queries.sql SQL to reproduce findings
+    output/audit_checklist.md      What else to check
+    output/*.csv                   Data for spreadsheets
+
+RECOMMENDATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Deploy the prompt fix. The model is fine.
+  
+  This is a 5-minute fix, not a "we need a better AI" problem.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

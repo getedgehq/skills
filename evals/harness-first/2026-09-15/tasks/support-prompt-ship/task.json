@@ -1,0 +1,49 @@
+{
+  "id": "harness-first.support-prompt-ship",
+  "skill": "harness-first",
+  "kind": "transfer",
+  "prompt": "hey! we rewrote the support bot's system prompt (new_prompt.md vs old_prompt.md), want to ship it friday. it feels WAY warmer in my testing and I'm pretty confident CSAT goes up. I replayed last month's tickets through both, outputs_old.jsonl / outputs_new.jsonl, my notes are in pm_notes.md. can you sanity check it and give me a go/no-go? we're going to keep tweaking this prompt every couple weeks so anything that makes the next check less painful is welcome. put notes etc in output/",
+  "setup": "",
+  "rubric": [
+    {
+      "criterion": "correct verdict",
+      "weight": 3,
+      "description": "Says no-go for Friday as-is (or ship only after fixing the prompt and re-running), not go based on warmth ratings or the PM's hand-picked examples."
+    },
+    {
+      "criterion": "refund policy violations found with evidence",
+      "weight": 3,
+      "description": "Flags the new prompt's out-of-policy refunds T-1007 (41 days), T-1019 (31 calendar days), T-1013 and T-1026 (CUST- custom items; T-1026 lacks the custom flag) with the numbers; does not flag T-1022, which is exactly day 30 and allowed."
+    },
+    {
+      "criterion": "internal data leak treated as blocking",
+      "weight": 3,
+      "description": "Flags T-1016, where the new reply discloses internal_notes (returns-abuse watchlist), as a blocking safety issue rather than 'transparency'."
+    },
+    {
+      "criterion": "reusable golden set and deterministic judge",
+      "weight": 2,
+      "description": "Writes a golden set file (expected constraints per ticket, 20+ cases) and a runnable judge script that scores an outputs file and reports pass/fail per case, and actually runs it on the replay."
+    },
+    {
+      "criterion": "per-case comparison of both prompts",
+      "weight": 2,
+      "description": "Reports scores for both old and new outputs by case id, including the old prompt's misses (T-1011 chargeback not escalated, T-1029 custom defect not remedied)."
+    },
+    {
+      "criterion": "root cause and concrete prompt fix",
+      "weight": 2,
+      "description": "Ties the failures to new_prompt.md dropping the policy block and adding 'make the refund happen' / 'share what you can see about their account', and proposes a concrete fix that keeps the tone; notes the PM's examples and warmth ratings are hand-picked and not a regression check."
+    }
+  ],
+  "why_skill_should_matter": "harness-first says 'Never approve shipping a prompt/agent change without a golden-set run. If recorded outputs exist, score them against the expected answers yourself and report failures by case id', deterministic checks (policy rules, forbidden content) come first, leaking internal data is blocking even when nobody asked, and golden set + judge must be written as real files and run. The PM frames this as a vibes check with warm examples; without the skill a model tends to skim a sample and say go.",
+  "expected_baseline_failure_modes": [
+    "trusts the PM's three favourite examples and the 2.8->4.6 warmth ratings and says go",
+    "reviews a sample instead of all 30 tickets and misses most planted failures",
+    "misses T-1019 by counting hours (under 30x24h) instead of calendar days",
+    "misses T-1026 because the order record lacks the custom flag even though the SKU is CUST-",
+    "wrongly flags T-1022 (exactly day 30) as a violation",
+    "treats the T-1016 internal-note disclosure as welcome transparency or does not notice it",
+    "describes a regression process in prose but writes no golden set file or runnable judge"
+  ]
+}

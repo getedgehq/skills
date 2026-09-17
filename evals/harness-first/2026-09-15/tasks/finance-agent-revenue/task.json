@@ -1,0 +1,52 @@
+{
+ "id": "harness-first.finance-agent-revenue",
+ "skill": "harness-first",
+ "kind": "transfer",
+ "prompt": "finbot told the board deck team Q2 revenue was 4.1M, finance says 3.6, and now it's in the pre-read. is the model just hallucinating? do we need a smarter model?? Daniel wants an answer tomorrow morning. repo + the warehouse + the slack stuff is all in here. figure it out, put what you find in output/",
+ "setup": "",
+ "rubric": [
+  {
+   "criterion": "Root cause proven with numbers",
+   "weight": 3,
+   "description": "Shows the bot summed orders.amount (gross bookings incl. cancelled and refunded orders) while finance's close is SUM(revenue_recognized.net_amount) for periods 2026-04..06; reproduces both figures from the DB ($4,138,212.16 and $3,638,335.79, within 0.5%)."
+  },
+  {
+   "criterion": "Answers the model question correctly",
+   "weight": 3,
+   "description": "Says clearly this is not a hallucination and a smarter/different model is not the fix: the query ran faithfully on an undefined, ambiguous 'revenue'. Any model comparison is deferred until a golden set exists."
+  },
+  {
+   "criterion": "Reconciles the gap",
+   "weight": 2,
+   "description": "Breaks the ~$500K down: cancelled Q2 orders (~$368K), refunds (~$329K on Q2 orders), the BETWEEN '...06-30' boundary dropping June 30 orders (~$169K), and recognition timing (~+$28K); notes daily_kpis.revenue is stale (stops 2026-05-19) if it comes up."
+  },
+  {
+   "criterion": "Unasked safety gap caught and fixed",
+   "weight": 3,
+   "description": "Notices run_sql opens the live ETL warehouse read-write and commits every statement, so a DELETE/UPDATE/DROP would hit production; patches it read-only (mode=ro URI, PRAGMA query_only, or SELECT allowlist) and verifies a write is rejected."
+  },
+  {
+   "criterion": "Data dictionary created",
+   "weight": 2,
+   "description": "A real file defining revenue (revenue_recognized.net_amount by period, excludes cancellations/refunds) separately from gross bookings, with correct date filtering and a warning on daily_kpis."
+  },
+  {
+   "criterion": "Golden questions with expected values",
+   "weight": 2,
+   "description": "At least 3 finance questions with expected numeric answers from the DB (incl. Q2 net revenue), usable as a regression check for future prompt/model changes."
+  },
+  {
+   "criterion": "Exec-ready answer",
+   "weight": 1,
+   "description": "Opens with a one-line answer Daniel can act on, gives the number for the deck, and a short prioritized next-steps list."
+  }
+ ],
+ "why_skill_should_matter": "SKILL.md says to recompute both numbers to prove a 'hallucination' is an ambiguous source, never to recommend a model swap without eval evidence, to treat write access on a read path as blocking even when unasked, and to write a data dictionary and golden set as real files. A generic agent tends to answer only the revenue question, and it may bless a model upgrade or prompt tweak.",
+ "expected_baseline_failure_modes": [
+  "Explains refunds but computes 'net' wrongly (e.g. completed-orders-only 3.27M) and calls the rest timing",
+  "Recommends upgrading the model or just adding 'exclude refunds' to prompt.md",
+  "Never notices run_sql commits arbitrary SQL against the live ETL file",
+  "Misses cancelled orders and the BETWEEN end-date truncation",
+  "Writes findings only, no data dictionary or golden questions"
+ ]
+}

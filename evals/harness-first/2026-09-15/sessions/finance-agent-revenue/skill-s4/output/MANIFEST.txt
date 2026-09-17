@@ -1,0 +1,114 @@
+FINBOT INVESTIGATION - COMPLETE FILE MANIFEST
+==============================================
+
+Investigation Date: 2026-09-15
+Issue: Q2 revenue reported as $4.1M, should be $3.6M
+Root Cause: No data dictionary → bot used wrong table
+Conclusion: Not a model problem, harness was missing
+
+FILES DELIVERED (14 total)
+===========================
+
+NAVIGATION & OVERVIEW (4 files)
+--------------------------------
+✓ START_HERE.txt            Quick orientation (read this first)
+✓ INDEX.txt                 Detailed file directory with descriptions
+✓ README.md                 Overview and quick deploy guide
+✓ MANIFEST.txt              This file
+
+EXECUTIVE REPORTS (3 files)
+----------------------------
+✓ EXECUTIVE_SUMMARY.md      One page for Daniel (CEO) - answers "switch models?"
+✓ QUICK_START.md            Deploy checklist for Jonas (bot owner)
+✓ FINDINGS_SUMMARY.txt      Complete findings with all details
+
+TECHNICAL ANALYSIS (3 files)
+-----------------------------
+✓ REPORT.md                 Full investigation report (harness scorecard, etc.)
+✓ agent_harness_analysis.md Line-by-line audit of current agent.py
+✓ query_comparison.txt      Side-by-side: wrong query vs correct query
+
+DEPLOYABLE FIXES (5 files)
+---------------------------
+✓ agent_v2.py               Hardened agent with:
+                            - Read-only DB (prevents DELETE/UPDATE/DROP)
+                            - Max iterations = 5
+                            - Token cap = 50k per run
+                            - Tracing to agent_trace.jsonl
+
+✓ prompt_v2.md              Improved system prompt with:
+                            - Data dictionary embedded
+                            - Explicit "use revenue_recognized for revenue"
+                            - Quarter-to-period mapping
+                            - Example correct queries
+
+✓ data_dictionary.md        Complete warehouse reference:
+                            - All tables and columns defined
+                            - revenue_recognized = source of truth
+                            - Common mistakes section
+                            - Query examples
+
+✓ golden_set.jsonl          Test suite (5 cases):
+                            - Q2 2026 revenue (the incident)
+                            - Q1 2026 revenue
+                            - Monthly revenue
+                            - Order counts
+                            - Refunds
+
+✓ eval_judge.py             Automated test runner:
+                            - Extracts numbers from answers
+                            - Checks SQL constraints
+                            - Reports pass/fail
+                            - Exits 1 if failures (for CI/CD)
+
+VERIFICATION
+============
+
+All files present:          ✓ 14/14
+Critical security fix:      ✓ agent_v2.py (read-only DB)
+Data dictionary created:    ✓ data_dictionary.md + embedded in prompt_v2.md
+Test suite created:         ✓ golden_set.jsonl + eval_judge.py
+Documentation complete:     ✓ 7 docs covering all stakeholders
+Evidence trail:             ✓ All numbers verified against warehouse.db
+
+READINESS CHECKLIST
+===================
+
+For Jonas (bot owner):
+  [ ] Read QUICK_START.md
+  [ ] Deploy agent_v2.py (read-only DB - CRITICAL)
+  [ ] Deploy prompt_v2.md (data dictionary)
+  [ ] Test: python agent.py "what was our Q2 2026 revenue?"
+      Expected: ~$3.6M (not $4.1M)
+  [ ] Run: python eval_judge.py
+      Expected: PASS ✓
+
+For Daniel (CEO):
+  [ ] Read EXECUTIVE_SUMMARY.md
+  [ ] Decision: Don't switch models yet, deploy harness first
+
+For Marta (VP Finance):
+  [ ] Correct board pre-read: Q2 = $3.6M (not $4.1M)
+  [ ] Review query_comparison.txt to understand the error
+
+EXPECTED OUTCOMES
+=================
+
+After deployment:
+  • Bot will return $3.6M for Q2 2026 revenue (correct)
+  • Bot cannot DELETE/UPDATE/DROP tables (security fix)
+  • Bot has iteration and cost limits (prevents runaway)
+  • All queries logged to agent_trace.jsonl (debugging)
+  • Golden set prevents future regressions
+
+Time to deploy: ~1 hour
+Model changes needed: None
+Cost: $0 (no model swap needed)
+
+BOTTOM LINE
+===========
+
+The model isn't broken. The harness was missing.
+Now you have: tests, data dictionary, safety limits.
+Deploy these fixes before using the bot again.
+

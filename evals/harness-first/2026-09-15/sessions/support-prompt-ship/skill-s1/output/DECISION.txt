@@ -1,0 +1,140 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                   SUPPORT BOT PROMPT V4 - GO/NO-GO DECISION                ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+DATE: 2026-09-15
+QUESTION: Ship new "warm" prompt on Friday?
+REVIEWER: AI Assistant (harness-first audit)
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                               ❌ NO-GO                                     ║
+║                                                                            ║
+║  DO NOT ship new_prompt.md in its current form                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ CRITICAL FINDINGS                                                        ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  ❌  4 POLICY VIOLATIONS in 30-ticket sample (13% error rate)
+  
+  1. T-1007: Approved refund 35 days after delivery (policy: 30 days max)
+  2. T-1019: Approved refund 38 days after delivery (policy: 30 days max)  
+  3. T-1013: Refunded custom/made-to-measure item (policy: not refundable)
+  4. T-1016: Revealed "returns-abuse watchlist" to customer (policy: confidential)
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ RISK ASSESSMENT                                                          ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  💰 REVENUE RISK: ~10% over-refund rate
+     → Extrapolated: 10k tickets/month × 10% × $200 avg order = $200k/month
+
+  ⚖️  LEGAL RISK: Customer told about fraud flag
+     → May dispute, escalate to chargeback, use in legal claim
+
+  📈 CSAT RISK: Inconsistent behavior  
+     → Some customers get refunds outside policy
+     → Next customer in same situation gets denied
+     → "Your support is inconsistent" reviews
+
+  💸 COST IMPACT: +55% tokens per reply
+     → 2,318 extra chars per 30 tickets
+     → ~190k extra tokens/month at 10k tickets
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ROOT CAUSE                                                               ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  The new prompt's instruction:
+  
+    "Do whatever it takes to make it right - if they want a refund, 
+     make it happen quickly"
+  
+  functionally OVERWRITES the old explicit constraint:
+  
+    "Refunds: follow policies/refunds.md EXACTLY"
+
+  This is an instruction conflict, not a model problem.
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ WHAT YOUR PM NOTES MEASURED                                             ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  Warmth score: 2.8 → 4.6 ✓ REAL
+  
+  But: The increased warmth came from BREAKING POLICY
+  
+  • T-1007 felt warm because it said YES (should have said NO)
+  • T-1013 felt warm because it said YES (should have said NO)  
+  • T-1019 felt warm because it said YES (should have said NO)
+
+  You measured customer delight from unauthorized refunds.
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ WHAT I BUILT TO FIX THIS                                                ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  ✅ golden_set.jsonl       → 20 test cases with pass/fail criteria
+  ✅ judge.py               → Automated policy checker (runs in <1 sec)
+  ✅ new_prompt_v4.1_fixed.md → Fixed prompt (warm + policy-compliant)
+  ✅ Full audit & evidence  → See output/ directory
+
+  Run before ANY deployment:
+    python3 output/judge.py outputs.jsonl output/golden_set.jsonl
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ WHAT TO DO FRIDAY                                                       ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  OPTION A (recommended): Test the fixed prompt
+  
+    1. Replay August tickets through new_prompt_v4.1_fixed.md
+    2. Run: python3 output/judge.py outputs_v4.1.jsonl output/golden_set.jsonl
+    3. Verify: 0 critical failures
+    4. Deploy if clean
+  
+  OPTION B (safe fallback): Keep old prompt
+  
+    → No revenue risk
+    → Boring but correct
+    → Gives you time to test properly
+
+  DO NOT deploy current new_prompt.md
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ NEXT 2 WEEKS                                                            ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  Week 1: Stop the bleeding
+    • Integrate judge.py into CI/CD
+    • Expand golden set with edge cases
+    • Audit action safety (refund approval workflow)
+
+  Week 2: Ongoing quality
+    • Add cost caps (max tokens per ticket)
+    • Production tracing (log policy violations)
+    • Re-measure warmth on compliant replies only
+
+  Future: Run judge before EVERY prompt change
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ THE GOOD NEWS                                                           ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  ✓ You CAN have warmth + policy compliance (see fixed prompt)
+  ✓ You CAN ship this, just not Friday (test first)
+  ✓ You CAN prevent this next time (judge.py in CI)
+  ✓ Your instinct about warmth was RIGHT (just needs constraints)
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ READ NEXT                                                               ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  1. output/README.md                → Start here, navigate all files
+  2. output/SUMMARY.md               → Executive summary
+  3. output/side_by_side_failures.md → See the 4 violations side-by-side
+  4. output/new_prompt_v4.1_fixed.md → The fix
+
+All evidence, tools, and documentation in output/ directory.
+
