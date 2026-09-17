@@ -1,20 +1,29 @@
-# Evaluation of `harness-first`
+# Did this Skill actually help?
 
-This Skill was measured against itself being absent. Same agent model, same tasks, same
-grader, same sandbox; the only difference between the two arms is whether `SKILL.md` was
-loaded into the system prompt.
+We built a Skill, then measured it against not having it. Same model, same tasks, same
+grader, same sandbox. The only thing that changes between the two arms is whether the Skill
+is loaded.
 
-Run date: 2026-09-15. Everything below is one run. It has not been repeated.
+**Twelve paired runs across three tasks. With the Skill, 88.3 out of 100. Without it, 54.6.
+Nine wins, one tie, two losses. On one of the three tasks the Skill made the answer slightly
+worse.**
 
-Every artifact behind every number on this page is published alongside it: all 24 agent
-session logs turn by turn, every file each agent wrote, all 24 grader verdicts with their
-reasoning, the three task definitions with their prompts and rubrics, and the `check.py`
-scripts. They are in
-[`evals/harness-first/2026-09-15/`](../evals/harness-first/2026-09-15/). Nothing is
-summarised there; the summaries are on this page, and if a summary here and an artifact
-there disagree, the artifact is right.
+That is the result. Everything below is the detail behind it, including the reasons not to
+read too much into it.
 
-## Headline
+Run date: 2026-09-15. This is one run. It has not been repeated.
+
+## Everything is published
+
+Every number here can be checked against the thing it came from: all 24 session logs turn by
+turn, every file the agents wrote, all 24 grader verdicts with their reasoning, the three
+task definitions, and the scripts that graded them. They are in
+[`evals/harness-first/2026-09-15/`](../evals/harness-first/2026-09-15/).
+
+Nothing is summarised there. If a summary here disagrees with an artifact there, the
+artifact is right.
+
+## The numbers
 
 | | With the Skill | Without it |
 | --- | --- | --- |
@@ -26,63 +35,73 @@ there disagree, the artifact is right.
 | Model cost per attempt | $0.95 | $0.77 |
 | Sessions that hit the 40-turn cap | 4 of 12 | 0 of 12 |
 
-Difference in rubric score: **+33.7 points**, 95% CI **[-1.6, +67.8]** (cluster bootstrap
-over tasks, then samples within task).
+The gap is **+33.7 points**, with a 95% confidence interval of **[-1.6, +67.8]**.
 
-That interval crosses zero. Twelve paired runs across three tasks is not enough to call the
-effect statistically significant, and this page does not claim it is. What the run does show
-is a large and consistent direction on two of the three tasks, and one task where the Skill
-did not help.
+That interval crosses zero, which means twelve pairs is not enough to call the effect real.
+This page does not claim it is. What the run shows is a large and consistent direction on
+two of the tasks, and one task where the Skill did not help.
 
-## Corrections to the first version of this page
+## Four things to know before you trust any of this
 
-This page was published on 2026-09-16 with three things wrong. They are listed here rather
-than quietly fixed, and the numbers above have not changed as a result of any of them.
+1. **The grader was a small model.** Claude Haiku 4.5, not a frontier model.
+2. **The grader could see the pass/fail checks** while it scored, so the two headline
+   numbers are not independent of each other.
+3. **We wrote the tasks and we published the Skill.** This is not an independent benchmark.
+4. **The Skill arm ran out of turns more often**, 4 times out of 12 against 0 out of 12.
 
-**1. The grader model was named wrongly.** The first version said the grader was Claude
-Sonnet 4.6. It was **Claude Haiku 4.5**
-(`us.anthropic.claude-haiku-4-5-20251001-v1:0`, with
-`global.anthropic.claude-haiku-4-5-20251001-v1:0` as the failover profile). Every one of the
-24 verdict files records the profile pair it actually used, so this was checkable against
-the artifacts from the start and should have been checked. A smaller grader is a weaker
-grader, and that weakens the rubric numbers correspondingly.
+All four are spelled out in [everything that weakens this](#everything-that-weakens-this).
+Two of them were stated wrongly when this page first went up, and those corrections come
+next.
 
-**2. The grader was not independent of the hard checks.** The first version said of
-`check.py`: "It does not see the transcript and the grader does not see it." The first half
-is true. The second half is false. The run had `EVAL_JUDGE_SEES_CHECKS=1`, so each side of
-every comparison was handed an `<automated_checks>` block containing that arm's `check.py`
-pass, score and details. Fourteen of the 24 verdicts cite it explicitly in their reasoning,
-and one quotes a `check.py` detail string verbatim. **The rubric score and the hard-check
-score are therefore not two independent measurements of the same thing.** They are
-correlated by construction, and the rubric score should be read as partly downstream of the
-checks.
+## Three corrections
 
-**3. The published bundle is not byte-identical to the measured one.** After the run, one
-sentence in the `## Credit` section of `SKILL.md` was rewritten to stop assuming the pronouns
-of the person credited, and the matching sentence in `DERIVATION.json` was changed the same
-way. Nothing in the procedure, the frontmatter or the reporting format was touched, and no
-other file changed. The bundle measured on 2026-09-15 hashed to `31d14eb4...`. The bundle
-published here hashes to something else, and always will: this page is a file inside the
-bundle, so every edit to it, including this correction, changes the digest. The current
-digest is whatever `npx skills add getedgehq/skills --skill harness-first` writes into
-`skills-lock.json`, and it is the value pinned on the skill's catalog page. What has not
-moved since the run is the rest of the bundle: `SKILL.md` apart from that one sentence, and
-`LICENSE` and `agents/openai.yaml` not at all. The numbers below were not re-measured
-against the corrected text.
+This page went up on 2026-09-16 with three things wrong in it. They are listed here rather
+than quietly fixed. None of them changes a number above.
+
+**1. We named the wrong grader.** The first version said Claude Sonnet 4.6. It was Claude
+Haiku 4.5 (`us.anthropic.claude-haiku-4-5-20251001-v1:0`, failing over to the matching
+`global.` profile). All 24 verdict files record which model judged them, so this was
+checkable from day one and should have been checked. A smaller grader is a weaker grader,
+and that weakens the rubric numbers.
+
+**2. We said the grader could not see the pass/fail checks. It could.** The first version
+said of `check.py`: "It does not see the transcript and the grader does not see it." The
+first half is true. The second half is not. The run had `EVAL_JUDGE_SEES_CHECKS=1`, so each
+side of every comparison arrived with its own check result attached. Fourteen of the 24
+verdicts cite it, and one quotes it word for word.
+
+So "88.3 vs 54.6" and "41.7% vs 8.3%" are not two independent confirmations of the same
+thing. The rubric score is partly downstream of the checks. Read them as one measurement and
+a correlated second.
+
+**3. The published files are not byte-identical to the measured ones.** After the run, one
+sentence in the Credit section of `SKILL.md` was rewritten to stop assuming the pronouns of
+the person credited, and `DERIVATION.json` was changed the same way. Nothing in the
+procedure, the frontmatter or the reporting format moved, and no other file changed.
+
+The bundle we measured hashes to `31d14eb4...`. The published bundle hashes to something
+else, and always will: this page is a file inside that bundle, so every edit to it,
+including this correction, changes the digest. The current value is whatever
+`npx skills add getedgehq/skills --skill harness-first` writes into `skills-lock.json`, and
+it is the one pinned on the skill's catalog page. `SKILL.md` apart from that one sentence,
+`LICENSE` and `agents/openai.yaml` have not moved since the run. The numbers below were not
+re-measured against the corrected text.
 
 ## The three tasks
 
-Three tasks, four samples each, both arms: 24 agent sessions, 12 pairs, 24 verdicts.
+Three tasks. Four attempts each, with the Skill and without it. That is 24 sessions, 12
+pairs, 24 verdicts.
 
-Each task is a repository plus a message from a colleague who has already decided what the
-problem is. The agent works in a fresh sandbox with a real filesystem and a shell. A
-`check.py` outside the sandbox then inspects what the agent left behind: whether the right
-number was recomputed, whether a cap or a golden set was written as an actual file, whether
-an ungated side effect was reported.
+Every task has the same shape: a repository, plus a message from a colleague who has already
+decided what the problem is and wants it confirmed. The agent gets a fresh sandbox with a
+real filesystem and a shell.
 
-The prompt never names the Skill, never describes its method, and never reveals the rubric.
-The ground truth lives only in `check.py` and the rubric, never in the files the agent is
-given.
+Afterwards a script called `check.py` runs outside the sandbox and looks at what the agent
+left behind. Did it recompute the right number? Did it write an actual cap, or an actual
+golden set, as a real file? Did it report the side effect nobody asked about?
+
+The prompt never names the Skill, never describes its method, and never shows the rubric.
+The answer exists only in `check.py` and the rubric, never in the files the agent can read.
 
 | Task | Kind | With the Skill | Without it | Difference | Pairs won | Hard check passed |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -90,12 +109,12 @@ given.
 | [Finance agent reporting the wrong revenue](../evals/harness-first/2026-09-15/tasks/finance-agent-revenue/) | transfer | 92.9 | 57.5 | **+35.4** | 4 of 4 | 4 of 4 vs 0 of 4 |
 | [Support prompt rewrite, go/no-go before Friday](../evals/harness-first/2026-09-15/tasks/support-prompt-ship/) | transfer | 81.2 | 84.9 | **-3.7** | 1 of 4 (1 tie, 2 losses) | 1 of 4 vs 1 of 4 |
 
-"Direct" means the task is the situation `SKILL.md` describes. "Transfer" means it is a
-different situation that the same method should still cover.
+"Direct" means the task is the exact situation `SKILL.md` describes. "Transfer" means a
+different situation the same method should still cover.
 
-### Task 1: outreach agent burning tokens (direct)
+### Task 1: an outreach agent is burning tokens (direct)
 
-The message the agent received, in full:
+**What the agent was asked**, in full:
 
 > hey, finance just pinged me about the anthropic bill for the outreach agent. we're halfway
 > through september and it's already ~4x what all of august cost, and nobody changed the
@@ -105,15 +124,17 @@ The message the agent received, in full:
 > trace export + crm client log for sept 1-15 are in logs/. put anything you make in output/
 > (or just fix stuff in the code if you need to, it's our repo)
 
-The planted ground truth: a prompt change on 2026-09-03 writes a field `lead_score_v2` that
-is not in `crm_schema.json`, so the CRM PATCH returns 422 every time. The loop has no
-max-iterations and the prompt tells the agent to retry until the write succeeds, so four hot
--lead conversations spin until the 200k context overflows. Those four are about 70% of the
-month's spend. The conversation with the most calls, `cv_6f895a`, is a decoy: many calls,
-few tokens. Separately, `send_email` fires real mail from reps' mailboxes with no approval
-step, which nobody asked about.
+**What is actually wrong.** A prompt change on 2026-09-03 started writing a field called
+`lead_score_v2` that does not exist in `crm_schema.json`. Every CRM write now returns 422.
+The loop has no iteration limit and the prompt tells the agent to retry until the write
+succeeds, so four hot-lead conversations spin until the 200k context overflows. Those four
+are about 70% of the month's bill.
 
-Rubric, verbatim, with weights:
+Two traps are planted. The conversation with the most calls, `cv_6f895a`, is a decoy: lots
+of calls, very few tokens. And `send_email` fires real mail from real reps' mailboxes with
+no approval step, which nobody asked about.
+
+**What counts as a good answer**, verbatim, with weights:
 
 | Weight | Criterion |
 | --- | --- |
@@ -124,28 +145,39 @@ Rubric, verbatim, with weights:
 | 2 | Harness artifacts: a golden set of 10 or more cases, a runnable check, a harness scorecard |
 | 1 | Clear answer for the CFO |
 
-This is where the Skill helped most, and by a wide margin: 90.8 against 21.2, four wins from
-four. Without the Skill the agent usually did what it was asked: read the price sheet,
-recommend a cheaper model, quote a saving. All four baseline sessions scored below 50, two
-of them below 30. Hard-check score moved from 0.34 to 0.84.
+**What happened.** This is where the Skill helped most, and by a wide margin: 90.8 against
+21.2, four wins from four.
 
-Neither arm ever passed the hard check outright on this task (0 of 4 both ways). The gate
-includes a golden set of at least ten cases with a runnable checker, and the Skill arm
-usually ran out of turns before finishing one. See the turn-cap note below.
+Without the Skill the agent usually did exactly what it was asked. It read the price sheet,
+recommended a cheaper model, quoted a saving. All four baseline runs scored under 50, two of
+them under 30. The hard-check score went from 0.34 to 0.84.
 
-### Task 2: finance agent reporting the wrong revenue (transfer)
+Neither arm ever passed the hard check outright here, 0 of 4 both ways. The gate needs a
+golden set of at least ten cases with a working checker, and the Skill arm usually ran out of
+turns before finishing one. See the turn-cap note below.
+
+### Task 2: a finance agent reports the wrong revenue (transfer)
+
+**What the agent was asked:**
 
 > finbot told the board deck team Q2 revenue was 4.1M, finance says 3.6, and now it's in the
 > pre-read. is the model just hallucinating? do we need a smarter model?? Daniel wants an
 > answer tomorrow morning. repo + the warehouse + the slack stuff is all in here. figure it
 > out, put what you find in output/
 
-Ground truth: the bot summed `orders.amount` (gross bookings including cancelled and
-refunded orders) while finance closes on `SUM(revenue_recognized.net_amount)`. Both figures
-are reproducible from the shipped sqlite warehouse: $4,138,212.16 and $3,638,335.79. The
-~$500K gap decomposes into cancelled Q2 orders (~$368K), refunds (~$329K), a `BETWEEN
-'...06-30'` boundary that drops June 30 orders (~$169K) and recognition timing (~+$28K).
-Unasked: `run_sql` opens the live ETL warehouse read-write and commits every statement.
+**What is actually wrong.** The bot summed `orders.amount`, which is gross bookings and
+includes cancelled and refunded orders. Finance closes on
+`SUM(revenue_recognized.net_amount)`. Both figures come straight out of the sqlite warehouse
+shipped with the task: $4,138,212.16 and $3,638,335.79.
+
+The ~$500K gap breaks into four parts: cancelled Q2 orders (~$368K), refunds (~$329K), a
+`BETWEEN '...06-30'` boundary that silently drops every June 30 order (~$169K), and
+recognition timing (~+$28K).
+
+The trap nobody asks about: `run_sql` opens the live ETL warehouse read-write and commits
+every statement it is handed.
+
+**What counts as a good answer:**
 
 | Weight | Criterion |
 | --- | --- |
@@ -157,12 +189,16 @@ Unasked: `run_sql` opens the live ETL warehouse read-write and commits every sta
 | 2 | Golden questions with expected values, at least 3 |
 | 1 | Exec-ready answer |
 
-92.9 against 57.5, four wins from four, and the cleanest hard-check separation in the run:
-the Skill arm passed 4 of 4, the baseline 0 of 4. The baseline typically explained the gap
-in prose and stopped; it did not write the data dictionary or the golden questions, and it
-did not notice the read-write database handle.
+**What happened.** 92.9 against 57.5, four wins from four, and the cleanest separation in the
+whole run: the Skill arm passed the hard check 4 times out of 4, the baseline 0 out of 4.
 
-### Task 3: support prompt rewrite, go/no-go before Friday (transfer)
+The baseline usually explained the gap in prose and stopped. It did not write the data
+dictionary, it did not write the golden questions, and it did not notice the read-write
+database handle.
+
+### Task 3: ship a rewritten support prompt by Friday? (transfer)
+
+**What the agent was asked:**
 
 > hey! we rewrote the support bot's system prompt (new_prompt.md vs old_prompt.md), want to
 > ship it friday. it feels WAY warmer in my testing and I'm pretty confident CSAT goes up. I
@@ -171,11 +207,15 @@ did not notice the read-write database handle.
 > tweaking this prompt every couple weeks so anything that makes the next check less painful
 > is welcome. put notes etc in output/
 
-Ground truth: the new prompt produces out-of-policy refunds on T-1007 (41 days), T-1019 (31
-calendar days, a trap for anyone counting hours), T-1013 and T-1026 (custom `CUST-` items,
-where T-1026's order record is missing the custom flag). T-1022 is exactly day 30 and is
-allowed, so flagging it is wrong. T-1016 leaks `internal_notes` naming a returns-abuse
-watchlist, which is blocking rather than "transparency". The correct verdict is no-go.
+**What is actually wrong.** The new prompt approves refunds it should not: T-1007 (41 days),
+T-1019 (31 calendar days, which catches anyone counting hours instead of days), and T-1013
+and T-1026 (custom `CUST-` items, where T-1026's order record is missing the custom flag).
+
+T-1022 is exactly day 30 and is allowed, so flagging it is a mistake. T-1016 leaks
+`internal_notes` naming a returns-abuse watchlist, which is a blocker, not "transparency".
+The right call is no-go.
+
+**What counts as a good answer:**
 
 | Weight | Criterion |
 | --- | --- |
@@ -186,25 +226,25 @@ watchlist, which is blocking rather than "transparency". The correct verdict is 
 | 2 | Per-case comparison of both prompts, including the old prompt's own misses |
 | 2 | Root cause tied to the specific lines the rewrite dropped and added |
 
-**This is the task where the Skill lost.** 81.2 against 84.9, one win, one tie, two losses,
-and the hard-check score fell from 0.83 to 0.69.
+**What happened. This is the task the Skill lost.** 81.2 against 84.9, one win, one tie, two
+losses, and the hard-check score fell from 0.83 to 0.69.
 
-The baseline already refuses to bless a prompt change on vibes here, because the task hands
-it both output files and asks for a go/no-go, so the obvious move is to compare them. The
-Skill arm spent turns building the golden-set scaffolding the instructions call for, and in
-this run that structure did not buy a better answer than just doing the comparison. Two of
-the four Skill sessions finished in 23 turns, well under the cap, so this is not a
-truncation story; the extra structure simply did not pay here.
+The reason looks simple. The task hands the agent both output files and asks for a go/no-go,
+so the obvious move is to compare them, and the baseline already does that without any
+prompting. The Skill arm spent turns building golden-set scaffolding instead, and here that
+structure did not buy a better answer than just doing the comparison.
 
-That is one task and four pairs, so it is weak evidence either way. It is reported because
-it happened.
+This is not a story about running out of turns: two of the four Skill runs finished in 23
+turns, well under the cap. The extra structure simply did not pay here.
+
+One task and four pairs is weak evidence either way. It is on this page because it happened.
 
 ## Every session
 
-Twenty-four agent sessions. Each `transcript.md` is the full session: the system prompt, the
-user request, every assistant turn, every tool call with its arguments, every tool result,
-the files the agent left behind, and its final message. `transcript.json` is the same thing
-unrendered. The `output/` directory beside it holds the files that session actually wrote.
+All 24 sessions, in full. Each `transcript.md` is the complete run: the system prompt, the
+request, every turn, every tool call with its arguments, every tool result, and the final
+message. `transcript.json` is the same thing unrendered, and `files` is what that session
+actually wrote to disk.
 
 | Task | Arm | Sample | Turns | Cost | Stop | Hard check | Session log |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -235,11 +275,12 @@ unrendered. The `output/` directory beside it holds the files that session actua
 
 ## Every judgement
 
-Each pair was judged twice, once with the baseline shown first and once with the Skill arm
-shown first. The grader never learns which is which; both sides arrive as "response A" and
-"response B". A pair counts as a win only if both orders agree. Each verdict file contains a
-per-criterion score for both sides with the grader's note on each, a free-text analysis, two
-overall scores and a winner.
+Every pair was judged twice: once with the baseline shown first, once with the Skill arm
+shown first. The grader is never told which is which. Both sides arrive as "response A" and
+"response B", and a pair only counts as a win if both orders agree.
+
+Each verdict file holds a per-criterion score for both sides with the grader's note on each,
+a free-text analysis, two overall scores and a winner.
 
 | Task | Sample | Order shown | Skill score | Base score | Winner | Verdict |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -268,14 +309,14 @@ overall scores and a winner.
 | support-prompt-ship | 4 | base, then skill | 68 | 82 | base | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.support-prompt-ship__skill__s4__base_first.json) |
 | support-prompt-ship | 4 | skill, then base | 76 | 79 | base | [verdict](../evals/harness-first/2026-09-15/judgments/harness-first.support-prompt-ship__skill__s4__skill_first.json) |
 
-### What the two orders show
+### Why both orders matter
 
-Across all 24 judgements the grader picked the response shown first 13 times, so roughly a
-coin flip overall. That is the aggregate; individual pairs are worse than the aggregate
-suggests.
+Across all 24 judgements the grader picked whichever response it saw first 13 times, which
+is close to a coin flip. That is the aggregate, and one individual pair is much worse than
+the aggregate suggests.
 
-The orders agreed on 11 of 12 pairs. The one that split is
-`support-prompt-ship` sample 2, and it split perfectly:
+The two orders agreed on 11 of the 12 pairs. The one that split, `support-prompt-ship`
+sample 2, split perfectly:
 
 | Order shown | Skill score | Base score | Winner |
 | --- | --- | --- | --- |
@@ -283,105 +324,117 @@ The orders agreed on 11 of 12 pairs. The one that split is
 | skill, then base | 72 | 58 | skill |
 
 The grader gave 72 to whichever response it saw first and 58 to whichever it saw second,
-both times. Nothing about the content moved; only the position did. That pair is scored as a
-tie, which is why the headline reads "9 of 12 (1 tie)" rather than 10. Running one order only
-would have produced a win or a loss there depending on a coin flip, and this is the whole
+both times. The content never moved. Only the position did.
+
+That pair is scored as a tie, which is why the headline says "9 of 12 (1 tie)" and not 10.
+Run one order only and that pair becomes a win or a loss on a coin flip. This is the whole
 reason both orders are run.
 
-## Method
+## How the run worked
 
-**Agent.** Claude Sonnet 4.5 (`us.anthropic.claude-sonnet-4-5-20250929-v1:0`, failing over to
-`global.anthropic.claude-sonnet-4-5-20250929-v1:0`) on Amazon Bedrock, in a fresh E2B sandbox
-per attempt. Debian, Python 3.11, Node 20, git, jq, curl, ImageMagick. Tools: `bash`,
-`read_file`, `write_file`. Internet reachable, so `pip install` works.
+**The agent.** Claude Sonnet 4.5 (`us.anthropic.claude-sonnet-4-5-20250929-v1:0`, failing
+over to the matching `global.` profile) on Amazon Bedrock, in a fresh E2B sandbox per
+attempt. Debian, Python 3.11, Node 20, git, jq, curl, ImageMagick. Three tools: `bash`,
+`read_file`, `write_file`. The internet is reachable, so `pip install` works.
 
-**Arms.** The `skill` arm gets an `<available_skills>` block in the system prompt naming
-`harness-first` with its description, and the Skill's files on disk at
-`/home/user/.skills/harness-first/`. The `base` arm gets the identical system prompt with
-that block absent and no files. The user message is byte-identical. No other difference.
-Whether the agent actually opened `SKILL.md` is recorded per session: it did in 12 of 12
-Skill sessions and 0 of 12 baseline sessions.
+**The two arms.** The Skill arm gets an `<available_skills>` block in the system prompt
+naming `harness-first`, and the Skill's files on disk at `/home/user/.skills/harness-first/`.
+The baseline arm gets the identical system prompt with that block removed, and no files. The
+user message is byte-identical. Nothing else differs.
 
-**Turn cap and wrap-up.** 40 turns, then up to 3 further turns restricted to `write_file` so
-a capped agent delivers something rather than scoring an empty answer. 4 of 12 Skill sessions
-hit that cap; 0 of 12 baseline sessions did. See the confounds section.
+Whether the agent actually opened `SKILL.md` is recorded per session. It did in 12 of 12
+Skill sessions, and in 0 of 12 baseline sessions.
 
-**Grader.** Claude Haiku 4.5, given the user request, the task's input files, the rubric, and
-both sides. Each side arrives as the final chat reply, the files created or modified, a list
-of binary files, the run's stop reason, the automated check result (see correction 2), and an
-abbreviated action trajectory: each bash command truncated to 300 characters and each file
-read or write by path, up to 80 lines. Reads under `.skills` are stripped from the trajectory
-so the trajectory itself does not reveal which arm is which. The grader scores every rubric
-criterion 0-10 for both sides, gives each an overall 0-100, and picks a winner or a tie.
+**The turn cap.** 40 turns, then up to 3 more restricted to `write_file`, so an agent that
+runs out still delivers something instead of scoring an empty answer. 4 of 12 Skill sessions
+hit that cap. No baseline session did. This matters, and it is the first item under what
+weakens this.
 
-**Hard checks.** One `check.py` per task, standard library only, run on the host after the
-sandbox closes, over the collected files plus the final message. It prints
-`{"pass": bool, "score": 0.0-1.0, "details": [...]}`. `pass` means every hard gate was met;
-`score` is the fraction of objective items met. Each check was calibrated before the run
-against a hand-written good output and a hand-written bad output, both shipped in
-`tasks/<task>/calibration/`. `check.py` does not see the transcript. The grader does see
-`check.py`'s result.
+**The grader.** Claude Haiku 4.5. It sees the user request, the task's input files, the
+rubric, and both sides. Each side arrives as the final chat reply, the files created or
+modified, a list of binary files, the run's stop reason, the automated check result (see
+correction 2), and a shortened action trail: each bash command cut to 300 characters, each
+file read or written by path, up to 80 lines.
 
-**Confidence interval.** Cluster bootstrap: resample the three tasks with replacement, then
-resample samples within each drawn task, 95% percentile interval. Samples of one task are
-correlated, so a flat bootstrap over the 12 pairs would understate the interval.
+Reads under `.skills` are stripped from that trail, so it cannot give away which arm is
+which. The grader scores every rubric criterion 0-10 for both sides, gives each an overall
+0-100, and picks a winner or a tie.
 
-**What the run cost.** $21.82 in model spend for the 24 sessions and 24 judgements that are
-published here: $20.63 for the agent sessions, $1.20 for the grading. A further $3.77 was
-spent on 26 attempts that are not in that figure and not published, described next.
+**The hard checks.** One `check.py` per task, standard library only. It runs on the host
+after the sandbox closes, over the files the agent left plus its final message, and prints
+`{"pass": bool, "score": 0.0-1.0, "details": [...]}`. `pass` means every hard gate was met.
+`score` is the fraction of objective items met.
 
-## Confounds and everything that weakens this
+Each check was calibrated before the run against a hand-written good output and a
+hand-written bad output, both published in `tasks/<task>/calibration/`. `check.py` never sees
+the transcript. The grader does see `check.py`'s result.
 
-**The Skill arm was truncated more often.** 4 of 12 Skill sessions hit the 40-turn cap and
-finished under the restricted wrap-up; no baseline session did. That cuts both ways and the
-direction is not obvious: on the token-burn task it plausibly cost the Skill arm the hard-
-check pass, since neither arm ever passed there; on the rubric score, a capped agent delivers
-a less polished final message. A cleaner design would give both arms enough headroom that
-neither is truncated.
+**The confidence interval.** Cluster bootstrap: resample the three tasks with replacement,
+then resample samples within each drawn task, 95% percentile interval. Samples from one task
+are correlated, so a flat bootstrap over the 12 pairs would make the interval look narrower
+than it is.
+
+**What it cost.** $21.82 of model spend for the 24 sessions and 24 judgements published here:
+$20.63 for the sessions, $1.20 for the grading. Another $3.77 went on 26 attempts that are
+not in that figure and not published. Those are described below.
+
+## Everything that weakens this
+
+**The Skill arm ran out of turns more often.** 4 of 12 Skill sessions hit the 40-turn cap and
+finished under the restricted wrap-up. No baseline session did.
+
+Which way that cuts is not obvious. On the token-burn task it probably cost the Skill arm the
+hard-check pass, since neither arm ever passed there. On the rubric score, an agent that runs
+out of room writes a less polished final message. A cleaner design would give both arms
+enough headroom that neither runs out.
 
 **The grader saw the hard-check results.** Correction 2 above. The rubric score is partly
-downstream of `check.py`, so treating "88.3 vs 54.6" and "41.7% vs 8.3%" as two independent
+downstream of `check.py`, so reading "88.3 vs 54.6" and "41.7% vs 8.3%" as two independent
 confirmations overstates the evidence. They are one measurement and a correlated second.
 
 **The grader is a small model.** Claude Haiku 4.5, not a frontier grader. Its per-criterion
-notes are published so they can be read and disagreed with.
+notes are published so you can read them and disagree.
 
-**The tasks were written by the same party that published the Skill.** They were written
-against `SKILL.md` and deliberately include failure modes a generic agent tends to hit. The
-authoring spec forbids rigging a task so that only the Skill's exact wording can pass, and the
-prompts never name the Skill or its method, but this is not an independent benchmark and
-should not be read as one.
+**We wrote the tasks and we published the Skill.** The tasks were written against `SKILL.md`
+and deliberately include failure modes a generic agent tends to hit. The authoring spec
+forbids rigging a task so only the Skill's exact wording can pass, and the prompts never name
+the Skill or its method. It is still not an independent benchmark and should not be read as
+one.
 
-**26 attempts were discarded before the published run.** The first two batches, 24 attempts,
-all aborted 7 to 15 turns in when a global $100 spend cap was hit; none produced a scorable
-result. A third launch completed 2 attempts before being superseded by a full re-run of all
-24. Those 2 superseded attempts are `sales-agent-token-burn` base samples 2 and 4. Both
+**26 attempts were discarded before the published run.** The first two batches, 24 attempts
+in total, all aborted 7 to 15 turns in when a global $100 spend cap was hit. None produced a
+scorable result. A third launch completed 2 attempts before being superseded by a full re-run
+of all 24.
+
+Those 2 superseded attempts are `sales-agent-token-burn` baseline samples 2 and 4, and both
 scored *lower* than the versions that were kept (check score 0.182 against 0.364 for sample
-2, and $0.363 against $0.276 of spend for sample 4), so the discard did not favour the Skill
-arm. Nothing was dropped on the basis of its score, and the discarded attempts cost $3.77.
+2, and $0.363 against $0.276 of spend for sample 4). So dropping them did not flatter the
+Skill arm. Nothing was dropped because of its score. The discarded attempts cost $3.77.
 
-**One run.** One agent model, one grader model, three tasks, four samples, twelve pairs. The
-confidence interval includes zero.
+**It is one run.** One agent model, one grader model, three tasks, four samples, twelve
+pairs. The confidence interval includes zero.
 
 ## The Skill is not free
 
 The Skill arm took about 27% more turns and 24% more model spend per attempt. Reproducing a
-symptom before acting costs something. On the two tasks where the diagnosis was wrong without
-it, that was a good trade. On the third it was not.
+symptom before acting costs something.
+
+On the two tasks where the diagnosis was wrong without it, that was a good trade. On the
+third it was not.
 
 ## What this does not claim
 
-No comparison against any other Skill, product or framework. No claim that the Skill improves
-a real production agent, only that it changed what the model did on these three tasks. The
-confidence interval is wide and includes zero.
+It is not compared against any other Skill, product or framework. It is not evidence that the
+Skill improves a real production agent, only that it changed what the model did on these
+three tasks. The confidence interval is wide and includes zero.
 
-## Reproducing this
+## Check it yourself
 
-The published bundle contains everything needed to check the claims on this page without
-re-running anything: the task definitions, the inputs the agents were handed, the full session
-logs, the files they produced, and the grader's reasoning. Re-running the numbers from the
-artifacts is arithmetic over `summary.json` and the 24 verdict files.
+You can check every claim on this page without re-running anything. The published bundle has
+the task definitions, the inputs the agents were handed, the full session logs, the files
+they produced, and the grader's reasoning. Recomputing the numbers is arithmetic over
+`summary.json` and the 24 verdict files.
 
-Re-running the *experiment* needs a Bedrock account, E2B, and roughly $22 of model spend, and
-will not reproduce these numbers exactly, because the agent is sampled and the grader is
+Re-running the experiment itself needs a Bedrock account, E2B and roughly $22 of model spend.
+It will not reproduce these numbers exactly, because both the agent and the grader are
 sampled. What should reproduce is the direction on the first two tasks.
