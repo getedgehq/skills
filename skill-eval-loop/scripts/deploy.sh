@@ -27,14 +27,30 @@ SKILLS=${*:-$DEFAULT_SKILLS}
 ROOT=${INSTALL_ROOT:-$HOME/.agents/skills}
 RROOT=${REMOTE_ROOT:-/root/.agents/skills}
 
-# One digest over (relative path, bytes) for every file in a tree, skipping
-# bytecode. Same code both sides, so a mac-vs-linux checksum tool never differs.
-read -r -d '' DIGEST <<'PY'
+# Directories a tool drops beside the files it ran on. They are the installed
+# tree's own droppings, not drift from the checkout, so they are pruned on the
+# way out, deleted on the way in, and never hashed. Without .pytest_cache in
+# here, running the suite once from an install root makes every later deploy
+# report DIFF against a tree it had just copied correctly, which is how a real
+# drift report gets trained into noise.
+SCRATCH="__pycache__ .pytest_cache"
+# The same names as find's -name clauses, built from SCRATCH so the places that
+# have to agree cannot drift apart. The grouping parens are not in here: each
+# call site writes its own, because the local ones are escaped for this shell
+# and the remote one for the shell on the far side of ssh.
+NAMES=""
+for d in $SCRATCH; do NAMES="${NAMES:+$NAMES -o }-name $d"; done
+
+# One digest over (relative path, bytes) for every file in a tree, skipping the
+# scratch dirs. Same code both sides, so a mac-vs-linux checksum tool never
+# differs.
+read -r -d '' DIGEST <<PY
 import hashlib, os, sys
+SCRATCH = set("$SCRATCH".split())
 h = hashlib.sha256()
 root = sys.argv[1]
 for dirpath, dirnames, names in os.walk(root):
-    dirnames[:] = sorted(d for d in dirnames if d != "__pycache__")
+    dirnames[:] = sorted(d for d in dirnames if d not in SCRATCH)
     for n in sorted(names):
         p = os.path.join(dirpath, n)
         h.update(os.path.relpath(p, root).encode() + b"\0")
@@ -50,7 +66,7 @@ for s in $SKILLS; do
   if [ -n "$HOST" ]; then
     ssh "$HOST" "mkdir -p '$RROOT/$s'" || { fail=1; continue; }
     scp -q -r "$src/." "$HOST:$RROOT/$s/" || { fail=1; continue; }
-    ssh "$HOST" "find '$RROOT/$s' -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null; true"
+    ssh "$HOST" "find '$RROOT/$s' \\( $NAMES \\) -type d -exec rm -rf {} + 2>/dev/null; true"
     got=$(ssh "$HOST" "python3 - '$RROOT/$s'" <<PY
 $DIGEST
 PY
@@ -58,9 +74,9 @@ PY
     where="$HOST:$RROOT/$s"
   else
     mkdir -p "$ROOT/$s"
-    (cd "$src" && find . -name '__pycache__' -prune -o -type f -print | while read -r f; do
+    (cd "$src" && find . \( $NAMES \) -prune -o -type f -print | while read -r f; do
         mkdir -p "$ROOT/$s/$(dirname "$f")"; cp -p "$f" "$ROOT/$s/$f"; done)
-    find "$ROOT/$s" -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null
+    find "$ROOT/$s" \( $NAMES \) -type d -exec rm -rf {} + 2>/dev/null
     got=$(python3 -c "$DIGEST" "$ROOT/$s")
     where="$ROOT/$s"
   fi
