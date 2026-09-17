@@ -26,6 +26,12 @@ so generic-failure evals tie, while a skill carrying the user's rules wins.
   all found). `--per-session` caps marathon sessions so one session cannot fill the budget.
 - `--no-llm` extracts episodes only (free, used by the nightly timer); `--episodes FILE`
   clusters a saved extraction later.
+- The `session_index` also records **which skills each session loaded**, collected in the
+  same pass that reads the episodes. skill-eval-loop's recheck needs it to tell a skill
+  that earned its improvement from one that was never once loaded while the rate moved
+  anyway. Tool and argument spellings differ per source and were read off real sessions,
+  not assumed: Claude Code calls the tool `Skill` with the name in `skill`, OpenCode calls
+  it `skill` with the name in `name`, and Codex records no skill call at all.
 - The `session_index` lists **every** scanned session, not just the ones with episodes,
   and records how many turns the human typed in each. The recheck divides by that index,
   and an episode needs a previous user turn and a previous assistant turn, so a session

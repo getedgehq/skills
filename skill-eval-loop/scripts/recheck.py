@@ -30,6 +30,12 @@ Three rules keep a recheck from confirming a skill on no evidence:
     tell the two apart: extending the stopword list pulled three such signatures from
     35-42 distinct words down to 18-20, under the cap, without making a single one of
     them more about one theme. Mine a real one with theme.py instead;
+  - a rate that improved while the skill was never once loaded confirms nothing. Every
+    other guard here asks whether the rate moved; none of them asks whether the thing
+    under test ever ran, and a skill only reaches the model when it is loaded. The
+    session index now carries the skills each session loaded, and a drop with zero loads
+    is a SKIP, never an adopt-confirmed - and never a revoke either, because a skill that
+    never ran has not failed, it has had no chance, so the entry stays due;
   - and the denominator holds only sessions that could have carried a correction. A
     correction episode needs a previous user turn and a previous assistant turn, so a
     one-shot question cannot produce one; counting it measures the window's mix of work
@@ -192,6 +198,30 @@ def length_shift(sessions, episodes, t_adopt, until):
     return 1.0 if not after else float("inf")
 
 
+def loads(skill, sessions, since, until):
+    """How many sessions in a window actually loaded this skill.
+
+    A skill only reaches the model when it is loaded; until then its body is not in
+    context and it cannot have changed an answer. So a correction rate that fell across
+    a window where the skill was never once loaded fell for some other reason - the work
+    moved on, the theme stopped coming up, the window caught a quiet week - and reading
+    it as proof would write an adopt-confirmed row for a win the skill had no part in.
+    Nothing else in this file can catch that: every other guard asks whether the rate
+    moved, and none of them asks whether the thing under test ever ran.
+
+    Counted across all sources, and low for a reason that is not the skill's fault more
+    often than it looks: Codex transcripts record no skill load at all, so a window that
+    is mostly Codex reads zero however much the skill ran. That only ever costs a SKIP
+    and a later recheck, never a revoke, which is the right way round for a count that
+    can be wrong low.
+    """
+    n = 0
+    for s in sessions:
+        if since <= s.get("ts", 0) < until and skill in (s.get("skills") or ()):
+            n += 1
+    return n
+
+
 def kg_rate(episodes, sig_tokens, sessions, since, until, rare=frozenset()):
     """Session-rate of corrections about this theme in a time window.
 
@@ -240,6 +270,13 @@ def recheck_kg(entry, corr, dry):
         # have carried a correction, so its denominator counts sessions that never could.
         return None, ("this corrections run predates the session-length control and its "
                       "denominator cannot be trusted: re-mine before rechecking")
+    if any("skills" not in s for s in sess):
+        # Same standard as the line above. Without the per-session skill loads there is no
+        # way to tell a skill that earned its improvement from one that never ran, and the
+        # count reads zero either way - which would block every confirmation rather than
+        # the ones that deserve it. Re-mining is what recheck.py does on every run anyway.
+        return None, ("this corrections run predates the skill-usage index, so whether the "
+                      "skill ever loaded cannot be told from it: re-mine before rechecking")
     after_span = (max((s.get("ts", 0) for s in sess), default=0) - t_adopt) / 86400
     if after_span < MIN_AFTER_DAYS:
         return None, (f"only {after_span:.1f} days of sessions since adoption, "
@@ -276,6 +313,10 @@ def recheck_kg(entry, corr, dry):
             "sessions_scanned": n_before + n_after, "sessions_before": n_before,
             "sessions_after": n_after, "matching_before": hits_before,
             "matching_after": hits_after, "length_shift": round(shift, 3),
+            # Carried on every verdict, not only the ones it blocks: a confirmation that
+            # says how many times the skill actually ran is evidence, and one that cannot
+            # is a rate with a story attached.
+            "loads_after": loads(entry["skill"], sess, t_adopt, until),
             "metric": "correction_rate"}, None
 
 
@@ -360,6 +401,17 @@ def main():
                         "sessions_scanned": total, "metric": "tool_failure_rate"}
             detail = f"{total} sessions"
         improved = rate_now < baseline * IMPROVED
+        if improved and measured.get("loads_after") == 0:
+            # The rate fell in a window where this skill was never loaded once, so it fell
+            # for some other reason. Not a revoke either: a skill that never ran has not
+            # been shown to fail, only to have had no chance, and the entry stays due so a
+            # window that does load it can decide. This is the one verdict the rate alone
+            # gets backwards, and it gets it backwards in the direction that writes down a
+            # win - which is how a loop that measures itself starts believing its own press.
+            print(f"SKIP {skill}: correction rate fell {baseline:.2%} -> {rate_now:.2%}, but the "
+                  f"skill was never loaded in the {measured['sessions_after']} sessions since "
+                  "adoption, so the drop is not evidence about it")
+            continue
         verdict = {
             "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "skill": skill,
