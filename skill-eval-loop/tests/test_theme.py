@@ -159,6 +159,90 @@ class Derive(unittest.TestCase):
         self.assertIn("no baseline", why)
 
 
+class Named(unittest.TestCase):
+    """The derived words have to include the thing the skill is named after."""
+
+    def test_matches_across_an_ending_and_a_language(self):
+        self.assertTrue(theme.named({"umlaute", "text"}, "german-umlauts"),
+                        "the corpus says umlaute, the skill says umlauts")
+
+    def test_ignores_short_name_tokens(self):
+        self.assertFalse(theme.named({"build", "layout"}, "match-existing-ui"),
+                         "a two-letter name token would match half the dictionary")
+
+    def test_rejects_a_theme_made_only_of_the_descriptions_scenery(self):
+        # The real one: a skill about reusing assets whose derived theme was about the
+        # pages of one website. Every word is in its description, none is its subject.
+        self.assertFalse(theme.named({"find", "posts", "visuals", "getedge"},
+                                     "reuse-existing-assets"))
+
+
+class Breadth(unittest.TestCase):
+    """Two ways a theme can be too broad to attribute a rate change to one skill."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.sess = sessions(60, -60, 0)
+        self.adopted = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - 15 * DAY))
+
+    def test_refuses_a_description_that_already_matches_the_corpus(self):
+        # Caught one step earlier than it used to be: a seed this broad has no subset to
+        # rank inside, so it used to surface as the misleading "no word recurs often
+        # enough" rather than as the breadth problem it is.
+        md = skill_md(self.tmp, "ops-helper",
+                      "Fires when the deploy script or the migration or the port is wrong.")
+        corr = {"episodes": corpus(UMLAUT, NOISE, self.sess), "session_index": self.sess}
+        got, why = theme.derive("ops-helper", self.adopted, md, corr)
+        self.assertIsNone(got)
+        self.assertIn("there is no subset of the corpus", why)
+
+
+class Collision(unittest.TestCase):
+    """Two skills whose matchers cannot be told apart carry no verdict either way."""
+
+    def derived(self, name, hits):
+        return [({"skill": name}, {"_hits": set(hits)})]
+
+    def test_refuses_a_theme_that_matches_another_skills_sessions(self):
+        mine = set(range(20))
+        rival, j = self.collide(mine, self.derived("other", set(range(4, 24))))
+        self.assertEqual(rival, "other")
+        self.assertGreater(j, theme.MAX_CROSS_JACCARD)
+
+    def test_allows_two_themes_about_different_sessions(self):
+        rival, j = self.collide(set(range(10)), self.derived("other", set(range(20, 30))))
+        self.assertIsNone(rival)
+        self.assertEqual(j, 0.0)
+
+    def test_measured_on_sessions_not_on_words(self):
+        # The case word overlap misses. These two signatures share three words out of
+        # seventeen, a Jaccard of 0.18, well under the cap; they matched the same
+        # sessions to within one episode. Synonyms read as distinct vocabularies.
+        a = "company getedge linkedin post posts real right skill sure video"
+        b = "launch linkedin post read send session skill text viel wtf"
+        words = len(set(a.split()) & set(b.split())) / len(set(a.split()) | set(b.split()))
+        self.assertLess(words, theme.MAX_CROSS_JACCARD, "word overlap would have allowed both")
+        rival, j = self.collide(set(range(23)), self.derived("other", set(range(2, 25))))
+        self.assertEqual(rival, "other", "session overlap refuses both")
+
+    def test_a_settled_signature_from_the_ledger_also_counts_as_a_rival(self):
+        rival, _ = self.collide(set(range(20)), [], keepers={"installed": set(range(3, 23))})
+        self.assertEqual(rival, "installed")
+
+    def collide(self, hits, derived, keepers=None):
+        return theme.collision(hits, "mine", derived, keepers or {})
+
+
+class Matched(unittest.TestCase):
+    def test_uses_the_same_rule_as_the_recheck(self):
+        sess = sessions(20, -20, 0)
+        eps = [{"session": s["id"], "corr": "die umlaute im deutschen text sind falsch"}
+               for s in sess[:5]]
+        eps += [{"session": s["id"], "corr": "the deploy script failed again"} for s in sess]
+        hit = theme.matched("umlaute deutschen text falsch", eps, sess)
+        self.assertEqual(hit, {s["id"] for s in sess[:5]})
+
+
 class Rank(unittest.TestCase):
     def test_ignores_words_common_across_the_whole_corpus(self):
         sess = sessions(40, -40, 0)
@@ -166,6 +250,20 @@ class Rank(unittest.TestCase):
         seed = eps[:10]
         self.assertNotIn("render", theme.rank(seed, eps),
                          "a word in every correction cannot mark one theme")
+
+    def test_the_floor_is_absolute_not_a_share_of_the_seed(self):
+        # A floor set as a share of the seed grows faster than word frequencies do, so a
+        # broad seed throws away the very word that would have narrowed it. Tripling the
+        # real corpus took one skill's seed from 58 episodes to 135, moving a 20% floor
+        # from 11 to 27 while its most distinctive word only went from 6 to 15. Here the
+        # seed is 100 episodes and the theme word recurs in 8 of them: a proportional
+        # floor of 20 discards it, which is the failure, and an absolute floor keeps it.
+        seed = [{"session": f"t{i}", "corr": "umlaute falsch geschrieben"} for i in range(8)]
+        seed += [{"session": f"u{i}", "corr": f"unique{i} wording here"} for i in range(92)]
+        all_eps = seed + [{"session": f"n{i}", "corr": f"other{i} thing entirely"}
+                          for i in range(300)]
+        self.assertIn("umlaute", theme.rank(seed, all_eps),
+                      "a word in 8 of 100 theme episodes is the theme, not noise")
 
     def test_requires_a_word_to_recur_within_the_theme(self):
         sess = sessions(40, -40, 0)
