@@ -97,11 +97,16 @@ case "$AGENT" in
     code=$?;;
 esac
 set -e
-python3 - "$META" "$ID" "$ARM" "$AGENT" "$MODEL" "${FORGE_SAMPLE:-}" "$code" "$(( $(date +%s) - start ))" <<'PYEOF'
+python3 - "$META" "$ID" "$ARM" "$AGENT" "$MODEL" "${FORGE_SAMPLE:-}" "$code" "$(( $(date +%s) - start ))" "$TIMEOUT" <<'PYEOF'
 import json, os, re, sys
-meta, rid, arm, agent, model, sample, code, secs = sys.argv[1:]
+meta, rid, arm, agent, model, sample, code, secs, cap = sys.argv[1:]
+# The cap goes in the row because the judge has to tell an arm the clock killed from
+# an arm that answered badly, and an arm killed at the clock leaves the same exit and
+# the same failed verify as one that finished and got it wrong. Reading FORGE_TIMEOUT
+# at judge time instead would read whatever the environment says then, which is not
+# necessarily the cap this arm ran under.
 row = {"id": rid, "arm": arm, "agent": agent, "model": model, "sample": sample,
-       "exit": int(code), "seconds": int(secs)}
+       "exit": int(code), "seconds": int(secs), "timeout_s": int(cap)}
 if row["exit"] != 0:
     # keep the agent's own failure reason (quota, auth, timeout) next to the exit code
     err = ""

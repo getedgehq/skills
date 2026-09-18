@@ -510,6 +510,25 @@ fired, with `unrecognized arguments: --sources`.
   baseline both give it a skill on purpose. `invalid_code: baseline_had_the_skill`
   stops the brief on the first sample the way `arm_never_ran` does: an ambient install
   is still there for samples 2 and 3.
+- **An arm the clock killed is not an arm that failed the brief.** Both leave a
+  non-zero verify and a final message, and `both_arms_failed_verify` swallowed the
+  difference - its reason line says "fix the brief, not the loop", and no rewrite of a
+  brief buys it more time. `edge-launch-intro-scene-ax41` is the pair that showed it:
+  sample 1 had both arms exit 0 and both fail verify, a gate nobody passes; sample 2
+  had the without-arm finish in 1130s and the with-arm killed at the 1200s cap,
+  mid-sentence on "Now rendering...". Both were filed under the same code, and the two
+  together tripped the two-in-a-row rule and retired the brief with a message blaming
+  it. Only one of the two was a measurement. `invalid_code: arm_timed_out` fires on
+  exit 124 (`timeout(1)`) or 142 (the perl `alarm` fallback's SIGALRM), and only when
+  that arm also failed verify: an agent cut off at the cap whose work still passes the
+  brief's own gate is done by the only definition the brief offers, and throwing that
+  pair away would discard a real verdict over the runner's bookkeeping. `run_eval.sh`
+  records the cap it ran under as `timeout_s`, so the reason can name it - 1200s on a
+  brief that renders video is a different problem from 1200s on one that edits a file.
+  In `forge.sh` it is its own streak: it does not count as a failed gate and it does
+  not clear one, because it says nothing either way about whether the brief is
+  passable. Two in a row still stops the run, since a brief that cannot finish inside
+  the cap will not finish inside it on the third try.
 - **A zero load is only evidence where the runner records loads.** Claude Code emits a
   `Skill` tool call with the name in `skill`, OpenCode a `skill` part with the name in
   `state.input.name`, and Codex records nothing at all. Enforcing on a Codex zero would

@@ -143,6 +143,49 @@ def never_ran(arm):
     return bool(err) and final.startswith(err)
 
 
+def cut_off(arms):
+    """Arms the runner killed at the clock before they had finished.
+
+    An arm that ran out of time and an arm that finished and got it wrong leave the
+    same evidence downstream: a non-zero verify and a final message the judge can
+    read. edge-launch-intro-scene-ax41 is the case that showed it. Sample 1 had both
+    arms exit 0 and both fail verify, which is a brief nobody can pass. Sample 2 had
+    the without-arm finish in 1130s and the with-arm killed at the 1200s cap, 20
+    minutes in, mid-sentence on "Now rendering...". Both samples were recorded as
+    both_arms_failed_verify, whose reason line reads "fix the brief, not the loop",
+    and the two together tripped forge.sh's two-in-a-row rule and stopped the brief.
+    One of those two samples was never a measurement: the with-arm was not failing the
+    gate, it was out of time, and the advice to rewrite the brief cannot fix a clock.
+
+    A timeout only invalidates the pair when that arm also failed verify. An agent
+    killed at the cap whose work still passes the brief's own gate is complete by the
+    only definition the brief offers, and throwing that pair away would discard a real
+    comparison over the runner's bookkeeping.
+
+    124 is what timeout(1) and gtimeout return. 142 is the perl fallback on a host
+    with neither: alarm(2) kills by SIGALRM and the shell reports 128+14. Both are
+    the same event and only one of them has ever been seen here.
+    """
+    return sorted(a for a in arms
+                  if arms[a]["run"].get("exit") in (124, 142)
+                  and arms[a]["verify_exit"] != 0)
+
+
+def cutoff_reason(names, arms):
+    """Why this pair measures the clock, naming the cap it hit.
+
+    The cap is in the reason because the fix depends on it: 1200s on a brief that
+    renders video is a different problem from 1200s on a brief that edits one file,
+    and a reader who has to go and find FORGE_TIMEOUT to know which cannot tell.
+    """
+    caps = {arms[a]["run"].get("timeout_s") for a in names} - {None}
+    cap = f" {caps.pop()}s" if len(caps) == 1 else ""
+    which = " and ".join(f"{n}-arm" for n in names)
+    return (f"the {which} ran into the{cap} cap and then failed verify, so this pair "
+            "measures the clock rather than the skill. Raise FORGE_TIMEOUT or narrow "
+            "the brief, then rerun the sample")
+
+
 def dead_reason(name, arm):
     """Why this arm counts as never started, in the words of what was actually seen.
 
@@ -458,14 +501,18 @@ def main():
     # tonight. Ordered ahead of both_arms_failed_verify because an arm that never ran
     # also fails verify, and that code sends the brief back for a rewrite it does not
     # need.
-    dead = [a for a in ("with", "without") if never_ran(arms[a])]
-    if dead:
+    def refuse(code, reason):
+        """Record an unmeasurable pair and stop, without drawing slots or calling the
+        judge. Written once because the three refusals below differ only in their two
+        words: when this was two copies of the same twelve-line dict, an edit that
+        added skills_advertised to one of them reached the other only because a grep
+        caught it."""
         result = {
             "brief": brief["id"],
             "winner_arm": "invalid",
             "invalid": True,
-            "invalid_code": "arm_never_ran",
-            "invalid_reason": "; ".join(dead_reason(a, arms[a]) for a in dead),
+            "invalid_code": code,
+            "invalid_reason": reason,
             "verify": {a: arms[a]["verify_exit"] for a in arms},
             "tool_errors": {a: arms[a]["tool_errors"] for a in arms},
             "skills_installed": {a: arms[a]["skills"] for a in arms},
@@ -479,6 +526,10 @@ def main():
         print(json.dumps({k: result[k] for k in
                           ("brief", "winner_arm", "invalid_code", "invalid_reason")}, indent=1))
         print(f"-> {path}")
+
+    dead = [a for a in ("with", "without") if never_ran(arms[a])]
+    if dead:
+        refuse("arm_never_ran", "; ".join(dead_reason(a, arms[a]) for a in dead))
         return
 
     # Also before the mapping and before the model call, and for the same two reasons:
@@ -491,29 +542,22 @@ def main():
     # baseline having the skill too.
     leaked = blind_broken(arms)
     if leaked:
-        result = {
-            "brief": brief["id"],
-            "winner_arm": "invalid",
-            "invalid": True,
-            "invalid_code": "baseline_had_the_skill",
-            "invalid_reason": (
-                f"the without-arm was offered {', '.join(leaked)} without being "
-                "handed it, so the baseline could reach the skill under test and "
-                "this pair measures nothing. Uninstall it from the host or image the "
-                "runner uses, then rerun the sample"),
-            "verify": {a: arms[a]["verify_exit"] for a in arms},
-            "tool_errors": {a: arms[a]["tool_errors"] for a in arms},
-            "skills_installed": {a: arms[a]["skills"] for a in arms},
-            "skills_loaded": {a: arms[a]["loaded"] for a in arms},
-            "loads_knowable": {a: arms[a]["loads_knowable"] for a in arms},
-            "skills_advertised": advertised_record(arms),
-            "run": {a: arms[a]["run"] for a in arms},
-        }
-        path = os.path.join(runs, "verdict.json")
-        json.dump(result, open(path, "w"), indent=1)
-        print(json.dumps({k: result[k] for k in
-                          ("brief", "winner_arm", "invalid_code", "invalid_reason")}, indent=1))
-        print(f"-> {path}")
+        refuse("baseline_had_the_skill",
+               f"the without-arm was offered {', '.join(leaked)} without being "
+               "handed it, so the baseline could reach the skill under test and "
+               "this pair measures nothing. Uninstall it from the host or image the "
+               "runner uses, then rerun the sample")
+        return
+
+    # Third and last refusal before the mapping and the model call. Below it sits
+    # both_arms_failed_verify, which is exactly the code a cut-off arm gets today and
+    # exactly the wrong one: it tells the operator to rewrite a brief whose only
+    # problem was that the clock ran out. Ordered after baseline_had_the_skill because
+    # a contaminated pair is unmeasurable whether or not it also timed out, and the
+    # contamination is the thing that has to be fixed first.
+    late = cut_off(arms)
+    if late:
+        refuse("arm_timed_out", cutoff_reason(late, arms))
         return
 
     # Blind: random slot assignment, persisted privately, never reshuffled.
