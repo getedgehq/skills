@@ -60,6 +60,43 @@ A file may also carry `judge_saw_checks`. When it is `false`, the grader was han
 
 - `judgments`: `judge_saw_checks: false` in every file, so the grader was blind to the checks
 
+## The intervals were recalibrated on 2026-09-17
+
+Every current summary file in this bundle was regenerated that day. Nothing else
+was: the judgments, the session transcripts, the task definitions and the
+deliverables are byte-identical to what the run produced, and no score, verdict or
+count moved. A file whose name marks it as superseded is the exception and is kept
+exactly as it was written, because its whole purpose is to show what an earlier
+version said.
+
+What moved is the interval. The figures these runs first reported came from a
+percentile cluster bootstrap, which resamples tasks and then samples within tasks.
+That estimator is anti-conservative when the cluster count is small: measured
+against a known truth at the three tasks per Skill these runs use, it excludes zero
+about 15.7% of the time when the true effect is exactly zero, not 5%. The shortfall
+is in the number of tasks, so more samples per task make it worse rather than
+better. The measurement and its checks are in
+[`docs/BENCHMARK.md`](../../../docs/BENCHMARK.md) section 5.
+
+`delta_ci95` is now a two-sided 95% t interval on the per-task means, with k-1
+degrees of freedom, and `interval_method` names it. The bootstrap value every
+earlier figure was read off is kept beside it as `judge_delta_ci95_bootstrap`, and
+`resolved_bootstrap_legacy` records what the old rule would have said, so the
+correction can be checked against the numbers it replaces rather than taken on
+trust. The `summary.md` tables carry both intervals in adjacent columns.
+
+The publication rule is unchanged and is the pre-registered one: a cell resolves
+when the 95% interval on the judge point delta excludes zero. Two changes follow
+from implementing it correctly.
+
+`resolved` no longer reports a win-rate resolution. The win rate is bounded in
+[0, 100] and the t interval on its task means is not, printing bounds such as
+[53.9, 101.7] and [-194.5, 282.0] in this benchmark; an interval that runs past the
+range of the quantity it covers is not delivering 95% coverage near the bound. It
+is published as a diagnostic in the `win rate % [95% CI]` column and resolves
+nothing until a bounded interval replaces it. The bootstrap's win-rate interval is
+not the replacement, being the same estimator measured above.
+
 ## What was changed before publishing
 
 The repo's redaction gate rewrote these classes of string, everywhere they appeared. The count is the number of files in this bundle that contain the placeholder, so you can find every one of them:

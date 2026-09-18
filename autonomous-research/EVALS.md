@@ -4,13 +4,33 @@ We built a Skill, then measured it against not having it. Same model, same tasks
 same sandbox. The only thing that changes between the two arms is whether the Skill is loaded.
 
 **No resolved effect. At 8 judged pairs the Skill arm scored 13.7 rubric points above the
-baseline, 95% interval [-4.2, +32.5]. We then doubled the samples. At 16 judged pairs the same
-comparison gave 6.6 points, 95% interval [-8.1, +20.7]. The interval covers zero both times, so
-neither number is a result. The estimate halved when the sample doubled.**
+baseline, 95% interval [-9.9, +37.4]. We then doubled the samples. At 16 judged pairs the same
+comparison gave 6.6 points, 95% interval [-55.6, +68.7]. The interval covers zero both times, so
+neither number is a result. The estimate halved when the sample doubled, and the interval got
+much wider.**
 
 The harness records its own verdict on both, in the field `resolved`, as `unresolved`.
 
+These intervals are wider than anything else on this benchmark, and the reason is worth stating
+before the numbers below rather than after. This run has **two tasks**. Every interval here is
+built from the spread between two task means, which is one degree of freedom, and one degree of
+freedom buys almost nothing: the multiplier on the standard error is 12.7 here against 4.3 on a
+three-task run. Sixteen pairs does not compensate, because the sixteen sit on those same two
+tasks. A two-task run cannot resolve anything at this scale and should not have been launched
+expecting to.
+
 Run date: 2026-09-16, run `heldout`. This is one run. It has not been repeated.
+
+> **Correction, 2026-09-17.** The intervals on this page were recomputed and one claim was
+> withdrawn. They used to read [-4.2, +32.5] and [-8.1, +20.7], and this page used to cite a
+> resolved +3.1 point result for the same Skill on the v1 tasks. All three came from a percentile
+> cluster bootstrap that we have since measured to be anti-conservative at small task counts: at
+> three tasks it excludes zero about 15.7% of the time when the true effect is exactly zero,
+> rather than 5%. Recomputed with a correctly sized interval, the two figures on this page stay
+> unresolved and widen, and the v1 result **stops resolving**: +3.1 points, 95% interval
+> [-1.4, +7.6]. This Skill now has no resolved result on any task set. No estimate moved and no
+> count moved. The reasoning is in [`docs/BENCHMARK.md`](../docs/BENCHMARK.md) section 5 and the
+> withdrawal is recorded in [`evals/WITHDRAWN.md`](../evals/WITHDRAWN.md).
 
 ## Why both numbers are on this page
 
@@ -26,31 +46,34 @@ So: both n figures are published together and always will be. Quoting the n=4 fi
 own would have been the most misleading number we could have printed. It was the larger of the
 two, it was the one we saw first, and it did not survive doubling the sample.
 
-## The same Skill resolved on the tasks it was written beside
+## The other task set, and a result this page used to lean on
 
-This Skill has been measured on two different sets of tasks, and the two measurements point
-different ways. Both are on the getedge.cc page for this Skill, as separate labelled rows, and
-both belong here too.
+This Skill has been measured on two different sets of tasks. The getedge.cc page for this Skill
+carries the 16-pair figure from this run. The v1 figure belongs here, on the page that used to
+lean on it.
 
 On the three v1 tasks, written alongside the Skill, the arm with the Skill in the prompt scored
-+3.1 points over 9 pairs, 95% interval [+0.2, +6.5]. That interval excludes zero, so under our
-rule that cell is resolved. The checker agreed with the direction: 88.9% of Skill-arm attempts
-passed against 77.8% of baseline attempts. Those numbers are in
-`results/v1/summary-indep-v2.json`, which is a different run from the one this page documents
-and is not in this bundle.
++3.1 points over 9 pairs. Until the correction above, that cell was this Skill's one resolved
+result, on a bootstrap interval of [+0.2, +6.5] that cleared zero by two tenths of a point.
+Recomputed correctly the interval is [-1.4, +7.6] and it does not clear zero. The checker still
+agrees with the direction, 88.9% of Skill-arm attempts passing against 77.8% of baseline
+attempts, but a checker agreeing with the direction of an unresolved judge delta is not a
+resolution either. Those numbers are in `results/v1/summary-indep-v2.json`, which is a different
+run from the one this page documents and is not in this bundle.
 
 On the two tasks written afterward, the ones on this page, the same arm scored +6.6 points over
-16 pairs, interval [-8.1, +20.7], and the checker passed 0 of 16 attempts in both arms.
+16 pairs, interval [-55.6, +68.7], and the checker passed 0 of 16 attempts in both arms.
 
-The tempting read is overfitting, and it is not one we can support. The two task sets are not
-the same difficulty, and the checker numbers show it: on the v1 tasks the baseline already
-passed 77.8% of the time, and on these two neither arm passed once. A resolved +3.1 on tasks
-where the baseline was already close to the ceiling and an unresolved +6.6 on tasks neither arm
-can do are not measurements of the same thing.
+The tempting read was overfitting, and it was never one we could support. The two task sets are
+not the same difficulty, and the checker numbers show it: on the v1 tasks the baseline already
+passed 77.8% of the time, and on these two neither arm passed once. A +3.1 on tasks where the
+baseline was already close to the ceiling and a +6.6 on tasks neither arm can do are not
+measurements of the same thing.
 
-What the pair does establish is narrower and still worth stating. The only resolved result this
-Skill has is on the tasks it was written beside, it is worth about three points, and it did not
-carry over to the first harder tasks we pointed at it.
+What the pair establishes now is shorter than what this page used to claim. This Skill has no
+resolved result on either task set. The direction is positive in both, by about three points on
+one and about seven on the other, and neither is distinguishable from nothing at the task counts
+we ran.
 
 ## Everything is published
 
@@ -88,11 +111,12 @@ is an alias, not the older package.
 | Rubric score, Skill arm | 57.2 | 54.7 |
 | Rubric score, baseline | 43.5 | 48.1 |
 | Difference | +13.7 | +6.6 |
-| 95% confidence interval | [-4.2, +32.5] | [-8.1, +20.7] |
+| 95% confidence interval | [-9.9, +37.4] | [-55.6, +68.7] |
 | Harness verdict | `unresolved` | `unresolved` |
-| Relative uplift | 31.6% [-8.8, +84.6] | 13.6% [-14.1, +48.2] |
+| Tasks behind the interval | 2 | 2 |
+| Relative uplift | 31.6% | 13.6% |
 | Pairs won / tied / lost | 2 / 3 / 3 | 4 / 7 / 5 |
-| Win rate | 43.8% [12.5, 81.2] | 46.9% [21.9, 75.0] |
+| Win rate | 43.8% | 46.9% |
 | Grader self-disagreements | 3 of 8 | 7 of 16 |
 | Holistic score, Skill arm | 45.0 | 46.7 |
 | Holistic score, baseline | 43.2 | 47.5 |
@@ -105,10 +129,13 @@ is an alias, not the older package.
 
 Four things in that table are worth stating out loud.
 
-**The win rate never separated from a coin flip.** 43.8% at n=4 and 46.9% at n=8, both intervals
-straddling 50. At n=4 the win rate and the rubric delta pointed in opposite directions: the
-rubric said the Skill arm was 13.7 points ahead while the head to head count was 2 wins against
-3 losses.
+**The win rate never separated from a coin flip.** 43.8% at n=4 and 46.9% at n=8, both on the
+wrong side of 50. It is printed without an interval, here and everywhere else on this benchmark:
+a win rate is bounded between 0 and 100%, the interval we use on the judge gap is not bounded,
+and on this run it puts the win rate between -151.7% and +245.4%. An interval that wide on a
+quantity that narrow is not telling anyone anything. At n=4 the win rate and the rubric delta
+pointed in opposite directions: the rubric said the Skill arm was 13.7 points ahead while the
+head to head count was 2 wins against 3 losses.
 
 **The grader's two metrics disagree in sign.** The rubric score and the holistic score come from
 the same grader, on the same documents, in the same call. At n=8 the rubric score puts the Skill
@@ -125,8 +152,9 @@ against 12.2. For no resolved gain.
 
 ### Per task
 
-Two tasks, so the confidence interval is built by resampling two clusters. That is the
-dominant reason it is wide, and no amount of extra sampling inside those two tasks fixes it.
+Two tasks, so the confidence interval is built from two task means and one degree of freedom.
+That is the whole reason it is wide, and no amount of extra sampling inside those two tasks
+fixes it.
 
 | Task | n | Skill | Baseline | Difference | Won / tied / lost | Hard-check score |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -135,11 +163,19 @@ dominant reason it is wide, and no amount of extra sampling inside those two tas
 | phone-policy-brief | 8 | 54.2 | 52.5 | +1.7 | 0 / 5 / 3 | 0.716 vs 0.648 |
 | ssb-levy-rea | 8 | 55.1 | 43.7 | +11.4 | 4 / 2 / 2 | 0.777 vs 0.631 |
 
-At n=4 the two tasks agreed with each other, +11.9 and +15.6. The width came from variation
-between samples of the same task, not from the tasks disagreeing. Doubling the samples was the
-right response to that, and it is what made the phone-policy-brief estimate collapse from +11.9
-to +1.7, driven by the baseline arm improving from 45.6 to 52.5 rather than by the Skill arm
-falling.
+At n=4 the two tasks agreed with each other, +11.9 and +15.6. We read that at the time as
+variation between samples of the same task, and doubling the samples as the right response.
+That reading was wrong, and the correction at the top of this page is why. The interval here is
+built from how far the two task means sit apart, so samples inside a task cannot narrow it; what
+doubling the samples did was move the task means themselves, from +11.9 and +15.6 to +1.7 and
++11.4, which is a much larger spread and therefore a much wider interval. The phone-policy-brief
+collapse from +11.9 to +1.7 was driven by the baseline arm improving from 45.6 to 52.5 rather
+than by the Skill arm falling.
+
+The lever we should have pulled was more tasks. We have since measured both: at three tasks,
+going from three samples to six moves the chance of detecting a real five-point effect from 0.14
+to 0.16, while going from three tasks to six moves it from 0.14 to 0.38. This run has two
+tasks.
 
 ### Every pair
 
@@ -165,8 +201,10 @@ claim you wanted to make, which is the reason all sixteen are here.
 
 1. **The grader was a small model.** Claude Haiku 4.5, not a frontier model. The agent doing the
    work was Claude Sonnet 4.5.
-2. **Two tasks.** The interval is a cluster bootstrap over two clusters. It will be wide whatever
-   the point estimate is, and that was known and written down before the run was launched.
+2. **Two tasks.** The interval is built from two task means and one degree of freedom. It will
+   be wide whatever the point estimate is, and that was known and written down before the run was
+   launched. What was not known then is how much wider a correctly sized interval is than the
+   one we were using: [-55.6, +68.7] against [-8.1, +20.7] at 16 pairs.
 3. **Only the `loaded` arm was run.** The Skill text was placed in the system prompt and its
    bundled scripts were uploaded into the sandbox. This measures the Skill's content, not whether
    an agent finds it on its own. The realistic number for "I installed this and forgot about it"
@@ -424,10 +462,11 @@ effect here, so it is a cost with an unmeasured return.
   Both numbers must be quoted together or neither. The estimate fell when the sample doubled, so
   in this instance the stopping rule did not inflate the published figure, but that is an outcome
   and not a defence.
-- **Two tasks.** The cluster bootstrap resamples two clusters. A wide interval is a property of
-  the design, not a surprise. More samples inside these two tasks cannot narrow the
-  between-task component, and after 16 pairs we stopped rather than keep buying precision on two
-  tasks.
+- **Two tasks, and that is the binding limit.** The interval is built from two task means, so
+  a wide interval is a property of the design rather than a surprise. More samples inside these
+  two tasks cannot narrow it, and after 16 pairs we stopped rather than keep buying precision
+  that was never for sale. Six tasks per Skill is the requirement going forward; this run has
+  two, which is the smallest number an interval can be computed from at all.
 - **One run, one date.** Not repeated.
 - **One agent model, one grader model.** Claude Sonnet 4.5 doing the work, Claude Haiku 4.5
   grading it. Results may not transfer to another agent or another grader.
