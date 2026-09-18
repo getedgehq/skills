@@ -893,6 +893,38 @@ class UnpassableBrief(unittest.TestCase):
         self.assertEqual(n, 1)
         self.assertIn("could reach the skill under test", err)
 
+    LATE = "arm_timed_out"
+
+    def test_two_cut_off_samples_running_stop_the_brief(self):
+        # Not the first one: which arm runs long can vary between samples. But a brief
+        # that cannot finish inside the cap twice will not finish inside it on the
+        # third, and proving that again costs two more arms of wall clock.
+        n, err = self.samples_run(self.LATE, self.LATE, self.LATE)
+        self.assertEqual(n, 2)
+        self.assertIn("ran out of time twice running", err)
+        self.assertIn("FORGE_TIMEOUT", err)
+
+    def test_one_cut_off_sample_does_not_stop_the_brief(self):
+        n, err = self.samples_run(self.LATE, None, None)
+        self.assertEqual(n, 3)
+        self.assertNotIn("twice running", err)
+
+    def test_a_cut_off_sample_does_not_count_as_a_failed_gate(self):
+        # Counting it would blame the brief for the clock: these two are exactly the
+        # pair of samples edge-launch produced, and they stopped the brief with a
+        # message telling the operator to rewrite it.
+        n, err = self.samples_run(self.BOTH, self.LATE, None)
+        self.assertEqual(n, 3)
+        self.assertNotIn("failed its own verify in both arms twice running", err)
+
+    def test_a_cut_off_sample_does_not_clear_a_real_failed_gate(self):
+        # The other half of the same rule, and the one an else-branch gets wrong: a
+        # sample that says nothing about the gate must leave the verify count where it
+        # stood, not reset it. Sample 4 is the second consecutive gate failure.
+        n, err = self.samples_run(self.BOTH, self.LATE, self.BOTH, None)
+        self.assertEqual(n, 3, "the gate failed twice with only a timeout in between")
+        self.assertIn("failed its own verify in both arms twice running", err)
+
 
 class LeakyBaseline(unittest.TestCase):
     """A baseline that could reach the candidate's skill is not a baseline.
@@ -1018,6 +1050,125 @@ class LeakyBaseline(unittest.TestCase):
         fresh coin flip instead of inheriting this pair's."""
         self.judge_pair(offered=["demo-skill"])
         self.assertFalse(os.path.exists(os.path.join(self.runs, "mapping.private.json")))
+
+
+class CutOffArm(unittest.TestCase):
+    """An arm the clock killed is not an arm that failed the brief.
+
+    edge-launch-intro-scene-ax41 is the pair that showed it. Sample 1: both arms exit
+    0, both fail verify - a gate nobody passes. Sample 2: the without-arm finishes in
+    1130s, the with-arm is killed at the 1200s cap mid-sentence on "Now rendering...".
+    Both came back both_arms_failed_verify, whose reason reads "fix the brief, not the
+    loop", and together they tripped the two-in-a-row rule and stopped the brief. Only
+    one of the two was a measurement, and no rewrite of the brief can buy time.
+    """
+
+    JUDGE = os.path.join(SCRIPTS, "judge.py")
+
+    def judge_pair(self, with_run=None, without_run=None, verify="false", finals=None):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp)
+        bin_, self.marker = stub_claude(tmp)
+        brief = os.path.join(tmp, "brief.json")
+        json.dump({"id": "b1", "prompt": "p", "verify": verify}, open(brief, "w"))
+        self.runs = os.path.join(tmp, "runs", "b1", "s1")
+        for arm, run in (("with", with_run), ("without", without_run)):
+            work = os.path.join(self.runs, arm)
+            meta = work + ".meta"
+            os.makedirs(work)
+            os.makedirs(meta)
+            open(os.path.join(meta, "final.txt"), "w").write(
+                (finals or {}).get(arm, "Here is the scene you asked for."))
+            with open(os.path.join(meta, "transcript.jsonl"), "w") as fh:
+                fh.write(json.dumps({"message": {"role": "assistant", "content": [
+                    {"type": "text", "text": "Now rendering..."}]}}) + "\n")
+            json.dump(run or {"agent": "claude", "exit": 0},
+                      open(os.path.join(meta, "run.json"), "w"))
+        env = dict(os.environ, FORGE_ROOT=tmp, FORGE_ENGINE="claude",
+                   PATH=bin_ + os.pathsep + os.environ["PATH"], PYTHONDONTWRITEBYTECODE="1")
+        out = subprocess.run([sys.executable, self.JUDGE, brief, "--sample", "1"],
+                             env=env, capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return json.load(open(os.path.join(self.runs, "verdict.json")))
+
+    def judged(self):
+        return os.path.exists(self.marker)
+
+    def late(self, code=124, cap=1200):
+        return {"agent": "claude", "exit": code, "seconds": cap + 1, "timeout_s": cap,
+                "error": "timeout"}
+
+    def test_an_arm_killed_at_the_cap_does_not_make_it_a_broken_brief(self):
+        v = self.judge_pair(with_run=self.late())
+        self.assertEqual(v["invalid_code"], "arm_timed_out")
+        self.assertEqual(v["winner_arm"], "invalid")
+        self.assertNotIn("fix the brief", v["invalid_reason"])
+
+    def test_the_reason_names_the_arm_the_cap_and_the_fix(self):
+        v = self.judge_pair(with_run=self.late())
+        self.assertIn("the with-arm", v["invalid_reason"])
+        self.assertIn("1200s", v["invalid_reason"])
+        self.assertIn("FORGE_TIMEOUT", v["invalid_reason"])
+
+    def test_both_arms_out_of_time_names_both(self):
+        v = self.judge_pair(with_run=self.late(), without_run=self.late())
+        self.assertEqual(v["invalid_code"], "arm_timed_out")
+        self.assertIn("with-arm and without-arm", v["invalid_reason"])
+
+    def test_a_cut_off_arm_that_still_passed_the_gate_is_a_real_comparison(self):
+        """The brief's own verify is the only definition of done it offers. An agent
+        killed at the cap whose work passes it is done, and throwing the pair away
+        would discard a real verdict over the runner's bookkeeping."""
+        v = self.judge_pair(with_run=self.late(), verify="true")
+        self.assertNotEqual(v.get("invalid_code"), "arm_timed_out")
+        self.assertTrue(self.judged())
+
+    def test_the_perl_fallback_signal_is_the_same_event(self):
+        """No `timeout` and no `gtimeout` leaves perl's alarm, which kills by SIGALRM
+        and reports 128+14. Same cap, same cut-off, different number."""
+        v = self.judge_pair(with_run=self.late(code=142))
+        self.assertEqual(v["invalid_code"], "arm_timed_out")
+
+    def test_an_ordinary_failure_is_still_a_failed_gate(self):
+        """Only the cap's own exit codes count. A crash that fails verify is exactly
+        what both_arms_failed_verify is for, and swallowing it here would hide briefs
+        that genuinely cannot be passed."""
+        run = {"agent": "claude", "exit": 1, "seconds": 30, "error": "boom"}
+        v = self.judge_pair(with_run=run, without_run=run,
+                            finals={"with": "tried", "without": "tried"})
+        self.assertEqual(v.get("invalid_code"), "both_arms_failed_verify")
+
+    def test_a_run_row_without_a_cap_still_refuses(self):
+        """run.json rows written before the cap was recorded have no timeout_s. The
+        refusal does not depend on it - only the seconds drop out of the sentence."""
+        v = self.judge_pair(with_run={"agent": "claude", "exit": 124, "error": "timeout"})
+        self.assertEqual(v["invalid_code"], "arm_timed_out")
+        self.assertIn("ran into the cap", v["invalid_reason"])
+
+    def test_two_different_caps_are_not_reported_as_one(self):
+        v = self.judge_pair(with_run=self.late(cap=1200), without_run=self.late(cap=600))
+        self.assertEqual(v["invalid_code"], "arm_timed_out")
+        self.assertNotIn("1200s", v["invalid_reason"])
+        self.assertNotIn("600s", v["invalid_reason"])
+
+    def test_an_arm_that_never_started_outranks_it(self):
+        """A container that timed out before launching anything is a runner fault, and
+        its reason tells the operator to fix the runner rather than buy it more time."""
+        v = self.judge_pair(with_run={"agent": "claude", "exit": 124, "timeout_s": 1200,
+                                      "error": "timeout"},
+                            finals={"with": "timeout"})
+        self.assertEqual(v["invalid_code"], "arm_never_ran")
+
+    def test_no_model_call_and_no_blind_mapping(self):
+        """Refused before the slots are drawn and before the judge is paid, so the
+        rerun under a bigger cap gets a fresh coin flip."""
+        self.judge_pair(with_run=self.late())
+        self.assertFalse(self.judged(), "a model call was spent on an arm that ran out of time")
+        self.assertFalse(os.path.exists(os.path.join(self.runs, "mapping.private.json")))
+
+    def test_the_run_row_is_in_the_record(self):
+        v = self.judge_pair(with_run=self.late())
+        self.assertEqual(v["run"]["with"]["timeout_s"], 1200)
 
 
 if __name__ == "__main__":
