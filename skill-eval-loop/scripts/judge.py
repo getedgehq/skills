@@ -279,6 +279,10 @@ def never_used_its_skill(arm):
     arm whose runner records no skill call has an unknowable zero rather than an empty
     one. Written against the arm rather than against the with-arm by name, because a
     baseline given a rival skill has to clear the same bar to be a baseline.
+
+    aggregate.py calls this too, over the same three facts as this writes them into the
+    sample verdict, so the rule that invalidates a pair here and the rule that says why
+    a brief produced no verdict there cannot drift into disagreeing about one run.
     """
     return bool(arm["skills"]) and arm["loads_knowable"] and not arm["loaded"]
 

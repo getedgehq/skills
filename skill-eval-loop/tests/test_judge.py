@@ -560,6 +560,79 @@ class RivalEndToEnd(unittest.TestCase):
         self.assertNotEqual(gate.returncode, 0)
         self.assertIn("does not record what either arm was given", gate.stderr)
 
+    def silent_baseline(self, **kw):
+        """A pair whose baseline was handed the rival and did not load it.
+
+        The shape both rejected head-to-heads came back in, on a runner that does
+        record skill calls - so the zero is an empty one, not an unknowable one.
+        """
+        fields = {"skills_loaded": {"with": ["li-post-fede"], "without": []},
+                  "loads_knowable": {"with": True, "without": True}}
+        fields.update(kw)
+        return self.sample(winner_arm="invalid", invalid=True,
+                           invalid_reason="the without-arm never loaded it", **fields)
+
+    def test_a_rival_the_model_never_reached_for_is_reported_as_that(self):
+        # "Fix whatever invalidated the others and rerun the brief" is not an
+        # instruction here: nothing about the run was wrong, so the rerun reproduces
+        # it. The measurement is about the incumbent, and the candidate is not being
+        # rejected on its merits.
+        agg, gate, row = self.chain([self.silent_baseline()] * 3,
+                                    "--rival", "fede-linkedin-post")
+        self.assertEqual(agg.returncode, 0, agg.stderr)
+        self.assertEqual(gate.returncode, 0, gate.stderr)
+        self.assertEqual(row["decision"], "reject")
+        self.assertEqual(row["arms_never_loaded"], {"with": 0, "without": 3})
+        self.assertIn("never loaded it in 3 of 3 samples", gate.stdout)
+        self.assertIn("about fede-linkedin-post, not about li-post-fede", gate.stdout)
+        self.assertNotIn("Fix whatever invalidated", gate.stdout)
+        self.assertIn("reproduces it", gate.stdout)
+
+    def test_the_finding_survives_one_sample_that_did_load_it(self):
+        # 1 valid of 3 is still below the floor, and the reason the other two went is
+        # still the incumbent. Rejecting on the count alone would send the operator to
+        # rerun for the two samples the rerun will lose again.
+        agg, gate, row = self.chain(
+            [self.silent_baseline(), self.sample(), self.silent_baseline()],
+            "--rival", "fede-linkedin-post")
+        self.assertEqual(gate.returncode, 0, gate.stderr)
+        self.assertEqual(row["valid_samples"], 1)
+        self.assertEqual(row["arms_never_loaded"], {"with": 0, "without": 2})
+        self.assertIn("never loaded it in 2 of 3 samples", gate.stdout)
+
+    def test_a_candidate_that_went_silent_is_not_a_finding_about_the_baseline(self):
+        # The same invalidation on the other arm says the opposite thing, and printing
+        # the baseline note over it would name a skill that was loaded every time.
+        quiet = self.sample(winner_arm="invalid", invalid=True,
+                            invalid_reason="the with-arm never loaded it",
+                            skills_loaded={"with": [], "without": ["fede-linkedin-post"]},
+                            loads_knowable={"with": True, "without": True})
+        agg, gate, row = self.chain([quiet] * 3, "--rival", "fede-linkedin-post")
+        self.assertEqual(gate.returncode, 0, gate.stderr)
+        self.assertEqual(row["arms_never_loaded"], {"with": 3, "without": 0})
+        self.assertNotIn("not about li-post-fede", gate.stdout)
+        self.assertIn("Fix whatever invalidated", gate.stdout)
+
+    def test_an_unknowable_zero_is_not_counted_as_a_silent_arm(self):
+        # A runner that records no skill call at all - Codex - reports an empty list
+        # for every arm it ever runs. Counting that as the incumbent being passed over
+        # would put a finding on the ledger that the transcript format invented.
+        blind = self.silent_baseline(loads_knowable={"with": False, "without": False})
+        agg, gate, row = self.chain([blind] * 3, "--rival", "fede-linkedin-post")
+        self.assertEqual(gate.returncode, 0, gate.stderr)
+        self.assertIsNone(row["arms_never_loaded"])
+        self.assertNotIn("reproduces it", gate.stdout)
+
+    def test_a_verdict_predating_the_field_is_not_read_as_silence(self):
+        # skills_loaded and loads_knowable arrived together; a sample older than both
+        # records an empty load list because nobody looked, which is the unknowable
+        # zero again, one version further back.
+        old = self.sample(winner_arm="invalid", invalid=True, invalid_reason="not blind")
+        old.pop("skills_loaded")
+        agg, gate, row = self.chain([old] * 3, "--rival", "fede-linkedin-post")
+        self.assertEqual(gate.returncode, 0, gate.stderr)
+        self.assertIsNone(row["arms_never_loaded"])
+
 
 def stub_claude(tmp):
     """A fake claude CLI on PATH, and the file that records whether it was called.

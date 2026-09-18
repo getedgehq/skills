@@ -13,6 +13,9 @@ import json
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import judge  # noqa: E402  - for never_used_its_skill, one definition of one rule
+
 
 def main():
     if len(sys.argv) != 2:
@@ -79,6 +82,29 @@ def main():
         if seen:
             installed[a] = list(next(iter(seen)))
 
+    # Which arm went silent, and how often. judge.py invalidates a pair when an arm was
+    # given a skill and never loaded it, and the reason it writes names the arm - in a
+    # sentence. So the two briefs that produced no verdict tonight came out of the gate
+    # as "0 valid sample(s) ... fix whatever invalidated the others and rerun the
+    # brief", which blames the candidate and asks for a rerun that reproduces the same
+    # thing: what actually happened is that the incumbent in the baseline arm was not
+    # chosen by the model, alone on a machine, on a task its own description claims.
+    # That is a finding about the rival, and it is the production zero this loop has
+    # been chasing, reproduced where it can be worked on. Counted over every sample,
+    # and derived from the three facts the sample verdict already stores rather than
+    # from a new field, so it answers for runs that are already in the archive.
+    never = {"with": 0, "without": 0}
+    for v in vs:
+        for a in never:
+            arm = {"skills": (v.get("skills_installed") or {}).get(a),
+                   # Absent means the verdict predates the field, which is not the same
+                   # as a runner that records skill calls: default to unknowable, so a
+                   # silent arm is only ever named on evidence that it was silent.
+                   "loads_knowable": (v.get("loads_knowable") or {}).get(a, False),
+                   "loaded": (v.get("skills_loaded") or {}).get(a)}
+            if judge.never_used_its_skill(arm):
+                never[a] += 1
+
     if n == 0:
         winner = "invalid"
     elif wins["with"] * 2 > n and passes["with"] >= passes["without"] and passes["with"] * 2 > n:
@@ -100,6 +126,7 @@ def main():
         "verify": {a: 0 if n and passes[a] * 2 > n else 1 for a in passes},
         "tool_errors": errors,
         **({"skills_installed": installed} if installed else {}),
+        **({"arms_never_loaded": never} if any(never.values()) else {}),
         "verdict": {"reasons": [r for v in valid for r in v.get("verdict", {}).get("reasons", [])][:12]},
         "sample_verdicts": [os.path.relpath(p, runs) for p in samples],
     }
