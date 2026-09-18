@@ -397,6 +397,17 @@ fired, with `unrecognized arguments: --sources`.
   a timeout after real work, a runner that writes no transcript, an agent that only
   edited files. Unlike a failing gate this stops the brief on the first sample, since
   a runner that could not launch an agent will not launch one on sample two either.
+- **A verify that reads prose punishes the arm that explains itself.** A brief checked
+  the agent's reply for banned fonts and failed the arm that had the skill, on its own
+  sentence saying AX41 has no Arial. The skill's whole effect is to make an agent state
+  which faces it chose, so the better the skill worked the more certainly the check
+  failed it, and the pair was filed as `both_arms_failed_verify`: two Opus runs, and a
+  clear win recorded as the brief being too hard. Check the delivered artifact, and
+  where the brief asks for it in the reply, check the delivered document inside the
+  reply and not the sentences around it. Strip comment spans before matching, not
+  comment lines: the line that failed was the fourth line of a `/* ... */` listing the
+  faces that were rejected, and a per-line test sees only the opening. Fixed, the same
+  two stored replies score with-arm clean and without-arm five real violations.
 - **A with-arm that never loaded the skill is not a with-arm.** Installing a skill in
   the arm does not load it; the model still chooses it from its description, exactly as
   in production. When it does not choose it, both arms ran the same task with the same
