@@ -72,7 +72,19 @@ def main():
     # flag says what was asked for and the verdict says what was installed, and the
     # whole point of the row is that a reader can tell a head-to-head from a walkover;
     # a --rival that never reached the arm would put the wrong one on the ledger.
-    baseline = sorted(v.get("skills_installed", {}).get("without", []) or [])
+    installed = v.get("skills_installed")
+    baseline = sorted((installed or {}).get("without") or [])
+    # A verdict that does not record the field is not a verdict that records an empty
+    # baseline, and answering both with the refusal below is how this guard came to
+    # reject every head-to-head it was ever given: aggregate.py wrote no such field
+    # until it was fixed to, so `installed` was None on every real run and the message
+    # told the operator to rerun an eval whose samples were already right. Re-running
+    # aggregate.py only re-reads the stored sample verdicts, so the fix costs nothing.
+    if args.rival and installed is None:
+        sys.exit(f"--rival {args.rival} was passed but this verdict does not record "
+                 f"what either arm was given, so it cannot say whether the head-to-head "
+                 f"happened. Rerun aggregate.py over the samples - it re-reads them and "
+                 f"spends no eval - then gate again.")
     if args.rival and not baseline:
         sys.exit(f"--rival {args.rival} was passed but the baseline arm ran with no "
                  f"skill installed. Rerun the brief or drop the flag; recording a "
