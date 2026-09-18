@@ -70,6 +70,15 @@ eval_brief() {  # eval_brief <brief> <skill-dir>: predict, N samples, blind judg
     # would make the condition merely false, and the loop would carry on evaluating
     # against no verdict instead of stopping the way it does today.
     python3 "$HERE/judge.py" "$brief" --sample "$s" | tee "$FORGE_ROOT/.judge-out.json"
+    # An arm that never started stops the brief on the first sample, not the second.
+    # The two-in-a-row rule above exists because a failing gate can be chance; a
+    # runner that could not launch an agent is not chance, and samples 2 and 3 would
+    # reproduce it exactly while costing another container build each.
+    if grep -q '"invalid_code": "arm_never_ran"' "$FORGE_ROOT/.judge-out.json"; then
+      echo "an arm of $(basename "$brief") never started: stopping at sample $s." \
+           "Fix the runner, then rerun - nothing here is the brief's fault." >&2
+      break
+    fi
     if grep -q '"invalid_code": "both_arms_failed_verify"' "$FORGE_ROOT/.judge-out.json"; then
       failed=$((failed + 1))
       if [[ $failed -ge 2 ]]; then

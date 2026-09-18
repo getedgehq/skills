@@ -149,6 +149,17 @@ set +e
 code=$?
 set -e
 
+# Under sudo, Harbor writes the whole job tree as root, and the step below runs as
+# the invoking user: the first real container pair died on PermissionError reading
+# the agent's own session log, after the run had already been paid for. Hand the
+# tree back before anything tries to read it. Failures here are not fatal on their
+# own - the read below will say what it could not open - but a silent chown that
+# did nothing would turn this into the same error one line later.
+if [[ "${FORGE_HARBOR_SUDO:-}" == "1" && -d "$META/jobs" ]]; then
+  sudo -n chown -R "$(id -u):$(id -g)" "$META/jobs" \
+    || echo "could not take ownership of $META/jobs back from root" >&2
+fi
+
 # Harbor writes one trial per job here. Pull the agent's workdir into $DIR and
 # its native session log into the transcript file judge.py already parses.
 python3 - "$META" "$DIR" "$ID" "$ARM" "$AGENT" "$MODEL" "${FORGE_SAMPLE:-}" \

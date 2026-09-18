@@ -94,6 +94,34 @@ def final_message(meta):
     return last
 
 
+def transcript_bytes(meta):
+    try:
+        return os.path.getsize(os.path.join(meta, "transcript.jsonl"))
+    except OSError:
+        return 0
+
+
+def never_ran(arm):
+    """True when the runner never got an agent started in this arm.
+
+    Not the same failure as a bad brief, and the loop kept calling it one. A Harbor
+    arm whose binary was not on the sudo PATH exited 127 in two seconds with an empty
+    transcript; both arms did; and the judge, reading two empty workdirs, recorded
+    "both arms failed verify - fix the brief, not the loop" and spent a model call
+    saying it. The brief was fine. Twice in a row the record blamed the one thing that
+    was not broken, which is worse than a missing verdict: the next person reruns a
+    brief that never needed a rewrite and the infrastructure fault leaves no trace.
+
+    All three of these have to hold, because each alone has an innocent reading: a
+    non-zero exit can be a timeout after real work, an empty transcript can be a
+    runner that writes none, and a missing final message can be an agent that only
+    edited files. Together they mean nothing ran.
+    """
+    return (arm["run"].get("exit", 0) != 0
+            and not arm["transcript_bytes"]
+            and arm["final"].strip() in ("", "(no final message)"))
+
+
 def tool_error_count(meta):
     n = 0
     try:
@@ -295,8 +323,43 @@ def main():
             "skills": sorted(trees),
             "loaded": sorted(used & set(trees)),
             "loads_knowable": knowable,
+            "transcript_bytes": transcript_bytes(meta),
             "run": run,
         }
+
+    # Before the mapping and before the model call: a pair where an arm never started
+    # has nothing to judge, and the two things this saves are the point. No mapping is
+    # written, so the rerun that follows the fix draws its own blind slots; and no
+    # judge call is spent reading two empty workdirs, which is what happened twice
+    # tonight. Ordered ahead of both_arms_failed_verify because an arm that never ran
+    # also fails verify, and that code sends the brief back for a rewrite it does not
+    # need.
+    dead = [a for a in ("with", "without") if never_ran(arms[a])]
+    if dead:
+        result = {
+            "brief": brief["id"],
+            "winner_arm": "invalid",
+            "invalid": True,
+            "invalid_code": "arm_never_ran",
+            "invalid_reason": "; ".join(
+                f"the {a}-arm produced no transcript and its runner exited "
+                f"{arms[a]['run'].get('exit')}"
+                + (f" ({arms[a]['run']['error']})" if arms[a]["run"].get("error") else "")
+                + ", so the agent never started and this sample measures the runner, "
+                  "not the skill" for a in dead),
+            "verify": {a: arms[a]["verify_exit"] for a in arms},
+            "tool_errors": {a: arms[a]["tool_errors"] for a in arms},
+            "skills_installed": {a: arms[a]["skills"] for a in arms},
+            "skills_loaded": {a: arms[a]["loaded"] for a in arms},
+            "loads_knowable": {a: arms[a]["loads_knowable"] for a in arms},
+            "run": {a: arms[a]["run"] for a in arms},
+        }
+        path = os.path.join(runs, "verdict.json")
+        json.dump(result, open(path, "w"), indent=1)
+        print(json.dumps({k: result[k] for k in
+                          ("brief", "winner_arm", "invalid_code", "invalid_reason")}, indent=1))
+        print(f"-> {path}")
+        return
 
     # Blind: random slot assignment, persisted privately, never reshuffled.
     map_path = os.path.join(runs, "mapping.private.json")

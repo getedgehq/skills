@@ -147,6 +147,15 @@ class RunnerContract(unittest.TestCase):
                             or "${CLAUDE_CODE_OAUTH_TOKEN" in line):
                 self.fail(f"token reaches a log: {line.strip()}")
 
+    def test_a_sudo_run_hands_the_job_tree_back(self):
+        # Harbor under sudo writes its jobs tree as root; the pull-back step runs as
+        # the invoking user and died on PermissionError reading the agent's own
+        # session log, after a full container run had been paid for.
+        self.assertIn('chown -R "$(id -u):$(id -g)" "$META/jobs"', self.text)
+        chown = self.text.index("chown -R")
+        self.assertLess(chown, self.text.index("Harbor writes one trial per job"),
+                        "the chown has to come before anything reads the tree")
+
     def test_sudo_passes_named_variables_not_the_whole_environment(self):
         self.assertIn("sudo -n env", self.text)
         self.assertNotIn("sudo -nE", self.text)
