@@ -1,0 +1,53 @@
+{
+  "_comment": "Example only. Replace every host with your own. notify_email has no default and never will: an alerting tool that ships with an address in it mails a stranger.",
+  "notify_email": "",
+  "email_from": "",
+  "timeout_seconds": 15,
+
+  "domains": [
+    {
+      "_why": "Marketing site. A bare 200 is not enough: a suspended deployment and an empty build both return 200. The marker is a string that only the real page contains.",
+      "host": "www.example.com",
+      "tier": "critical",
+      "check": { "type": "marker", "path": "/", "marker": "Example Domain" }
+    },
+    {
+      "_why": "API root 404s by design, so probe the health path and read the field that proves the database is actually attached.",
+      "host": "api.example.com",
+      "tier": "critical",
+      "check": { "type": "json", "path": "/health", "field": "database", "equals": "connected" }
+    },
+    {
+      "_why": "Nested field, substring match: status can be 'ok' or 'ok (degraded)'.",
+      "host": "service.example.com",
+      "tier": "critical",
+      "check": { "type": "json", "path": "/healthz", "field": "checks.db", "contains": "ok" }
+    },
+    {
+      "_why": "Behind HTTP auth. 401 is the correct answer from a healthy host, so allow it or this alerts every day.",
+      "host": "internal.example.com",
+      "tier": "standard",
+      "check": { "type": "status", "path": "/", "allow": [200, 401, 403] }
+    },
+    {
+      "_why": "Redirect to the apex. Default status check accepts any 2xx or 3xx.",
+      "host": "example.net",
+      "tier": "standard",
+      "check": { "type": "status" }
+    },
+    {
+      "_why": "The homepage can be fine while every signed-in action fails. Declare the exact signature of that break: this one returned 403 with 'csrf' in the body after an origin misconfiguration, while / kept serving 200.",
+      "host": "app.example.com",
+      "tier": "critical",
+      "check": { "type": "marker", "path": "/", "marker": "Sign in" },
+      "post_check": {
+        "path": "/api/auth/sync",
+        "method": "POST",
+        "origin": "https://app.example.com",
+        "body": { "probe": "uptime-monitor" },
+        "ok_status": [200, 401],
+        "fail_if": { "status": 403, "body_contains": "csrf" }
+      }
+    }
+  ]
+}

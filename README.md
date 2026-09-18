@@ -1,6 +1,6 @@
 # GetEdge Skills
 
-Twenty Agent Skills, and a loop that works out which of them are actually worth keeping.
+Twenty-three Agent Skills, and a loop that works out which of them are actually worth keeping.
 
 ```
 npx skills add getedgehq/skills --skill skill-miner
@@ -47,7 +47,7 @@ The loop was developed on one person's own session logs, so these numbers are ev
 | Debug a slow or unreliable agent | `harness-first` |
 | Keep long work alive across context loss | `workplan` |
 
-## The twenty
+## The twenty-three
 
 | Skill | What it does |
 | --- | --- |
@@ -55,14 +55,17 @@ The loop was developed on one person's own session logs, so these numbers are ev
 | `agent-infra-fixer` | Finds guard hooks that block legitimate work or hide their reason from the agent, replays every past block through the current hooks, and fixes stdout blocks so the agent sees why. |
 | `autonomous-research` | Turns one topic line into a research-paper draft: eighteen agent prompts, keyless Crossref and OpenAlex lookup, and a citation-integrity gate that fails the run instead of shipping a broken bibliography. Measured in [`autonomous-research/EVALS.md`](autonomous-research/EVALS.md). |
 | `cli-ux-review` | Scores a command-line tool against a fixed rubric and writes the before/after fix for each failure. |
+| `domain-uptime-monitor` | Probes the domains you list with a real content check on each, so a suspended deployment or a broken build that still answers 200 is caught, and alerts only when a domain changes state. |
 | `cv-job-match` | Reads a CV, works out what the person can actually do, and returns live startup roles from Rocketlist's public board with published salary, the evidence for the fit and an apply link. Rocketlist's own Skill. |
 | `generate-image` | Generates images through the Codex CLI, billed to a ChatGPT subscription rather than a per-image API key. |
 | `harness-first` | Diagnoses an unreliable or expensive agent by auditing its harness, traces, tools and context first, and refuses to recommend a model swap without evidence. Measured in [`harness-first/EVALS.md`](harness-first/EVALS.md). |
 | `http-error-triage` | Separates a real credential problem from a CDN block, a wrong endpoint or a signature ban, before anyone concludes "the key is dead". |
+| `job-board-scout` | Watches public job APIs and public Ashby, Greenhouse and Lever boards for roles matching rules you write down, dedupes against its own state, and reports the funnel so a silent zero is visible. No credential. |
 | `linkedin-media-prep` | Converts, crops and compresses images and video to what LinkedIn actually accepts. |
 | `pay-per-call-apis` | Gives an agent one install for hundreds of data and scraping tools: discover an endpoint, inspect its schema, run it, and report the per-call cost against a Monid balance. Monid's own Skill, not Apache-2.0. |
 | `people-search` | Plans a people search, ranks supplied or public-source candidates against a brief, and discloses exactly which filters a connected provider can and can't support, without implying built-in LinkedIn access it doesn't have. |
 | `product-launch-video` | Turns a product URL or launch brief into an editable, reviewed launch film using HyperFrames or Remotion with remocn primitives. |
+| `reply-debt` | Ranks the mail still waiting on your reply: drops threads you already answered, bots and newsletters, keeps what asks something, orders it by wait time. Needs a Gmail connection. |
 | `security-audit-checklist` | Audits app code, cloud config, containers, CI and IaC, with three bundled scanners. |
 | `shadcn-first` | Builds UI from shadcn blocks and components instead of hand-written markup. |
 | `skill-cockpit` | A local browser cockpit for the self-improvement loop: mined themes, running evals, per-sample verdicts and the adoption ledger. |
@@ -90,11 +93,13 @@ A Skill is a folder with a `SKILL.md` at its root: a short front matter block na
 
 ## Every one of these is a derived copy, and each says how it was derived
 
-Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; two are companies' own Skills: `pay-per-call-apis` is Monid's, published unchanged apart from its name, and `cv-job-match` is Rocketlist's, published by GetEdge; seven were written directly for this repository: `people-search`, `agent-evals`, `harness-first`, and the four Skills of the loop above. Five ship an evaluation of themselves: [`harness-first`](harness-first/EVALS.md), [`autonomous-research`](autonomous-research/EVALS.md), [`strip-image-ai-metadata`](strip-image-ai-metadata/EVALS.md), [`top-down-comms`](top-down-comms/EVALS.md) and [`workplan`](workplan/EVALS.md). Each EVALS.md says whether its result cleared our bar, which is a 95% confidence interval on the judge point delta that excludes zero. Two cleared it with the Skill pasted into the prompt: `strip-image-ai-metadata` by 35.1 points and `workplan` by 13.4. `top-down-comms` cleared it that way too, by 11.6 points, but not with the Skill left on disk for the agent to find, where its 4.2 points do not separate from zero. `harness-first` and `autonomous-research` did not clear it: 31.8 points on a wide interval, and 6.6 points.
+Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; three are ports of private Floom workers that ran on a schedule before they were published; two are companies' own Skills: `pay-per-call-apis` is Monid's, published unchanged apart from its name, and `cv-job-match` is Rocketlist's, published by GetEdge; seven were written directly for this repository: `people-search`, `agent-evals`, `harness-first`, and the four Skills of the loop above. Five ship an evaluation of themselves: [`harness-first`](harness-first/EVALS.md), [`autonomous-research`](autonomous-research/EVALS.md), [`strip-image-ai-metadata`](strip-image-ai-metadata/EVALS.md), [`top-down-comms`](top-down-comms/EVALS.md) and [`workplan`](workplan/EVALS.md). Each EVALS.md says whether its result cleared our bar, which is a 95% confidence interval on the judge point delta that excludes zero. Two cleared it with the Skill pasted into the prompt: `strip-image-ai-metadata` by 35.1 points and `workplan` by 13.4. `top-down-comms` cleared it that way too, by 11.6 points, but not with the Skill left on disk for the agent to find, where its 4.2 points do not separate from zero. `harness-first` and `autonomous-research` did not clear it: 31.8 points on a wide interval, and 6.6 points.
 
 Nine of them started in Federico's own working set. The original was read, never modified. What is published is a copy, edited so that it is useful to a stranger rather than only to the person who wrote it.
 
 `autonomous-research` (formerly `opendraft`) is a port rather than a copy. Nothing in it was taken byte for byte: every file was written for this bundle against the OpenDraft engine (MIT) at a named commit, and its record maps each agent prompt and script back to the upstream file it came from, along with the upstream material deliberately left unported and why.
+
+`domain-uptime-monitor`, `job-board-scout` (formerly the private worker `recruiter-job-scout-v1`) and `reply-debt` are ports of private Floom pure-script workers, rewritten rather than copied: nothing in them is byte-for-byte from the original. Each original was read end to end before anything was ported, to confirm it does real work against real data rather than asking a model to write something plausible, and each `DERIVATION.json` records that check, the rename where there was one, and every value that was a constant about one person or one deployment and is now required config. `reply-debt` is the one Skill in this repository that is not credential-free: it needs a Gmail connection, and says so before you install it rather than at run time.
 
 `people-search` is neither a copy nor a port. It was written directly for this repository as part of GetEdge's September install-growth sprint, so its `DERIVATION.json` records licensing provenance only, not a source it was edited down from.
 
