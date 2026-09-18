@@ -5,16 +5,30 @@ grader, same sandbox. The only thing that changes between the two arms is whethe
 is installed on the machine the agent is working on.
 
 **We ran it twice at two sample sizes and both results are on this page. At 12 pairs the
-Skill scored +32.1 points, 95% interval [2.5, 62.8]. At 24 pairs it scored +31.8 points,
-95% interval [-0.9, 67.0]. The point estimate barely moved. The interval got wider, not
-narrower, and at the larger sample it includes zero.**
+Skill scored +32.1 points, 95% interval [-45.8, +110.0]. At 24 pairs it scored +31.8 points,
+95% interval [-57.0, +120.6]. The point estimate barely moved. The interval got wider, not
+narrower, and neither sample size resolves.**
 
 Our rule for calling a result real is that the 95% interval on the judge point delta has to
-exclude zero. That rule was fixed before any of these results were read. Under it, this Skill
-is resolved at 12 pairs and **not resolved at 24 pairs**. The larger sample is the one to
-believe about precision, and it does not clear the bar.
+exclude zero. That rule was fixed before any of these results were read. Under it this Skill
+is **not resolved at either sample size**. A +32 point gap that cannot be told apart from
+zero is an uncomfortable thing to publish, and it is the honest description of what three
+tasks can support.
 
 Run date: 2026-09-17, run `hf-v1`. Agent: Claude Sonnet 4.5. Grader: Claude Haiku 4.5.
+
+> **Correction, 2026-09-17.** This page used to report [2.5, 62.8] and [-0.9, 67.0], and to
+> call the 12-pair result resolved. Both intervals came from a percentile cluster bootstrap
+> that we have since measured to be anti-conservative at three tasks: it excludes zero about
+> 15.7% of the time when the true effect is exactly zero, rather than 5%. Recomputed with a
+> correctly sized interval, neither sample size resolves. No estimate moved and no count moved;
+> the intervals widened. The reasoning is in [`docs/BENCHMARK.md`](../docs/BENCHMARK.md)
+> section 5.
+>
+> This page's original point survives the correction and is sharpened by it. It said that
+> adding samples widened rather than narrowed the interval, and read that as a warning about
+> the first result. It was a warning about the estimator: samples were never the lever, because
+> both runs sit on the same three tasks.
 
 ## Everything is published
 
@@ -38,10 +52,10 @@ it did (`skill_read` is true in all 24 `result.json` files).
 | Judge score, with the Skill | 86.1 | 85.8 |
 | Judge score, without it | 54.0 | 54.0 |
 | **Difference** | **+32.1** | **+31.8** |
-| **95% interval** | **[2.5, 62.8]** | **[-0.9, 67.0]** |
-| Interval excludes zero | yes | no |
+| **95% interval** | **[-45.8, +110.0]** | **[-57.0, +120.6]** |
+| Interval excludes zero | no | no |
 | Win / tie / loss | 8 / 3 / 1 | 16 / 6 / 2 |
-| Win rate [95% interval] | 79.2 [41.7, 100.0] | 79.2 [47.9, 100.0] |
+| Win rate | 79.2% | 79.2% |
 | Grader self-disagreements | 3 of 12 | 6 of 24 |
 | Hard checks fully passed, Skill | 41.7% | 45.8% |
 | Hard checks fully passed, base | 8.3% | 8.3% |
@@ -55,8 +69,11 @@ interval are computed on. The grader also gives a single holistic 0 to 100 score
 side. That one averages 80.0 with the Skill against 52.8 without it at 24 pairs, which points
 the same way.
 
-The win rate interval does not exclude 50% at either sample size, so it does not resolve the
-cell on its own either.
+The win rate is printed without an interval, at either sample size. It is bounded between 0
+and 100%, and the interval we now use on the judge gap is not bounded; on this run it puts the
+win rate between -10.5% and +168.8%. An interval that runs past the range of the thing it
+covers is not a 95% interval, so we publish the win rate as a point estimate and it resolves
+nothing.
 
 Note the direction of the turn and cost numbers. The Skill arm is slower and more expensive:
 $0.99 per attempt against $0.75, 34 turns against 29. Six of the 24 Skill-arm sessions hit
@@ -65,8 +82,10 @@ for it, and it is discussed in [the limits](#the-limits).
 
 ## Why both sample sizes are on this page
 
-We ran 12 pairs first. That result cleared the bar. We then ran 12 more, and the combined
-24 did not.
+We ran 12 pairs first. Under the interval we were using at the time, that result cleared the
+bar. We then ran 12 more, and the combined 24 did not. Under the corrected interval neither
+of them clears it, so the decision that produced this section turned out not to matter here.
+The section stays, because the reasoning behind it is the part worth keeping.
 
 If you stop measuring the moment a number looks good, you publish your lucky runs and bury
 your unlucky ones, and the rate at which you announce effects that are not there goes up.
@@ -81,8 +100,9 @@ tasks is very large. See the per-task table below.
 
 ## The superseded grader
 
-An earlier version of this page reported +33.7 points with an interval of [-1.6, 67.8] over
-12 pairs, from `summary-v2.json`. That grader could see the automated checker's verdict for
+An earlier version of this page reported +33.7 points over 12 pairs, from `summary-v2.json`.
+Its interval on the calibrated method is [-57.3, +124.8]; the bootstrap it was published with
+gave [-1.6, 67.8]. That grader could see the automated checker's verdict for
 each side while it scored. That is a problem: the checker result and the grader score were
 then not two independent measurements of the same deliverable, they were one measurement and
 an echo of it. That grader is retired. Everything on this page comes from the current one,
@@ -101,9 +121,9 @@ self-disagreement, the current one 8 wins, 3 ties and 1 loss with 3 self-disagre
 
 ## Five things to know before you trust any of this
 
-1. **At the larger sample, this is not a resolved result.** The interval is [-0.9, 67.0].
-   The direction is consistent across every cut we have, but the evidence does not exclude
-   zero.
+1. **This is not a resolved result at either sample size.** The intervals are
+   [-45.8, +110.0] at 12 pairs and [-57.0, +120.6] at 24. The direction is consistent across
+   every cut we have, but the evidence does not exclude zero.
 2. **The grader was a small model.** Claude Haiku 4.5, not a frontier model.
 3. **The result is carried by one task.** On the three tasks the differences are +68.7,
    +29.3 and -2.7. Drop the largest and the average gap roughly halves.
@@ -329,8 +349,13 @@ did not finish normally.
 ## The limits
 
 - **One run, one date.** Not repeated.
-- **Not resolved at the larger sample.** The 24-pair interval is [-0.9, 67.0] and includes
-  zero. Our own rule says that is a cell we paid for and did not resolve.
+- **Not resolved at either sample size.** The 24-pair interval is [-57.0, +120.6] and the
+  12-pair interval is [-45.8, +110.0]. Both include zero. Our own rule says that is a cell we
+  paid for and did not resolve, and paying for it twice did not change that.
+- **Three tasks, and that is what the interval is measuring.** The three task gaps are +68.7,
+  +29.3 and -2.7. An interval on three numbers that far apart is wide almost regardless of how
+  many samples sit behind each one, which is why doubling the samples here moved nothing. Six
+  tasks per Skill is the requirement going forward, and this run has three.
 - **Two sample sizes, both published for a reason.** We did not fix the sample size in
   advance. See [why both sample sizes are on this page](#why-both-sample-sizes-are-on-this-page).
 - **A numbers bug we fixed today.** Until today, `summary-t3-n4.json` reported attempt

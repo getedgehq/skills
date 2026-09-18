@@ -15,6 +15,15 @@ own. That matters for how you read every number below, and it is in
 
 Run date: 2026-09-17, run `t3-v2`. This is one run. It has not been repeated.
 
+> **Correction, 2026-09-17.** The interval on this page was recomputed. It used to read
+> [+6.5, +20.8], which came from a percentile cluster bootstrap that we have since measured to
+> be anti-conservative at three tasks: it excludes zero about 15.7% of the time when the true
+> effect is exactly zero, rather than 5%. Recomputed with a correctly sized interval this cell
+> still resolves, and its interval is narrower, not wider: [+9.4, +17.4]. It is the only cell on
+> this benchmark that came through the recalibration still resolved, and two that did not are
+> retracted in [`evals/WITHDRAWN.md`](../evals/WITHDRAWN.md). The reasoning is in
+> [`docs/BENCHMARK.md`](../docs/BENCHMARK.md) section 5. No estimate moved and no count moved.
+
 ## Everything is published
 
 Every number here can be checked against the thing it came from: all 36 session logs turn by
@@ -40,12 +49,19 @@ artifact is right.
 | Sessions that ended on their own | 7 of 18 | 6 of 18 |
 
 The gap on the weighted rubric is **+13.4 points**, with a 95% confidence interval of
-**[+6.5, +20.8]**.
+**[+9.4, +17.4]**.
 
-That interval excludes zero, so on these three tasks the effect is real. It is a smaller
-effect than the interval is wide, which is what eighteen pairs buys you. It does not say the
-effect is 13.4 points. It says the effect is somewhere between about 6 and about 21 points,
+That interval excludes zero, so on these three tasks the effect is real. It does not say the
+effect is 13.4 points. It says the effect is somewhere between about 9 and about 17 points,
 and the direction is not in doubt.
+
+Why this interval is as tight as it is, when three tasks usually buy something much wider:
+the three tasks agree with each other. Their individual gaps sit within about 1.6 points of
+one another, so almost nothing is left for the between-task variance to widen the interval
+with. That is also why this cell survived the recalibration above while larger point
+estimates elsewhere on this benchmark did not. A big average gap built out of three tasks
+that disagree is a weaker result than a smaller one built out of three that agree, and the
+bootstrap was not reading that distinction correctly.
 
 Two scores are reported because the grader produced two. The weighted rubric score applies
 the task's own criteria and weights. The holistic score is the grader's single 0 to 100
@@ -268,9 +284,12 @@ the transcripts we did not systematically read.
 - **`loaded` only.** See point 2 near the top. The gap between "the Skill is in the prompt"
   and "the Skill is installed and the agent has to reach for it" is not measured here, and on
   other skills in this programme that gap has been large.
-- **Eighteen pairs.** The confidence interval is [+6.5, +20.8]. Effects smaller than roughly
-  five points would not be detectable at this sample size, and the measured effect is not
-  much larger than that floor.
+- **Three tasks, and that is the binding limit.** The confidence interval is [+9.4, +17.4],
+  and its width is set by how much the three tasks disagree with each other, not by the
+  eighteen pairs. We measured this directly: going from three samples per task to six moves
+  the chance of detecting a real five-point effect from 0.14 to 0.16, while going from three
+  tasks to six moves it from 0.14 to 0.38. More samples were the wrong lever. Six tasks per
+  Skill is the requirement going forward, and this run has three.
 - **Our tasks, our Skill.** Three tasks written by the people who wrote the Skill. The defence
   is not that we were impartial; it is that every task, deliverable, check result and grader
   verdict is published so you can disagree with a specific one.

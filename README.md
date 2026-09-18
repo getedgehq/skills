@@ -1,5 +1,8 @@
 # GetEdge Skills
 
+[![Catalogue](https://img.shields.io/badge/Catalogue-getedge.cc-000000?style=for-the-badge&color=154CFF)](https://getedge.cc)
+[![Licence](https://img.shields.io/badge/Licence-Apache--2.0-000000?style=for-the-badge&color=154CFF)](LICENSE)
+
 Twenty-three Agent Skills, and a loop that works out which of them are actually worth keeping.
 
 ```
@@ -93,7 +96,7 @@ A Skill is a folder with a `SKILL.md` at its root: a short front matter block na
 
 ## Every one of these is a derived copy, and each says how it was derived
 
-Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; three are ports of private Floom workers that ran on a schedule before they were published; two are companies' own Skills: `pay-per-call-apis` is Monid's, published unchanged apart from its name, and `cv-job-match` is Rocketlist's, published by GetEdge; seven were written directly for this repository: `people-search`, `agent-evals`, `harness-first`, and the four Skills of the loop above. Five ship an evaluation of themselves: [`harness-first`](harness-first/EVALS.md), [`autonomous-research`](autonomous-research/EVALS.md), [`strip-image-ai-metadata`](strip-image-ai-metadata/EVALS.md), [`top-down-comms`](top-down-comms/EVALS.md) and [`workplan`](workplan/EVALS.md). Each EVALS.md says whether its result cleared our bar, which is a 95% confidence interval on the judge point delta that excludes zero. Two cleared it with the Skill pasted into the prompt: `strip-image-ai-metadata` by 35.1 points and `workplan` by 13.4. `top-down-comms` cleared it that way too, by 11.6 points, but not with the Skill left on disk for the agent to find, where its 4.2 points do not separate from zero. `harness-first` and `autonomous-research` did not clear it: 31.8 points on a wide interval, and 6.6 points.
+Eleven are edited copies from [Federico de Ponte's](https://github.com/federicodeponte) working set; three are ports of private Floom workers that ran on a schedule before they were published; two are companies' own Skills: `pay-per-call-apis` is Monid's, published unchanged apart from its name, and `cv-job-match` is Rocketlist's, published by GetEdge; seven were written directly for this repository: `people-search`, `agent-evals`, `harness-first`, and the four Skills of the loop above. Five ship an evaluation of themselves: [`harness-first`](harness-first/EVALS.md), [`autonomous-research`](autonomous-research/EVALS.md), [`strip-image-ai-metadata`](strip-image-ai-metadata/EVALS.md), [`top-down-comms`](top-down-comms/EVALS.md) and [`workplan`](workplan/EVALS.md). Each EVALS.md says whether its result cleared our bar, which is a 95% confidence interval on the judge point delta that excludes zero. One does: `workplan`, by 13.4 points with the Skill pasted into the prompt, interval [+9.4, +17.4]. The other four are measured and unresolved. Three of them read as resolved until 2026-09-17, when we measured the interval itself against a known truth, found it was not a 95% interval at three tasks, and replaced it; the estimates did not move and the intervals widened past zero. That correction is written out in [`docs/BENCHMARK.md`](docs/BENCHMARK.md) sections 5 and 11, and every figure it took down is in [`evals/WITHDRAWN.md`](evals/WITHDRAWN.md). An unresolved cell is not a finding of no effect: at three tasks this benchmark is powered around 0.42 for a real 10-point effect, so failing to resolve is the ordinary outcome and the repair is more tasks.
 
 Nine of them started in Federico's own working set. The original was read, never modified. What is published is a copy, edited so that it is useful to a stranger rather than only to the person who wrote it.
 
@@ -131,8 +134,29 @@ Before their recorded licence dates these copies carried no licence file at all,
 
 ## What is not claimed
 
-Four of these Skills have been measured against the same agent with the Skill absent, and each publishes its own page: `harness-first`, `autonomous-research`, `top-down-comms` and `workplan`. For the rest, no comparative evaluation has been run and no quality or safety state is asserted.
+Five of these Skills have been measured against the same agent with the Skill absent, and each publishes its own page: `harness-first`, `autonomous-research`, `strip-image-ai-metadata`, `top-down-comms` and `workplan`. For the rest, no comparative evaluation has been run and no quality or safety state is asserted.
 
-A published page is not the same as a positive result. Our rule, fixed before any of these numbers were read, is that a result counts only if the 95% confidence interval on the difference excludes zero. One of the four clears that bar, two do not, and one clears it only in the arm where the Skill is pasted into the prompt rather than left on disk for the agent to find. Each page says which it is in its opening paragraph. A result that clears the bar is evidence about the handful of tasks it was run on, not a general quality bar. Every session log, grader verdict and task definition behind each page is in [`evals/`](evals/), so the numbers can be checked rather than taken. The loop results above measure the Skills the loop produced for one user, not the four loop Skills. These are working instructions, published because they were useful in practice. Package-level tests and gates are documented separately from evaluations.
+A published page is not the same as a positive result. Our rule, fixed before any of these numbers were read, is that a result counts only if the 95% confidence interval on the difference excludes zero. One of the five clears that bar, and it clears it only in the arm where the Skill is pasted into the prompt rather than left on disk for the agent to find. The other four are measured and unresolved. Each page says which it is in its opening paragraph, and the four that came down say so in a correction at the top rather than by quietly changing a number.
+
+Ten computed figures have been withdrawn, and they are listed with their failure modes in [`evals/WITHDRAWN.md`](evals/WITHDRAWN.md). Six went because auditing the task showed the task was broken rather than the Skill. Four went because the interval they were read off was not a 95% interval, on task sets that are sound. We publish that file because a benchmark that only writes down the numbers that worked is a marketing document.
+
+A result that clears the bar is evidence about the handful of tasks it was run on, not a general quality bar, and at three tasks per Skill this design is underpowered for effects of ordinary size. Six tasks per Skill is the requirement going forward. Every session log, grader verdict and task definition behind each page is in [`evals/`](evals/), so the numbers can be checked rather than taken. The loop results above measure the Skills the loop produced for one user, not the four loop Skills. These are working instructions, published because they were useful in practice. Package-level tests and gates are documented separately from evaluations.
 
 Several call out to tools that must already be on your machine: `generate-image` drives the Codex CLI, `linkedin-media-prep` and `strip-image-ai-metadata` use ffmpeg and Python imaging libraries, and `security-audit-checklist` bundles three Python scanners. Read a Skill's instructions and its scripts before you run it, the same as any other code you install.
+
+## Citation
+
+The benchmark behind the EVALS.md pages is `edge-skill-bench@1.0`; [`docs/BENCHMARK.md`](docs/BENCHMARK.md) states its scope, its versioning rule and what it does not measure.
+
+If you use **GetEdge Skills** in academic work, please cite it using the "Cite this repository" button on GitHub or the following BibTeX entry:
+
+```bibtex
+@software{GetEdge_Skills,
+author = {De Ponte, Federico},
+title = {{GetEdge Skills: measured Agent Skills and the loop that decides which ones to keep}},
+year = {2026},
+url = {https://github.com/getedgehq/skills}
+}
+```
+
+A DOI is minted on the first Zenodo release and added to [`CITATION.cff`](CITATION.cff) and to the entry above.

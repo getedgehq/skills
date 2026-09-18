@@ -14,6 +14,16 @@ against 27.4. That is unusual and it has a plain explanation, which is in
 
 Run date: 2026-09-17, run `t3-v2`. This is one run. It has not been repeated.
 
+> **Correction, 2026-09-17.** An earlier version of this page said the effect was resolved, with
+> a 95% interval of [+13.8, +58.6]. That interval came from a percentile cluster bootstrap that
+> we have since measured to be anti-conservative at three tasks: it excludes zero about 15.7% of
+> the time when the true effect is exactly zero. Recomputed with a correctly sized interval, this
+> result does not resolve. The estimate did not move and the counts below did not move. The
+> interval did, from [+13.8, +58.6] to [-23.0, +93.2]. The reasoning is in
+> [`docs/BENCHMARK.md`](../docs/BENCHMARK.md) section 5 and the withdrawal is recorded in
+> [`evals/WITHDRAWN.md`](../evals/WITHDRAWN.md). This page is kept rather than deleted, because
+> the runs behind it are real and the retraction should be readable next to what it retracts.
+
 ## Everything is published
 
 Every number here can be checked against the thing it came from: all 36 session logs turn by
@@ -36,12 +46,21 @@ artifact is right.
 | Model cost per attempt | $0.17 | $0.24 |
 | Sessions that ran out of turns | 0 of 18 | 7 of 18 |
 
-The gap is **+35.1 points**, with a 95% confidence interval of **[+13.8, +58.6]**.
+The gap is **+35.1 points**, with a 95% confidence interval of **[-23.0, +93.2]**.
 
-That interval excludes zero, so on these three tasks the effect is real. The interval is
-wide, which is what eighteen pairs buys you. It does not say the effect is 35 points. It says
-the effect is somewhere between about 14 and about 59 points, and the direction is not in
-doubt.
+**That interval includes zero, so this run does not establish an effect.** Our rule is that a
+result counts only when the interval excludes zero, and this one does not.
+
+The interval is enormous because the three tasks disagree, not because eighteen pairs is few.
+The per-task gaps are +24.7, +57.8 and +31.5, a spread of about 23 points, and with three tasks
+that spread is what the interval has to account for. The honest reading is that something large
+happened on all three tasks and we cannot put a number on it from three tasks.
+
+Two things are worth separating here. The judge delta does not resolve. The hard check, which
+is a separate script that opens the files, is not a confidence interval at all: 17 of 18 with
+the Skill against 2 of 18 without it, which is a difference no reading of these runs makes
+disappear. What we do not have is a calibrated interval on the rubric score. That is a real gap
+and the repair is more tasks, not more samples per task.
 
 ## Four things to know before you trust any of this
 
@@ -217,14 +236,19 @@ skills make agents cheaper.
 - **`loaded` only.** See point 2 near the top. The gap between "the Skill is in the prompt"
   and "the Skill is installed and the agent has to reach for it" is not measured here, and on
   other skills in this programme that gap has been large.
-- **Eighteen pairs.** The confidence interval is [+13.8, +58.6]. Effects smaller than roughly
-  five points would not be detectable at this sample size.
+- **Three tasks, and that is the binding limit.** The confidence interval is [-23.0, +93.2] and
+  it does not resolve. The width comes from the task count, not the pair count: the three task
+  gaps are +24.7, +57.8 and +31.5, and three numbers that spread cannot pin a mean. Adding more
+  samples per task would not narrow this and in fact makes the old bootstrap worse. Six tasks
+  would.
 - **Our tasks, our Skill.** Three tasks written by the people who wrote the Skill. The defence
   is not that we were impartial; it is that every task, deliverable, check result and grader
   verdict is published so you can disagree with a specific one.
 - **Four grader self-disagreements.** On four pairs the grader picked a different winner when
   the two deliverables were swapped. They are in the 18 and in the confidence interval, not
   removed.
+- **This page reports an unresolved result.** It is published because the runs happened and the
+  hard-check gap is large, not because the rubric delta survived our own rule. It did not.
 - **The base arm hit the turn cap 7 times out of 18.** Those seven sessions are truncated
   work, and a truncated answer scores badly. Some of the gap is the cap, not the Skill. The
   Skill arm hit it zero times, so this cuts against the Skill arm's advantage being purely

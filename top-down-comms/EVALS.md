@@ -10,14 +10,23 @@ listing, and the agent had to decide to open it. The two versions do not give th
 answer, and that difference is the most useful thing on this page.
 
 **Nine pairs per arm, three tasks. With the Skill in the prompt: 91.5 out of 100 against
-79.9, a gap of +11.6 points, confidence interval [+5.0, +17.4], eight wins, zero ties, one
+79.9, a gap of +11.6 points, confidence interval [-3.1, +26.2], eight wins, zero ties, one
 loss. With the Skill only installed: 85.6 against 81.5, a gap of +4.2 points, confidence
-interval [-3.5, +10.7], six wins, two ties, one loss. The second interval includes zero, so
-that arm is not resolved.**
+interval [-5.6, +13.9], six wins, two ties, one loss. Both intervals include zero, so neither
+arm is resolved.**
 
 The agent opened the Skill in 5 of the 9 runs where it had to find it.
 
 Run date: 2026-09-17, run `td-v2`. This is one run. It has not been repeated.
+
+> **Correction, 2026-09-17.** An earlier version of this page said the prompt arm was resolved,
+> with a 95% interval of [+5.0, +17.4]. That interval came from a percentile cluster bootstrap
+> that we have since measured to be anti-conservative at three tasks: it excludes zero about
+> 15.7% of the time when the true effect is exactly zero. Recomputed with a correctly sized
+> interval, neither arm resolves. No estimate moved and no count moved; the intervals widened.
+> The reasoning is in [`docs/BENCHMARK.md`](../docs/BENCHMARK.md) section 5 and the withdrawal
+> is recorded in [`evals/WITHDRAWN.md`](../evals/WITHDRAWN.md). The page is kept, because the
+> runs are real and a retraction should be readable beside the thing it retracts.
 
 ## Everything is published
 
@@ -34,10 +43,10 @@ is right.
 | | Skill in the prompt | Skill on disk | No Skill |
 | --- | --- | --- | --- |
 | Rubric score (0-100) | **91.5** | **85.6** | 79.9 / 81.5 |
-| Gap against the baseline | **+11.6** [+5.0, +17.4] | **+4.2** [-3.5, +10.7] | |
-| Relative uplift | 14.5% [5.9, 23.2] | 5.1% [-4.1, 13.7] | |
+| Gap against the baseline | **+11.6** [-3.1, +26.2] | **+4.2** [-5.6, +13.9] | |
+| Relative uplift | 14.5% | 5.1% | |
 | Paired comparisons | 8 wins, 0 ties, 1 loss | 6 wins, 2 ties, 1 loss | |
-| Win rate | 88.9% [55.6, 100.0] | 77.8% [50.0, 100.0] | |
+| Win rate | 88.9% | 77.8% | |
 | Hard checks fully passed | 4 of 9 (44.4%) | 6 of 9 (66.7%) | 3 of 9 (33.3%) |
 | Hard-check score | 0.850 | 0.837 | 0.811 |
 | Judge self-disagreements | 0 of 9 | 2 of 9 | |
@@ -52,9 +61,18 @@ them 79.9 in the comparison against the prompt arm and 81.5 in the comparison ag
 disk arm. That spread of 1.6 points is judge noise on identical documents, and it is a useful
 scale for reading the +4.2 above it.
 
-The prompt arm's interval excludes zero. On these three tasks that effect is real, and it is
-somewhere between about five and about seventeen points. Nine pairs does not buy a tighter
-interval than that.
+Neither interval excludes zero, so neither arm is resolved. The prompt arm's +11.6 is the
+larger of the two and the more interesting one, and it is still consistent with no effect at
+all: [-3.1, +26.2] is what three tasks buy, and nine pairs spread across those same three
+tasks does not narrow it.
+
+Only the gap carries an interval. The win rate and the relative uplift are point estimates
+here, with no interval beside them, and that is deliberate rather than an omission. The
+intervals this page used to print for both came from the same bootstrap the correction above
+withdrew. The win rate has no replacement yet: it is bounded between 0 and 100%, the interval
+we now use on the gap is not bounded, and on this run it puts the disk arm's win rate between
+53.9% and 101.7%. An interval whose upper bound is a win rate no run can produce is not a 95%
+interval, so we do not publish one.
 
 ## Skill given up front versus the agent finding it
 
@@ -68,7 +86,7 @@ in 5 of the 9 runs.
 
 Where it did not open the file, it had no way to benefit from it. That drags the arm's
 average toward the baseline, and the arm does not resolve: +4.2 points with an interval of
-[-3.5, +10.7].
+[-5.6, +13.9].
 
 Reading was not random across tasks. It split by task, which is the least convenient way for
 it to split:
@@ -176,13 +194,16 @@ scores moved from 0.811 to 0.850, from 0.797 to 0.837, and from 0.778 to 0.811.
 What this could not move: any judge number. The judge never receives checker output, so
 rescoring the checkers cannot change a verdict that was produced without them. The published
 pre-fix summary shows exactly that. Every judge figure is byte-identical before and after:
-91.5 against 79.9, +11.6 [+5.0, +17.4], 8 wins and 1 loss, zero order disagreements in the
-prompt arm; 85.6 against 81.5, +4.2 [-3.5, +10.7], 6 wins, 2 ties and 1 loss in the disk arm.
+91.5 against 79.9, +11.6 [-3.1, +26.2], 8 wins and 1 loss, zero order disagreements in the
+prompt arm; 85.6 against 81.5, +4.2 [-5.6, +13.9], 6 wins, 2 ties and 1 loss in the disk arm.
 The checker fixes changed the checker column and nothing else.
 
-**This run replaces an earlier v1 figure of +10.5 points [+4.8, +15.6].** That figure was
-measured on the earlier version of these tasks, which have since been rebuilt. It is not the
-same measurement and the two should not be averaged or compared.
+**This run replaces an earlier v1 figure of +10.5 points.** That figure was measured on the
+earlier version of these tasks, which have since been rebuilt. It is not the same measurement
+and the two should not be averaged or compared. It was published with a bootstrap interval of
+[+4.8, +15.6], which read as resolved; under the calibrated interval it is [-2.9, +23.8] and
+does not resolve either. It is listed among the cells the recalibration moved in
+[`docs/BENCHMARK.md` section 11](../docs/BENCHMARK.md).
 
 ## The three tasks
 
@@ -346,16 +367,21 @@ published artifacts.
 - **One run, one date.** Not repeated.
 - **One agent model, one judge model.** Claude Sonnet 4.5 doing the work, Claude Haiku 4.5
   judging it. Results may not transfer to another agent.
-- **Nine pairs per arm.** The prompt arm's interval is [+5.0, +17.4] and the disk arm's is
-  [-3.5, +10.7]. Effects smaller than roughly five points are not detectable here.
-- **The disk arm is not resolved.** Its interval includes zero. The honest statement for
-  "I installed this and forgot about it" is that this run did not establish an effect, not
-  that it established a small one.
+- **Three tasks, and that is the binding limit.** The prompt arm's interval is [-3.1, +26.2]
+  and the disk arm's is [-5.6, +13.9]. Both include zero. The width comes from having three
+  tasks, not nine pairs: simulation on this benchmark's own variance puts power at about 0.42
+  for a real 10 point effect at this design, so failing to resolve is the ordinary outcome
+  rather than the informative one. Six tasks is the repair.
+- **Neither arm is resolved.** The honest statement for "I installed this and forgot about it"
+  is that this run did not establish an effect, and after the correction above the same is true
+  of the prompt arm. Neither is a finding of no effect.
 - **The rubrics overlap the Skill's first rule.** Every task has a weight-3 criterion that
   amounts to "the reader learns the decision and the action before anything else", and the
   Skill's Rule 1 is "the governing thought goes first". We wrote both. A judge scoring
   against that rubric will reward a document written to that rule, and some of the measured
-  gap is that overlap rather than a better document. The defence is weak on its own and the
+  gap is that overlap rather than a better document. This matters more now that neither arm
+  resolves, because the contaminated part of the rubric can no longer be dismissed as a
+  detail inside a result that stood. The defence is weak on its own and the
   mitigation is partial: the hard checks test specific facts, dates, owners and figures
   rather than structure, and they also favour the Skill arms, 4 of 9 and 6 of 9 against 3 of
   9. Read the gap as evidence about facts and decisions surviving the rewrite, and treat the
