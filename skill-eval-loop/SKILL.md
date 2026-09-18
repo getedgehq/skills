@@ -413,6 +413,19 @@ fired, with `unrecognized arguments: --sources`.
   arm: its error comes from stderr and no agent answer opens with it. The reason text
   says which of the two shapes it saw, so nobody goes looking for a missing file over
   an expired credential.
+- **Guard the directory the judge reads from, not the one the agent writes in.** Both
+  runners refused to start when the arm's workdir already existed and said nothing
+  about `<arm>.meta` next to it, which is the half the verdict is actually built from:
+  `final.txt`, `transcript.jsonl`, `run.json`. The run truncates three of those and
+  never touches the fourth, because only the codex arm writes `final.txt` at all, so a
+  run into a `.meta` an earlier pass left behind is judged on the earlier pass's
+  answer. That is the failure above with the evidence pointing the other way. There a
+  dead arm answered with the runner's own error and could be caught by reading it;
+  here it answers with a real reply a real agent really wrote, and nothing downstream
+  can tell. The workaround in use was renaming the brief, which puts two ids in the
+  ledger for one question, so the refusal now says to delete the sample dir instead.
+  It refuses rather than cleans: the earlier run is evidence until somebody has read
+  it.
 - **A verify that reads prose punishes the arm that explains itself.** A brief checked
   the agent's reply for banned fonts and failed the arm that had the skill, on its own
   sentence saying AX41 has no Arial. The skill's whole effect is to make an agent state
