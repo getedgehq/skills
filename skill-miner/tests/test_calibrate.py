@@ -131,6 +131,29 @@ class Check(unittest.TestCase):
         out = self.run_check([row("winner", "adopt"), row("loser", "reject")])
         self.assertIn("no usable signal", out)
 
+    def test_coverage_names_the_decisions_with_no_prediction(self):
+        # The live report said "paired 1 predictions with decisions" for weeks while
+        # 20 of 21 decisions had none, which reads as young data rather than as a
+        # scorer that crashed on every hand-written brief.
+        self.write([{"skill": "winner", "potential": 0.8, "ts": "2026-09-01T00:00:00Z"}])
+        out = self.run_check([row("winner", "adopt"), row("orphan", "reject"),
+                              row("orphan2", "reject")])
+        self.assertIn("coverage: 1 of 3 decided evals have a prediction (33%)", out)
+        self.assertIn("no prediction for: orphan, orphan2", out)
+
+    def test_full_coverage_names_nobody(self):
+        self.write([{"skill": "winner", "potential": 0.8, "ts": "2026-09-01T00:00:00Z"},
+                    {"skill": "loser", "potential": 0.3, "ts": "2026-09-01T00:00:00Z"}])
+        out = self.run_check([row("winner", "adopt"), row("loser", "reject")])
+        self.assertIn("coverage: 2 of 2 decided evals have a prediction (100%)", out)
+        self.assertNotIn("no prediction for", out)
+
+    def test_a_long_missing_list_is_truncated_with_a_count(self):
+        self.write([{"skill": "winner", "potential": 0.8, "ts": "2026-09-01T00:00:00Z"}])
+        rows = [row("winner", "adopt")] + [row(f"m{i}", "reject") for i in range(9)]
+        out = self.run_check(rows)
+        self.assertIn("and 3 more", out)
+
     def test_the_latest_prediction_for_a_skill_wins(self):
         self.write([{"skill": "winner", "potential": 0.1, "ts": "2026-08-01T00:00:00Z"},
                     {"skill": "winner", "potential": 0.9, "ts": "2026-09-01T00:00:00Z"},
