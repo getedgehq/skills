@@ -24,7 +24,18 @@ BASE="$ROOT/runs/$ID"
 [[ -n "${FORGE_SAMPLE:-}" ]] && BASE="$BASE/s$FORGE_SAMPLE"
 DIR="$BASE/$ARM"
 META="$BASE/$ARM.meta"
-[[ -e "$DIR" ]] && { echo "refusing: $DIR exists" >&2; exit 1; }
+# Guard the directory the judge reads from, not only the one the agent writes in.
+# The agent's workdir is $DIR and the harness metadata is $META, and the verdict is
+# built entirely out of $META: final.txt, transcript.jsonl, run.json. Everything in
+# there is truncated by the run itself except final.txt, which only the codex arm
+# writes, so a $META left behind by an earlier pass hands the judge a previous run's
+# answer as this run's. That is the failure of #43 with the evidence pointing the
+# other way: there the dead arm answered with the runner's error and was catchable,
+# here it answers with a real reply somebody's agent really wrote, and nothing
+# downstream can tell. Refuse both.
+for d in "$DIR" "$META"; do
+  [[ -e "$d" ]] && { echo "refusing: $d exists - delete the sample dir to rerun" >&2; exit 1; }
+done
 mkdir -p "$DIR" "$META"
 
 PROMPT=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['prompt'])" "$BRIEF")
@@ -86,11 +97,16 @@ case "$AGENT" in
     code=$?;;
 esac
 set -e
-python3 - "$META" "$ID" "$ARM" "$AGENT" "$MODEL" "${FORGE_SAMPLE:-}" "$code" "$(( $(date +%s) - start ))" <<'PYEOF'
+python3 - "$META" "$ID" "$ARM" "$AGENT" "$MODEL" "${FORGE_SAMPLE:-}" "$code" "$(( $(date +%s) - start ))" "$TIMEOUT" <<'PYEOF'
 import json, os, re, sys
-meta, rid, arm, agent, model, sample, code, secs = sys.argv[1:]
+meta, rid, arm, agent, model, sample, code, secs, cap = sys.argv[1:]
+# The cap goes in the row because the judge has to tell an arm the clock killed from
+# an arm that answered badly, and an arm killed at the clock leaves the same exit and
+# the same failed verify as one that finished and got it wrong. Reading FORGE_TIMEOUT
+# at judge time instead would read whatever the environment says then, which is not
+# necessarily the cap this arm ran under.
 row = {"id": rid, "arm": arm, "agent": agent, "model": model, "sample": sample,
-       "exit": int(code), "seconds": int(secs)}
+       "exit": int(code), "seconds": int(secs), "timeout_s": int(cap)}
 if row["exit"] != 0:
     # keep the agent's own failure reason (quota, auth, timeout) next to the exit code
     err = ""

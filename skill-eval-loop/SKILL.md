@@ -397,6 +397,35 @@ fired, with `unrecognized arguments: --sources`.
   a timeout after real work, a runner that writes no transcript, an agent that only
   edited files. Unlike a failing gate this stops the brief on the first sample, since
   a runner that could not launch an agent will not launch one on sample two either.
+  Those three signs were read off a Harbor arm and they missed the next one. When the
+  CLI itself fails it still writes its init line to the transcript and still writes a
+  final message, the failure text, so an arm can be dead with neither an empty
+  transcript nor a missing final message. Both arms of the first rival pair came back
+  exit 1 with `Failed to authenticate: OAuth session expired and could not be
+  refreshed` as their answer, and nothing above fired. That pair survived only because
+  the judge's own model call was failing on the same credential; with a working judge
+  it would have been scored as two agents answering the brief with the same sentence,
+  and the loop would have blamed the brief a third time. The second reading catches
+  it: `run_eval.sh` copies the CLI's error into `run.json` and `-o` writes the same
+  text to `final.txt`, so a final message that starts with the runner's recorded
+  error is the runner talking and not the agent. Compared by prefix, because
+  `run.json` keeps 300 characters. A timeout after real work still reads as a real
+  arm: its error comes from stderr and no agent answer opens with it. The reason text
+  says which of the two shapes it saw, so nobody goes looking for a missing file over
+  an expired credential.
+- **Guard the directory the judge reads from, not the one the agent writes in.** Both
+  runners refused to start when the arm's workdir already existed and said nothing
+  about `<arm>.meta` next to it, which is the half the verdict is actually built from:
+  `final.txt`, `transcript.jsonl`, `run.json`. The run truncates three of those and
+  never touches the fourth, because only the codex arm writes `final.txt` at all, so a
+  run into a `.meta` an earlier pass left behind is judged on the earlier pass's
+  answer. That is the failure above with the evidence pointing the other way. There a
+  dead arm answered with the runner's own error and could be caught by reading it;
+  here it answers with a real reply a real agent really wrote, and nothing downstream
+  can tell. The workaround in use was renaming the brief, which puts two ids in the
+  ledger for one question, so the refusal now says to delete the sample dir instead.
+  It refuses rather than cleans: the earlier run is evidence until somebody has read
+  it.
 - **A verify that reads prose punishes the arm that explains itself.** A brief checked
   the agent's reply for banned fonts and failed the arm that had the skill, on its own
   sentence saying AX41 has no Arial. The skill's whole effect is to make an agent state
@@ -417,12 +446,40 @@ fired, with `unrecognized arguments: --sources`.
   it: three of 39 real with-arms, in both of the briefs whose skill was then adopted.
   The pair is marked `invalid` with `invalid_code: skill_never_loaded`, and it stops
   nothing - the next sample may well load it.
+- **A skill handed to a container is installed, even though the host workdir is empty.**
+  The installed-skill scan walks the arm's workdir, and `run_eval_harbor.sh` never puts
+  the skill there: it resolves it into `<arm>.meta/skill/<name>` and hands that to
+  Harbor, which mounts it inside the container. So every Harbor with-arm read as an arm
+  with no skill installed, and two of the three integrity checks went quiet on it. With
+  no installed name, the never-loaded check cannot fire and the blindness check has
+  nothing to match, which means no Harbor pair could ever have been refused for either.
+  The first real one proved it: `skills_installed {"with": []}` for an arm whose own
+  container transcript carries a `skill_listing` naming the skill. The scan now also
+  reads what the runner handed over, and the workdir copy still wins where both exist,
+  because that is the tree the agent actually read.
+- **A silent arm outranks a gate both arms failed.** `both_arms_failed_verify` used to
+  win that tie and its text says "fix the brief, not the loop", which on the first
+  Harbor pair was advice about a brief the local runner passes three times out of
+  three: with-arm 91, 82 and 88 words against a baseline's 310, 312 and 280, under the
+  same 150-word gate. The Harbor with-arm wrote 194 because it never loaded the skill,
+  and that skill's entire job is to make the reply short, so the gate did not fail
+  independently of the silent arm, it failed because of it. A gate never once tested
+  with the skill in place says nothing about the brief. Which code comes out also
+  decides whether the brief survives: two `both_arms_failed_verify` in a row stop the
+  run, so a skill that keeps failing to load would retire its own eval with the log
+  blaming the brief, while `skill_never_loaded` stops nothing. The verify failure stays
+  in the reason rather than being dropped, because the two facts together are what says
+  the gate is still unmeasured.
 - **A win over an empty machine is not the comparison adoption rests on.** Every arm
   the loop has run had one skill installed on the with side and none on the without
   side; the skill is then adopted into a fleet of 314 where several others answer the
   same trigger, and there the model picks between them. The gap is measurable: the
   seven skills adopted so far load 18 of 21 times in their own evals, where each is the
-  only skill on the machine, and once in 189 real sessions. On the same subject,
+  only skill installed for the trigger, and once in 189 real sessions. Not the only
+  skill on the machine, which is what this said until the inventories were read: the
+  AX41 CLI offers every arm 18 bundled skills and Harbor's image 13, so the candidate
+  already competes with a dozen-odd generic ones. It competes with none that answer
+  its own trigger, and that is the whole of the gap. On the same subject,
   `fede-linkedin-post` was loaded 8 times in 1041 recent sessions while `li-post-fede`,
   installed in the same two roots, was loaded 0. `--rival PATH` installs the incumbent
   in the baseline arm, which is the head-to-head the adoption actually needs.
@@ -433,6 +490,74 @@ fired, with `unrecognized arguments: --sources`.
   baseline that installed nothing stops the gate rather than recording a contest that
   did not happen. An empty list is the honest reading of every row written before the
   field existed, and the adopt line says "over an empty baseline" out loud.
+- **A guard that reads a field nobody writes refuses everything, and its tests will not
+  say so.** The `--rival` check above shipped reading `skills_installed` off the
+  aggregate verdict. `judge.py` writes that field per sample, `aggregate.py` did not
+  carry it, and `gate.py` reads only the aggregate - so the check read an absent field
+  as an empty baseline and refused every head-to-head it was ever given, for eleven PRs,
+  with the one message no operator can act on: rerun an eval whose samples were already
+  right. The first real one was a 3-0 whose three samples each record the incumbent
+  installed and loaded in the baseline arm; the queue log ends `END rival rc=1`. Four
+  tests covered the guard and all four passed, because each one hands `gate.py` a
+  verdict dict the test built, carrying a key no producer writes. A fixture that
+  fabricates its producer's output tests the consumer against a format, not against the
+  system. Where two scripts meet over a file, one test has to run both - `RivalEndToEnd`
+  is that test. And a verdict that does not record what the arms were given is not a
+  verdict that records an empty baseline: the two readings get different messages now,
+  because only one of them is fixed by re-aggregating, which re-reads the stored samples
+  and spends no eval. The field is read off every sample rather than the valid ones, and
+  samples that disagree about what an arm was given stop the aggregate instead of being
+  merged, since those are two experiments and not one comparison.
+- **Read what the agent was offered, not only what you installed.** Every other check in
+  `judge.py` reads the harness's own installs, so they all agree with each other by
+  construction, and none of them can see an ambient copy: a skill already on the host or
+  baked into the container image is advertised to both arms and installed by neither.
+  The without-arm is then a second with-arm and the pair measures nothing. Nothing has
+  gone wrong yet and the measurement is what says so rather than a guess - all 53
+  real without-arms on AX41 whose runner writes an inventory were read, and not one
+  advertised the skill its pair was testing. The reason this said, when it shipped, is
+  the wrong one: it argued that adoption ends in deployment and the loop's own four
+  skills sit in `~/.agents/skills` exactly the way an adopted skill will, so the first
+  recheck over a deployed skill would read as a skill that stopped working. Measured
+  since, that mechanism does not fire. `run_eval.sh` launches the CLI with
+  `--setting-sources project,local`, which never loads the user scope: those four
+  skills and eighteen others sit in the eval user's own `~/.agents/skills` and not one
+  of the twenty-two was offered to any of the 100 archived arms. What the loop deploys
+  is invisible to what the loop measures. The live ways in are the ones left - a skill
+  baked into a container image, a project-scope install under the run root, a workdir
+  the harness populated twice - and the guard is worth having for those, not for the
+  one it was written about. `advertised_skills` reads the inventory
+  per runner, off two shapes that are both in `runs/` today: the host CLI writes a
+  `skills` list on the `system/init` line, the SDK CLI inside Harbor a `skill_listing`
+  attachment with `names`. A runner that writes neither returns `None`, which is an
+  unknown inventory and not an empty one - Codex records no listing at all, and reading
+  its silence as "offered nothing" would clear every Codex baseline unchecked. What the
+  baseline was handed is subtracted first, because `--rival` and the populated-fleet
+  baseline both give it a skill on purpose. `invalid_code: baseline_had_the_skill`
+  stops the brief on the first sample the way `arm_never_ran` does: an ambient install
+  is still there for samples 2 and 3.
+- **An arm the clock killed is not an arm that failed the brief.** Both leave a
+  non-zero verify and a final message, and `both_arms_failed_verify` swallowed the
+  difference - its reason line says "fix the brief, not the loop", and no rewrite of a
+  brief buys it more time. `edge-launch-intro-scene-ax41` is the pair that showed it:
+  sample 1 had both arms exit 0 and both fail verify, a gate nobody passes; sample 2
+  had the without-arm finish in 1130s and the with-arm killed at the 1200s cap,
+  mid-sentence on "Now rendering...". Both were filed under the same code, and the two
+  together tripped the two-in-a-row rule and retired the brief with a message blaming
+  it. Only one of the two was a measurement. `invalid_code: arm_timed_out` fires on
+  exit 124 (`timeout(1)`) or 142 (the perl `alarm` fallback's SIGALRM), and only when
+  that arm also failed verify: an agent cut off at the cap whose work still passes the
+  brief's own gate is done by the only definition the brief offers, and throwing that
+  pair away would discard a real verdict over the runner's bookkeeping. `run_eval.sh`
+  records the cap it ran under as `timeout_s`, so the reason can name it - 1200s on a
+  brief that renders video is a different problem from 1200s on one that edits a file.
+  In `forge.sh` it is its own streak: it does not count as a failed gate and it does
+  not clear one, because it says nothing either way about whether the brief is
+  passable. Two in a row still stops the run, since a brief that cannot finish inside
+  the cap will not finish inside it on the third try. One pair in the archive has a
+  cut-off arm and it is the one that showed this, so nothing else on the record was
+  miscoded - which is why the fix is a guard for the next one rather than a rescoring
+  of the last 45.
 - **A zero load is only evidence where the runner records loads.** Claude Code emits a
   `Skill` tool call with the name in `skill`, OpenCode a `skill` part with the name in
   `state.input.name`, and Codex records nothing at all. Enforcing on a Codex zero would

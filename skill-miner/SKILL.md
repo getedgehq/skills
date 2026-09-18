@@ -111,6 +111,12 @@ decorative:
   the model never made. The reply is now parsed to the end of the first complete object,
   and a candidate that still cannot be read is carried as unscored and sorts last,
   rather than being quietly retired at the 0.5 threshold.
+- **`--check` reports coverage, not just the gap.** A report that pairs one prediction
+  reads the same whether the ledger is young or the scorer is broken, and on this one it
+  read that way for weeks: 1 of 19 decided evals had a prediction, and the missing 18 were
+  a crash, not a wait. `--check` now prints the fraction and names the decisions with no
+  prediction, so the next systematic gap shows up as a number in the same pass that reads
+  the gap rather than six weeks later.
 - **A brief nobody mined still gets a prediction.** `--skill-dir` reads the cluster out of
   the brief's `source_failure`, which only `draft.py` writes. A brief written by hand has
   no such key, the fallback handed the brief itself back as a cluster, and the next line

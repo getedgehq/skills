@@ -55,7 +55,7 @@ eval_brief() {  # eval_brief <brief> <skill-dir>: predict, N samples, blind judg
     python3 "$MINER/score.py" "$brief" --skill-dir "$skill" \
       || echo "scoring failed, evaluating anyway (no prediction recorded)" >&2
   fi
-  local failed=0
+  local failed=0 late=0
   for s in $(seq 1 "$SAMPLES"); do
     FORGE_SAMPLE=$s bash "$HERE/run_eval.sh" "$brief" without "$RIVAL"
     FORGE_SAMPLE=$s bash "$HERE/run_eval.sh" "$brief" with "$skill"
@@ -79,7 +79,30 @@ eval_brief() {  # eval_brief <brief> <skill-dir>: predict, N samples, blind judg
            "Fix the runner, then rerun - nothing here is the brief's fault." >&2
       break
     fi
-    if grep -q '"invalid_code": "both_arms_failed_verify"' "$FORGE_ROOT/.judge-out.json"; then
+    # Same rule, same reason: a skill the baseline could reach is installed on the host
+    # or baked into the image, so it will be there for samples 2 and 3 as well. The
+    # whole brief is unmeasurable until it is removed.
+    if grep -q '"invalid_code": "baseline_had_the_skill"' "$FORGE_ROOT/.judge-out.json"; then
+      echo "the baseline of $(basename "$brief") could reach the skill under test:" \
+           "stopping at sample $s. Uninstall it, then rerun." >&2
+      break
+    fi
+    # A cut-off arm is its own streak, and it must not touch the other one. Counting
+    # it as a verify failure blames the brief for the clock; resetting the verify
+    # streak on it erases a real gate failure from the sample before. It says nothing
+    # either way about whether the brief is passable, so the verify counter is left
+    # exactly where it stood and this counter moves instead. Two in a row still stops:
+    # a brief that cannot finish inside the cap will not finish inside it next time,
+    # and each further sample costs two arms of wall clock to prove it again.
+    if grep -q '"invalid_code": "arm_timed_out"' "$FORGE_ROOT/.judge-out.json"; then
+      late=$((late + 1))
+      if [[ $late -ge 2 ]]; then
+        echo "an arm of $(basename "$brief") ran out of time twice running: stopping" \
+             "after sample $s. Raise FORGE_TIMEOUT or narrow the brief." >&2
+        break
+      fi
+    elif grep -q '"invalid_code": "both_arms_failed_verify"' "$FORGE_ROOT/.judge-out.json"; then
+      late=0
       failed=$((failed + 1))
       if [[ $failed -ge 2 ]]; then
         echo "brief $(basename "$brief") failed its own verify in both arms twice running:" \
@@ -87,6 +110,7 @@ eval_brief() {  # eval_brief <brief> <skill-dir>: predict, N samples, blind judg
         break
       fi
     else
+      late=0
       failed=0
     fi
   done

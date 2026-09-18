@@ -118,6 +118,28 @@ def priors_text(rows, min_n):
     return "\n".join(text)
 
 
+def coverage(rows, paired):
+    """How many decided evals have a prediction at all, and which do not.
+
+    Without this the report reads the same whether the data is young or the
+    scorer is broken. On this ledger it read "paired 1 predictions with
+    decisions" for weeks while 20 of 21 decisions had none, because score.py
+    raised KeyError on every brief with no mined cluster behind it and forge.sh
+    printed that as "evaluating anyway" (#41). A number that only ever goes up
+    slowly looks like youth; a coverage line that says 1 of 21 does not.
+    """
+    have = {name for _, _, name in paired}
+    missing = [r.get("skill") for r in rows if r.get("skill") not in have]
+    pct = 100 * len(have) / len(rows) if rows else 0
+    print(f"  coverage: {len(have)} of {len(rows)} decided evals have a prediction ({pct:.0f}%)")
+    if missing:
+        shown = ", ".join(sorted(set(m for m in missing if m))[:6])
+        more = len(set(missing)) - 6
+        print(f"  no prediction for: {shown}" + (f", and {more} more" if more > 0 else ""))
+        print("  a decision with no prediction is not evidence against the scorer: "
+              "check whether scoring ran at all before reading the gap above")
+
+
 def check(rows, preds_path):
     if not os.path.exists(preds_path):
         print(f"no predictions recorded yet ({preds_path} does not exist)")
@@ -141,6 +163,7 @@ def check(rows, preds_path):
     won = [p for p, o, _ in paired if o and p is not None]
     lost = [p for p, o, _ in paired if not o and p is not None]
     print(f"paired {len(paired)} predictions with decisions")
+    coverage(rows, paired)
     for label, vals in (("passed the gate", won), ("rejected", lost)):
         if vals:
             print(f"  mean predicted potential, {label}: {sum(vals)/len(vals):.2f}  (n={len(vals)})")

@@ -116,10 +116,91 @@ def never_ran(arm):
     non-zero exit can be a timeout after real work, an empty transcript can be a
     runner that writes none, and a missing final message can be an agent that only
     edited files. Together they mean nothing ran.
+
+    That shape was read off a Harbor arm, and it missed the next one. When the CLI
+    itself fails, it still writes its init line to the transcript and still writes a
+    final message - the failure text. Both arms of the first rival pair came back
+    exit 1, 145 bytes of transcript header and the final message "Failed to
+    authenticate: OAuth session expired and could not be refreshed", which is not an
+    empty arm by any of the three tests above. That pair survived only because the
+    judge's own model call was failing on the same credential; with a working judge
+    it would have been scored as two agents answering the brief with the same
+    sentence, and the loop would have blamed the brief a third time.
+
+    So the second reading: run_eval.sh copies the CLI's error result into run.json,
+    and -o writes that same result to final.txt, so a final message that is the
+    runner's recorded error is the runner talking, not the agent. Truncation is why
+    this compares by prefix - run.json keeps 300 characters. A timeout after real
+    work still reads as a real arm: its error comes from stderr, and no agent answer
+    opens with it.
     """
-    return (arm["run"].get("exit", 0) != 0
-            and not arm["transcript_bytes"]
-            and arm["final"].strip() in ("", "(no final message)"))
+    if arm["run"].get("exit", 0) == 0:
+        return False
+    final = arm["final"].strip()
+    if not arm["transcript_bytes"] and final in ("", "(no final message)"):
+        return True
+    err = (arm["run"].get("error") or "").strip()
+    return bool(err) and final.startswith(err)
+
+
+def cut_off(arms):
+    """Arms the runner killed at the clock before they had finished.
+
+    An arm that ran out of time and an arm that finished and got it wrong leave the
+    same evidence downstream: a non-zero verify and a final message the judge can
+    read. edge-launch-intro-scene-ax41 is the case that showed it. Sample 1 had both
+    arms exit 0 and both fail verify, which is a brief nobody can pass. Sample 2 had
+    the without-arm finish in 1130s and the with-arm killed at the 1200s cap, 20
+    minutes in, mid-sentence on "Now rendering...". Both samples were recorded as
+    both_arms_failed_verify, whose reason line reads "fix the brief, not the loop",
+    and the two together tripped forge.sh's two-in-a-row rule and stopped the brief.
+    One of those two samples was never a measurement: the with-arm was not failing the
+    gate, it was out of time, and the advice to rewrite the brief cannot fix a clock.
+
+    A timeout only invalidates the pair when that arm also failed verify. An agent
+    killed at the cap whose work still passes the brief's own gate is complete by the
+    only definition the brief offers, and throwing that pair away would discard a real
+    comparison over the runner's bookkeeping.
+
+    124 is what timeout(1) and gtimeout return. 142 is the perl fallback on a host
+    with neither: alarm(2) kills by SIGALRM and the shell reports 128+14. Both are
+    the same event and only one of them has ever been seen here.
+    """
+    return sorted(a for a in arms
+                  if arms[a]["run"].get("exit") in (124, 142)
+                  and arms[a]["verify_exit"] != 0)
+
+
+def cutoff_reason(names, arms):
+    """Why this pair measures the clock, naming the cap it hit.
+
+    The cap is in the reason because the fix depends on it: 1200s on a brief that
+    renders video is a different problem from 1200s on a brief that edits one file,
+    and a reader who has to go and find FORGE_TIMEOUT to know which cannot tell.
+    """
+    caps = {arms[a]["run"].get("timeout_s") for a in names} - {None}
+    cap = f" {caps.pop()}s" if len(caps) == 1 else ""
+    which = " and ".join(f"{n}-arm" for n in names)
+    return (f"the {which} ran into the{cap} cap and then failed verify, so this pair "
+            "measures the clock rather than the skill. Raise FORGE_TIMEOUT or narrow "
+            "the brief, then rerun the sample")
+
+
+def dead_reason(name, arm):
+    """Why this arm counts as never started, in the words of what was actually seen.
+
+    The two shapes leave different evidence and the record has to say which one it
+    read. A line saying "produced no transcript" over an arm that produced a
+    transcript header and an authentication error sends the next reader looking for
+    a missing file instead of at an expired credential.
+    """
+    err = (arm["run"].get("error") or "").strip()
+    seen = ("its final message is the runner's own error" if err and
+            arm["final"].strip().startswith(err) else "it produced no transcript")
+    return (f"the {name}-arm exited {arm['run'].get('exit')} and {seen}"
+            + (f" ({err})" if err else "")
+            + ", so the agent never started and this sample measures the runner, "
+              "not the skill")
 
 
 def tool_error_count(meta):
@@ -202,7 +283,78 @@ def never_used_its_skill(arm):
     return bool(arm["skills"]) and arm["loads_knowable"] and not arm["loaded"]
 
 
-def skill_trees(workdir):
+def advertised_skills(meta):
+    """Skill names this arm's agent was offered, or None when the runner never says.
+
+    skill_trees answers what we installed. This answers what the agent could actually
+    reach, and the two come apart in the direction that matters: a skill already on the
+    host, or baked into the container image, is offered to both arms and installed by
+    neither. The without-arm is then not a baseline, it is a second with-arm, and every
+    check in this file goes on agreeing with itself because all of them read what we
+    put there.
+
+    Nothing has caught fire yet, and the measurement is what says so rather than a
+    guess: across all 53 without-arms on AX41 whose runner writes an inventory, not one
+    advertised the skill its pair was testing. But adoption ends in deployment - the loop's own four skills are
+    installed exactly this way - so the day a re-check runs over an adopted skill its
+    baseline sees it, and the recheck reads as a skill that stopped working. The
+    inventory is read here, before that is anybody's outage.
+
+    Two shapes because two Claude Code versions write it differently, and both are in
+    the runs directory today: the host CLI puts a `skills` list on the system/init
+    line, the SDK CLI inside Harbor's image emits a `skill_listing` attachment with
+    `names`. A runner that writes neither returns None, which is not an empty
+    inventory: Codex records no listing at all, and reading its silence as "offered
+    nothing" would clear every Codex baseline without checking one.
+    """
+    found = None
+    try:
+        fh = open(os.path.join(meta, "transcript.jsonl"), errors="replace")
+    except OSError:
+        return None
+    for line in fh:
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        if not isinstance(d, dict):
+            continue
+        names = None
+        if d.get("type") == "system" and d.get("subtype") == "init":
+            names = d.get("skills")
+        att = d.get("attachment")
+        if isinstance(att, dict) and att.get("type") == "skill_listing":
+            names = att.get("names")
+        if isinstance(names, list):
+            found = (found or set()) | {str(n).split(":")[-1] for n in names}
+    return found
+
+
+def advertised_record(arms):
+    """What each arm was offered, for the verdict record. None stays None: an arm whose
+    runner writes no listing has an unknown inventory, and writing [] would file that
+    as a checked-and-empty one."""
+    return {a: (None if arms[a]["advertised"] is None else sorted(arms[a]["advertised"]))
+            for a in arms}
+
+
+def blind_broken(arms):
+    """Skills the baseline could reach that only the candidate was handed.
+
+    Subtracting the without-arm's own installs first is what keeps --rival legal: a
+    baseline deliberately given the incumbent is supposed to reach it, and that pair is
+    the head-to-head the ledger wants. What is not legal is a name the with-arm alone
+    was handed turning up in the baseline's inventory anyway, because the only way it
+    got there is a copy neither arm installed.
+    """
+    candidate = set(arms["with"]["skills"]) - set(arms["without"]["skills"])
+    offered = arms["without"]["advertised"]
+    if offered is None or not candidate:
+        return []
+    return sorted(candidate & offered)
+
+
+def skill_trees(workdir, meta=None):
     """Where the skill under test was installed in this arm, and what it is called.
 
     run_eval.sh drops it in a different place per runner: .claude/skills for Claude
@@ -213,6 +365,18 @@ def skill_trees(workdir):
     runner is added, so the skill is found by its SKILL.md instead, and only inside a
     dot-directory: an agent asked to WRITE a SKILL.md puts it in the work it produced,
     which is the deliverable and stays in the manifest.
+
+    And the fourth runner arrived, exactly as predicted, except that it broke the
+    other end: run_eval_harbor.sh never puts the skill in the workdir at all. It
+    resolves it into <arm>.meta/skill/<name> and hands that to Harbor, which mounts it
+    inside the container, so the host workdir the scan above walks is empty of skills
+    whatever the arm was given. Every Harbor with-arm therefore read as an arm with no
+    skill installed, and two of the three integrity checks went quiet on it: with no
+    installed name, never_used_its_skill cannot fire, and named_skills has nothing to
+    match, so neither the never-loaded check nor the blindness check could ever refuse
+    a Harbor pair. The first one to run proved it. The judge recorded
+    skills_installed {"with": []} for an arm the container's own skill listing shows it
+    advertised, and the pair was filed against the brief instead.
     """
     out = {}
     for entry in sorted(os.listdir(workdir)) if os.path.isdir(workdir) else []:
@@ -222,6 +386,10 @@ def skill_trees(workdir):
             if "SKILL.md" in names:
                 out[os.path.basename(root)] = root
                 dirs[:] = []
+    handed = os.path.join(meta or "", "skill")
+    for entry in sorted(os.listdir(handed)) if meta and os.path.isdir(handed) else []:
+        if os.path.exists(os.path.join(handed, entry, "SKILL.md")):
+            out.setdefault(entry, os.path.join(handed, entry))
     return out
 
 
@@ -309,7 +477,7 @@ def main():
         if not os.path.exists(final_path):
             open(final_path, "w").write(final)
         code, vout = run_verify(brief, workdir, final_path)
-        trees = skill_trees(workdir)
+        trees = skill_trees(workdir, meta)
         run = json.load(open(os.path.join(meta, "run.json")))
         used, knowable = skills_loaded(meta, run.get("agent", "claude"))
         arms[arm] = {
@@ -321,6 +489,7 @@ def main():
             "skills": sorted(trees),
             "loaded": sorted(used & set(trees)),
             "loads_knowable": knowable,
+            "advertised": advertised_skills(meta),
             "transcript_bytes": transcript_bytes(meta),
             "run": run,
         }
@@ -332,24 +501,24 @@ def main():
     # tonight. Ordered ahead of both_arms_failed_verify because an arm that never ran
     # also fails verify, and that code sends the brief back for a rewrite it does not
     # need.
-    dead = [a for a in ("with", "without") if never_ran(arms[a])]
-    if dead:
+    def refuse(code, reason):
+        """Record an unmeasurable pair and stop, without drawing slots or calling the
+        judge. Written once because the three refusals below differ only in their two
+        words: when this was two copies of the same twelve-line dict, an edit that
+        added skills_advertised to one of them reached the other only because a grep
+        caught it."""
         result = {
             "brief": brief["id"],
             "winner_arm": "invalid",
             "invalid": True,
-            "invalid_code": "arm_never_ran",
-            "invalid_reason": "; ".join(
-                f"the {a}-arm produced no transcript and its runner exited "
-                f"{arms[a]['run'].get('exit')}"
-                + (f" ({arms[a]['run']['error']})" if arms[a]["run"].get("error") else "")
-                + ", so the agent never started and this sample measures the runner, "
-                  "not the skill" for a in dead),
+            "invalid_code": code,
+            "invalid_reason": reason,
             "verify": {a: arms[a]["verify_exit"] for a in arms},
             "tool_errors": {a: arms[a]["tool_errors"] for a in arms},
             "skills_installed": {a: arms[a]["skills"] for a in arms},
             "skills_loaded": {a: arms[a]["loaded"] for a in arms},
             "loads_knowable": {a: arms[a]["loads_knowable"] for a in arms},
+            "skills_advertised": advertised_record(arms),
             "run": {a: arms[a]["run"] for a in arms},
         }
         path = os.path.join(runs, "verdict.json")
@@ -357,6 +526,38 @@ def main():
         print(json.dumps({k: result[k] for k in
                           ("brief", "winner_arm", "invalid_code", "invalid_reason")}, indent=1))
         print(f"-> {path}")
+
+    dead = [a for a in ("with", "without") if never_ran(arms[a])]
+    if dead:
+        refuse("arm_never_ran", "; ".join(dead_reason(a, arms[a]) for a in dead))
+        return
+
+    # Also before the mapping and before the model call, and for the same two reasons:
+    # a baseline that could reach the candidate's skill is not a baseline, so there is
+    # nothing here a judge could read, and the rerun after the skill is uninstalled
+    # should draw its own slots rather than inherit this pair's. Ahead of every check
+    # below it because those all compare two arms and this one says the two arms are
+    # the same arm - skill_never_loaded in particular would fire on exactly this pair
+    # from the other side, blaming the with-arm for a silence that came from the
+    # baseline having the skill too.
+    leaked = blind_broken(arms)
+    if leaked:
+        refuse("baseline_had_the_skill",
+               f"the without-arm was offered {', '.join(leaked)} without being "
+               "handed it, so the baseline could reach the skill under test and "
+               "this pair measures nothing. Uninstall it from the host or image the "
+               "runner uses, then rerun the sample")
+        return
+
+    # Third and last refusal before the mapping and the model call. Below it sits
+    # both_arms_failed_verify, which is exactly the code a cut-off arm gets today and
+    # exactly the wrong one: it tells the operator to rewrite a brief whose only
+    # problem was that the clock ran out. Ordered after baseline_had_the_skill because
+    # a contaminated pair is unmeasurable whether or not it also timed out, and the
+    # contamination is the thing that has to be fixed first.
+    late = cut_off(arms)
+    if late:
+        refuse("arm_timed_out", cutoff_reason(late, arms))
         return
 
     # Blind: random slot assignment, persisted privately, never reshuffled.
@@ -407,6 +608,7 @@ def main():
         "skills_installed": {a: arms[a]["skills"] for a in arms},
         "skills_loaded": {a: arms[a]["loaded"] for a in arms},
         "loads_knowable": {a: arms[a]["loads_knowable"] for a in arms},
+        "skills_advertised": advertised_record(arms),
         "run": {a: arms[a]["run"] for a in arms},
     }
     # An arm had a skill and its runner would have recorded the call, and there is no
@@ -414,28 +616,47 @@ def main():
     # Checked on both arms rather than only the candidate's, because the baseline can
     # have one too - under --rival it holds the skill already installed for this
     # trigger - and a rival that was never loaded turns the head-to-head the ledger
-    # will record back into the walkover it was meant to replace. Ordered after a
-    # broken brief, because a gate nothing passes is the bigger problem, and before
-    # the blindness check, which cannot fire on an arm that never read the skill it
-    # would have to name.
+    # will record back into the walkover it was meant to replace. Ordered ahead of a
+    # broken brief, for the reason at that branch, and ahead of the blindness check,
+    # which cannot fire on an arm that never read the skill it would have to name.
     silent = [a for a in ("with", "without") if never_used_its_skill(arms[a])]
-    if both_failed:
-        result["invalid"] = True
-        # Two invalid samples are not the same kind of problem, and the caller has to
-        # tell them apart to know whether running the next sample is worth anything.
-        # This one is a property of the brief: its gate was unpassable this time and
-        # will be unpassable the next two times, so the remaining samples buy nothing
-        # but an hour each. The one below is chance, and the next sample may be clean.
-        result["invalid_code"] = "both_arms_failed_verify"
-        result["invalid_reason"] = "both arms failed verify - fix the brief, not the loop"
-        result["winner_arm"] = "invalid"
-    elif silent:
+    if silent:
         result["invalid"] = True
         result["invalid_code"] = "skill_never_loaded"
         result["invalid_reason"] = "; ".join(
             f"the {a}-arm never loaded {', '.join(arms[a]['skills'])}, so it ran the "
             "task without the skill it was given and this pair compares two runs, "
             "not a skill" for a in silent)
+        result["winner_arm"] = "invalid"
+        # Ahead of both_arms_failed_verify, which used to win this tie and was wrong
+        # about it on the first Harbor pair. Both arms there failed the brief's gate,
+        # which caps the reply at 150 words, and the verdict came back "fix the brief,
+        # not the loop" - over a brief whose identical gate the local runner had just
+        # passed three times out of three, 91, 82 and 88 words against a baseline's
+        # 310, 312 and 280. The with-arm wrote 194 because it never loaded the skill,
+        # and that skill's entire job is to make the reply short: the gate did not
+        # fail independently of the silent arm, it failed BECAUSE of it. A gate that
+        # was never once tested with the skill in place says nothing about the brief.
+        # It also matters which code comes out, not just which is truer: two
+        # both_arms_failed_verify in a row stop the brief, so a skill that keeps
+        # failing to load would retire its own eval with the log blaming the brief,
+        # while skill_never_loaded stops nothing and the next sample may well load it.
+        # The verify failure stays in the reason rather than being dropped, because
+        # the two together are what says the gate is still unmeasured.
+        if both_failed:
+            result["invalid_reason"] += (
+                ". Both arms also failed verify, which is what a silent arm looks like "
+                "when the skill's own job is to pass that gate: the brief is not "
+                "implicated until a sample runs with the skill actually loaded")
+    elif both_failed:
+        result["invalid"] = True
+        # Two invalid samples are not the same kind of problem, and the caller has to
+        # tell them apart to know whether running the next sample is worth anything.
+        # This one is a property of the brief: its gate was unpassable this time and
+        # will be unpassable the next two times, so the remaining samples buy nothing
+        # but an hour each. The one above is chance, and the next sample may be clean.
+        result["invalid_code"] = "both_arms_failed_verify"
+        result["invalid_reason"] = "both arms failed verify - fix the brief, not the loop"
         result["winner_arm"] = "invalid"
     elif spoken:
         result["invalid"] = True
