@@ -163,6 +163,60 @@ class FirstObject(unittest.TestCase):
         with self.assertRaises(ValueError):
             score.first_object("I cannot score this candidate.")
 
+    def test_a_missing_comma_between_members(self):
+        # The observed failure, from the queue on 18 Sep: "Expecting ',' delimiter:
+        # line 3 column 1". The model wrote every value asked for and left out one
+        # separator, and the whole score was discarded over it.
+        text = '{"potential": 0.6,\n"reason": "%s"\n"risk": "the sample is small"}' % ("x" * 480)
+        got = score.first_object(text)
+        self.assertEqual(got["potential"], 0.6)
+        self.assertEqual(got["risk"], "the sample is small")
+
+    def test_a_literal_newline_inside_a_string(self):
+        # A different malformation with a different message ("Invalid control
+        # character"), tolerated by the same second pass.
+        self.assertEqual(score.first_object('{"potential": 0.3, "reason": "a\nb"}')["reason"],
+                         "a\nb")
+
+    def test_an_unescaped_quote_is_still_a_failure(self):
+        # Same "Expecting ',' delimiter" message as the missing comma above, and the
+        # repair has no way to tell the two apart. It does not need one: a comma put
+        # into the middle of a string leaves something no decoder accepts, so this
+        # reply fails anyway rather than parsing into members nobody wrote.
+        with self.assertRaises(ValueError):
+            score.first_object('{"potential": 0.6, "reason": "he said "no" to it"}')
+
+    def test_only_a_member_opening_with_a_quote_is_repaired(self):
+        # The guard that keeps the repair on the observed shape. A separator missing
+        # inside a list raises the same message and is deliberately left to fail:
+        # every shape the repair learns to rewrite is one it can get wrong quietly.
+        with self.assertRaises(ValueError):
+            score.first_object('{"potential": 0.6, "tags": [1 2]}')
+
+    def test_a_valid_reply_is_read_exactly_as_written(self):
+        text = '{"potential": 0.5, "reason": "line one\\nline two", "risk": "none"}'
+        self.assertEqual(score.first_object(text)["reason"], "line one\nline two")
+
+
+class KeepReply(unittest.TestCase):
+    """A reply that could not be parsed is kept, or the next fix is another guess."""
+
+    def test_the_reply_is_written_where_the_reason_says_it_is(self):
+        tmp = tempfile.mkdtemp()
+        path = score.keep_reply(tmp, "brand-visual-check", "{not json")
+        self.assertTrue(path and os.path.exists(path))
+        self.assertEqual(open(path).read(), "{not json")
+
+    def test_a_name_with_a_slash_in_it_stays_inside_the_directory(self):
+        tmp = tempfile.mkdtemp()
+        path = score.keep_reply(tmp, "owner/repo@skill", "x")
+        self.assertEqual(os.path.dirname(path), os.path.join(tmp, "mined", "score-failures"))
+
+    def test_an_unwritable_root_does_not_raise(self):
+        # Scoring already failed; a second failure on the way out would replace the
+        # decoder's message with an OSError about a directory nobody asked about.
+        self.assertEqual(score.keep_reply("/proc/nonexistent", "a", "x"), "")
+
 
 class Record(unittest.TestCase):
     def test_creates_the_log_and_appends(self):
