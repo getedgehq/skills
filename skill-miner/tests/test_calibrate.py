@@ -86,6 +86,7 @@ class Priors(unittest.TestCase):
     def test_priors_reach_the_prompt(self):
         prompt = score.SCORE_PROMPT.format(
             kind="correction", signature="s", count=1, session_count=1, evidence="-",
+            note="",
             name="n", pool="p", installs=0, content="c", ledger="(none)",
             priors="MEASURED PRIORS from this user's own past evals:\n- x: 1 of 2")
         self.assertIn("MEASURED PRIORS", prompt)
@@ -290,6 +291,37 @@ class PredictWhatIsEvaluated(unittest.TestCase):
 
     def test_a_bare_cluster_is_taken_as_itself(self):
         self.assertEqual(score.cluster_from({"signature": "lone"}, 0)["signature"], "lone")
+
+    def test_a_hand_written_brief_still_yields_a_scorable_cluster(self):
+        # 22 of 37 briefs here have no source_failure. The old fallback handed the
+        # brief back as if it were a cluster and the caller raised KeyError on
+        # "signature", which forge.sh swallowed as "evaluating anyway" - so the
+        # majority of decisions never got the prediction PR #29 exists to record.
+        brief = {"id": "li-post__li-post-fede-rival", "prompt": "Write the launch post.",
+                 "rubric": "voice", "verify": "true"}
+        got = score.cluster_from(brief, 0)
+        self.assertEqual(got["signature"], "li-post__li-post-fede-rival")
+        self.assertTrue(got["no_mined_cluster"])
+        self.assertEqual(got["evidence"], ["Write the launch post."])
+
+    def test_a_brief_with_no_id_falls_back_to_its_own_prompt(self):
+        got = score.cluster_from({"prompt": "  Ship  the\n post.  ", "rubric": "x"}, 0)
+        self.assertEqual(got["signature"], "Ship the post.")
+
+    def test_a_null_source_failure_is_not_a_cluster(self):
+        # draft.py writes the key; a brief edited by hand can carry it as null,
+        # and "source_failure" in data was true for exactly that shape.
+        got = score.cluster_from({"id": "b", "source_failure": None,
+                                  "prompt": "p", "rubric": "r"}, 0)
+        self.assertTrue(got["no_mined_cluster"])
+
+    def test_the_prompt_says_the_missing_evidence_is_not_weak_evidence(self):
+        # Rubric item 3 scores more sessions higher, so an empty cluster reads as a
+        # bad bet unless the prompt says otherwise, and every hand-written brief
+        # would score near 0 for having been written by hand.
+        self.assertIn("{note}", score.SCORE_PROMPT)
+        self.assertIn("not read the absent evidence as weak evidence",
+                      score.NO_CLUSTER_NOTE)
 
     def test_a_skill_dir_pass_does_not_overwrite_the_matched_scores(self):
         # Both run in one forge pass. The matched file is the record of why this
