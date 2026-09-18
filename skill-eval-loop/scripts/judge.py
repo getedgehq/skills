@@ -240,7 +240,7 @@ def never_used_its_skill(arm):
     return bool(arm["skills"]) and arm["loads_knowable"] and not arm["loaded"]
 
 
-def skill_trees(workdir):
+def skill_trees(workdir, meta=None):
     """Where the skill under test was installed in this arm, and what it is called.
 
     run_eval.sh drops it in a different place per runner: .claude/skills for Claude
@@ -251,6 +251,18 @@ def skill_trees(workdir):
     runner is added, so the skill is found by its SKILL.md instead, and only inside a
     dot-directory: an agent asked to WRITE a SKILL.md puts it in the work it produced,
     which is the deliverable and stays in the manifest.
+
+    And the fourth runner arrived, exactly as predicted, except that it broke the
+    other end: run_eval_harbor.sh never puts the skill in the workdir at all. It
+    resolves it into <arm>.meta/skill/<name> and hands that to Harbor, which mounts it
+    inside the container, so the host workdir the scan above walks is empty of skills
+    whatever the arm was given. Every Harbor with-arm therefore read as an arm with no
+    skill installed, and two of the three integrity checks went quiet on it: with no
+    installed name, never_used_its_skill cannot fire, and named_skills has nothing to
+    match, so neither the never-loaded check nor the blindness check could ever refuse
+    a Harbor pair. The first one to run proved it. The judge recorded
+    skills_installed {"with": []} for an arm the container's own skill listing shows it
+    advertised, and the pair was filed against the brief instead.
     """
     out = {}
     for entry in sorted(os.listdir(workdir)) if os.path.isdir(workdir) else []:
@@ -260,6 +272,10 @@ def skill_trees(workdir):
             if "SKILL.md" in names:
                 out[os.path.basename(root)] = root
                 dirs[:] = []
+    handed = os.path.join(meta or "", "skill")
+    for entry in sorted(os.listdir(handed)) if meta and os.path.isdir(handed) else []:
+        if os.path.exists(os.path.join(handed, entry, "SKILL.md")):
+            out.setdefault(entry, os.path.join(handed, entry))
     return out
 
 
@@ -347,7 +363,7 @@ def main():
         if not os.path.exists(final_path):
             open(final_path, "w").write(final)
         code, vout = run_verify(brief, workdir, final_path)
-        trees = skill_trees(workdir)
+        trees = skill_trees(workdir, meta)
         run = json.load(open(os.path.join(meta, "run.json")))
         used, knowable = skills_loaded(meta, run.get("agent", "claude"))
         arms[arm] = {
@@ -447,28 +463,47 @@ def main():
     # Checked on both arms rather than only the candidate's, because the baseline can
     # have one too - under --rival it holds the skill already installed for this
     # trigger - and a rival that was never loaded turns the head-to-head the ledger
-    # will record back into the walkover it was meant to replace. Ordered after a
-    # broken brief, because a gate nothing passes is the bigger problem, and before
-    # the blindness check, which cannot fire on an arm that never read the skill it
-    # would have to name.
+    # will record back into the walkover it was meant to replace. Ordered ahead of a
+    # broken brief, for the reason at that branch, and ahead of the blindness check,
+    # which cannot fire on an arm that never read the skill it would have to name.
     silent = [a for a in ("with", "without") if never_used_its_skill(arms[a])]
-    if both_failed:
-        result["invalid"] = True
-        # Two invalid samples are not the same kind of problem, and the caller has to
-        # tell them apart to know whether running the next sample is worth anything.
-        # This one is a property of the brief: its gate was unpassable this time and
-        # will be unpassable the next two times, so the remaining samples buy nothing
-        # but an hour each. The one below is chance, and the next sample may be clean.
-        result["invalid_code"] = "both_arms_failed_verify"
-        result["invalid_reason"] = "both arms failed verify - fix the brief, not the loop"
-        result["winner_arm"] = "invalid"
-    elif silent:
+    if silent:
         result["invalid"] = True
         result["invalid_code"] = "skill_never_loaded"
         result["invalid_reason"] = "; ".join(
             f"the {a}-arm never loaded {', '.join(arms[a]['skills'])}, so it ran the "
             "task without the skill it was given and this pair compares two runs, "
             "not a skill" for a in silent)
+        result["winner_arm"] = "invalid"
+        # Ahead of both_arms_failed_verify, which used to win this tie and was wrong
+        # about it on the first Harbor pair. Both arms there failed the brief's gate,
+        # which caps the reply at 150 words, and the verdict came back "fix the brief,
+        # not the loop" - over a brief whose identical gate the local runner had just
+        # passed three times out of three, 91, 82 and 88 words against a baseline's
+        # 310, 312 and 280. The with-arm wrote 194 because it never loaded the skill,
+        # and that skill's entire job is to make the reply short: the gate did not
+        # fail independently of the silent arm, it failed BECAUSE of it. A gate that
+        # was never once tested with the skill in place says nothing about the brief.
+        # It also matters which code comes out, not just which is truer: two
+        # both_arms_failed_verify in a row stop the brief, so a skill that keeps
+        # failing to load would retire its own eval with the log blaming the brief,
+        # while skill_never_loaded stops nothing and the next sample may well load it.
+        # The verify failure stays in the reason rather than being dropped, because
+        # the two together are what says the gate is still unmeasured.
+        if both_failed:
+            result["invalid_reason"] += (
+                ". Both arms also failed verify, which is what a silent arm looks like "
+                "when the skill's own job is to pass that gate: the brief is not "
+                "implicated until a sample runs with the skill actually loaded")
+    elif both_failed:
+        result["invalid"] = True
+        # Two invalid samples are not the same kind of problem, and the caller has to
+        # tell them apart to know whether running the next sample is worth anything.
+        # This one is a property of the brief: its gate was unpassable this time and
+        # will be unpassable the next two times, so the remaining samples buy nothing
+        # but an hour each. The one above is chance, and the next sample may be clean.
+        result["invalid_code"] = "both_arms_failed_verify"
+        result["invalid_reason"] = "both arms failed verify - fix the brief, not the loop"
         result["winner_arm"] = "invalid"
     elif spoken:
         result["invalid"] = True
