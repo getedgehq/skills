@@ -475,7 +475,11 @@ fired, with `unrecognized arguments: --sources`.
   side; the skill is then adopted into a fleet of 314 where several others answer the
   same trigger, and there the model picks between them. The gap is measurable: the
   seven skills adopted so far load 18 of 21 times in their own evals, where each is the
-  only skill on the machine, and once in 189 real sessions. On the same subject,
+  only skill installed for the trigger, and once in 189 real sessions. Not the only
+  skill on the machine, which is what this said until the inventories were read: the
+  AX41 CLI offers every arm 18 bundled skills and Harbor's image 13, so the candidate
+  already competes with a dozen-odd generic ones. It competes with none that answer
+  its own trigger, and that is the whole of the gap. On the same subject,
   `fede-linkedin-post` was loaded 8 times in 1041 recent sessions while `li-post-fede`,
   installed in the same two roots, was loaded 0. `--rival PATH` installs the incumbent
   in the baseline arm, which is the head-to-head the adoption actually needs.
@@ -486,6 +490,26 @@ fired, with `unrecognized arguments: --sources`.
   baseline that installed nothing stops the gate rather than recording a contest that
   did not happen. An empty list is the honest reading of every row written before the
   field existed, and the adopt line says "over an empty baseline" out loud.
+- **Read what the agent was offered, not only what you installed.** Every other check in
+  `judge.py` reads the harness's own installs, so they all agree with each other by
+  construction, and none of them can see an ambient copy: a skill already on the host or
+  baked into the container image is advertised to both arms and installed by neither.
+  The without-arm is then a second with-arm and the pair measures nothing. Nothing has
+  gone wrong yet and the measurement is what says so rather than a guess - all 53
+  real without-arms on AX41 whose runner writes an inventory were read, and not one
+  advertised the skill its pair was testing - but
+  adoption ends in deployment, and the loop's own four skills sit in `~/.agents/skills`
+  exactly the way an adopted skill will, so the first recheck over a deployed skill
+  would read as a skill that stopped working. `advertised_skills` reads the inventory
+  per runner, off two shapes that are both in `runs/` today: the host CLI writes a
+  `skills` list on the `system/init` line, the SDK CLI inside Harbor a `skill_listing`
+  attachment with `names`. A runner that writes neither returns `None`, which is an
+  unknown inventory and not an empty one - Codex records no listing at all, and reading
+  its silence as "offered nothing" would clear every Codex baseline unchecked. What the
+  baseline was handed is subtracted first, because `--rival` and the populated-fleet
+  baseline both give it a skill on purpose. `invalid_code: baseline_had_the_skill`
+  stops the brief on the first sample the way `arm_never_ran` does: an ambient install
+  is still there for samples 2 and 3.
 - **A zero load is only evidence where the runner records loads.** Claude Code emits a
   `Skill` tool call with the name in `skill`, OpenCode a `skill` part with the name in
   `state.input.name`, and Codex records nothing at all. Enforcing on a Codex zero would
