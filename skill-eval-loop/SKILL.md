@@ -446,6 +446,30 @@ fired, with `unrecognized arguments: --sources`.
   it: three of 39 real with-arms, in both of the briefs whose skill was then adopted.
   The pair is marked `invalid` with `invalid_code: skill_never_loaded`, and it stops
   nothing - the next sample may well load it.
+- **A skill handed to a container is installed, even though the host workdir is empty.**
+  The installed-skill scan walks the arm's workdir, and `run_eval_harbor.sh` never puts
+  the skill there: it resolves it into `<arm>.meta/skill/<name>` and hands that to
+  Harbor, which mounts it inside the container. So every Harbor with-arm read as an arm
+  with no skill installed, and two of the three integrity checks went quiet on it. With
+  no installed name, the never-loaded check cannot fire and the blindness check has
+  nothing to match, which means no Harbor pair could ever have been refused for either.
+  The first real one proved it: `skills_installed {"with": []}` for an arm whose own
+  container transcript carries a `skill_listing` naming the skill. The scan now also
+  reads what the runner handed over, and the workdir copy still wins where both exist,
+  because that is the tree the agent actually read.
+- **A silent arm outranks a gate both arms failed.** `both_arms_failed_verify` used to
+  win that tie and its text says "fix the brief, not the loop", which on the first
+  Harbor pair was advice about a brief the local runner passes three times out of
+  three: with-arm 91, 82 and 88 words against a baseline's 310, 312 and 280, under the
+  same 150-word gate. The Harbor with-arm wrote 194 because it never loaded the skill,
+  and that skill's entire job is to make the reply short, so the gate did not fail
+  independently of the silent arm, it failed because of it. A gate never once tested
+  with the skill in place says nothing about the brief. Which code comes out also
+  decides whether the brief survives: two `both_arms_failed_verify` in a row stop the
+  run, so a skill that keeps failing to load would retire its own eval with the log
+  blaming the brief, while `skill_never_loaded` stops nothing. The verify failure stays
+  in the reason rather than being dropped, because the two facts together are what says
+  the gate is still unmeasured.
 - **A win over an empty machine is not the comparison adoption rests on.** Every arm
   the loop has run had one skill installed on the with side and none on the without
   side; the skill is then adopted into a fleet of 314 where several others answer the

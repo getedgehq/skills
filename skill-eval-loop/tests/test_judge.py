@@ -70,6 +70,56 @@ class Blindness(unittest.TestCase):
             self.assertEqual(trees, {})
             self.assertIn("drafted-skill/SKILL.md", judge.manifest(d, hide=trees.values()))
 
+    # The Harbor runner never installs into the workdir: it resolves the skill into
+    # <arm>.meta/skill/<name> and hands that to the container. Scanning the workdir
+    # alone reported every Harbor with-arm as having no skill installed, which is what
+    # the first real Harbor pair recorded, and with no installed name neither the
+    # never-loaded check nor the blindness check can fire.
+
+    def harbor_meta(self, tmp, name="tldr-replies"):
+        meta = os.path.join(tmp, "with.meta")
+        handed = os.path.join(meta, "skill", name)
+        os.makedirs(handed)
+        with open(os.path.join(handed, "SKILL.md"), "w") as fh:
+            fh.write("---\nname: %s\n---\n" % name)
+        return meta
+
+    def test_the_skill_handed_to_a_container_counts_as_installed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = arm_dir(tmp, None, work=("post.md",))
+            self.assertEqual(judge.skill_trees(d), {})
+            trees = judge.skill_trees(d, self.harbor_meta(tmp))
+            self.assertEqual(sorted(trees), ["tldr-replies"])
+
+    def test_the_handed_skill_never_reaches_the_file_list(self):
+        # It lives outside the workdir, so the manifest cannot leak it either way.
+        with tempfile.TemporaryDirectory() as tmp:
+            d = arm_dir(tmp, None, work=("post.md",))
+            trees = judge.skill_trees(d, self.harbor_meta(tmp))
+            self.assertNotIn("tldr-replies", judge.manifest(d, hide=trees.values()))
+
+    def test_a_meta_dir_with_no_skill_adds_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = arm_dir(tmp, None, work=("post.md",))
+            meta = os.path.join(tmp, "with.meta")
+            os.makedirs(meta)
+            self.assertEqual(judge.skill_trees(d, meta), {})
+
+    def test_a_handed_dir_without_a_skill_md_is_not_a_skill(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = arm_dir(tmp, None, work=("post.md",))
+            meta = os.path.join(tmp, "with.meta")
+            os.makedirs(os.path.join(meta, "skill", "not-a-skill"))
+            self.assertEqual(judge.skill_trees(d, meta), {})
+
+    def test_the_workdir_copy_wins_over_the_handed_one(self):
+        # The local runner installs into the workdir and that is the tree the agent
+        # actually read; the handed copy is a second record of the same skill.
+        with tempfile.TemporaryDirectory() as tmp:
+            d = arm_dir(tmp, "claude")
+            trees = judge.skill_trees(d, self.harbor_meta(tmp, "li-post-fede"))
+            self.assertIn(".claude", trees["li-post-fede"])
+
     def test_an_arm_that_names_the_skill_is_caught(self):
         names = ["li-post-fede", "tldr-replies"]
         self.assertEqual(judge.named_skills("Wrote it following the li-post-fede skill.", names),
@@ -445,14 +495,15 @@ class SilentArm(unittest.TestCase):
                 fh.write(json.dumps(obj) + "\n")
         json.dump({"agent": "claude", "exit": 0}, open(os.path.join(meta, "run.json"), "w"))
 
-    def judge_pair(self, without_skill=None, without_loaded=None):
+    def judge_pair(self, without_skill=None, without_loaded=None, verify="true",
+                   with_loaded="demo-skill"):
         tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, tmp)
         bin_, marker = stub_claude(tmp)
         brief = os.path.join(tmp, "brief.json")
-        json.dump({"id": "b1", "prompt": "p", "verify": "true"}, open(brief, "w"))
+        json.dump({"id": "b1", "prompt": "p", "verify": verify}, open(brief, "w"))
         runs = os.path.join(tmp, "runs", "b1", "s1")
-        self.arm_files(runs, "with", skill="demo-skill", loaded="demo-skill")
+        self.arm_files(runs, "with", skill="demo-skill", loaded=with_loaded)
         self.arm_files(runs, "without", skill=without_skill, loaded=without_loaded)
         env = dict(os.environ, FORGE_ROOT=tmp, FORGE_ENGINE="claude",
                    PATH=bin_ + os.pathsep + os.environ["PATH"], PYTHONDONTWRITEBYTECODE="1")
@@ -476,6 +527,32 @@ class SilentArm(unittest.TestCase):
                             without_loaded="fede-linkedin-post")
         self.assertFalse(v.get("invalid"), v.get("invalid_reason"))
         self.assertEqual(v["skills_installed"]["without"], ["fede-linkedin-post"])
+
+    # The first Harbor pair. Both arms failed the brief's 150-word gate and the verdict
+    # read "fix the brief, not the loop" - over a brief the local runner had passed
+    # three times out of three on the with side. The with-arm wrote 194 words because
+    # it never loaded the skill, and that skill's whole job is to make the reply short.
+
+    def test_a_silent_arm_outranks_a_gate_both_arms_failed(self):
+        v = self.judge_pair(verify="false", with_loaded=None)
+        self.assertEqual(v["invalid_code"], "skill_never_loaded")
+
+    def test_the_failed_gate_is_still_in_the_record(self):
+        """Dropping it would hide that the gate is unmeasured, not that it is fine."""
+        v = self.judge_pair(verify="false", with_loaded=None)
+        self.assertIn("also failed verify", v["invalid_reason"])
+        self.assertIn("never loaded demo-skill", v["invalid_reason"])
+        self.assertEqual(v["verify"], {"with": 1, "without": 1})
+
+    def test_a_gate_nobody_passed_with_both_arms_loaded_is_still_the_brief(self):
+        """The negative control: with nothing silent, the brief is still implicated."""
+        v = self.judge_pair(verify="false")
+        self.assertEqual(v["invalid_code"], "both_arms_failed_verify")
+
+    def test_a_silent_arm_that_passed_its_gate_says_nothing_about_verify(self):
+        v = self.judge_pair(with_loaded=None)
+        self.assertEqual(v["invalid_code"], "skill_never_loaded")
+        self.assertNotIn("also failed verify", v["invalid_reason"])
 
 
 class DeadArm(unittest.TestCase):
@@ -788,6 +865,18 @@ class UnpassableBrief(unittest.TestCase):
     def test_a_normal_verdict_runs_every_sample(self):
         n, _ = self.samples_run(None, None, None)
         self.assertEqual(n, 3)
+
+    def test_a_skill_that_keeps_not_loading_does_not_retire_the_brief(self):
+        # Which code comes out decides whether the brief survives, and on the first
+        # Harbor pair the two competed: both arms failed the gate because the with-arm
+        # never loaded the skill whose job was to pass it. Filed as a broken brief,
+        # two such samples would stop the run and the log would blame a brief the
+        # local runner passes three times out of three. Loading is chance - the model
+        # picks the skill from its description against whatever else is installed -
+        # so the next sample may well load it.
+        n, err = self.samples_run(*(["skill_never_loaded"] * 3))
+        self.assertEqual(n, 3)
+        self.assertNotIn("twice running", err)
 
     def test_a_dead_runner_stops_the_brief_on_the_first_sample(self):
         # Not the two-in-a-row rule: a runner that could not launch an agent will not
