@@ -116,10 +116,48 @@ def never_ran(arm):
     non-zero exit can be a timeout after real work, an empty transcript can be a
     runner that writes none, and a missing final message can be an agent that only
     edited files. Together they mean nothing ran.
+
+    That shape was read off a Harbor arm, and it missed the next one. When the CLI
+    itself fails, it still writes its init line to the transcript and still writes a
+    final message - the failure text. Both arms of the first rival pair came back
+    exit 1, 145 bytes of transcript header and the final message "Failed to
+    authenticate: OAuth session expired and could not be refreshed", which is not an
+    empty arm by any of the three tests above. That pair survived only because the
+    judge's own model call was failing on the same credential; with a working judge
+    it would have been scored as two agents answering the brief with the same
+    sentence, and the loop would have blamed the brief a third time.
+
+    So the second reading: run_eval.sh copies the CLI's error result into run.json,
+    and -o writes that same result to final.txt, so a final message that is the
+    runner's recorded error is the runner talking, not the agent. Truncation is why
+    this compares by prefix - run.json keeps 300 characters. A timeout after real
+    work still reads as a real arm: its error comes from stderr, and no agent answer
+    opens with it.
     """
-    return (arm["run"].get("exit", 0) != 0
-            and not arm["transcript_bytes"]
-            and arm["final"].strip() in ("", "(no final message)"))
+    if arm["run"].get("exit", 0) == 0:
+        return False
+    final = arm["final"].strip()
+    if not arm["transcript_bytes"] and final in ("", "(no final message)"):
+        return True
+    err = (arm["run"].get("error") or "").strip()
+    return bool(err) and final.startswith(err)
+
+
+def dead_reason(name, arm):
+    """Why this arm counts as never started, in the words of what was actually seen.
+
+    The two shapes leave different evidence and the record has to say which one it
+    read. A line saying "produced no transcript" over an arm that produced a
+    transcript header and an authentication error sends the next reader looking for
+    a missing file instead of at an expired credential.
+    """
+    err = (arm["run"].get("error") or "").strip()
+    seen = ("its final message is the runner's own error" if err and
+            arm["final"].strip().startswith(err) else "it produced no transcript")
+    return (f"the {name}-arm exited {arm['run'].get('exit')} and {seen}"
+            + (f" ({err})" if err else "")
+            + ", so the agent never started and this sample measures the runner, "
+              "not the skill")
 
 
 def tool_error_count(meta):
@@ -339,12 +377,7 @@ def main():
             "winner_arm": "invalid",
             "invalid": True,
             "invalid_code": "arm_never_ran",
-            "invalid_reason": "; ".join(
-                f"the {a}-arm produced no transcript and its runner exited "
-                f"{arms[a]['run'].get('exit')}"
-                + (f" ({arms[a]['run']['error']})" if arms[a]["run"].get("error") else "")
-                + ", so the agent never started and this sample measures the runner, "
-                  "not the skill" for a in dead),
+            "invalid_reason": "; ".join(dead_reason(a, arms[a]) for a in dead),
             "verify": {a: arms[a]["verify_exit"] for a in arms},
             "tool_errors": {a: arms[a]["tool_errors"] for a in arms},
             "skills_installed": {a: arms[a]["skills"] for a in arms},

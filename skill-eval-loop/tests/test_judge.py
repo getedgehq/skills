@@ -490,7 +490,8 @@ class DeadArm(unittest.TestCase):
 
     JUDGE = os.path.join(SCRIPTS, "judge.py")
 
-    def judge_pair(self, with_run=None, without_run=None, transcripts=True, verify="true"):
+    def judge_pair(self, with_run=None, without_run=None, transcripts=True, verify="true",
+                   finals=None):
         tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, tmp)
         bin_, self.marker = stub_claude(tmp)
@@ -502,6 +503,8 @@ class DeadArm(unittest.TestCase):
             meta = work + ".meta"
             os.makedirs(work)
             os.makedirs(meta)
+            if (finals or {}).get(arm):
+                open(os.path.join(meta, "final.txt"), "w").write(finals[arm])
             with open(os.path.join(meta, "transcript.jsonl"), "w") as fh:
                 if transcripts:
                     fh.write(json.dumps({"message": {"role": "assistant", "content": [
@@ -531,6 +534,7 @@ class DeadArm(unittest.TestCase):
         # The whole point: the old code sent the brief back for a rewrite.
         self.assertNotIn("fix the brief", v["invalid_reason"])
         self.assertIn("harbor", v["invalid_reason"])
+        self.assertIn("produced no transcript", v["invalid_reason"])
         self.assertFalse(self.judged(), "a model call was spent on two empty workdirs")
 
     def test_one_dead_arm_is_enough(self):
@@ -548,6 +552,40 @@ class DeadArm(unittest.TestCase):
     def test_a_nonzero_exit_with_a_transcript_is_still_judged(self):
         # A timeout after real work exits non-zero and has plenty to compare.
         out, v, _ = self.judge_pair(with_run=self.dead(error=""), transcripts=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertNotEqual(v.get("invalid_code"), "arm_never_ran")
+        self.assertTrue(self.judged())
+
+    AUTH = "Failed to authenticate: OAuth session expired and could not be refreshed"
+
+    def test_a_final_message_that_is_the_runners_error_is_not_an_answer(self):
+        # The real shape, off the first rival pair. The CLI failed to authenticate,
+        # wrote its init line to the transcript and wrote the failure as the final
+        # message, so none of the three original tests fired. With a working judge
+        # this would have been scored as two agents answering with the same sentence.
+        run = {"agent": "claude", "exit": 1, "error": self.AUTH}
+        out, v, _ = self.judge_pair(with_run=run, without_run=run, transcripts=True,
+                                    finals={"with": self.AUTH, "without": self.AUTH})
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(v["invalid_code"], "arm_never_ran")
+        self.assertIn("authenticate", v["invalid_reason"])
+        self.assertIn("final message is the runner's own error", v["invalid_reason"])
+        self.assertNotIn("produced no transcript", v["invalid_reason"])
+        self.assertFalse(self.judged(), "a model call was spent judging two error strings")
+
+    def test_a_truncated_error_still_matches_its_own_final_message(self):
+        # run.json keeps 300 characters of the error; final.txt keeps all of it.
+        long = self.AUTH + " " + "x" * 400
+        run = {"agent": "claude", "exit": 1, "error": long[:300]}
+        _, v, _ = self.judge_pair(with_run=run, transcripts=True, finals={"with": long})
+        self.assertEqual(v["invalid_code"], "arm_never_ran")
+
+    def test_an_agent_answer_after_a_failed_exit_is_still_an_answer(self):
+        # A timeout after real work: the error comes from stderr and the final message
+        # is the agent's own. Condemning this would throw away real comparisons.
+        run = {"agent": "claude", "exit": 124, "error": "timeout"}
+        out, v, _ = self.judge_pair(with_run=run, transcripts=True,
+                                    finals={"with": "Here is the post you asked for."})
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertNotEqual(v.get("invalid_code"), "arm_never_ran")
         self.assertTrue(self.judged())
