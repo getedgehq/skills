@@ -111,6 +111,16 @@ decorative:
   the model never made. The reply is now parsed to the end of the first complete object,
   and a candidate that still cannot be read is carried as unscored and sorts last,
   rather than being quietly retired at the 0.5 threshold.
+- **A brief nobody mined still gets a prediction.** `--skill-dir` reads the cluster out of
+  the brief's `source_failure`, which only `draft.py` writes. A brief written by hand has
+  no such key, the fallback handed the brief itself back as a cluster, and the next line
+  raised `KeyError: 'signature'`. `forge.sh` prints that as "scoring failed, evaluating
+  anyway", which reads like one unlucky model call - but 22 of the 37 briefs here have no
+  `source_failure`, so the prediction log added to close the prediction-to-decision gap was
+  never going to see the majority of decisions, the first run against a real incumbent
+  among them. Such a brief now scores against its own task, and the prompt says the missing
+  cluster is no evidence either way rather than letting rubric item 3 read an absent
+  history as a weak one.
 - **Provenance is a class, not a path.** The ledger stores `skill_src` as a filesystem
   path, so bucketing it raw produced one n=1 bucket per draft - a dimension that could
   never say anything. Paths now class into drafted by the loop / already installed

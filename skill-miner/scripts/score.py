@@ -36,6 +36,15 @@ from forge_llm import call_model, first_object
 
 import calibrate
 
+NO_CLUSTER_NOTE = """
+NOTE: this brief was written by hand, not drafted from a mined cluster, so there is no
+failure history behind it and the signature above is the brief's own id. Score rubric
+item 3 from the task itself: judge whether this skill would change what an agent produces
+on this brief. Do not read the absent evidence as weak evidence - an unmined brief says
+nothing either way, and scoring it near 0 for that would make every hand-written brief
+look like a bad bet.
+"""
+
 SCORE_PROMPT = """You are deciding whether a candidate skill is worth an A/B eval run (two agent runs, real cost).
 
 FAILURE CLUSTER (from real session logs):
@@ -44,7 +53,7 @@ FAILURE CLUSTER (from real session logs):
 - occurrences: {count} across {session_count} sessions
 - evidence:
 {evidence}
-
+{note}
 CANDIDATE SKILL: {name} (pool: {pool}, installs: {installs})
 SKILL CONTENT (may be truncated):
 {content}
@@ -166,10 +175,29 @@ def cluster_from(data, index):
     A brief carries the cluster it was built from under source_failure, which is
     what lets the skill about to be evaluated be scored without the caller
     having to find its way back to the mined file and remember the index.
+
+    Only briefs draft.py wrote carry it. A brief written by hand has no
+    source_failure at all, and the fallback below used to hand the brief itself
+    back as if it were a cluster, so the next line raised KeyError on
+    "signature". forge.sh catches that as "scoring failed, evaluating anyway",
+    which reads like one unlucky model call and is not: 22 of the 37 briefs on
+    this machine have no source_failure, so the prediction log PR #29 added to
+    close the prediction-to-decision gap was never going to record the majority
+    of decisions, including the first run against a real incumbent. A brief with
+    no mined cluster behind it is not a scoring failure - it is a skill being
+    scored on the task instead of on a failure history, which is worth saying in
+    the prompt rather than crashing over.
     """
-    if "source_failure" in data:
+    if data.get("source_failure"):
         return data["source_failure"]
-    return data["clusters"][index] if "clusters" in data else data
+    if "clusters" in data:
+        return data["clusters"][index]
+    if "prompt" in data and "rubric" in data:
+        head = " ".join((data.get("prompt") or "").split())[:200]
+        return {"kind": "brief", "no_mined_cluster": True,
+                "signature": data.get("id") or head or "unnamed brief",
+                "evidence": [head] if head else []}
+    return data
 
 
 def candidates_from(args):
@@ -224,6 +252,7 @@ def main():
             kind=cluster["kind"], signature=cluster["signature"],
             count=cluster.get("count", "?"), session_count=cluster.get("session_count", "?"),
             evidence="\n".join(f"- {e}" for e in cluster.get("evidence", [])),
+            note=NO_CLUSTER_NOTE if cluster.get("no_mined_cluster") else "",
             name=c["name"], pool=c.get("pool", "?"), installs=c.get("installs", "n/a"),
             content=content or "(content unavailable - score from name/description only)",
             ledger="\n".join(hist) if hist else "(none)",
