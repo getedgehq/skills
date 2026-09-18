@@ -126,6 +126,11 @@ def main():
         # so the verdict is "better than nothing" and says nothing about whether the
         # model would pick this skill over the one already installed for the trigger.
         "baseline_skills": baseline,
+        # How many samples lost an arm to a skill it was given and never loaded. On the
+        # baseline arm that is a measurement of the incumbent, not of the candidate, and
+        # it is the one this ledger most needs to accumulate: an adopted skill nobody
+        # picks is what the production recheck keeps finding weeks later.
+        "arms_never_loaded": v.get("arms_never_loaded"),
         "verify": v["verify"],
         "tool_errors": v.get("tool_errors"),
         "reasons": v["verdict"].get("reasons", []),
@@ -158,9 +163,26 @@ def main():
                   "beats nothing, not that it beats what is already installed for the "
                   "same trigger. --rival runs that comparison.")
     elif thin:
+        # "Fix whatever invalidated the others and rerun the brief" is an instruction
+        # only when something was wrong with the run. When what invalidated them was
+        # the model declining to load the baseline's own skill, nothing was: the rerun
+        # reproduces it, and the sentence sends the operator to spend an hour an arm
+        # proving it again. So this says what was measured instead of asking for it
+        # back. The candidate is not being rejected on its merits and the message
+        # should not read as though it were.
+        silent = (v.get("arms_never_loaded") or {}).get("without") or 0
         print(f"REJECTED {skill_name}: {n_valid} valid sample(s), and one run is an "
-              f"anecdote. Fix whatever invalidated the others and rerun the brief "
-              f"(winner={v['winner_arm']}, verify={v['verify']})")
+              f"anecdote (winner={v['winner_arm']}, verify={v['verify']})")
+        if silent and baseline:
+            rival = ", ".join(baseline)
+            print(f"  The baseline arm was given {rival} and never loaded it in "
+                  f"{silent} of {v.get('samples', silent)} samples, on a task its own "
+                  f"description claims, installed alone on the machine. That is a "
+                  f"result about {rival}, not about {skill_name}, and rerunning the "
+                  f"brief reproduces it. Unmeasured: whether {skill_name} beats that "
+                  f"skill. Measured: the model does not reach for it.")
+        else:
+            print(f"  Fix whatever invalidated the others and rerun the brief.")
     else:
         print(f"REJECTED {skill_name} (winner={v['winner_arm']}, verify={v['verify']})")
     print(f"ledger: {ledger}")

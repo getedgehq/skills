@@ -508,6 +508,32 @@ fired, with `unrecognized arguments: --sources`.
   and spends no eval. The field is read off every sample rather than the valid ones, and
   samples that disagree about what an arm was given stop the aggregate instead of being
   merged, since those are two experiments and not one comparison.
+- **An incumbent the model never reaches for is a result, not a sample to rerun.** With
+  the guard above working, three head-to-heads ran and two produced no verdict: the
+  skill installed in the baseline arm was not loaded, in 3 of 3 samples for one brief
+  and 2 of 3 for the other, each time installed alone on the machine, on a task its own
+  description claims. `gate.py` answered both with "fix whatever invalidated the others
+  and rerun the brief" - which names the candidate, and asks for an hour an arm to
+  reproduce something that was not a fault. Nothing about those runs was wrong. What
+  they measured is the production zero this loop keeps finding weeks later in real
+  sessions, reproduced inside the eval where it can be worked on, and it is a
+  measurement of the incumbent rather than of the candidate. `aggregate.py` now counts
+  silent arms per side into `arms_never_loaded`, the gate says which skill was passed
+  over and drops the rerun instruction when that is the reason, and the count rides onto
+  the ledger row so the pattern accumulates. Two details carry the honesty: the count is
+  derived from the three facts the sample verdict already stores rather than from a new
+  field, so it answers for runs already in the archive and costs no eval; and
+  `never_used_its_skill` is called by both stages rather than restated in the second,
+  because the rule that invalidates a pair and the rule that explains a missing verdict
+  must not drift into disagreeing about one run. A runner that records no skill call at
+  all is never counted - that zero is unknowable, and a finding invented by a transcript
+  format is worse than no finding.
+- **Picking a rival by reading two descriptions is the method this loop already
+  disproved.** `run-to-publishable-result` was paired against `tldr-replies` because
+  both read as end-of-turn status-message skills. It loads 3 of 3 on its own brief and 0
+  of 3 as the baseline on the other, so two triggers that a reader cannot tell apart are
+  not one trigger to the model. Same failure as matching themes by word overlap: the
+  description is not the behaviour.
 - **Read what the agent was offered, not only what you installed.** Every other check in
   `judge.py` reads the harness's own installs, so they all agree with each other by
   construction, and none of them can see an ambient copy: a skill already on the host or
