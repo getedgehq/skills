@@ -397,6 +397,22 @@ fired, with `unrecognized arguments: --sources`.
   a timeout after real work, a runner that writes no transcript, an agent that only
   edited files. Unlike a failing gate this stops the brief on the first sample, since
   a runner that could not launch an agent will not launch one on sample two either.
+  Those three signs were read off a Harbor arm and they missed the next one. When the
+  CLI itself fails it still writes its init line to the transcript and still writes a
+  final message, the failure text, so an arm can be dead with neither an empty
+  transcript nor a missing final message. Both arms of the first rival pair came back
+  exit 1 with `Failed to authenticate: OAuth session expired and could not be
+  refreshed` as their answer, and nothing above fired. That pair survived only because
+  the judge's own model call was failing on the same credential; with a working judge
+  it would have been scored as two agents answering the brief with the same sentence,
+  and the loop would have blamed the brief a third time. The second reading catches
+  it: `run_eval.sh` copies the CLI's error into `run.json` and `-o` writes the same
+  text to `final.txt`, so a final message that starts with the runner's recorded
+  error is the runner talking and not the agent. Compared by prefix, because
+  `run.json` keeps 300 characters. A timeout after real work still reads as a real
+  arm: its error comes from stderr and no agent answer opens with it. The reason text
+  says which of the two shapes it saw, so nobody goes looking for a missing file over
+  an expired credential.
 - **A verify that reads prose punishes the arm that explains itself.** A brief checked
   the agent's reply for banned fonts and failed the arm that had the skill, on its own
   sentence saying AX41 has no Arial. The skill's whole effect is to make an agent state
