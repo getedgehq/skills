@@ -32,7 +32,7 @@ import sys
 import time
 
 import forge_llm  # noqa: F401  (ensures script dir on path)
-from forge_llm import call_model
+from forge_llm import call_model, first_object
 
 import calibrate
 
@@ -72,29 +72,24 @@ Score the candidate's potential. Hard-earned rubric:
 Return STRICT JSON only: {{"potential": 0.0-1.0, "reason": "<one sentence>", "risk": "<main way this score could be wrong>"}}"""
 
 
-def first_object(text):
-    """The first complete JSON object in a model reply.
+def keep_reply(root, name, text):
+    """Park the reply a score could not be read out of, and say where it went.
 
-    Slicing from the first "{" to the last "}" is the usual shortcut and it fails on
-    exactly the reply this has to survive: a model that answers with the object and
-    then keeps going, a second object or a sentence with a brace in it, produces a
-    slice that is valid JSON followed by more, and json.loads rejects the whole thing
-    with "Extra data". Two real candidates scored 0.00 that way, which reads in the
-    output as a judgement the model never made. raw_decode stops at the end of the
-    first object instead, and each later "{" is tried in case the reply opens with
-    prose containing one.
+    A parse failure used to leave nothing but the decoder's complaint, and a complaint
+    names a column in a reply nobody kept. That is one guess per incident about what
+    the model actually wrote, and a guess is not a thing to fix a parser from. Writing
+    the reply down costs a few kilobytes and turns the next one into a five-second
+    read. Best effort: a failed score is already bad enough without a second error on
+    the way out of it.
     """
-    dec = json.JSONDecoder()
-    at, err = text.find("{"), None
-    while at != -1:
-        try:
-            obj, _ = dec.raw_decode(text[at:])
-            if isinstance(obj, dict):
-                return obj
-        except ValueError as e:
-            err = err or e
-        at = text.find("{", at + 1)
-    raise ValueError(err or "no JSON object in the reply")
+    try:
+        d = os.path.join(root, "mined", "score-failures")
+        os.makedirs(d, exist_ok=True)
+        path = os.path.join(d, re.sub(r"[^\w.-]", "-", name) + ".txt")
+        open(path, "w").write(text)
+        return path
+    except OSError:
+        return ""
 
 
 def fetch_skill_md(name):
@@ -234,13 +229,16 @@ def main():
             ledger="\n".join(hist) if hist else "(none)",
             priors=priors,
         )
-        engine = ""
+        engine, text = "", None
         try:
             text, engine = call_model(prompt)
             verdict = first_object(text)
             failed = False
         except (ValueError, SystemExit) as e:
-            verdict = {"potential": None, "reason": f"scoring failed: {e}", "risk": ""}
+            kept = keep_reply(root, c["name"], text) if text is not None else ""
+            verdict = {"potential": None,
+                       "reason": f"scoring failed: {e}" + (f" (reply kept at {kept})" if kept else ""),
+                       "risk": ""}
             failed = True
         scored.append({**c, "potential": verdict.get("potential", 0),
                        "reason": verdict.get("reason", ""), "risk": verdict.get("risk", ""),

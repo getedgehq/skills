@@ -71,6 +71,11 @@ python3 scripts/score.py candidates.json failures.json --index 0
 - `score.py` enriches each candidate with its actual SKILL.md (fetched for
   registry hits), the failure evidence, and ledger history, then LLM-scores
   P(measurable improvement) 0-1. Only candidates >=0.5 deserve eval spend.
+- A candidate printed with `?` instead of a number scored nothing: the reply could
+  not be read as JSON. The reply itself is kept at
+  `$FORGE_ROOT/mined/score-failures/<name>.txt` and the line says so. Read that file
+  before changing the parser. A decoder's complaint names a column in a reply nobody
+  kept, and a parser fixed from the complaint alone is fixed for a guess.
 - Nothing matches? `draft.py <clusters.json> --index 0` drafts a minimal candidate
   skill into `$FORGE_ROOT/drafts/`. For correction themes it automatically feeds the
   mapped memory files and the user's verbatim rules as enriched context; add more with

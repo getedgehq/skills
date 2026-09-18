@@ -253,22 +253,20 @@ def named_skills(text, names):
 def first_object(text):
     """The first complete JSON object in a model reply, or None.
 
-    Slicing from the first '{' to the last '}' breaks on a reply that answers with the
-    object and then keeps talking: the slice is valid JSON followed by prose, and
-    json.loads rejects all of it. score.py lost two real candidate scores to exactly
-    that (PR #22).
+    One implementation, in forge_llm, because there were two: this one and score.py's,
+    written from the same lesson and already drifted apart. score.py's had learned to
+    read a reply with a missing comma in it and this one had not, which is the wrong
+    half of the loop to be the tolerant one - a verdict this cannot read is a paid pair
+    of container runs thrown away, where a score it cannot read costs a model call.
+
+    None rather than an exception is this caller's contract: winner_slot below is
+    already the place that decides what an unreadable verdict means.
     """
-    dec = json.JSONDecoder()
-    for i, ch in enumerate(text):
-        if ch != "{":
-            continue
-        try:
-            obj, _ = dec.raw_decode(text[i:])
-        except ValueError:
-            continue
-        if isinstance(obj, dict):
-            return obj
-    return None
+    import forge_llm  # deferred like its other use below, which is the only caller
+    try:
+        return forge_llm.first_object(text)
+    except ValueError:
+        return None
 
 
 def winner_slot(verdict):
