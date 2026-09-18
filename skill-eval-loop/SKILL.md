@@ -490,6 +490,24 @@ fired, with `unrecognized arguments: --sources`.
   baseline that installed nothing stops the gate rather than recording a contest that
   did not happen. An empty list is the honest reading of every row written before the
   field existed, and the adopt line says "over an empty baseline" out loud.
+- **A guard that reads a field nobody writes refuses everything, and its tests will not
+  say so.** The `--rival` check above shipped reading `skills_installed` off the
+  aggregate verdict. `judge.py` writes that field per sample, `aggregate.py` did not
+  carry it, and `gate.py` reads only the aggregate - so the check read an absent field
+  as an empty baseline and refused every head-to-head it was ever given, for eleven PRs,
+  with the one message no operator can act on: rerun an eval whose samples were already
+  right. The first real one was a 3-0 whose three samples each record the incumbent
+  installed and loaded in the baseline arm; the queue log ends `END rival rc=1`. Four
+  tests covered the guard and all four passed, because each one hands `gate.py` a
+  verdict dict the test built, carrying a key no producer writes. A fixture that
+  fabricates its producer's output tests the consumer against a format, not against the
+  system. Where two scripts meet over a file, one test has to run both - `RivalEndToEnd`
+  is that test. And a verdict that does not record what the arms were given is not a
+  verdict that records an empty baseline: the two readings get different messages now,
+  because only one of them is fixed by re-aggregating, which re-reads the stored samples
+  and spends no eval. The field is read off every sample rather than the valid ones, and
+  samples that disagree about what an arm was given stop the aggregate instead of being
+  merged, since those are two experiments and not one comparison.
 - **Read what the agent was offered, not only what you installed.** Every other check in
   `judge.py` reads the harness's own installs, so they all agree with each other by
   construction, and none of them can see an ambient copy: a skill already on the host or

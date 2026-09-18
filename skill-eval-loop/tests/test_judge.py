@@ -412,12 +412,6 @@ class RivalBaseline(unittest.TestCase):
         v.update(kw)
         return v
 
-    def test_a_rival_that_never_reached_the_arm_stops_the_gate(self):
-        out, row = self.run_gate(self.won(), "--rival", "fede-linkedin-post")
-        self.assertNotEqual(out.returncode, 0)
-        self.assertIn("ran with no skill installed", out.stderr)
-        self.assertIsNone(row)
-
     def test_the_rival_the_baseline_really_had_reaches_the_ledger(self):
         out, row = self.run_gate(
             self.won(skills_installed={"with": ["demo-skill"], "without": ["fede-linkedin-post"]}),
@@ -442,6 +436,129 @@ class RivalBaseline(unittest.TestCase):
             self.won(skills_installed={"with": ["demo-skill"], "without": ["fede-linkedin-post"]}))
         self.assertEqual(row["baseline_skills"], ["fede-linkedin-post"])
         self.assertNotIn("beats nothing", out.stdout)
+
+    def test_a_verdict_that_cannot_say_is_not_a_verdict_that_says_nothing(self):
+        # The two readings of a missing field, and the refusal above answers only one
+        # of them. Every verdict aggregate.py wrote before it carried this field was
+        # the other, so the operator was sent to rerun an eval that was already right.
+        out, row = self.run_gate(self.won(), "--rival", "fede-linkedin-post")
+        self.assertNotEqual(out.returncode, 0)
+        self.assertIn("does not record what either arm was given", out.stderr)
+        self.assertIn("spends no eval", out.stderr)
+        self.assertNotIn("ran with no skill installed", out.stderr)
+        self.assertIsNone(row)
+
+    def test_a_baseline_the_runner_really_left_empty_is_still_refused(self):
+        # And the other reading keeps its own message: the field is there and says the
+        # baseline got nothing, which no amount of re-aggregating will change. This
+        # replaces a test that asserted the same message for a verdict carrying no
+        # field at all - the conflation itself, written down and passing.
+        out, row = self.run_gate(
+            self.won(skills_installed={"with": ["demo-skill"], "without": []}),
+            "--rival", "fede-linkedin-post")
+        self.assertNotEqual(out.returncode, 0)
+        self.assertIn("ran with no skill installed", out.stderr)
+        self.assertIsNone(row)
+
+
+class RivalEndToEnd(unittest.TestCase):
+    """aggregate.py and gate.py run together, over sample verdicts judge.py wrote.
+
+    Every test above hands gate.py a verdict dict the test built. That is how a
+    guard that refused 100% of the head-to-heads it was given passed its whole suite
+    for eleven PRs: the fixtures carried skills_installed and the producer did not.
+    These run the real chain, so a field one script stops writing fails here rather
+    than in a queue log at 03:24.
+    """
+
+    def chain(self, samples, *gate_args):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp)
+        brief = os.path.join(tmp, "brief.json")
+        json.dump({"id": "b1", "prompt": "p", "verify": "true"}, open(brief, "w"))
+        for i, v in enumerate(samples, 1):
+            d = os.path.join(tmp, "runs", "b1", f"s{i}")
+            os.makedirs(d)
+            json.dump(v, open(os.path.join(d, "verdict.json"), "w"))
+        skill = os.path.join(tmp, "li-post-fede")
+        os.makedirs(skill)
+        open(os.path.join(skill, "SKILL.md"), "w").write("---\nname: li-post-fede\n---\n")
+        env = dict(os.environ, FORGE_ROOT=tmp, PYTHONDONTWRITEBYTECODE="1")
+        agg = subprocess.run([sys.executable, AGGREGATE, brief], env=env,
+                             capture_output=True, text=True)
+        if agg.returncode != 0:
+            return agg, None, None
+        gate = subprocess.run([sys.executable, os.path.join(SCRIPTS, "gate.py"), brief, skill,
+                               "--adopt-dir", os.path.join(tmp, "adopted"), *gate_args],
+                              env=env, capture_output=True, text=True)
+        ledger = os.path.join(tmp, "ledger.jsonl")
+        row = (json.loads(open(ledger).read().strip())
+               if os.path.exists(ledger) and open(ledger).read().strip() else None)
+        return agg, gate, row
+
+    def sample(self, without=("fede-linkedin-post",), **kw):
+        v = {"winner_arm": "with", "verify": {"with": 0, "without": 0},
+             "verdict": {"reasons": []}, "tool_errors": {"with": 0, "without": 0},
+             "skills_installed": {"with": ["li-post-fede"], "without": list(without)},
+             "skills_loaded": {"with": ["li-post-fede"], "without": list(without)}}
+        v.update(kw)
+        return v
+
+    def test_the_head_to_head_the_samples_record_reaches_the_ledger(self):
+        # The live case: three samples, the rival installed and loaded in the baseline
+        # of each, 3-0 to the candidate. This exited 1 at the gate.
+        agg, gate, row = self.chain([self.sample()] * 3, "--rival", "fede-linkedin-post")
+        self.assertEqual(agg.returncode, 0, agg.stderr)
+        self.assertEqual(gate.returncode, 0, gate.stderr)
+        self.assertEqual(row["baseline_skills"], ["fede-linkedin-post"])
+        self.assertIn("over fede-linkedin-post", gate.stdout)
+        self.assertNotIn("beats nothing", gate.stdout)
+
+    def test_a_walkover_still_reads_as_a_walkover(self):
+        agg, gate, row = self.chain([self.sample(without=())] * 3)
+        self.assertEqual(gate.returncode, 0, gate.stderr)
+        self.assertEqual(row["baseline_skills"], [])
+        self.assertIn("beats nothing", gate.stdout)
+
+    def test_an_invalid_sample_still_says_what_it_was_given(self):
+        # Read off every sample, not the valid ones: an unreadable pair answers what
+        # the runner installed as well as a readable one. All three invalid is what
+        # separates the two, because with any valid sample left the field survives
+        # either way - here, reading only the valid ones leaves nothing to read, and
+        # the gate sends the operator to rerun an aggregate that would change nothing.
+        dud = self.sample(winner_arm="invalid", invalid=True, invalid_reason="not blind")
+        agg, gate, row = self.chain([dud] * 3, "--rival", "fede-linkedin-post")
+        self.assertEqual(agg.returncode, 0, agg.stderr)
+        self.assertEqual(gate.returncode, 0, gate.stderr)
+        self.assertNotIn("does not record what either arm was given", gate.stderr)
+        self.assertEqual(row["baseline_skills"], ["fede-linkedin-post"])
+        self.assertEqual(row["decision"], "reject")
+
+    def test_one_bad_sample_does_not_cost_the_other_two_their_contest(self):
+        dud = self.sample(winner_arm="invalid", invalid=True, invalid_reason="not blind")
+        agg, gate, row = self.chain([dud, self.sample(), self.sample()],
+                                    "--rival", "fede-linkedin-post")
+        self.assertEqual(gate.returncode, 0, gate.stderr)
+        self.assertEqual(row["baseline_skills"], ["fede-linkedin-post"])
+
+    def test_samples_given_different_baselines_are_not_one_comparison(self):
+        agg, gate, row = self.chain([self.sample(), self.sample(without=())],
+                                    "--rival", "fede-linkedin-post")
+        self.assertNotEqual(agg.returncode, 0)
+        self.assertIn("not given the same skills in every sample", agg.stderr)
+        self.assertIn("s2", agg.stderr)
+        self.assertIsNone(gate)
+
+    def test_samples_that_never_recorded_it_leave_the_field_out(self):
+        # Rather than writing an empty list, which gate.py would read as a baseline
+        # that really ran empty and refuse with the one message re-aggregating cannot
+        # fix. Pre-#36 samples are the ones this describes.
+        old = {"winner_arm": "with", "verify": {"with": 0, "without": 0},
+               "verdict": {"reasons": []}}
+        agg, gate, row = self.chain([old] * 3, "--rival", "fede-linkedin-post")
+        self.assertEqual(agg.returncode, 0, agg.stderr)
+        self.assertNotEqual(gate.returncode, 0)
+        self.assertIn("does not record what either arm was given", gate.stderr)
 
 
 def stub_claude(tmp):
