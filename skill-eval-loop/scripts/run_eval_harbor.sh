@@ -30,7 +30,11 @@ BASE="$ROOT/runs/$ID"
 [[ -n "${FORGE_SAMPLE:-}" ]] && BASE="$BASE/s$FORGE_SAMPLE"
 DIR="$BASE/$ARM"
 META="$BASE/$ARM.meta"
-[[ -e "$DIR" ]] && { echo "refusing: $DIR exists" >&2; exit 1; }
+# Both dirs, for the reason spelled out in run_eval.sh: the verdict is built out of
+# $META, and a $META left behind by an earlier pass hands the judge that pass's answer.
+for d in "$DIR" "$META"; do
+  [[ -e "$d" ]] && { echo "refusing: $d exists - delete the sample dir to rerun" >&2; exit 1; }
+done
 mkdir -p "$DIR" "$META"
 
 python3 -c "import json,sys;sys.stdout.write(json.load(open(sys.argv[1]))['prompt'])" \
