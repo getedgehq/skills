@@ -52,9 +52,11 @@ Rules that matter for anyone reading a score:
 - Calibration fixtures are hand-written and committed before the run. The `good` fixture must
   pass and the `bad` one must fail, and the checker is fixed until that is true.
 
-The published runs mostly honour the 3-task rule, and one does not: `autonomous-research` was
-measured on 2 tasks, not 3. Read a per-skill `n` as tasks multiplied by samples per task, not as
-an independent sample count.
+The published runs mostly honour the 3-task rule, and one does not: the `heldout` run of
+`autonomous-research` was measured on 2 tasks, not 3, which is where its 16 judged pairs come
+from. The same Skill's earlier v1 run used 3 tasks. Both are published on its page, and the
+disagreement between them is itself reported there. Read a per-skill `n` as tasks multiplied by
+samples per task, not as an independent sample count.
 
 ### Environment
 
@@ -188,18 +190,26 @@ Two quantities carry intervals:
 
 ### What "resolved" means
 
-The report's stated rule: **a cell counts as resolved only if the 95% confidence interval on the
-judge point delta excludes zero.** This rule was fixed before the results were read and has not
-been changed since.
+**The normative rule: a cell counts as resolved only if the 95% confidence interval on the judge
+point delta excludes zero, in either direction.** This is the rule fixed before the results were
+read, and it is the rule a cited score is read against.
 
-The harness records a finer label. It emits `pts` when the delta interval excludes 0, `win` when
-the win-rate interval excludes 50, `pts+win` when both do, and `unresolved` when neither does.
+The harness records a finer label alongside it. It emits `pts` when the delta interval excludes 0,
+`win` when the win-rate interval excludes 50, `pts+win` when both do, and `unresolved` when neither
+does. That label is diagnostic and is published with each cell, but it is **not** the publication
+rule. Widening the rule to "delta **or** win rate" after the results were read would be exactly the
+kind of after-the-fact rule change the rest of this benchmark refuses, so the harness label stays a
+second opinion rather than a second definition. Every cell published so far reads `pts+win` or
+`unresolved`, so no published figure turns on the difference.
 
-`NOT YET SPECIFIED:` which of the two is normative for a cited score? The report's prose rule
-(delta only) and the harness label (delta **or** win rate) are not the same rule, and a cell could
-in principle be `win` under the harness while unresolved under the report. Every cell published so
-far reads `pts+win` or `unresolved`, so nothing currently turns on it, but a rule that has not been
-tested by a disagreeing case is a rule that has not been settled.
+"In either direction" is load-bearing and was not always implemented. An interval sitting entirely
+below zero excludes zero just as cleanly as one sitting entirely above it, and it means the Skill
+measurably made the work worse. The catalog renderer originally tested `ci[0] > 0`, which could
+not express that case: a resolved harm either rendered as "not resolved" or dropped its evaluation
+block off the page entirely. It now tests both bounds and gives a resolved harm its own label,
+"Measured regression", with the same prominence a resolved gain gets. Nothing published today
+changes, because no published interval sits below zero. The rule is stated this way so that the
+first one can be published rather than hidden.
 
 ### Reading an unresolved cell
 
@@ -331,13 +341,11 @@ The questions this document could not answer from the report or the repo, in one
 2. Whether the 40-turn cap is part of the frozen definition or a harness setting.
 3. Which arm (`loaded` or `skill`) is the citable default for a bare score.
 4. What power calculation selects 6 samples, and what effect size 6 is powered for.
-5. Whether "resolved" means the delta interval alone (the report) or delta **or** win rate (the
-   harness).
-6. Where a pre-registration lives once public, and how its timestamp becomes checkable.
-7. The withdrawal procedure: authority, canonical record, version-bump consequence, and how a
+5. Where a pre-registration lives once public, and how its timestamp becomes checkable.
+6. The withdrawal procedure: authority, canonical record, version-bump consequence, and how a
    reader holding a cited score learns it was withdrawn.
-8. The versioning policy: what forces a major bump versus a minor one.
-9. Whether `edge-skill-bench` gets a DOI and a `CITATION.cff` entry of its own, separate from the
+7. The versioning policy: what forces a major bump versus a minor one.
+8. Whether `edge-skill-bench` gets a DOI and a `CITATION.cff` entry of its own, separate from the
    Skills repository's.
 
 ---
