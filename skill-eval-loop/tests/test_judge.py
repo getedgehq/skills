@@ -394,6 +394,28 @@ class RivalBaseline(unittest.TestCase):
         self.assertNotIn("beats nothing", out.stdout)
 
 
+def stub_claude(tmp):
+    """A fake claude CLI on PATH, and the file that records whether it was called.
+
+    forge_llm shells out to the CLI, so shadowing the module through PYTHONPATH does
+    nothing: judge.py's own script directory is sys.path[0] and the real forge_llm
+    wins. Two end-to-end judge tests were quietly spending a real model call each
+    because of that. Intercepting the CLI is also what lets a test assert the judge
+    was never reached.
+    """
+    bin_ = os.path.join(tmp, "bin")
+    os.makedirs(bin_, exist_ok=True)
+    marker = os.path.join(tmp, "judge-calls.txt")
+    path = os.path.join(bin_, "claude")
+    with open(path, "w") as fh:
+        fh.write("#!/usr/bin/env bash\n"
+                 "echo called >> %s\n"
+                 "printf '%%s' '{\"result\": \"{\\\"winner\\\": \\\"A\\\", "
+                 "\\\"reasons\\\": []}\"}'\n" % marker)
+    os.chmod(path, 0o755)
+    return bin_, marker
+
+
 class SilentArm(unittest.TestCase):
     """The never-loaded check runs on whichever arm had a skill, candidate or rival.
 
@@ -426,17 +448,14 @@ class SilentArm(unittest.TestCase):
     def judge_pair(self, without_skill=None, without_loaded=None):
         tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, tmp)
-        stub = os.path.join(tmp, "stub")
-        os.makedirs(stub)
-        open(os.path.join(stub, "forge_llm.py"), "w").write(
-            "def call_model(prompt, model=None):\n"
-            "    return '{\"winner\": \"A\", \"reasons\": []}', 'stub'\n")
+        bin_, marker = stub_claude(tmp)
         brief = os.path.join(tmp, "brief.json")
         json.dump({"id": "b1", "prompt": "p", "verify": "true"}, open(brief, "w"))
         runs = os.path.join(tmp, "runs", "b1", "s1")
         self.arm_files(runs, "with", skill="demo-skill", loaded="demo-skill")
         self.arm_files(runs, "without", skill=without_skill, loaded=without_loaded)
-        env = dict(os.environ, FORGE_ROOT=tmp, PYTHONPATH=stub, PYTHONDONTWRITEBYTECODE="1")
+        env = dict(os.environ, FORGE_ROOT=tmp, FORGE_ENGINE="claude",
+                   PATH=bin_ + os.pathsep + os.environ["PATH"], PYTHONDONTWRITEBYTECODE="1")
         out = subprocess.run([sys.executable, self.JUDGE, brief, "--sample", "1"],
                              env=env, capture_output=True, text=True)
         self.assertEqual(out.returncode, 0, out.stderr)
@@ -457,6 +476,87 @@ class SilentArm(unittest.TestCase):
                             without_loaded="fede-linkedin-post")
         self.assertFalse(v.get("invalid"), v.get("invalid_reason"))
         self.assertEqual(v["skills_installed"]["without"], ["fede-linkedin-post"])
+
+
+class DeadArm(unittest.TestCase):
+    """An arm whose agent never started is a runner fault, not a broken brief.
+
+    The Harbor binary was not on the sudo PATH, so both arms exited 127 in two seconds
+    with empty transcripts, and judge.py recorded "both arms failed verify - fix the
+    brief, not the loop" over two empty workdirs - twice, with a model call spent each
+    time. The stub CLI records every call, so these tests assert the check runs before
+    the judge does and not merely that the code is right.
+    """
+
+    JUDGE = os.path.join(SCRIPTS, "judge.py")
+
+    def judge_pair(self, with_run=None, without_run=None, transcripts=True, verify="true"):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp)
+        bin_, self.marker = stub_claude(tmp)
+        brief = os.path.join(tmp, "brief.json")
+        json.dump({"id": "b1", "prompt": "p", "verify": verify}, open(brief, "w"))
+        runs = os.path.join(tmp, "runs", "b1", "s1")
+        for arm, run in (("with", with_run), ("without", without_run)):
+            work = os.path.join(runs, arm)
+            meta = work + ".meta"
+            os.makedirs(work)
+            os.makedirs(meta)
+            with open(os.path.join(meta, "transcript.jsonl"), "w") as fh:
+                if transcripts:
+                    fh.write(json.dumps({"message": {"role": "assistant", "content": [
+                        {"type": "text", "text": "done"}]}}) + "\n")
+            json.dump(run or {"agent": "claude", "exit": 0},
+                      open(os.path.join(meta, "run.json"), "w"))
+        env = dict(os.environ, FORGE_ROOT=tmp, FORGE_ENGINE="claude",
+                   PATH=bin_ + os.pathsep + os.environ["PATH"], PYTHONDONTWRITEBYTECODE="1")
+        out = subprocess.run([sys.executable, self.JUDGE, brief, "--sample", "1"],
+                             env=env, capture_output=True, text=True)
+        path = os.path.join(runs, "verdict.json")
+        verdict = json.load(open(path)) if os.path.exists(path) else None
+        return out, verdict, runs
+
+    def judged(self):
+        return os.path.exists(self.marker)
+
+    def dead(self, error="env: 'harbor': No such file or directory"):
+        return {"agent": "claude", "exit": 127, "runner": "harbor", "error": error}
+
+    def test_a_pair_that_never_started_is_a_runner_fault_not_a_brief_fault(self):
+        out, v, _ = self.judge_pair(with_run=self.dead(), without_run=self.dead(),
+                                    transcripts=False, verify="false")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(v["invalid_code"], "arm_never_ran")
+        self.assertEqual(v["winner_arm"], "invalid")
+        # The whole point: the old code sent the brief back for a rewrite.
+        self.assertNotIn("fix the brief", v["invalid_reason"])
+        self.assertIn("harbor", v["invalid_reason"])
+        self.assertFalse(self.judged(), "a model call was spent on two empty workdirs")
+
+    def test_one_dead_arm_is_enough(self):
+        _, v, _ = self.judge_pair(without_run=self.dead(), transcripts=False)
+        self.assertEqual(v["invalid_code"], "arm_never_ran")
+        self.assertIn("the without-arm", v["invalid_reason"])
+
+    def test_no_blind_mapping_is_written_for_a_pair_that_never_ran(self):
+        # The rerun after the fix has to draw its own slots. A mapping left behind here
+        # would be reused, and it was drawn for a pair that produced nothing.
+        _, _, runs = self.judge_pair(with_run=self.dead(), without_run=self.dead(),
+                                     transcripts=False)
+        self.assertFalse(os.path.exists(os.path.join(runs, "mapping.private.json")))
+
+    def test_a_nonzero_exit_with_a_transcript_is_still_judged(self):
+        # A timeout after real work exits non-zero and has plenty to compare.
+        out, v, _ = self.judge_pair(with_run=self.dead(error=""), transcripts=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertNotEqual(v.get("invalid_code"), "arm_never_ran")
+        self.assertTrue(self.judged())
+
+    def test_an_empty_transcript_alone_does_not_condemn_an_arm(self):
+        # Exit 0 and nothing in the transcript is a runner that writes none, not a
+        # runner that failed, and judging it is the right call.
+        self.judge_pair(transcripts=False)
+        self.assertTrue(self.judged())
 
 
 class ArmInstall(unittest.TestCase):
@@ -650,6 +750,14 @@ class UnpassableBrief(unittest.TestCase):
     def test_a_normal_verdict_runs_every_sample(self):
         n, _ = self.samples_run(None, None, None)
         self.assertEqual(n, 3)
+
+    def test_a_dead_runner_stops_the_brief_on_the_first_sample(self):
+        # Not the two-in-a-row rule: a runner that could not launch an agent will not
+        # launch one next time either, and each repeat costs another container build.
+        n, err = self.samples_run("arm_never_ran", None, None)
+        self.assertEqual(n, 1, "samples 2 and 3 would have reproduced the same fault")
+        self.assertIn("never started", err)
+        self.assertIn("nothing here is the brief's fault", err)
 
 
 if __name__ == "__main__":

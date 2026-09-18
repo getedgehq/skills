@@ -133,6 +133,12 @@ argument, and under `sudo` names the variables that may cross rather than using 
 This saves the API bill; it does not raise the weekly cap, which is the limit the loop
 actually hits.
 
+**A sudo run hands the job tree back.** With `FORGE_HARBOR_SUDO=1` Harbor writes its
+whole jobs directory as root, and the step that pulls the workdir and the session log
+into the arm runs as the invoking user. The first real container pair died there on a
+`PermissionError` reading the agent's own transcript, with the run already paid for, so
+the runner now chowns `$META/jobs` back before anything reads it.
+
 **Keep it on local Docker.** `CODEX_FORCE_AUTH_JSON` uploads a live `auth.json` into the
 sandbox and the OAuth token rides in the container environment, so Harbor's cloud
 providers (Daytona, Modal, Blaxel) would ship a working credential to a third party.
@@ -379,6 +385,18 @@ fired, with `unrecognized arguments: --sources`.
   next sample under the second is a verdict that stopping would have thrown away.
   `invalid_code` separates the two invalid verdicts, because the other one is
   chance and the next pair may well be blind, so it never stops anything.
+- **An arm whose agent never started is a runner fault, and the record has to say so.**
+  A Harbor binary that was not on the sudo PATH made both arms exit 127 in two seconds
+  with empty transcripts. Every downstream check read that as work: verify failed in
+  both arms, so the verdict came back `both_arms_failed_verify`, whose own text says
+  "fix the brief, not the loop". The brief was fine, and the loop said this twice,
+  spending a judge call on two empty workdirs each time. `invalid_code: arm_never_ran`
+  now names it, and the check runs before the blind mapping is drawn and before the
+  model is called. It needs all three signs together - a non-zero runner exit, an
+  empty transcript, and no final message - because each alone has an innocent reading:
+  a timeout after real work, a runner that writes no transcript, an agent that only
+  edited files. Unlike a failing gate this stops the brief on the first sample, since
+  a runner that could not launch an agent will not launch one on sample two either.
 - **A with-arm that never loaded the skill is not a with-arm.** Installing a skill in
   the arm does not load it; the model still chooses it from its description, exactly as
   in production. When it does not choose it, both arms ran the same task with the same
