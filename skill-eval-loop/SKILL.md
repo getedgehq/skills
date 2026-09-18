@@ -497,10 +497,18 @@ fired, with `unrecognized arguments: --sources`.
   The without-arm is then a second with-arm and the pair measures nothing. Nothing has
   gone wrong yet and the measurement is what says so rather than a guess - all 53
   real without-arms on AX41 whose runner writes an inventory were read, and not one
-  advertised the skill its pair was testing - but
-  adoption ends in deployment, and the loop's own four skills sit in `~/.agents/skills`
-  exactly the way an adopted skill will, so the first recheck over a deployed skill
-  would read as a skill that stopped working. `advertised_skills` reads the inventory
+  advertised the skill its pair was testing. The reason this said, when it shipped, is
+  the wrong one: it argued that adoption ends in deployment and the loop's own four
+  skills sit in `~/.agents/skills` exactly the way an adopted skill will, so the first
+  recheck over a deployed skill would read as a skill that stopped working. Measured
+  since, that mechanism does not fire. `run_eval.sh` launches the CLI with
+  `--setting-sources project,local`, which never loads the user scope: those four
+  skills and eighteen others sit in the eval user's own `~/.agents/skills` and not one
+  of the twenty-two was offered to any of the 100 archived arms. What the loop deploys
+  is invisible to what the loop measures. The live ways in are the ones left - a skill
+  baked into a container image, a project-scope install under the run root, a workdir
+  the harness populated twice - and the guard is worth having for those, not for the
+  one it was written about. `advertised_skills` reads the inventory
   per runner, off two shapes that are both in `runs/` today: the host CLI writes a
   `skills` list on the `system/init` line, the SDK CLI inside Harbor a `skill_listing`
   attachment with `names`. A runner that writes neither returns `None`, which is an
@@ -528,7 +536,10 @@ fired, with `unrecognized arguments: --sources`.
   In `forge.sh` it is its own streak: it does not count as a failed gate and it does
   not clear one, because it says nothing either way about whether the brief is
   passable. Two in a row still stops the run, since a brief that cannot finish inside
-  the cap will not finish inside it on the third try.
+  the cap will not finish inside it on the third try. One pair in the archive has a
+  cut-off arm and it is the one that showed this, so nothing else on the record was
+  miscoded - which is why the fix is a guard for the next one rather than a rescoring
+  of the last 45.
 - **A zero load is only evidence where the runner records loads.** Claude Code emits a
   `Skill` tool call with the name in `skill`, OpenCode a `skill` part with the name in
   `state.input.name`, and Codex records nothing at all. Enforcing on a Codex zero would
