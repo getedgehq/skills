@@ -79,6 +79,14 @@ eval_brief() {  # eval_brief <brief> <skill-dir>: predict, N samples, blind judg
            "Fix the runner, then rerun - nothing here is the brief's fault." >&2
       break
     fi
+    # Same rule, same reason: a skill the baseline could reach is installed on the host
+    # or baked into the image, so it will be there for samples 2 and 3 as well. The
+    # whole brief is unmeasurable until it is removed.
+    if grep -q '"invalid_code": "baseline_had_the_skill"' "$FORGE_ROOT/.judge-out.json"; then
+      echo "the baseline of $(basename "$brief") could reach the skill under test:" \
+           "stopping at sample $s. Uninstall it, then rerun." >&2
+      break
+    fi
     if grep -q '"invalid_code": "both_arms_failed_verify"' "$FORGE_ROOT/.judge-out.json"; then
       failed=$((failed + 1))
       if [[ $failed -ge 2 ]]; then

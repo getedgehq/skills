@@ -886,6 +886,139 @@ class UnpassableBrief(unittest.TestCase):
         self.assertIn("never started", err)
         self.assertIn("nothing here is the brief's fault", err)
 
+    def test_a_contaminated_baseline_stops_the_brief_on_the_first_sample(self):
+        # Same reason: the skill is installed on the host or in the image, so it is
+        # there for samples 2 and 3 too and none of them can measure anything.
+        n, err = self.samples_run("baseline_had_the_skill", None, None)
+        self.assertEqual(n, 1)
+        self.assertIn("could reach the skill under test", err)
+
+
+class LeakyBaseline(unittest.TestCase):
+    """A baseline that could reach the candidate's skill is not a baseline.
+
+    Every other check in judge.py reads what the harness installed, so all of them agree
+    with each other by construction. This one reads what the agent was offered, which is
+    the only place an ambient copy shows up: a skill already on the host, or baked into
+    the container image, is advertised to both arms and installed by neither. The
+    measurement that motivates it is in advertised_skills: 53 real without-arms on AX41,
+    none contaminated today, and the loop's own four skills deployed to ~/.agents/skills
+    exactly the way an adopted skill will be.
+    """
+
+    JUDGE = os.path.join(SCRIPTS, "judge.py")
+
+    def arm_files(self, runs, arm, skill=None, loaded=None, advertised=None, shape="init"):
+        work = os.path.join(runs, arm)
+        meta = work + ".meta"
+        os.makedirs(work)
+        os.makedirs(meta)
+        open(os.path.join(work, "post.md"), "w").write("the agent's output\n")
+        if skill:
+            sk = os.path.join(work, ".claude", "skills", skill)
+            os.makedirs(sk)
+            open(os.path.join(sk, "SKILL.md"), "w").write("---\nname: %s\n---\n" % skill)
+        lines = []
+        if advertised is not None:
+            # The host CLI's shape and the SDK CLI's shape, both live in runs/ today.
+            lines.append({"type": "system", "subtype": "init", "skills": list(advertised)}
+                         if shape == "init" else
+                         {"type": "attachment", "attachment": {
+                             "type": "skill_listing", "names": list(advertised),
+                             "skillCount": len(advertised)}})
+        if loaded:
+            lines.append({"message": {"role": "assistant", "content": [
+                {"type": "tool_use", "name": "Skill", "input": {"skill": loaded}}]}})
+        lines.append({"message": {"role": "assistant",
+                                  "content": [{"type": "text", "text": "done"}]}})
+        with open(os.path.join(meta, "transcript.jsonl"), "w") as fh:
+            for obj in lines:
+                fh.write(json.dumps(obj) + "\n")
+        json.dump({"agent": "claude", "exit": 0}, open(os.path.join(meta, "run.json"), "w"))
+
+    def judge_pair(self, offered=None, shape="init", without_skill=None,
+                   without_loaded=None, with_loaded="demo-skill"):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp)
+        bin_, marker = stub_claude(tmp)
+        brief = os.path.join(tmp, "brief.json")
+        json.dump({"id": "b1", "prompt": "p", "verify": "true"}, open(brief, "w"))
+        runs = os.path.join(tmp, "runs", "b1", "s1")
+        self.arm_files(runs, "with", skill="demo-skill", loaded=with_loaded)
+        self.arm_files(runs, "without", skill=without_skill, loaded=without_loaded,
+                       advertised=offered, shape=shape)
+        env = dict(os.environ, FORGE_ROOT=tmp, FORGE_ENGINE="claude",
+                   PATH=bin_ + os.pathsep + os.environ["PATH"], PYTHONDONTWRITEBYTECODE="1")
+        out = subprocess.run([sys.executable, self.JUDGE, brief, "--sample", "1"],
+                             env=env, capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.runs = runs
+        return json.load(open(os.path.join(runs, "verdict.json")))
+
+    def test_a_baseline_offered_the_candidates_skill_invalidates_the_pair(self):
+        v = self.judge_pair(offered=["dataviz", "demo-skill"])
+        self.assertEqual(v["invalid_code"], "baseline_had_the_skill")
+        self.assertEqual(v["winner_arm"], "invalid")
+
+    def test_the_reason_names_the_skill_and_what_to_do_about_it(self):
+        v = self.judge_pair(offered=["demo-skill"])
+        self.assertIn("demo-skill", v["invalid_reason"])
+        self.assertIn("Uninstall", v["invalid_reason"])
+
+    def test_the_rest_of_the_fleet_is_not_a_leak(self):
+        """The negative control, and the common case: 13 to 18 bundled skills are
+        offered to both arms of every pair the loop has ever run."""
+        v = self.judge_pair(offered=["dataviz", "code-review", "simplify"])
+        self.assertFalse(v.get("invalid"), v.get("invalid_reason"))
+
+    def test_a_rival_the_baseline_was_handed_is_not_a_leak(self):
+        """--rival installs a skill in the baseline on purpose; it is supposed to
+        reach it, and subtracting the without-arm's own installs is what allows it."""
+        v = self.judge_pair(offered=["rival-skill"], without_skill="rival-skill",
+                            without_loaded="rival-skill")
+        self.assertFalse(v.get("invalid"), v.get("invalid_reason"))
+
+    def test_a_baseline_handed_the_same_skill_is_a_populated_fleet_pair(self):
+        """run_eval.sh's other supported shape: hand the baseline the skill already
+        installed for this trigger, and the pair measures the skill against a fleet
+        that has it rather than against an empty machine. Both arms advertise it
+        because both were given it, and refusing that would delete the comparison an
+        adoption into a populated fleet actually rests on."""
+        v = self.judge_pair(offered=["demo-skill"], without_skill="demo-skill",
+                            without_loaded="demo-skill")
+        self.assertFalse(v.get("invalid"), v.get("invalid_reason"))
+
+    def test_the_container_listing_shape_is_read_too(self):
+        v = self.judge_pair(offered=["demo-skill"], shape="attachment")
+        self.assertEqual(v["invalid_code"], "baseline_had_the_skill")
+
+    def test_a_plugin_prefixed_name_is_the_same_skill(self):
+        v = self.judge_pair(offered=["somebundle:demo-skill"])
+        self.assertEqual(v["invalid_code"], "baseline_had_the_skill")
+
+    def test_a_runner_that_lists_nothing_is_not_cleared(self):
+        """Codex writes no listing at all. Recording that as an empty inventory would
+        file every Codex baseline as checked when none of them were."""
+        v = self.judge_pair(offered=None)
+        self.assertIsNone(v["skills_advertised"]["without"])
+        self.assertFalse(v.get("invalid"), v.get("invalid_reason"))
+
+    def test_it_outranks_the_never_loaded_check(self):
+        """Same pair, read from the other end: the with-arm looks silent, but the
+        reason it had nothing to add is that the baseline had the skill as well."""
+        v = self.judge_pair(offered=["demo-skill"], with_loaded=None)
+        self.assertEqual(v["invalid_code"], "baseline_had_the_skill")
+
+    def test_the_inventory_is_in_the_record(self):
+        v = self.judge_pair(offered=["demo-skill", "dataviz"])
+        self.assertEqual(v["skills_advertised"]["without"], ["dataviz", "demo-skill"])
+
+    def test_no_blind_mapping_is_written(self):
+        """Refused before the slots are drawn, so the rerun after the uninstall gets a
+        fresh coin flip instead of inheriting this pair's."""
+        self.judge_pair(offered=["demo-skill"])
+        self.assertFalse(os.path.exists(os.path.join(self.runs, "mapping.private.json")))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

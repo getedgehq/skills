@@ -240,6 +240,77 @@ def never_used_its_skill(arm):
     return bool(arm["skills"]) and arm["loads_knowable"] and not arm["loaded"]
 
 
+def advertised_skills(meta):
+    """Skill names this arm's agent was offered, or None when the runner never says.
+
+    skill_trees answers what we installed. This answers what the agent could actually
+    reach, and the two come apart in the direction that matters: a skill already on the
+    host, or baked into the container image, is offered to both arms and installed by
+    neither. The without-arm is then not a baseline, it is a second with-arm, and every
+    check in this file goes on agreeing with itself because all of them read what we
+    put there.
+
+    Nothing has caught fire yet, and the measurement is what says so rather than a
+    guess: across all 53 without-arms on AX41 whose runner writes an inventory, not one
+    advertised the skill its pair was testing. But adoption ends in deployment - the loop's own four skills are
+    installed exactly this way - so the day a re-check runs over an adopted skill its
+    baseline sees it, and the recheck reads as a skill that stopped working. The
+    inventory is read here, before that is anybody's outage.
+
+    Two shapes because two Claude Code versions write it differently, and both are in
+    the runs directory today: the host CLI puts a `skills` list on the system/init
+    line, the SDK CLI inside Harbor's image emits a `skill_listing` attachment with
+    `names`. A runner that writes neither returns None, which is not an empty
+    inventory: Codex records no listing at all, and reading its silence as "offered
+    nothing" would clear every Codex baseline without checking one.
+    """
+    found = None
+    try:
+        fh = open(os.path.join(meta, "transcript.jsonl"), errors="replace")
+    except OSError:
+        return None
+    for line in fh:
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        if not isinstance(d, dict):
+            continue
+        names = None
+        if d.get("type") == "system" and d.get("subtype") == "init":
+            names = d.get("skills")
+        att = d.get("attachment")
+        if isinstance(att, dict) and att.get("type") == "skill_listing":
+            names = att.get("names")
+        if isinstance(names, list):
+            found = (found or set()) | {str(n).split(":")[-1] for n in names}
+    return found
+
+
+def advertised_record(arms):
+    """What each arm was offered, for the verdict record. None stays None: an arm whose
+    runner writes no listing has an unknown inventory, and writing [] would file that
+    as a checked-and-empty one."""
+    return {a: (None if arms[a]["advertised"] is None else sorted(arms[a]["advertised"]))
+            for a in arms}
+
+
+def blind_broken(arms):
+    """Skills the baseline could reach that only the candidate was handed.
+
+    Subtracting the without-arm's own installs first is what keeps --rival legal: a
+    baseline deliberately given the incumbent is supposed to reach it, and that pair is
+    the head-to-head the ledger wants. What is not legal is a name the with-arm alone
+    was handed turning up in the baseline's inventory anyway, because the only way it
+    got there is a copy neither arm installed.
+    """
+    candidate = set(arms["with"]["skills"]) - set(arms["without"]["skills"])
+    offered = arms["without"]["advertised"]
+    if offered is None or not candidate:
+        return []
+    return sorted(candidate & offered)
+
+
 def skill_trees(workdir, meta=None):
     """Where the skill under test was installed in this arm, and what it is called.
 
@@ -375,6 +446,7 @@ def main():
             "skills": sorted(trees),
             "loaded": sorted(used & set(trees)),
             "loads_knowable": knowable,
+            "advertised": advertised_skills(meta),
             "transcript_bytes": transcript_bytes(meta),
             "run": run,
         }
@@ -399,6 +471,42 @@ def main():
             "skills_installed": {a: arms[a]["skills"] for a in arms},
             "skills_loaded": {a: arms[a]["loaded"] for a in arms},
             "loads_knowable": {a: arms[a]["loads_knowable"] for a in arms},
+            "skills_advertised": advertised_record(arms),
+            "run": {a: arms[a]["run"] for a in arms},
+        }
+        path = os.path.join(runs, "verdict.json")
+        json.dump(result, open(path, "w"), indent=1)
+        print(json.dumps({k: result[k] for k in
+                          ("brief", "winner_arm", "invalid_code", "invalid_reason")}, indent=1))
+        print(f"-> {path}")
+        return
+
+    # Also before the mapping and before the model call, and for the same two reasons:
+    # a baseline that could reach the candidate's skill is not a baseline, so there is
+    # nothing here a judge could read, and the rerun after the skill is uninstalled
+    # should draw its own slots rather than inherit this pair's. Ahead of every check
+    # below it because those all compare two arms and this one says the two arms are
+    # the same arm - skill_never_loaded in particular would fire on exactly this pair
+    # from the other side, blaming the with-arm for a silence that came from the
+    # baseline having the skill too.
+    leaked = blind_broken(arms)
+    if leaked:
+        result = {
+            "brief": brief["id"],
+            "winner_arm": "invalid",
+            "invalid": True,
+            "invalid_code": "baseline_had_the_skill",
+            "invalid_reason": (
+                f"the without-arm was offered {', '.join(leaked)} without being "
+                "handed it, so the baseline could reach the skill under test and "
+                "this pair measures nothing. Uninstall it from the host or image the "
+                "runner uses, then rerun the sample"),
+            "verify": {a: arms[a]["verify_exit"] for a in arms},
+            "tool_errors": {a: arms[a]["tool_errors"] for a in arms},
+            "skills_installed": {a: arms[a]["skills"] for a in arms},
+            "skills_loaded": {a: arms[a]["loaded"] for a in arms},
+            "loads_knowable": {a: arms[a]["loads_knowable"] for a in arms},
+            "skills_advertised": advertised_record(arms),
             "run": {a: arms[a]["run"] for a in arms},
         }
         path = os.path.join(runs, "verdict.json")
@@ -456,6 +564,7 @@ def main():
         "skills_installed": {a: arms[a]["skills"] for a in arms},
         "skills_loaded": {a: arms[a]["loaded"] for a in arms},
         "loads_knowable": {a: arms[a]["loads_knowable"] for a in arms},
+        "skills_advertised": advertised_record(arms),
         "run": {a: arms[a]["run"] for a in arms},
     }
     # An arm had a skill and its runner would have recorded the call, and there is no
