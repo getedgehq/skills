@@ -1,0 +1,10 @@
+- `http-error-triage`: evidence-led diagnosis of HTTP authentication, entitlement, proxy, client, WAF, and rate-limit failures.
+- `harness-first`: diagnose agent reliability, cost, tool, retry, trace, approval, and evaluation problems before changing models.
+- `people-search`: source and rank people with evidence for every result.
+- `product-launch-video`: produce evidence-led, editable product launch films from real product assets.
+- `linkedin-media-prep`: crop, resize, compress, and package images and video for LinkedIn.
+- `strip-image-ai-metadata`: remove AI-generation metadata from image files and verify the result.
+- `security-audit-checklist`: run a structured pre-release application security review.
+- `workplan`: maintain a durable plan, dependencies, decisions, verification, and handoff across multi-stage work.
+- `top-down-comms`: turn operational material into decision-led executive communication.
+- `cli-ux-review`: review command-line interfaces for naming, help, errors, safety, and consistency.

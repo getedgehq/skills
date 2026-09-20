@@ -1,0 +1,1 @@
+- `people-search` is installed and available.

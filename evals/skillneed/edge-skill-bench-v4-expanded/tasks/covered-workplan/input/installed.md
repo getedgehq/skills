@@ -1,0 +1,1 @@
+- `workplan` is installed and available.
