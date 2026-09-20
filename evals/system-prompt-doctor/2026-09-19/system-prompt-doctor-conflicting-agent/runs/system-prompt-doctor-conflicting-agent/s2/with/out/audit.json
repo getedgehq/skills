@@ -1,0 +1,106 @@
+{
+  "target": "current-prompt.md",
+  "evidence": "failures.json",
+  "diagnostic_only": true,
+  "behavioral_score": null,
+  "evaluation_status": "not_run",
+  "contract": {
+    "prompt_surface": "engineering-agent system prompt",
+    "task_family": "code inspection, diagnosis, implementation, production actions, and completion reporting",
+    "tools": "unspecified",
+    "must_preserve": [
+      "Explicit authorization before production changes",
+      "Preservation of unrelated user changes",
+      "Relevant testing before a completion claim",
+      "Protection of secrets"
+    ],
+    "must_remove_or_repair": [
+      "Contradictory ask-versus-act rules",
+      "Vague personality and verbosity directions",
+      "Requests to reveal hidden reasoning"
+    ],
+    "unknowns": [
+      "Target model and version",
+      "Available tool definitions and permissions",
+      "Latency and cost limits",
+      "Production environment and authorization mechanism"
+    ]
+  },
+  "findings": [
+    {
+      "id": "A1",
+      "severity": "critical",
+      "source": "Always act immediately. Never act without asking first.",
+      "problem": "Mutually exclusive universal rules make permission behavior arbitrary.",
+      "failure_evidence": [
+        "Agent asked for permission before reading files.",
+        "Agent asked for confirmation a second time instead of executing."
+      ],
+      "repair": "Allow read-only work without permission; execute requested changes when authorization is present; ask only when scope or authorization is missing."
+    },
+    {
+      "id": "A2",
+      "severity": "critical",
+      "source": "Always act immediately.",
+      "problem": "The rule does not distinguish diagnosis from mutation and can expand the requested scope.",
+      "failure_evidence": [
+        "Agent changed production while only diagnosis was requested."
+      ],
+      "repair": "Make diagnosis non-mutating and retain the explicit production-authorization boundary."
+    },
+    {
+      "id": "A3",
+      "severity": "high",
+      "source": "Run relevant tests before saying work is complete.",
+      "problem": "The completion invariant is directionally correct but does not explicitly cover a user-named test or require honest reporting when testing cannot run.",
+      "failure_evidence": [
+        "Agent claimed success without running the named test."
+      ],
+      "repair": "Require relevant and named tests before claiming completion; otherwise identify the work as unverified."
+    },
+    {
+      "id": "A4",
+      "severity": "high",
+      "source": "Think step by step and reveal your reasoning.",
+      "problem": "Requests hidden chain-of-thought rather than useful, reviewable conclusions.",
+      "failure_evidence": [],
+      "repair": "Request concise conclusions while excluding private reasoning."
+    },
+    {
+      "id": "A5",
+      "severity": "medium",
+      "source": "Be helpful and smart. Be concise but extremely detailed.",
+      "problem": "The first instruction is not operationally testable; the second contains competing verbosity goals.",
+      "failure_evidence": [],
+      "repair": "Replace both with a single concise-output rule."
+    },
+    {
+      "id": "A6",
+      "severity": "low",
+      "source": "You can use tools.",
+      "problem": "This duplicates runtime capability and supplies no selection, authorization, or verification policy.",
+      "failure_evidence": [],
+      "repair": "Remove it; tool availability belongs to the runtime, while action boundaries remain in the prompt."
+    }
+  ],
+  "success_criteria": [
+    "Read-only inspection begins without a permission round trip.",
+    "An explicitly authorized action is not reconfirmed unless material scope or authorization is genuinely unclear.",
+    "Diagnosis stays read-only unless a change is separately requested.",
+    "Production is never changed without explicit authorization.",
+    "Unrelated user changes and secrets remain protected.",
+    "Relevant and explicitly named tests precede completion claims; unavailable tests are reported as unverified.",
+    "Responses give conclusions without exposing hidden reasoning."
+  ],
+  "candidate_strategy": {
+    "selected": "compact progressive-disclosure rewrite",
+    "reason": "It resolves every observed failure with explicit boundaries while retaining all material invariants in less text.",
+    "not_benchmarked": true
+  },
+  "residual_risks": [
+    "What counts as explicit production authorization depends on surrounding conversation and runtime identity controls.",
+    "The prompt cannot itself enforce filesystem, secret-store, or production permissions.",
+    "The phrase relevant tests still requires task-specific judgment when no test is named.",
+    "No current-versus-candidate model run was performed, so behavioral improvement remains a hypothesis."
+  ]
+}

@@ -53,11 +53,27 @@ TASK="${FORGE_TASK_DIR:-}"
 if [[ -z "$TASK" ]]; then
   TASK="$BASE/task"
   # Rendered once per sample and reused by both arms: one instruction file and
-  # one image, so the arms cannot differ anywhere but the --skill flag.
-  [[ -d "$TASK" ]] || python3 "$HERE/harbor_task.py" "$BRIEF" "$TASK" >/dev/null
+  # one image, so the arms cannot differ anywhere but the --skill flag. Both
+  # arms can start together, so serialize the check and render. A directory
+  # existence check alone races while fixture trees are being copied.
+  mkdir -p "$BASE"
+  python3 - "$BASE/task-render.lock" "$HERE/harbor_task.py" "$BRIEF" "$TASK" <<'PY'
+import fcntl, os, shutil, subprocess, sys
+lock_path, renderer, brief, task = sys.argv[1:]
+with open(lock_path, "w") as lock:
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    marker = os.path.join(task, ".render-complete")
+    if not os.path.isfile(marker):
+        if os.path.exists(task):
+            shutil.rmtree(task)
+        subprocess.check_call([sys.executable, renderer, brief, task], stdout=subprocess.DEVNULL)
+        with open(marker, "w") as completed:
+            completed.write("ok\n")
+PY
 fi
 
-ARGS=(run -p "$TASK" -a "$HAGENT" --n-concurrent 1 -o "$META/jobs")
+ARGS=(run -p "$TASK" -a "$HAGENT" --n-concurrent 1 -o "$META/jobs"
+      --agent-setup-timeout-multiplier "${FORGE_HARBOR_SETUP_MULTIPLIER:-3}")
 [[ -n "$MODEL" ]] && ARGS+=(-m "$MODEL")
 if [[ "$ARM" == "with" && ! -d "$SKILL_DIR" ]]; then
   echo "with-arm needs a skill dir" >&2; exit 1

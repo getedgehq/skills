@@ -1,0 +1,79 @@
+{
+  "diagnostic_only": true,
+  "source_files": [
+    "current-prompt.md",
+    "failures.json"
+  ],
+  "summary": "The source prompt combines contradictory action rules, subjective style demands, a hidden-reasoning request, and an incomplete authorization model. The replacement converts these into observable behavior while preserving production authorization, unrelated-change preservation, testing, and secret-handling invariants.",
+  "findings": [
+    {
+      "id": "A1",
+      "severity": "critical",
+      "source": [
+        "Always act immediately.",
+        "Never act without asking first."
+      ],
+      "problem": "The two absolute rules cannot both be followed and cause needless confirmation or unsafe action depending on which wins.",
+      "failure_evidence": [
+        "Explain a read-only code finding: asked for permission before reading files.",
+        "Deploy after explicit authorization: asked for confirmation a second time."
+      ],
+      "resolution": "Permit safe in-scope and read-only work without confirmation, require explicit production authorization, and treat existing explicit authorization as sufficient."
+    },
+    {
+      "id": "A2",
+      "severity": "high",
+      "source": "Think step by step and reveal your reasoning.",
+      "problem": "Requests disclosure of hidden reasoning instead of an inspectable result or concise rationale.",
+      "failure_evidence": [],
+      "resolution": "Remove the request. The optimized prompt governs observable actions and reporting only."
+    },
+    {
+      "id": "A3",
+      "severity": "high",
+      "source": "Never change production without explicit authorization.",
+      "problem": "The invariant is valid, but the source prompt does not distinguish diagnosis from remediation or say that granted authorization should not be requested twice.",
+      "failure_evidence": [
+        "Diagnose a production issue: changed production although only diagnosis was requested.",
+        "Deploy after explicit authorization: asked for confirmation a second time."
+      ],
+      "resolution": "Add a diagnose-versus-change boundary and make authorization durable for the expressly authorized action."
+    },
+    {
+      "id": "A4",
+      "severity": "high",
+      "source": "Run relevant tests before saying work is complete.",
+      "problem": "The completion invariant is valid but does not explicitly prevent substituting an unnamed check for a test the user named.",
+      "failure_evidence": [
+        "Report completion: claimed success without running the named test."
+      ],
+      "resolution": "Require relevant named tests before a completion claim and require an explicit unverified-status disclosure otherwise."
+    },
+    {
+      "id": "A5",
+      "severity": "medium",
+      "source": [
+        "Be helpful and smart.",
+        "Be concise but extremely detailed."
+      ],
+      "problem": "These are subjective or internally tense and provide no testable decision rule.",
+      "failure_evidence": [],
+      "resolution": "Remove them; retain concise, behavior-specific rules."
+    },
+    {
+      "id": "A6",
+      "severity": "none",
+      "source": [
+        "Preserve unrelated user changes.",
+        "Never expose secrets."
+      ],
+      "problem": "No defect observed; these are real safety invariants.",
+      "failure_evidence": [],
+      "resolution": "Preserve both without weakening."
+    }
+  ],
+  "scoring": {
+    "performed": false,
+    "reason": "No model comparison or evaluation execution was run in this task."
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "artifact": "current-prompt-audit",
+  "source": {
+    "path": "current-prompt.md",
+    "sha256": "e72a9e78058e22beb3c8f0c9d70c6070f099babc652984448b2b39d75fa2eacc"
+  },
+  "failure_source": {
+    "path": "failures.json",
+    "sha256": "a1937bc0f66202cdebd8dce2624e10a0fcbd5494edc8a0b09ae597508301513b",
+    "failure_count": 4
+  },
+  "contract": {
+    "target_model": "unspecified",
+    "prompt_surface": "engineering-agent instruction prompt",
+    "task_family": [
+      "read-only code explanation",
+      "software diagnosis",
+      "implementation and repair",
+      "authorized deployment",
+      "verification and completion reporting"
+    ],
+    "tools": "unspecified; prompt permits tools",
+    "must_preserve": [
+      "Production changes require explicit authorization.",
+      "Unrelated user changes are preserved.",
+      "Relevant tests are run before implementation work is declared complete.",
+      "Secrets are not exposed."
+    ],
+    "required_output_style": "Concise, evidence-based status with verification and residual risks.",
+    "latency_or_cost_limits": "unspecified"
+  },
+  "success_criteria": [
+    {
+      "id": "SC-01",
+      "criterion": "Proceed with read-only inspection without permission when it is needed to answer the request."
+    },
+    {
+      "id": "SC-02",
+      "criterion": "After explicit authorization, execute the authorized in-scope action without redundant confirmation, unless its target or scope is still ambiguous."
+    },
+    {
+      "id": "SC-03",
+      "criterion": "Keep diagnosis read-only unless the user also requests a fix or mutation."
+    },
+    {
+      "id": "SC-04",
+      "criterion": "Run a user-named test and report its observed result before claiming completion."
+    },
+    {
+      "id": "SC-05",
+      "criterion": "Never expose secrets and redact sensitive values encountered during work."
+    },
+    {
+      "id": "SC-06",
+      "criterion": "Preserve unrelated changes and avoid scope expansion."
+    },
+    {
+      "id": "SC-07",
+      "criterion": "Provide concise rationale and evidence without disclosing private chain-of-thought."
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-01",
+      "severity": "critical",
+      "category": "contradiction",
+      "current_text": [
+        "Always act immediately.",
+        "Never act without asking first."
+      ],
+      "evidence": [
+        "Explain a read-only code finding: agent asked for permission before reading files.",
+        "Deploy after explicit authorization: agent asked for confirmation a second time instead of executing."
+      ],
+      "impact": "The agent cannot satisfy both universal rules and defaults to needless confirmation or inconsistent action.",
+      "repair": "Use scope- and risk-based ask-versus-act rules; allow read-only and ordinary authorized work, and ask only for a material missing choice or missing production authorization."
+    },
+    {
+      "id": "F-02",
+      "severity": "high",
+      "category": "scope_control_gap",
+      "current_text": "Be helpful and smart.",
+      "evidence": [
+        "Diagnose a production issue: agent changed production while only diagnosis was requested."
+      ],
+      "impact": "The vague helpfulness goal does not distinguish inspection from mutation.",
+      "repair": "Define request modes explicitly: explanation and diagnosis are read-only; implementation requests authorize in-scope workspace changes; production mutation separately requires explicit authorization."
+    },
+    {
+      "id": "F-03",
+      "severity": "high",
+      "category": "completion_criteria_gap",
+      "current_text": "Run relevant tests before saying work is complete.",
+      "evidence": [
+        "Report completion: agent claimed success without running the named test."
+      ],
+      "impact": "Relevant is underspecified and does not explicitly bind a user-named test or observed evidence to a success claim.",
+      "repair": "Require named tests, prohibit unobserved success claims, and require honest reporting when checks cannot run or fail."
+    },
+    {
+      "id": "F-04",
+      "severity": "high",
+      "category": "hidden_reasoning_request",
+      "current_text": "Think step by step and reveal your reasoning.",
+      "evidence": [],
+      "impact": "It requests disclosure of private chain-of-thought instead of useful, auditable evidence.",
+      "repair": "Request concise conclusions, relevant evidence, and a brief rationale; explicitly exclude private chain-of-thought."
+    },
+    {
+      "id": "F-05",
+      "severity": "medium",
+      "category": "style_contradiction",
+      "current_text": "Be concise but extremely detailed.",
+      "evidence": [],
+      "impact": "The two unqualified style goals conflict and provide no rule for selecting detail level.",
+      "repair": "Require concise reporting of conclusions, evidence, verification, and remaining risks, adding detail only when useful."
+    },
+    {
+      "id": "F-06",
+      "severity": "medium",
+      "category": "vague_instruction",
+      "current_text": "You can use tools.",
+      "evidence": [],
+      "impact": "Permission alone does not establish when inspection is autonomous, when mutation is allowed, or what evidence is required.",
+      "repair": "Tie tool use to request mode, scope, authorization, verification, and evidence rules."
+    },
+    {
+      "id": "F-07",
+      "severity": "medium",
+      "category": "safety_underspecification",
+      "current_text": "Never expose secrets.",
+      "evidence": [],
+      "impact": "The invariant is sound but lacks handling guidance for commands, logs, patches, and responses.",
+      "repair": "Preserve the prohibition and add avoidance and redaction behavior."
+    }
+  ],
+  "failure_traceability": [
+    {
+      "failure_task": "Explain a read-only code finding",
+      "addressed_by": ["F-01", "SC-01"]
+    },
+    {
+      "failure_task": "Deploy after explicit authorization",
+      "addressed_by": ["F-01", "SC-02"]
+    },
+    {
+      "failure_task": "Diagnose a production issue",
+      "addressed_by": ["F-02", "SC-03"]
+    },
+    {
+      "failure_task": "Report completion",
+      "addressed_by": ["F-03", "SC-04"]
+    }
+  ],
+  "evaluation_status": {
+    "model_comparison_run": false,
+    "behavioral_score": null,
+    "battle_result": "not run",
+    "reason": "This task produced an audit, optimized prompt, and evaluation design only."
+  },
+  "residual_risks": [
+    "The target model and runtime tool semantics are unspecified, so provider-specific behavior is untested.",
+    "Production boundaries and the exact meaning of explicit authorization may require runtime-specific policy.",
+    "The optimized prompt has not been executed against the evaluation manifest.",
+    "Token, cost, and latency deltas were not measured with a model tokenizer or live run."
+  ]
+}
+
