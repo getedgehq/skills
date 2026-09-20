@@ -14,6 +14,7 @@ SAMPLES="${3:-3}"
 (( SAMPLES <= 6 )) || { echo "refusing more than 6 samples" >&2; exit 2; }
 
 STATE="${FORGE_ROOT:-$HOME/skill-forge}"
+HOST_CODEX_AUTH_FILE="${FORGE_CODEX_AUTH_FILE:-$HOME/.codex/auth.json}"
 mkdir -p "$STATE/brain-scan"
 BASE_BRIEF="$STATE/brain-scan/base-brief.json"
 EXPLICIT="$STATE/brain-scan/explicit-brief.json"
@@ -61,6 +62,7 @@ run_isolated() {
       XDG_CONFIG_HOME="$isolated_home/.config" \
       XDG_DATA_HOME="$isolated_home/.local/share" \
       XDG_CACHE_HOME="$isolated_home/.cache" \
+      FORGE_CODEX_AUTH_FILE="$HOST_CODEX_AUTH_FILE" \
       FORGE_SAMPLE="$sample" \
       bash "$EVAL/run_eval.sh" "$brief" "$arm" "$skill_dir"
   )

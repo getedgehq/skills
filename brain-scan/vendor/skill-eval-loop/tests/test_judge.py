@@ -44,6 +44,24 @@ def arm_dir(tmp, runner=None, skill="li-post-fede", work=("post.md",)):
 
 
 class Blindness(unittest.TestCase):
+    def test_judge_reads_the_actual_artifact_contents(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = arm_dir(tmp, None, work=("out/reply.txt",))
+            evidence = judge.artifacts(d)
+            self.assertIn("FILE: out/reply.txt", evidence)
+            self.assertIn("the agent's output", evidence)
+
+    def test_artifact_contents_hide_injected_skills_and_hidden_state(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = arm_dir(tmp, "codex", work=("out/post.md",))
+            hidden = os.path.join(d, ".private")
+            os.makedirs(hidden)
+            open(os.path.join(hidden, "secret.txt"), "w").write("treatment marker")
+            evidence = judge.artifacts(d, hide=judge.skill_trees(d).values())
+            self.assertIn("the agent's output", evidence)
+            self.assertNotIn("more rules", evidence)
+            self.assertNotIn("treatment marker", evidence)
+
     def test_no_runner_leaks_the_skill_into_the_file_list(self):
         for runner in INSTALL:
             with tempfile.TemporaryDirectory() as tmp:

@@ -62,7 +62,9 @@ or on your own cloud box. To watch and drive it in a browser, use **skill-cockpi
 ## The blind is enforced, not assumed
 
 `judge.py` sees two anonymous slots, a random mapping kept on disk, each arm's final
-message and its file list. Three things keep the arm identity out of that prompt, and
+message and the readable contents of its produced artifacts (bounded to keep the
+prompt finite). Hidden runner state, injected Skill trees, and binary contents are
+excluded symmetrically. Three things keep the arm identity out of that prompt, and
 `tests/test_judge.py` pins all three on fixtures.
 
 **The skill is found, not skipped by path.** Every runner installs the candidate

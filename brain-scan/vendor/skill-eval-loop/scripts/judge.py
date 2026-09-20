@@ -4,7 +4,7 @@
 Usage: judge.py <brief.json> [--sample N] [--model M]
 
 1. Runs the brief's verify command in each arm's workdir (objective gate).
-2. Extracts each arm's final assistant message + file manifest.
+2. Extracts each arm's final assistant message + produced artifact contents.
 3. Shuffles arms into anonymous slots (mapping kept in mapping.private.json,
    never shown to the judge) and asks a judge model for a verdict.
 
@@ -42,10 +42,10 @@ VERIFY COMMAND RESULTS (exit 0 = task objectively completed):
 - Run A: verify exit {va}, tool errors during run: {ea}
 - Run B: verify exit {vb}, tool errors during run: {eb}
 
-RUN A - final message and produced files:
+RUN A - final message and produced artifacts:
 {fa}
 
-RUN B - final message and produced files:
+RUN B - final message and produced artifacts:
 {fb}
 
 Judge ONLY what you can see above. If verify failed for a run, weight that heavily.
@@ -409,6 +409,49 @@ def manifest(workdir, hide=()):
     return "\n".join(sorted(files)[:80]) or "(no files)"
 
 
+def artifacts(workdir, hide=(), per_file_limit=20000, total_limit=60000):
+    """Render produced files for the blind judge, without treatment metadata.
+
+    A filename-only manifest cannot judge a file-based deliverable. Include readable
+    file contents symmetrically for both anonymous arms, while excluding hidden
+    runner state (including injected Skills), binaries, and unbounded output.
+    """
+    blocks = []
+    used = 0
+    for root, dirs, names in os.walk(workdir):
+        if any(root == h or root.startswith(h + os.sep) for h in hide):
+            dirs[:] = []
+            continue
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        for name in sorted(names):
+            if name.startswith("."):
+                continue
+            path = os.path.join(root, name)
+            rel = os.path.relpath(path, workdir)
+            try:
+                with open(path, "rb") as fh:
+                    raw = fh.read(per_file_limit + 1)
+            except OSError:
+                continue
+            if b"\x00" in raw:
+                blocks.append(f"FILE: {rel} ({os.path.getsize(path)}b; binary omitted)")
+                continue
+            text = raw[:per_file_limit].decode("utf-8", errors="replace")
+            if len(raw) > per_file_limit:
+                text += "\n[truncated]"
+            block = f"FILE: {rel}\n{text}"
+            remaining = total_limit - used
+            if remaining <= 0:
+                blocks.append("[additional artifact contents omitted: total limit reached]")
+                return "\n\n".join(blocks)
+            if len(block) > remaining:
+                blocks.append(block[:remaining] + "\n[truncated: total limit reached]")
+                return "\n\n".join(blocks)
+            blocks.append(block)
+            used += len(block)
+    return "\n\n".join(blocks) or "(no produced artifacts)"
+
+
 def named_skills(text, names):
     """Skill names an arm said out loud in its final message.
 
@@ -490,6 +533,7 @@ def main():
             "tool_errors": tool_error_count(meta),
             "final": final[-3000:],
             "files": manifest(workdir, hide=trees.values()),
+            "artifacts": artifacts(workdir, hide=trees.values()),
             "skills": sorted(trees),
             "loaded": sorted(used & set(trees)),
             "loads_knowable": knowable,
@@ -587,8 +631,8 @@ def main():
         prompt=brief["prompt"], rubric=brief.get("rubric", "correctness; completeness; brief adherence"),
         va=arms[slots["A"]]["verify_exit"], vb=arms[slots["B"]]["verify_exit"],
         ea=arms[slots["A"]]["tool_errors"], eb=arms[slots["B"]]["tool_errors"],
-        fa=arms[slots["A"]]["final"] + "\n\nFILES:\n" + arms[slots["A"]]["files"],
-        fb=arms[slots["B"]]["final"] + "\n\nFILES:\n" + arms[slots["B"]]["files"],
+        fa=arms[slots["A"]]["final"] + "\n\nARTIFACTS:\n" + arms[slots["A"]]["artifacts"],
+        fb=arms[slots["B"]]["final"] + "\n\nARTIFACTS:\n" + arms[slots["B"]]["artifacts"],
     )
     import forge_llm
     text, engine = forge_llm.call_model(prompt, args.model)

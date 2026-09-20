@@ -99,7 +99,7 @@ accordingly.
 
 | Skill | Status | Record |
 | --- | --- | --- |
-| `brain-scan` | Release validation: 6 wins, 1 tie, 2 losses; +55.6pp objective completion observed | [`EVALS.md`](brain-scan/EVALS.md) |
+| `brain-scan` | Measured pilot: 8 wins, 0 ties, 1 loss; +33.3pp objective completion observed | [`EVALS.md`](brain-scan/EVALS.md) |
 | `agent-receipt` | Measured in Harbor, inconclusive | [`EVALS.md`](agent-receipt/EVALS.md) |
 | `decision-ledger` | Measured in Harbor, inconclusive | [`EVALS.md`](decision-ledger/EVALS.md) |
 | `agent-skills-gap` | Supported in its recorded direct A/B eval; outside `edge-skill-bench@1.0` | [`EVALS.md`](agent-skills-gap/EVALS.md) |
