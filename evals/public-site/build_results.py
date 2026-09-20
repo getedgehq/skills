@@ -26,7 +26,8 @@ def page(item: dict[str, object]) -> str:
         for row in item["stats"]
     )
     limits = "".join(f"<li>{esc(limit)}</li>" for limit in item["limitations"])
-    repo = f"https://github.com/getedgehq/skills/tree/main/{slug}"
+    repo = esc(item.get("repo_url") or f"https://github.com/getedgehq/skills/tree/main/{slug}")
+    get_label = esc(item.get("get_label", "Open the pinned skill"))
     canonical = f"https://getedge.cc/evaluation/{slug}/"
     return f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -42,7 +43,7 @@ def page(item: dict[str, object]) -> str:
 </style></head><body><div class="wrap"><nav><a class="brand" href="/">Edge <small>skills that prove their work</small></a><div class="links"><a href="/explore/">Explore</a><a href="/standards/">Standards</a><a href="{repo}">GitHub</a></div></nav>
 <main><p class="eyebrow">Evaluation receipt / {slug}</p><h1>{title}</h1><p class="lead">{description}</p><span class="status">{status_label}</span>
 <section class="stats">{stats}</section>
-<section class="grid"><div><p class="eyebrow">What this proves</p><h2>{esc(item["claim"])}</h2><div class="actions"><a class="btn primary" href="{repo}">Inspect package</a><a class="btn" href="/eval-data/{slug}/index.json">Machine record</a></div></div>
+<section class="grid"><div><p class="eyebrow">What this proves</p><h2>{esc(item["claim"])}</h2><div class="actions"><a class="btn primary" href="{repo}">{get_label}</a><a class="btn" href="/eval-data/{slug}/index.json">Machine record</a></div></div>
 <div class="copy"><div class="row"><span>Status</span><p>{status}. {esc(item["status_explanation"])}</p></div><div class="row"><span>Method</span><p>{method}</p></div><div class="row"><span>Model</span><p>{model}</p></div><div class="row"><span>Limitations</span><ul>{limits}</ul></div><div class="row"><span>Exact package</span><code>sha256:{package_hash}</code></div></div></section></main></div>
 <footer><div class="wrap">Evidence is published with its limits. A package page, a controlled result, and a universal claim are different things.</div></footer></body></html>'''
 
@@ -63,6 +64,19 @@ def build(manifest: Path, output: Path) -> None:
         data.write_text(json.dumps(item, indent=2) + "\n", encoding="utf-8")
         routes.extend((f"/evaluation/{slug}/", f"/skills/{slug}/", f"/eval-data/{slug}/index.json"))
     (output / "result-routes.txt").write_text("\n".join(routes) + "\n", encoding="utf-8")
+    sitemap = output / "sitemap.xml"
+    if sitemap.is_file():
+        body = sitemap.read_text(encoding="utf-8")
+        additions = []
+        for item in records:
+            slug = str(item["slug"])
+            for route in (f"skills/{slug}/", f"evaluation/{slug}/"):
+                url = f"https://getedge.cc/{route}"
+                if url not in body:
+                    additions.append(f"  <url><loc>{url}</loc></url>")
+        if additions:
+            body = body.replace("</urlset>", "\n".join(additions) + "\n</urlset>")
+            sitemap.write_text(body, encoding="utf-8")
 
 
 def main() -> int:

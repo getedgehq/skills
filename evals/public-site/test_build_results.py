@@ -31,12 +31,37 @@ class BuildResultsTests(unittest.TestCase):
             root = Path(raw)
             manifest = root / "manifest.json"
             manifest.write_text(json.dumps([item]))
-            MODULE.build(manifest, root / "site")
-            result = (root / "site/evaluation/example/index.html").read_text()
+            site = root / "site"
+            site.mkdir()
+            (site / "sitemap.xml").write_text("<urlset>\n</urlset>\n")
+            MODULE.build(manifest, site)
+            result = (site / "evaluation/example/index.html").read_text()
             self.assertIn("Example &lt; skill", result)
-            self.assertTrue((root / "site/skills/example/index.html").is_file())
-            self.assertEqual(json.loads((root / "site/eval-data/example/index.json").read_text())["status"], "supported")
-            self.assertIn("/evaluation/example/", (root / "site/result-routes.txt").read_text())
+            self.assertTrue((site / "skills/example/index.html").is_file())
+            self.assertEqual(json.loads((site / "eval-data/example/index.json").read_text())["status"], "supported")
+            self.assertIn("/evaluation/example/", (site / "result-routes.txt").read_text())
+            sitemap = (site / "sitemap.xml").read_text()
+            self.assertIn("https://getedge.cc/skills/example/", sitemap)
+            self.assertIn("https://getedge.cc/evaluation/example/", sitemap)
+
+    def test_escapes_repository_url_attributes(self):
+        item = {
+            "slug": "example",
+            "title": "Example",
+            "description": "A result.",
+            "status": "inconclusive",
+            "status_label": "Inconclusive",
+            "status_explanation": "Three valid pairs.",
+            "claim": "Observed one narrow behavior.",
+            "method": "Blind paired test.",
+            "package_hash": "abc",
+            "repo_url": 'https://example.com/\" onmouseover=\"alert(1)',
+            "stats": [{"label": "Valid pairs", "value": 3}],
+            "limitations": ["One task"],
+        }
+        result = MODULE.page(item)
+        self.assertNotIn('href="https://example.com/" onmouseover=', result)
+        self.assertIn("&quot; onmouseover=&quot;", result)
 
 
 if __name__ == "__main__":
