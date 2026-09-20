@@ -86,9 +86,39 @@ case "$AGENT" in
   codex)
     MODEL="${FORGE_MODEL:-}"
     M=(); [[ -n "$MODEL" ]] && M=(-m "$MODEL")
-    "${TO[@]}" nice -n 10 codex exec --skip-git-repo-check --sandbox workspace-write "${M[@]}" \
-      --json -o "$META/final.txt" "$PROMPT" < /dev/null > "$META/transcript.jsonl" 2> "$META/stderr.log"
-    code=$?;;
+    if [[ "${FORGE_SUBJECT_ISOLATION:-}" == "systemd" ]]; then
+      command -v systemd-run >/dev/null || { echo "systemd-run is required" >&2; exit 1; }
+      sudo -n true || { echo "passwordless sudo is required for systemd isolation" >&2; exit 1; }
+      [[ -f "${FORGE_CODEX_AUTH_FILE:-$HOME/.codex/auth.json}" ]] || { echo "Codex auth file not found" >&2; exit 1; }
+      owner="$(id -u):$(id -g)"
+      mkdir -p "$DIR/.subject-home/.codex" "$DIR/.subject-home/tmp"
+      # Process-scoped credential copy. It lives only inside the isolated arm,
+      # is never printed, and is removed before the runner returns.
+      cp "${FORGE_CODEX_AUTH_FILE:-$HOME/.codex/auth.json}" "$DIR/.subject-home/.codex/auth.json"
+      chmod 600 "$DIR/.subject-home/.codex/auth.json"
+      sudo -n chown -R nobody:nogroup "$DIR"
+      sudo -n systemd-run --quiet --wait --pipe --collect --uid=nobody \
+        -p ProtectHome=yes -p NoNewPrivileges=yes \
+        -p 'InaccessiblePaths=/tmp /var/tmp /run/user' \
+        -p "BindPaths=$DIR:/workspace" -p WorkingDirectory=/workspace \
+        /usr/bin/env HOME=/workspace/.subject-home \
+          XDG_CONFIG_HOME=/workspace/.subject-home/.config \
+          XDG_DATA_HOME=/workspace/.subject-home/.local/share \
+          XDG_CACHE_HOME=/workspace/.subject-home/.cache \
+          TMPDIR=/workspace/.subject-home/tmp \
+          "${TO[@]}" nice -n 10 /usr/bin/codex exec \
+          --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check "${M[@]}" \
+          --json -o /workspace/.subject-home/final.txt "$PROMPT" \
+          < /dev/null > "$META/transcript.jsonl" 2> "$META/stderr.log"
+      code=$?
+      sudo -n cp "$DIR/.subject-home/final.txt" "$META/final.txt" 2>/dev/null || true
+      sudo -n chown -R "$owner" "$DIR" "$META"
+      rm -rf -- "$DIR/.subject-home"
+    else
+      "${TO[@]}" nice -n 10 codex exec --skip-git-repo-check --sandbox workspace-write "${M[@]}" \
+        --json -o "$META/final.txt" "$PROMPT" < /dev/null > "$META/transcript.jsonl" 2> "$META/stderr.log"
+      code=$?
+    fi;;
   opencode)
     MODEL="${FORGE_MODEL:-}"
     M=(); [[ -n "$MODEL" ]] && M=(-m "$MODEL")
