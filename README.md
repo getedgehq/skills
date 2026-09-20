@@ -78,8 +78,8 @@ Five skills currently publish controlled comparisons against the same agent with
 | `workplan` | Supported in the recorded benchmark | [`EVALS.md`](workplan/EVALS.md) |
 | `autonomous-research` | Measured, inconclusive | [`EVALS.md`](autonomous-research/EVALS.md) |
 | `harness-first` | Measured, inconclusive | [`EVALS.md`](harness-first/EVALS.md) |
-| `strip-image-ai-metadata` | Measured, inconclusive | [`EVALS.md`](strip-image-ai-metadata/EVALS.md) |
-| `top-down-comms` | Measured, inconclusive | [`EVALS.md`](top-down-comms/EVALS.md) |
+| `strip-image-ai-metadata` | Supported in the recorded benchmark | [`EVALS.md`](strip-image-ai-metadata/EVALS.md) |
+| `top-down-comms` | Supported in the recorded benchmark | [`EVALS.md`](top-down-comms/EVALS.md) |
 
 “Published,” “featured,” and “benchmarked” are different states. A benchmark result is supported only when its stated confidence interval excludes zero. An inconclusive result is not presented as a win.
 
