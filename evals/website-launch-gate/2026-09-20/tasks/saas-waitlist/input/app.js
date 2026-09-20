@@ -1,0 +1,1 @@
+const PUBLISHABLE_KEY='sk_live_TEST_ONLY_SHOULD_NOT_SHIP';document.querySelector('form').addEventListener('submit',e=>{e.preventDefault();fetch('/api/waitlist',{method:'POST',body:JSON.stringify({email:email.value,key:PUBLISHABLE_KEY})});status.textContent='Thanks';});

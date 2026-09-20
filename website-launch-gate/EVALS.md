@@ -59,6 +59,10 @@ failed calibration.
 - Claude was unavailable because its subscription weekly limit was reached.
 - Infrastructure-error attempts were rerun; no unfavorable completed attempt was discarded.
 
-The machine-readable aggregate is in [`eval-results/summary.json`](eval-results/summary.json).
+The task definitions and checkers, 24 baseline/Skill run records and agent transcripts, 12
+irrelevant-control run records, and all 24 blind presentation-order verdicts are published in
+[`evals/website-launch-gate/2026-09-20/`](../evals/website-launch-gate/2026-09-20/). The
+machine-readable aggregate is in [`eval-results/summary.json`](eval-results/summary.json). If an
+aggregate disagrees with a raw artifact, the raw artifact is authoritative.
 
 Source checklist credit: [Suraj Sharma, “20 tasks for Claude before website launch”](https://x.com/suraj_sharma14/status/2101154043720876226).

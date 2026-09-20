@@ -1,0 +1,1 @@
+checkout.addEventListener('submit',async e=>{e.preventDefault();if(!checkout.reportValidity())return;const r=await fetch('https://api.workshop.example/pay',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(Object.fromEntries(new FormData(checkout)))});if(!r.ok)alert('Payment could not be completed.');});
