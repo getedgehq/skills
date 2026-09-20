@@ -1,0 +1,1 @@
+checkout.onsubmit=e=>{e.preventDefault();if(!email.value.includes('@'))return alert('bad email');fetch('http://api.workshop.example/pay',{method:'POST',body:JSON.stringify({email:email.value,card:card.value})})}

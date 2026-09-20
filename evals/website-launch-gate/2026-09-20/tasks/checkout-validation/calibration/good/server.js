@@ -1,0 +1,1 @@
+const rateLimit=require('express-rate-limit');app.use('/api/checkout',rateLimit({windowMs:60000,max:10}));app.post('/api/checkout',(req,res)=>{const {email,card,terms,website}=req.body;if(website)return res.status(400).end();if(!email||!/^\S+@\S+\.\S+$/.test(email)||!card||terms!=='on')return res.status(422).json({error:'invalid checkout'});res.status(202).json({ok:true});});
