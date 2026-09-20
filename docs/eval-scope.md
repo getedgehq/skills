@@ -85,7 +85,7 @@ otherwise assume otherwise:
 | Skill | What it is |
 | --- | --- |
 | `agent-skills-gap` | Session-profile product with a separate direct A/B evaluation, outside this frozen benchmark |
-| `agent-evals` | Authoring and running agent evaluations |
+| `skill-evals` | Authoring and running agent evaluations |
 | `agent-infra-fixer` | Fixing guard hooks that block legitimate agent work |
 | `skill-cockpit` | The local browser page over mined themes, runs and the adoption ledger |
 | `skill-eval-loop` | Turning a theme into an eval brief and running the with-and-without comparison |
@@ -94,7 +94,7 @@ otherwise assume otherwise:
 `agent-skills-gap` publishes its own direct Codex A/B record and is explicitly not an
 `edge-skill-bench@1.0` result. **The other five are machinery that runs the evaluation, so
 measuring them with themselves is circular.** A number produced for `skill-eval-loop` by an evaluation loop, or
-for `agent-evals` by an eval harness, is the instrument reporting on itself. It would be graded by
+for `skill-evals` by an eval harness, is the instrument reporting on itself. It would be graded by
 criteria the Skill under test supplies the vocabulary for, and a reader could not tell an effect
 from an echo. There is no blinding that fixes that, so no number is published for them rather than
 a number published with a caveat.
@@ -175,7 +175,7 @@ from the other side.
 ## A counting discrepancy in the root `README.md`
 
 The root `README.md` describes "four" loop Skills and "the other fourteen Skills", which sums to
-18. The repository holds 20 canonical Skills. The loop list of four omits `agent-evals`, and the
+18. The repository holds 20 canonical Skills. The loop list of four omits `skill-evals`, and the
 remainder is 16 rather than 14.
 
 Noted here rather than fixed, because `README.md` is out of this document's scope. The counts that
