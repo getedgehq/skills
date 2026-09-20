@@ -5,7 +5,7 @@ fixtures. Both arms used the same GPT-5.6 Sol agent, task, filesystem, and execu
 only intended difference was whether this Skill was installed. Each baseline-versus-Skill pair was
 also judged blind by GPT-6 Astra in both presentation orders.
 
-**Across 24 attempts, the executable score rose from 50.9% to 63.2%: a +12.3 point lift. All six
+**Across 24 attempts, the corrected executable score rose from 53.7% to 66.0%: a +12.3 point lift. All six
 task effects were nonnegative. The blind judge recorded 8 Skill wins, 2 ties, and 2 losses across
 12 matched pairs.**
 
@@ -15,7 +15,7 @@ Run date: 2026-09-20. This is a six-task pilot and has not been independently re
 
 | Measure | With the Skill | Without it | Difference |
 | --- | ---: | ---: | ---: |
-| Executable checker | **63.2%** | 50.9% | **+12.3 points** |
+| Corrected executable checker | **66.0%** | 53.7% | **+12.3 points** |
 | Blind judge score | **70.8** | 57.8 | **+13.0 points** |
 | Blind win / tie / loss | **8 / 2 / 2** | — | — |
 
@@ -26,20 +26,28 @@ The task-level calibrated 95% interval was +0.4 to +24.2 points for the executab
 
 | Task | Baseline | Website Skill | Skill minus baseline |
 | --- | ---: | ---: | ---: |
-| Checkout validation | 27.8% | **50.0%** | **+22.2** |
+| Checkout validation | 33.3% | **55.6%** | **+22.2** |
 | Developer docs and links | 62.5% | 62.5% | 0.0 |
 | Local service and mobile | 61.1% | 61.1% | 0.0 |
 | Newsletter consent | 37.5% | **50.0%** | **+12.5** |
 | Product launch discovery | 50.0% | **77.8%** | **+27.8** |
-| SaaS waitlist | 66.7% | **77.8%** | **+11.1** |
+| SaaS waitlist | 77.8% | **88.9%** | **+11.1** |
 
 ## Relevance control
 
 We also ran 12 attempts with a same-length but irrelevant Python release Skill installed. Website
-Launch Gate scored 63.2% versus 51.9% for that control, an +11.3 point difference, with no negative
-task effects. The six-task 95% interval crossed zero (-2.0 to +24.7), so this is directional
-evidence rather than a settled estimate. The irrelevant Skill was installed but never read; this
+Launch Gate scored 66.0% versus 51.9% for that control, a +14.1 point difference, with no negative
+task effects (six-task 95% interval: +1.5 to +26.7). The irrelevant Skill was installed but never read; this
 control tests relevance-aware Skill selection, not forced exposure to irrelevant instructions.
+
+## Checker correction
+
+The original whole-project scans also read `output/launch-report.md`, so honest remediation notes
+that quoted a removed insecure URL or secret prefix were counted as live defects. We corrected the
+two affected checkers to exclude `output/`, recomputed all 36 attempts from the frozen completed
+sites, and did not rerun an agent or change an output. Both baseline and Skill means rose by the
+same amount, leaving the +12.3 point primary effect unchanged. The correction record and script are
+published with the raw artifacts.
 
 ## What the checker required
 

@@ -12,7 +12,10 @@ This directory contains the public evidence behind the Website Launch Gate pilot
 - `control/`: two attempts per task with a same-length irrelevant Python release Skill installed.
 - `judgments/`: GPT-6 Astra's blind verdict for every baseline-versus-Skill pair in both
   presentation orders.
-- `summary.json`: the harness aggregate from the baseline-versus-Skill run.
+- `summary.json`: the original harness aggregate from the baseline-versus-Skill run.
+- `summary.corrected.json`: the recomputed aggregate after the documented checker correction.
+- `recompute_corrected.py`: reproduces every corrected attempt verdict and aggregate from the
+  frozen completed sites.
 
 The compact published aggregate and limitations are in
 [`website-launch-gate/eval-results/summary.json`](../../../website-launch-gate/eval-results/summary.json).
@@ -30,5 +33,13 @@ runner with a same-length but irrelevant Skill installed.
 
 Infrastructure-error attempts were rerun. Completed attempts were never discarded because of an
 unfavorable score. The public projection omits Docker caches and duplicate Harbor bookkeeping but
-retains the task/checker, run result, agent transcript, launch report, and judge verdict needed to
-audit the published claims.
+retains the frozen completed sites, run records, transcripts, launch reports, render screenshots,
+and judge verdicts needed to reproduce and audit the published claims.
+
+## Checker correction
+
+The original checkout and SaaS checkers scanned `output/launch-report.md` alongside production
+files. This incorrectly treated documentation of a removed insecure URL or secret prefix as a live
+defect. The corrected checkers exclude `output/`; `recompute_corrected.py` applies them to the frozen
+completed sites. No agent was rerun and no completed site was changed. The primary Skill-minus-
+baseline lift remains +12.3 points; the arm means and relevance-control estimate changed.

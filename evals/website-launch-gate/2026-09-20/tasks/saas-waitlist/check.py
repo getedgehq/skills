@@ -8,7 +8,13 @@ def read(rel):
     p = ROOT / rel
     return p.read_text(errors="ignore") if p.exists() and p.is_file() else ""
 
-all_text = "\n".join(p.read_text(errors="ignore") for p in ROOT.rglob("*") if p.is_file() and p.stat().st_size < 2_000_000)
+all_text = "\n".join(
+    p.read_text(errors="ignore")
+    for p in ROOT.rglob("*")
+    if p.is_file()
+    and p.stat().st_size < 2_000_000
+    and "output" not in p.relative_to(ROOT).parts
+)
 details = []
 passed = 0
 for name, kind, rel, arg in CHECKS:
