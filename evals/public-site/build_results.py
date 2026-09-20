@@ -64,6 +64,19 @@ def build(manifest: Path, output: Path) -> None:
         data.write_text(json.dumps(item, indent=2) + "\n", encoding="utf-8")
         routes.extend((f"/evaluation/{slug}/", f"/skills/{slug}/", f"/eval-data/{slug}/index.json"))
     (output / "result-routes.txt").write_text("\n".join(routes) + "\n", encoding="utf-8")
+    sitemap = output / "sitemap.xml"
+    if sitemap.is_file():
+        body = sitemap.read_text(encoding="utf-8")
+        additions = []
+        for item in records:
+            slug = str(item["slug"])
+            for route in (f"skills/{slug}/", f"evaluation/{slug}/"):
+                url = f"https://getedge.cc/{route}"
+                if url not in body:
+                    additions.append(f"  <url><loc>{url}</loc></url>")
+        if additions:
+            body = body.replace("</urlset>", "\n".join(additions) + "\n</urlset>")
+            sitemap.write_text(body, encoding="utf-8")
 
 
 def main() -> int:
