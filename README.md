@@ -25,6 +25,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 | Keep long work alive across context loss | [`workplan`](workplan/) |
 | Diagnose an unreliable or expensive agent | [`harness-first`](harness-first/) |
 | Find recurring failures in agent sessions | [`skill-miner`](skill-miner/) |
+| Discover what your agent is good and bad at | [`agent-skills-gap`](agent-skills-gap/) |
 | Test whether a skill actually helps | [`skill-eval-loop`](skill-eval-loop/) |
 | Fix hooks and agent infrastructure | [`agent-infra-fixer`](agent-infra-fixer/) |
 | Inspect the improvement loop locally | [`skill-cockpit`](skill-cockpit/) |
@@ -33,6 +34,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 
 ### Agent development
 
+- [`agent-skills-gap`](agent-skills-gap/) analyzes supplied Claude or Codex sessions and creates an evidence-backed skills profile plus share card.
 - [`agent-evals`](agent-evals/) builds repeatable agent evaluations and verifiers.
 - [`agent-infra-fixer`](agent-infra-fixer/) diagnoses and repairs broken agent guardrails.
 - [`harness-first`](harness-first/) audits the harness before recommending a model change.
@@ -71,10 +73,13 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 
 ## Evidence status
 
-Five skills currently publish controlled comparisons against the same agent without the skill:
+Six skills currently publish controlled comparisons against the same agent without the skill. Five
+use the frozen `edge-skill-bench@1.0` environment; `agent-skills-gap` publishes a separate direct
+Codex A/B evaluation and is labelled accordingly.
 
 | Skill | Status | Record |
 | --- | --- | --- |
+| `agent-skills-gap` | Supported in its recorded direct A/B eval; outside `edge-skill-bench@1.0` | [`EVALS.md`](agent-skills-gap/EVALS.md) |
 | `workplan` | Supported in the recorded benchmark | [`EVALS.md`](workplan/EVALS.md) |
 | `autonomous-research` | Measured, inconclusive | [`EVALS.md`](autonomous-research/EVALS.md) |
 | `harness-first` | Measured, inconclusive | [`EVALS.md`](harness-first/EVALS.md) |
