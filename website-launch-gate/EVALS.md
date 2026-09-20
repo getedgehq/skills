@@ -19,8 +19,8 @@ Run date: 2026-09-20. This is a six-task pilot and has not been independently re
 | Blind judge score | **70.8** | 57.8 | **+13.0 points** |
 | Blind win / tie / loss | **8 / 2 / 2** | — | — |
 
-The task-clustered calibrated 95% interval was +0.4 to +24.2 points for the executable checker and
-+6.5 to +21.5 points for the blind judge score.
+The task-level calibrated 95% interval was +0.4 to +24.2 points for the executable checker and
++4.2 to +21.8 points for the blind judge score.
 
 ## The six tasks
 
