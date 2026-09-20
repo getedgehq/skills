@@ -1,0 +1,3 @@
+- `http-error-triage`: separate credential, entitlement, endpoint, client, CDN, WAF, proxy, and rate-limit causes using evidence.
+- `security-audit-checklist`: structured application security audit.
+- `workplan`: durable multi-step execution plan.

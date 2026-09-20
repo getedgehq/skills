@@ -1,0 +1,3 @@
+- `top-down-comms`: concise outcome-first communication.
+- `autonomous-research`: source-grounded long-form research.
+- `documents`: create and edit Word documents.
