@@ -24,6 +24,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 | --- | --- |
 | Keep long work alive across context loss | [`workplan`](workplan/) |
 | Diagnose an unreliable or expensive agent | [`harness-first`](harness-first/) |
+| Decide whether another skill would help | [`skillneed`](skillneed/) |
 | Find recurring failures in agent sessions | [`skill-miner`](skill-miner/) |
 | Discover what your agent is good and bad at | [`agent-skills-gap`](agent-skills-gap/) |
 | Test whether a skill actually helps | [`skill-eval-loop`](skill-eval-loop/) |
@@ -41,6 +42,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`skill-cockpit`](skill-cockpit/) provides a local view of mined failures and evaluation runs.
 - [`skill-eval-loop`](skill-eval-loop/) runs controlled with-skill and without-skill comparisons.
 - [`skill-miner`](skill-miner/) finds recurring failures in Claude Code, Codex, and OpenCode sessions.
+- [`skillneed`](skillneed/) decides whether a task needs specialist procedure and recommends at most one exact package.
 - [`workplan`](workplan/) keeps multi-step work durable across context loss.
 
 ### Research and communication
@@ -73,7 +75,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 
 ## Evidence status
 
-Six skills currently publish controlled comparisons against the same agent without the skill. Five
+Seven skills currently publish controlled comparisons against the same agent without the skill. Six
 use the frozen `edge-skill-bench@1.0` environment; `agent-skills-gap` publishes a separate direct
 Codex A/B evaluation and is labelled accordingly.
 
@@ -83,6 +85,7 @@ Codex A/B evaluation and is labelled accordingly.
 | `workplan` | Supported in the recorded benchmark | [`EVALS.md`](workplan/EVALS.md) |
 | `autonomous-research` | Measured, inconclusive | [`EVALS.md`](autonomous-research/EVALS.md) |
 | `harness-first` | Measured, inconclusive | [`EVALS.md`](harness-first/EVALS.md) |
+| `skillneed` | Measured, inconclusive | [`EVALS.md`](skillneed/EVALS.md) |
 | `strip-image-ai-metadata` | Supported in the recorded benchmark | [`EVALS.md`](strip-image-ai-metadata/EVALS.md) |
 | `top-down-comms` | Supported in the recorded benchmark | [`EVALS.md`](top-down-comms/EVALS.md) |
 

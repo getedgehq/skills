@@ -1,0 +1,1 @@
+- `linkedin-media-prep`: prepare images and videos for LinkedIn dimensions, formats, framing, and file limits.

@@ -8,17 +8,18 @@ mean what a reader would take it to mean.
 
 ## The arithmetic
 
-The repository root holds **24 directories**. Of those, **23 contain a `SKILL.md`** and are
-Skills; **1 does not** and is data.
+Ignoring the support directories `.github/` and `docs/`, the repository root holds
+**29 product directories**. Of those, **28 contain a `SKILL.md`** and are Skills;
+**1 does not** and is data.
 
 ```
-24 directories
+29 product directories
   1  evals/                  raw eval material, not a Skill
- 23  Skills
+ 28  Skills
       3  alias shells        ship the canonical Skill's bytes, not separately measurable
-     20  canonical Skills
-          5  meta-tooling    the machinery that runs the evaluation, out of scope
-         15  measurable      in scope for edge-skill-bench@1.0
+     25  canonical Skills
+          6  meta-tooling    benchmark machinery or separately evaluated, out of scope
+         19  measurable      in scope for edge-skill-bench@1.0
 ```
 
 Verify it in the clone:
@@ -30,9 +31,9 @@ grep -l "alias_of" */SKILL.md
 
 ---
 
-## In scope: 15 measurable Skills
+## In scope: 19 measurable Skills
 
-These are the 15 the research report is built around. Each does work with a deliverable a
+These are the 19 the research report is built around. Each does work with a deliverable a
 deterministic checker can inspect or execute, and each can be given a task a competent agent
 without it might get wrong.
 
@@ -41,21 +42,25 @@ without it might get wrong.
 | `autonomous-research` | Measured, unresolved. Ships [`EVALS.md`](../autonomous-research/EVALS.md) |
 | `cli-ux-review` | Result withdrawn, task rebuilt, re-running |
 | `cv-job-match` | Tasks authored and calibrated, first run in flight |
+| `domain-uptime-monitor` | Not measured yet |
 | `generate-image` | Tasks authored and calibrated, first run in flight |
 | `harness-first` | Measured, unresolved. Ships [`EVALS.md`](../harness-first/EVALS.md) |
 | `http-error-triage` | Result withdrawn, task rebuilt, re-running |
+| `job-board-scout` | Not measured yet |
 | `linkedin-media-prep` | Result withdrawn, task rebuilt, re-running |
 | `pay-per-call-apis` | Tasks authored and calibrated, first run in flight |
 | `people-search` | Result withdrawn, task rebuilt, re-running |
 | `product-launch-video` | Tasks authored and calibrated, first run in flight |
+| `reply-debt` | Not measured yet |
 | `security-audit-checklist` | Result withdrawn, task rebuilt, re-running |
 | `shadcn-first` | Result withdrawn, task rebuilt, re-running |
+| `skillneed` | Measured, unresolved. Ships [`EVALS.md`](../skillneed/EVALS.md) |
 | `strip-image-ai-metadata` | Measured, resolved. Ships [`EVALS.md`](../strip-image-ai-metadata/EVALS.md) |
 | `top-down-comms` | Measured, resolved in `loaded`, unresolved in `skill`. Ships [`EVALS.md`](../top-down-comms/EVALS.md) |
 | `workplan` | Measured, resolved. Ships [`EVALS.md`](../workplan/EVALS.md) |
 
-Statuses are as of the 2026-09-17 report draft. Five of the 15 have published sessions, grader
-verdicts and task definitions under [`evals/`](../evals/). For the other ten, no comparative
+Statuses are updated through 2026-09-19. Six of the 19 have published sessions, grader
+verdicts and task definitions under [`evals/`](../evals/). For the other thirteen, no comparative
 evaluation has landed and no quality claim is made. "Not measured yet" is the published state, not
 an implied zero.
 
@@ -75,24 +80,26 @@ otherwise assume otherwise:
 
 ---
 
-## Out of scope: 5 meta-tooling Skills
+## Out of scope: 6 meta-tooling Skills
 
 | Skill | What it is |
 | --- | --- |
+| `agent-skills-gap` | Session-profile product with a separate direct A/B evaluation, outside this frozen benchmark |
 | `agent-evals` | Authoring and running agent evaluations |
 | `agent-infra-fixer` | Fixing guard hooks that block legitimate agent work |
 | `skill-cockpit` | The local browser page over mined themes, runs and the adoption ledger |
 | `skill-eval-loop` | Turning a theme into an eval brief and running the with-and-without comparison |
 | `skill-miner` | Reading session logs for corrections, frustration and tool errors, and drafting a Skill |
 
-**The reason, plainly: these five are the machinery that runs the evaluation, so measuring them
-with themselves is circular.** A number produced for `skill-eval-loop` by an evaluation loop, or
+`agent-skills-gap` publishes its own direct Codex A/B record and is explicitly not an
+`edge-skill-bench@1.0` result. **The other five are machinery that runs the evaluation, so
+measuring them with themselves is circular.** A number produced for `skill-eval-loop` by an evaluation loop, or
 for `agent-evals` by an eval harness, is the instrument reporting on itself. It would be graded by
 criteria the Skill under test supplies the vocabulary for, and a reader could not tell an effect
 from an echo. There is no blinding that fixes that, so no number is published for them rather than
 a number published with a caveat.
 
-This exclusion is about the benchmark, not about evidence in general. These five can still be
+This exclusion is about the benchmark, not about evidence in general. These packages can still be
 judged the ordinary way, by whether the loop they run finds real defects and whether its adoption
 decisions hold up. That is a different claim from a measured point delta and it is not made here.
 
@@ -115,7 +122,7 @@ in the `name:` field and the added `metadata: {internal: true, alias_of: ...}` b
 `git ls-files -s monid opendraft rocketlist`: mode `120000` is a symlink, `100644` a real file.
 
 Counting a rename as its own Skill would measure the same bytes twice and inflate the coverage
-figure. The 18 packages the platform lists are 15 distinct measurable Skills plus these 3 renames.
+figure. The 22 packages the platform lists are 19 distinct measurable Skills plus these 3 renames.
 
 **One caution about `opendraft`, because the published package and the repository folder are not
 the same thing.** In this repository `opendraft/SKILL.md` is byte-identical to
@@ -137,8 +144,9 @@ and the result is `autonomous-research`'s.
 run, the session logs turn by turn, every file the agents wrote, every grader verdict with its
 reasoning, the task definitions, and the per-run summaries.
 
-It currently holds directories for the five Skills with published evaluations:
-`autonomous-research`, `harness-first`, `strip-image-ai-metadata`, `top-down-comms`, `workplan`.
+It currently holds directories for the six Skills with published evaluations:
+`autonomous-research`, `harness-first`, `skillneed`, `strip-image-ai-metadata`,
+`top-down-comms`, `workplan`.
 
 If a summary anywhere disagrees with an artifact in `evals/`, the artifact is right.
 
@@ -172,4 +180,4 @@ remainder is 16 rather than 14.
 
 Noted here rather than fixed, because `README.md` is out of this document's scope. The counts that
 `edge-skill-bench@1.0` uses are the ones verified against the filesystem at the top of this page:
-24 directories, 23 Skills, 20 canonical, 15 measurable.
+29 product directories, 28 Skills, 25 canonical, 19 measurable.
