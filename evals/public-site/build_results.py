@@ -26,7 +26,7 @@ def page(item: dict[str, object]) -> str:
         for row in item["stats"]
     )
     limits = "".join(f"<li>{esc(limit)}</li>" for limit in item["limitations"])
-    repo = str(item.get("repo_url") or f"https://github.com/getedgehq/skills/tree/main/{slug}")
+    repo = esc(item.get("repo_url") or f"https://github.com/getedgehq/skills/tree/main/{slug}")
     get_label = esc(item.get("get_label", "Open the pinned skill"))
     canonical = f"https://getedge.cc/evaluation/{slug}/"
     return f'''<!doctype html>

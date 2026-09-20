@@ -44,6 +44,25 @@ class BuildResultsTests(unittest.TestCase):
             self.assertIn("https://getedge.cc/skills/example/", sitemap)
             self.assertIn("https://getedge.cc/evaluation/example/", sitemap)
 
+    def test_escapes_repository_url_attributes(self):
+        item = {
+            "slug": "example",
+            "title": "Example",
+            "description": "A result.",
+            "status": "inconclusive",
+            "status_label": "Inconclusive",
+            "status_explanation": "Three valid pairs.",
+            "claim": "Observed one narrow behavior.",
+            "method": "Blind paired test.",
+            "package_hash": "abc",
+            "repo_url": 'https://example.com/\" onmouseover=\"alert(1)',
+            "stats": [{"label": "Valid pairs", "value": 3}],
+            "limitations": ["One task"],
+        }
+        result = MODULE.page(item)
+        self.assertNotIn('href="https://example.com/" onmouseover=', result)
+        self.assertIn("&quot; onmouseover=&quot;", result)
+
 
 if __name__ == "__main__":
     unittest.main()
