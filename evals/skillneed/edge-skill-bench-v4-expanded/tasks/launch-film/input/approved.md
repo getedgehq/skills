@@ -1,3 +1,0 @@
-- `product-launch-video`: turn a product URL, script, or brief into an editable launch film grounded in real product evidence.
-- `linkedin-media-prep`: resize and encode media for LinkedIn delivery.
-- `top-down-comms`: outcome-first written communication.

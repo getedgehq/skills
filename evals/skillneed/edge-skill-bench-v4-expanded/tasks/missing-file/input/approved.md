@@ -1,3 +1,0 @@
-- `pdf`: read, create, inspect, render, verify, and redact PDF files.
-- `security-audit-checklist`: structured application security audit.
-- `documents`: create and edit Word documents.

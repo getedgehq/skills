@@ -1,3 +1,0 @@
-- `people-search`: plan a people search, rank candidates against a brief, and show the source behind every name.
-- `cv-job-match`: match one candidate's CV to live roles.
-- `public-dataset-report`: produce a statistical report from public data.
