@@ -37,7 +37,9 @@ agent runs on, not a second opinion about whether it passed.
 """
 import json
 import os
+import shutil
 import sys
+from pathlib import Path
 
 # ubuntu:24.04 matches Harbor's own examples and carries no agent CLI: Harbor
 # installs the one under test into the container itself.
@@ -50,6 +52,7 @@ RUN apt-get update && apt-get install -y \\
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+{fixture_copy}
 {setup}"""
 
 # No [environment].skills_dir: see the module docstring. artifacts pulls the
@@ -103,11 +106,13 @@ def dockerfile(brief):
     """
     setup = (brief.get("setup") or "").strip()
     lines = "\n".join("RUN " + line for line in setup.splitlines() if line.strip())
+    fixture_copy = "COPY fixture/ /app/" if brief.get("fixture_dir") else ""
     return DOCKERFILE.format(image=brief.get("image") or DEFAULT_IMAGE,
+                             fixture_copy=fixture_copy,
                              setup=lines + "\n" if lines else "")
 
 
-def render(brief, out):
+def render(brief, out, brief_dir=None):
     os.makedirs(os.path.join(out, "environment"), exist_ok=True)
     os.makedirs(os.path.join(out, "tests"), exist_ok=True)
     name = slug(brief["id"])
@@ -126,6 +131,20 @@ def render(brief, out):
 
     with open(os.path.join(out, "environment", "Dockerfile"), "w") as fh:
         fh.write(dockerfile(brief))
+
+    if brief.get("fixture_dir"):
+        if brief_dir is None:
+            raise ValueError("fixture_dir requires the brief's source directory")
+        brief_root = os.path.realpath(brief_dir)
+        source = os.path.realpath(os.path.join(brief_root, brief["fixture_dir"]))
+        if os.path.commonpath((brief_root, source)) != brief_root:
+            raise ValueError("fixture_dir must stay inside the brief directory")
+        destination = os.path.join(out, "environment", "fixture")
+        if not os.path.isdir(source):
+            raise ValueError(f"fixture_dir is not a directory: {source}")
+        if any(path.is_symlink() for path in Path(source).rglob("*")):
+            raise ValueError("fixture_dir must not contain symlinks")
+        shutil.copytree(source, destination)
 
     # Harbor wants a verifier; the real gate runs on the host in judge.py. This
     # one reports nothing rather than a passing score it did not check, so a
@@ -147,7 +166,7 @@ def main():
     for key in ("id", "prompt"):
         if not brief.get(key):
             sys.exit(f"brief has no {key}")
-    print(render(brief, sys.argv[2]))
+    print(render(brief, sys.argv[2], os.path.dirname(os.path.abspath(sys.argv[1]))))
 
 
 if __name__ == "__main__":

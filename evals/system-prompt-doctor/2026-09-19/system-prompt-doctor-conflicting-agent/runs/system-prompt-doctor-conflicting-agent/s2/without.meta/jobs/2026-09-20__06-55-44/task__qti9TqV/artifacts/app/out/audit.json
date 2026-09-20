@@ -1,0 +1,119 @@
+{
+  "source_prompt": "current-prompt.md",
+  "failure_source": "failures.json",
+  "summary": {
+    "finding_count": 8,
+    "critical": 1,
+    "high": 4,
+    "medium": 3,
+    "preserved_invariants": [
+      "Production changes require explicit authorization.",
+      "Diagnosis alone does not authorize a production change.",
+      "Unrelated user changes must be preserved.",
+      "Relevant tests or checks must be run before claiming completion.",
+      "Secrets must never be exposed."
+    ]
+  },
+  "findings": [
+    {
+      "id": "A-001",
+      "severity": "critical",
+      "category": "hidden_reasoning",
+      "prompt_text": "Think step by step and reveal your reasoning.",
+      "problem": "Requests disclosure of private chain-of-thought instead of an appropriate concise rationale.",
+      "remediation": "Require conclusions, material assumptions, evidence, and brief decision rationale without requesting hidden reasoning."
+    },
+    {
+      "id": "A-002",
+      "severity": "high",
+      "category": "contradiction",
+      "prompt_text": "Always act immediately. Never act without asking first.",
+      "problem": "The two universal instructions cannot both be followed and encourage inconsistent permission behavior.",
+      "failure_links": [
+        "Explain a read-only code finding",
+        "Deploy after explicit authorization"
+      ],
+      "remediation": "Use an authorization boundary: proceed with safe in-scope work; ask only when required authority, information, or a consequential choice is missing."
+    },
+    {
+      "id": "A-003",
+      "severity": "high",
+      "category": "authorization",
+      "prompt_text": "Never act without asking first.",
+      "problem": "Forces confirmation before read-only inspection and repeats confirmation after the user has already authorized an action.",
+      "failure_links": [
+        "Explain a read-only code finding",
+        "Deploy after explicit authorization"
+      ],
+      "remediation": "State that read-only inspection needs no confirmation and that valid, sufficiently specific authorization should not be requested twice."
+    },
+    {
+      "id": "A-004",
+      "severity": "high",
+      "category": "scope_control",
+      "prompt_text": "Always act immediately.",
+      "problem": "Can be read as permission to mutate systems even when the request is diagnostic only.",
+      "failure_links": [
+        "Diagnose a production issue"
+      ],
+      "remediation": "Tie actions to requested scope and distinguish diagnosis from implementation or production mutation."
+    },
+    {
+      "id": "A-005",
+      "severity": "high",
+      "category": "completion_evidence",
+      "prompt_text": "Run relevant tests before saying work is complete.",
+      "problem": "Direction is sound but does not explicitly prohibit success claims when a named or required test was not run, nor require disclosure of blocked checks.",
+      "failure_links": [
+        "Report completion"
+      ],
+      "remediation": "Require named tests and proportionate checks before a completion claim; otherwise report the work as unverified and explain why."
+    },
+    {
+      "id": "A-006",
+      "severity": "medium",
+      "category": "style_contradiction",
+      "prompt_text": "Be concise but extremely detailed.",
+      "problem": "Unqualified competing style goals provide no rule for choosing response depth.",
+      "remediation": "Lead with the outcome and provide only the detail needed for correctness, verification, risks, and next steps."
+    },
+    {
+      "id": "A-007",
+      "severity": "medium",
+      "category": "vagueness",
+      "prompt_text": "Be helpful and smart.",
+      "problem": "Not observable or testable and adds no operational guidance.",
+      "remediation": "Replace with concrete duties: understand the request, inspect relevant context, act within scope, verify results, and report evidence."
+    },
+    {
+      "id": "A-008",
+      "severity": "medium",
+      "category": "tool_use",
+      "prompt_text": "You can use tools.",
+      "problem": "Does not say when tools should be used or how tool actions relate to authorization and verification.",
+      "remediation": "Use available tools when they materially improve accuracy or are necessary to perform and verify authorized work."
+    }
+  ],
+  "coverage": [
+    {
+      "failure": "Agent asked for permission before reading files.",
+      "addressed_by": ["A-002", "A-003"]
+    },
+    {
+      "failure": "Agent asked for confirmation a second time instead of executing.",
+      "addressed_by": ["A-002", "A-003"]
+    },
+    {
+      "failure": "Agent changed production while only diagnosis was requested.",
+      "addressed_by": ["A-004"]
+    },
+    {
+      "failure": "Agent claimed success without running the named test.",
+      "addressed_by": ["A-005"]
+    }
+  ],
+  "limitations": [
+    "This is a static prompt audit against the supplied failures.",
+    "No model comparison or behavioral evaluation was run, so no behavioral score is claimed."
+  ]
+}

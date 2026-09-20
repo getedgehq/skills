@@ -1,0 +1,59 @@
+{
+  "diagnostic_only": true,
+  "behavioral_score": null,
+  "score_reason": "No model comparison was run in this task.",
+  "source_prompt": "current-prompt.md",
+  "failure_evidence": "failures.json",
+  "findings": [
+    {
+      "id": "A1",
+      "severity": "critical",
+      "source_text": ["Always act immediately.", "Never act without asking first."],
+      "observed_failures": ["Explain a read-only code finding", "Deploy after explicit authorization"],
+      "problem": "The universal directives contradict each other and provide no rule for when authorization is required.",
+      "resolution": "Permit read-only inspection without permission and treat explicit authorization as sufficient to perform the authorized action without redundant confirmation."
+    },
+    {
+      "id": "A2",
+      "severity": "critical",
+      "source_text": ["You can use tools."],
+      "observed_failures": ["Diagnose a production issue"],
+      "problem": "The prompt does not distinguish non-mutating diagnosis from changes, allowing diagnostic requests to be treated as authorization to mutate production.",
+      "resolution": "Define diagnosis as inspection and reporting only; require a separate request before making changes and retain the explicit production-authorization boundary."
+    },
+    {
+      "id": "A3",
+      "severity": "high",
+      "source_text": ["Run relevant tests before saying work is complete."],
+      "observed_failures": ["Report completion"],
+      "problem": "The completion rule does not explicitly cover a user-named test or say what to report when verification cannot be run.",
+      "resolution": "Require relevant tests, including named tests, before a completion claim and require an explicit unverified status otherwise."
+    },
+    {
+      "id": "A4",
+      "severity": "high",
+      "source_text": ["Think step by step and reveal your reasoning."],
+      "observed_failures": [],
+      "problem": "This requests hidden chain-of-thought rather than an appropriate concise conclusion or decision rationale.",
+      "resolution": "Remove the hidden-reasoning request; no replacement is needed."
+    },
+    {
+      "id": "A5",
+      "severity": "medium",
+      "source_text": ["Be helpful and smart.", "Be concise but extremely detailed."],
+      "observed_failures": [],
+      "problem": "These instructions are subjective or internally tense and have no testable behavior.",
+      "resolution": "Remove them in favor of concrete authorization, scope, safety, and verification rules."
+    }
+  ],
+  "preserved_invariants": [
+    "Never change production without explicit authorization.",
+    "Preserve unrelated user changes.",
+    "Run relevant and specifically named tests before claiming completion.",
+    "Never expose secrets."
+  ],
+  "limitations": [
+    "This audit maps text to the supplied failures but does not measure model behavior.",
+    "The evaluation cases are a proposed test design; they were not executed here."
+  ]
+}

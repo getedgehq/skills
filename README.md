@@ -28,6 +28,9 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 | Find recurring failures in agent sessions | [`skill-miner`](skill-miner/) |
 | Discover what your agent is good and bad at | [`agent-skills-gap`](agent-skills-gap/) |
 | Test whether a skill actually helps | [`skill-eval-loop`](skill-eval-loop/) |
+| Release an evaluated skill end to end | [`skill-release-pipeline`](skill-release-pipeline/) |
+| Turn agent work into a public-safe proof record | [`agent-receipt`](agent-receipt/) |
+| Recover decisions and reversals from messy notes | [`decision-ledger`](decision-ledger/) |
 | Fix hooks and agent infrastructure | [`agent-infra-fixer`](agent-infra-fixer/) |
 | Inspect the improvement loop locally | [`skill-cockpit`](skill-cockpit/) |
 
@@ -41,8 +44,12 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`harness-first`](harness-first/) audits the harness before recommending a model change.
 - [`skill-cockpit`](skill-cockpit/) provides a local view of mined failures and evaluation runs.
 - [`skill-eval-loop`](skill-eval-loop/) runs controlled with-skill and without-skill comparisons.
+- [`skill-release-pipeline`](skill-release-pipeline/) takes a concrete failure through package creation, evaluation, evidence binding, and publication.
+- [`skill-battle`](skill-battle/) defines the disclosure and integrity contract for public skill comparisons.
 - [`skill-miner`](skill-miner/) finds recurring failures in Claude Code, Codex, and OpenCode sessions.
 - [`skillneed`](skillneed/) decides whether a task needs specialist procedure and recommends at most one exact package.
+- [`system-prompt-doctor`](system-prompt-doctor/) audits and tests user-owned agent instructions against representative tasks.
+- [`invocation-doctor`](invocation-doctor/) repairs skill descriptions using train and held-out trigger cases.
 - [`workplan`](workplan/) keeps multi-step work durable across context loss.
 
 ### Research and communication
@@ -50,6 +57,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`autonomous-research`](autonomous-research/) produces source-grounded research with citation checks.
 - [`people-search`](people-search/) plans and documents evidence-backed people searches.
 - [`top-down-comms`](top-down-comms/) structures executive and client communication around a governing thought.
+- [`decision-ledger`](decision-ledger/) converts messy notes into evidence-linked decisions, reversals, proposals, open questions, and actions.
 
 ### Engineering and operations
 
@@ -66,7 +74,14 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`linkedin-media-prep`](linkedin-media-prep/) prepares images and video for LinkedIn.
 - [`product-launch-video`](product-launch-video/) turns a product brief into an editable launch film.
 - [`reply-debt`](reply-debt/) identifies mail that is still waiting on a reply.
+- [`repo-to-launch`](repo-to-launch/) turns repository facts into a grounded launch package without inventing product claims.
 - [`strip-image-ai-metadata`](strip-image-ai-metadata/) removes C2PA and AI-generation metadata.
+
+### Evidence and publishing
+
+- [`agent-receipt`](agent-receipt/) produces a public-safe, hash-bound result record from a private run manifest.
+- [`skill-battle`](skill-battle/) packages controlled comparison results without silently escalating disclosure.
+- [`skill-release-pipeline`](skill-release-pipeline/) enforces the release contract and exact package hashes.
 
 ### Partner packages
 
@@ -75,13 +90,19 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 
 ## Evidence status
 
-Seven skills currently publish controlled comparisons against the same agent without the skill. Six
+Twelve skills currently publish controlled comparisons against the same agent without the skill. Six
 use the frozen `edge-skill-bench@1.0` environment; `agent-skills-gap` publishes a separate direct
-Codex A/B evaluation and is labelled accordingly.
+Codex A/B evaluation, and five packages publish isolated Harbor A/B evaluations. Each is labelled
+accordingly.
 
 | Skill | Status | Record |
 | --- | --- | --- |
+| `agent-receipt` | Measured in Harbor, inconclusive | [`EVALS.md`](agent-receipt/EVALS.md) |
+| `decision-ledger` | Measured in Harbor, inconclusive | [`EVALS.md`](decision-ledger/EVALS.md) |
 | `agent-skills-gap` | Supported in its recorded direct A/B eval; outside `edge-skill-bench@1.0` | [`EVALS.md`](agent-skills-gap/EVALS.md) |
+| `invocation-doctor` | Measured in Harbor, inconclusive | [`EVALS.md`](invocation-doctor/EVALS.md) |
+| `repo-to-launch` | Measured in Harbor, inconclusive | [`EVALS.md`](repo-to-launch/EVALS.md) |
+| `system-prompt-doctor` | Measured in Harbor, negative | [`EVALS.md`](system-prompt-doctor/EVALS.md) |
 | `workplan` | Supported in the recorded benchmark | [`EVALS.md`](workplan/EVALS.md) |
 | `autonomous-research` | Measured, inconclusive | [`EVALS.md`](autonomous-research/EVALS.md) |
 | `harness-first` | Measured, inconclusive | [`EVALS.md`](harness-first/EVALS.md) |

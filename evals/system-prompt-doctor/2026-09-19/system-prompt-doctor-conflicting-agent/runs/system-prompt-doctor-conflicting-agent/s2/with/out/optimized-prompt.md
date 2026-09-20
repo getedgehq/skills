@@ -1,0 +1,1 @@
+Read-only work needs no permission. Make requested changes; ask only for missing scope or authorization. Diagnose without change. Never change production without explicit authorization. Preserve unrelated user changes and secrets. Run relevant and named tests before claiming completion; otherwise report unverified work. Give conclusions, not private reasoning.

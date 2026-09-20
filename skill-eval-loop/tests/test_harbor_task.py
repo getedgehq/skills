@@ -77,6 +77,36 @@ class Blindness(unittest.TestCase):
 
 
 class Rendering(unittest.TestCase):
+    def test_fixture_directory_is_copied_into_the_image_context(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            brief_dir = os.path.join(tmp, "brief")
+            os.makedirs(os.path.join(brief_dir, "fixture"))
+            with open(os.path.join(brief_dir, "fixture", "input.txt"), "w") as fixture:
+                fixture.write("real fixture")
+            out = os.path.join(tmp, "task")
+            harbor_task.render(dict(BRIEF, fixture_dir="fixture"), out, brief_dir)
+            self.assertEqual(read(out, "environment", "fixture", "input.txt"), "real fixture")
+            self.assertIn("COPY fixture/ /app/", read(out, "environment", "Dockerfile"))
+
+    def test_fixture_directory_cannot_escape_the_brief_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            brief_dir = os.path.join(tmp, "brief")
+            os.makedirs(brief_dir)
+            with self.assertRaisesRegex(ValueError, "must stay inside"):
+                harbor_task.render(dict(BRIEF, fixture_dir="../"), os.path.join(tmp, "task"), brief_dir)
+
+    def test_fixture_directory_rejects_symlinks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            brief_dir = os.path.join(tmp, "brief")
+            fixture = os.path.join(brief_dir, "fixture")
+            os.makedirs(fixture)
+            private = os.path.join(tmp, "private.txt")
+            with open(private, "w") as target:
+                target.write("private")
+            os.symlink(private, os.path.join(fixture, "linked.txt"))
+            with self.assertRaisesRegex(ValueError, "must not contain symlinks"):
+                harbor_task.render(dict(BRIEF, fixture_dir="fixture"), os.path.join(tmp, "task"), brief_dir)
+
     def test_setup_is_baked_into_the_image(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = render(tmp, setup="pip install ruff\nmkdir -p /app/src")
@@ -134,6 +164,12 @@ class RunnerContract(unittest.TestCase):
         # Deployed skills are symlinks; Harbor uploads the directory as it finds
         # it, so a link arrives dangling and the with arm has no skill at all.
         self.assertIn("cp -rL", self.text)
+
+    def test_parallel_arms_serialize_shared_task_rendering(self):
+        self.assertIn("task-render.lock", self.text)
+        self.assertIn("fcntl.LOCK_EX", self.text)
+        self.assertIn(".render-complete", self.text)
+        self.assertIn("shutil.rmtree(task)", self.text)
 
     def test_the_token_is_never_an_argument(self):
         # It goes through the environment. In argv it would reach the process
