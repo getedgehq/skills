@@ -26,6 +26,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 | Diagnose an unreliable or expensive agent | [`harness-first`](harness-first/) |
 | Decide whether another skill would help | [`skillneed`](skillneed/) |
 | Find recurring failures in agent sessions | [`skill-miner`](skill-miner/) |
+| Test a Skill on tasks recovered from your own sessions | [`brain-scan`](brain-scan/) |
 | Discover what your agent is good and bad at | [`agent-skills-gap`](agent-skills-gap/) |
 | Test whether a skill actually helps | [`skill-eval-loop`](skill-eval-loop/) |
 | Release an evaluated skill end to end | [`skill-release-pipeline`](skill-release-pipeline/) |
@@ -39,6 +40,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 ### Agent development
 
 - [`agent-skills-gap`](agent-skills-gap/) analyzes supplied Claude or Codex sessions and creates an evidence-backed skills profile plus share card.
+- [`brain-scan`](brain-scan/) mines authorized sessions and measures no Skill versus the selected Skill explicitly loaded on reconstructed real tasks.
 - [`skill-evals`](skill-evals/) builds repeatable agent evaluations and verifiers.
 - [`agent-infra-fixer`](agent-infra-fixer/) diagnoses and repairs broken agent guardrails.
 - [`harness-first`](harness-first/) audits the harness before recommending a model change.
@@ -90,13 +92,14 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 
 ## Evidence status
 
-Twelve skills currently publish controlled comparisons against the same agent without the skill. Six
+Thirteen skills currently publish controlled comparisons against the same agent without the skill. Six
 use the frozen `edge-skill-bench@1.0` environment; `agent-skills-gap` publishes a separate direct
-Codex A/B evaluation, and five packages publish isolated Harbor A/B evaluations. Each is labelled
+Codex A/B evaluation, `brain-scan` publishes a separate explicit-load release validation, and five packages publish isolated Harbor A/B evaluations. Each is labelled
 accordingly.
 
 | Skill | Status | Record |
 | --- | --- | --- |
+| `brain-scan` | Release validation: 6 wins, 1 tie, 2 losses; +55.6pp objective completion observed | [`EVALS.md`](brain-scan/EVALS.md) |
 | `agent-receipt` | Measured in Harbor, inconclusive | [`EVALS.md`](agent-receipt/EVALS.md) |
 | `decision-ledger` | Measured in Harbor, inconclusive | [`EVALS.md`](decision-ledger/EVALS.md) |
 | `agent-skills-gap` | Supported in its recorded direct A/B eval; outside `edge-skill-bench@1.0` | [`EVALS.md`](agent-skills-gap/EVALS.md) |
