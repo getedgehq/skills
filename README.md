@@ -39,7 +39,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 ### Agent development
 
 - [`agent-skills-gap`](agent-skills-gap/) analyzes supplied Claude or Codex sessions and creates an evidence-backed skills profile plus share card.
-- [`agent-evals`](agent-evals/) builds repeatable agent evaluations and verifiers.
+- [`skill-evals`](skill-evals/) builds repeatable agent evaluations and verifiers.
 - [`agent-infra-fixer`](agent-infra-fixer/) diagnoses and repairs broken agent guardrails.
 - [`harness-first`](harness-first/) audits the harness before recommending a model change.
 - [`skill-cockpit`](skill-cockpit/) provides a local view of mined failures and evaluation runs.

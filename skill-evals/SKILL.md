@@ -1,5 +1,5 @@
 ---
-name: agent-evals
+name: skill-evals
 description: Build evals for an AI agent that already does real work. Use when someone asks "how do I know my agent is right", wants to test an agent before trusting it, compare models on cost versus quality, or turn production failures into tests. Walks from first tasks and yes/no verifiers, to isolated environments, to a trace-driven improvement loop.
 ---
 
