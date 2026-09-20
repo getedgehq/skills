@@ -88,6 +88,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 ### Partner packages
 
 - [`cv-job-match`](cv-job-match/) matches a CV to live roles from Rocketlist.
+- [`rocketlist`](rocketlist/) searches current startup jobs and hiring companies through Rocketlist's public MCP.
 - [`pay-per-call-apis`](pay-per-call-apis/) exposes Monid's paid data and scraping tools through one CLI.
 
 ## Evidence status
