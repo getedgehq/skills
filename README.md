@@ -4,6 +4,10 @@ Versioned skills for AI agents, with provenance for every package and complete e
 
 [Browse on Edge](https://getedge.cc) · [How evidence works](docs/BENCHMARK.md) · [Apache 2.0 license](LICENSE)
 
+## Public database
+
+The skill directory and Arena records are published as one machine-readable dataset: [`database/edge-database.json`](database/edge-database.json). It includes the public skill index, tested tasks, configurations, scores, costs, provenance, and the limitations required to interpret them. See [`database/README.md`](database/README.md) for the contract and validator.
+
 ## Install a skill
 
 ```bash
