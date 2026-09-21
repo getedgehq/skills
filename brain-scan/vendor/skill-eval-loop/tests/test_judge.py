@@ -827,6 +827,16 @@ class DeadArm(unittest.TestCase):
         self.assertEqual(v["invalid_code"], "arm_never_ran")
         self.assertIn("the without-arm", v["invalid_reason"])
 
+    def test_host_readable_fallback_is_diagnostic_not_valid(self):
+        weak = {"agent": "codex", "exit": 0, "isolation": "host-readable",
+                "isolation_valid": False}
+        out, v, runs = self.judge_pair(with_run=weak, without_run=weak)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(v["invalid_code"], "insufficient_read_isolation")
+        self.assertIn("diagnostics", v["invalid_reason"])
+        self.assertFalse(self.judged())
+        self.assertFalse(os.path.exists(os.path.join(runs, "mapping.private.json")))
+
     def test_no_blind_mapping_is_written_for_a_pair_that_never_ran(self):
         # The rerun after the fix has to draw its own slots. A mapping left behind here
         # would be reused, and it was drawn for a pair that produced nothing.

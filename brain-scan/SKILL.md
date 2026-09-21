@@ -73,6 +73,11 @@ isolated merely because it has a fresh working directory or HOME; the subject mu
 traverse user homes, host temp state, other arms, or generated treatment briefs. Use an
 equivalent Harbor/container sandbox on hosts without systemd isolation.
 
+The macOS `workspace-write` fallback is diagnostic only: it now receives a minimal process-scoped
+Codex credential without inheriting user Skills or MCP configuration, but it cannot prevent reads
+outside the arm. The runner records this as `isolation_valid: false`, and the judge refuses to count
+the pair. Do not describe post-hoc contamination scanning as equivalent to read isolation.
+
 ## Report inline
 
 Return a compact terminal result:
@@ -99,5 +104,6 @@ upload, or alter live configuration unless the user separately authorizes that a
   until the result looks positive.
 - A deterministic check is not a substitute for inspecting the actual deliverable.
 
-The vendored evaluator and miner are exact copies of the GetEdge packages recorded in
-`DERIVATION.json`; they are included so installing Brain Scan is one Skill install.
+The vendored evaluator and miner are versioned GetEdge package copies recorded in
+`DERIVATION.json`, including documented Brain Scan portability patches; they are included so
+installing Brain Scan is one Skill install.
