@@ -580,6 +580,17 @@ def main():
         refuse("arm_never_ran", "; ".join(dead_reason(a, arms[a]) for a in dead))
         return
 
+    weak = [a for a in ("with", "without")
+            if arms[a]["run"].get("isolation_valid") is False]
+    if weak:
+        modes = ", ".join(
+            f"{a}={arms[a]['run'].get('isolation', 'unknown')}" for a in weak)
+        refuse("insufficient_read_isolation",
+               "the subject could read host state outside its arm "
+               f"({modes}); this run may be used for diagnostics but cannot count "
+               "as a controlled pair. Rerun in the systemd or container path")
+        return
+
     # Also before the mapping and before the model call, and for the same two reasons:
     # a baseline that could reach the candidate's skill is not a baseline, so there is
     # nothing here a judge could read, and the rerun after the skill is uninstalled

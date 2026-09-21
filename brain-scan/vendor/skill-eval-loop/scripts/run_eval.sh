@@ -16,6 +16,11 @@
 # FORGE_SAMPLE  sample number; runs land in runs/<id>/s<N>/<arm> (repeat samples
 #               make a verdict about the skill, not about one lucky run)
 set -euo pipefail
+SUBJECT_CODEX_HOME=""
+cleanup_subject_auth() {
+  [[ -z "$SUBJECT_CODEX_HOME" ]] || rm -rf -- "$SUBJECT_CODEX_HOME"
+}
+trap cleanup_subject_auth EXIT
 ROOT="${FORGE_ROOT:-$HOME/skill-forge}"
 BRIEF="$1"; ARM="$2"; SKILL_DIR="${3:-}"
 AGENT="${FORGE_AGENT:-claude}"
@@ -71,6 +76,8 @@ fi
 TIMEOUT="${FORGE_TIMEOUT:-1200}"
 start=$(date +%s)
 set +e
+RUN_ISOLATION="host-readable"
+ISOLATION_VALID="false"
 # macOS ships no `timeout`; fall back to gtimeout (coreutils) or a perl alarm.
 if command -v timeout >/dev/null; then TO=(timeout "$TIMEOUT")
 elif command -v gtimeout >/dev/null; then TO=(gtimeout "$TIMEOUT")
@@ -107,17 +114,32 @@ case "$AGENT" in
           XDG_CACHE_HOME=/workspace/.subject-home/.cache \
           TMPDIR=/workspace/.subject-home/tmp \
           "${TO[@]}" nice -n 10 /usr/bin/codex exec \
-          --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check "${M[@]}" \
+          --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check ${M[@]+"${M[@]}"} \
           --json -o /workspace/.subject-home/final.txt "$PROMPT" \
           < /dev/null > "$META/transcript.jsonl" 2> "$META/stderr.log"
       code=$?
+      RUN_ISOLATION="systemd-filesystem-namespace"
+      ISOLATION_VALID="true"
       sudo -n cp "$DIR/.subject-home/final.txt" "$META/final.txt" 2>/dev/null || true
       sudo -n chown -R "$owner" "$DIR" "$META"
       rm -rf -- "$DIR/.subject-home"
     else
-      "${TO[@]}" nice -n 10 codex exec --skip-git-repo-check --sandbox workspace-write "${M[@]}" \
+      # A fresh HOME keeps user Skills and MCP configuration out of the subject, but
+      # Codex still needs its credential. Copy only auth.json into a process-scoped
+      # CODEX_HOME outside the arm, then destroy it before returning. This fixes the
+      # macOS fallback without re-introducing the host's ambient agent state.
+      AUTH_SOURCE="${FORGE_CODEX_AUTH_FILE:-$HOME/.codex/auth.json}"
+      [[ -f "$AUTH_SOURCE" ]] || { echo "Codex auth file not found" >&2; exit 1; }
+      SUBJECT_CODEX_HOME=$(mktemp -d "${TMPDIR:-/tmp}/forge-codex-home.XXXXXX")
+      cp "$AUTH_SOURCE" "$SUBJECT_CODEX_HOME/auth.json"
+      chmod 700 "$SUBJECT_CODEX_HOME"
+      chmod 600 "$SUBJECT_CODEX_HOME/auth.json"
+      CODEX_HOME="$SUBJECT_CODEX_HOME" \
+      "${TO[@]}" nice -n 10 codex exec --skip-git-repo-check --sandbox workspace-write ${M[@]+"${M[@]}"} \
         --json -o "$META/final.txt" "$PROMPT" < /dev/null > "$META/transcript.jsonl" 2> "$META/stderr.log"
       code=$?
+      rm -rf -- "$SUBJECT_CODEX_HOME"
+      SUBJECT_CODEX_HOME=""
     fi;;
   opencode)
     MODEL="${FORGE_MODEL:-}"
@@ -140,28 +162,31 @@ case "$AGENT" in
           XDG_DATA_HOME=/workspace/.subject-home/.local/share \
           XDG_CACHE_HOME=/workspace/.subject-home/.cache \
           TMPDIR=/workspace/.subject-home/tmp \
-          "${TO[@]}" nice -n 10 /usr/bin/opencode run --pure --auto "${M[@]}" --format json "$PROMPT" \
+          "${TO[@]}" nice -n 10 /usr/bin/opencode run --pure --auto ${M[@]+"${M[@]}"} --format json "$PROMPT" \
           < /dev/null > "$META/transcript.jsonl" 2> "$META/stderr.log"
       code=$?
+      RUN_ISOLATION="systemd-filesystem-namespace"
+      ISOLATION_VALID="true"
       sudo -n chown -R "$owner" "$DIR"
       rm -rf -- "$DIR/.subject-home"
     else
-      "${TO[@]}" nice -n 10 opencode run --pure --auto "${M[@]}" --format json "$PROMPT" \
+      "${TO[@]}" nice -n 10 opencode run --pure --auto ${M[@]+"${M[@]}"} --format json "$PROMPT" \
         < /dev/null > "$META/transcript.jsonl" 2> "$META/stderr.log"
       code=$?
     fi;;
 esac
 set -e
-python3 - "$META" "$ID" "$ARM" "$AGENT" "$MODEL" "${FORGE_SAMPLE:-}" "$code" "$(( $(date +%s) - start ))" "$TIMEOUT" <<'PYEOF'
+python3 - "$META" "$ID" "$ARM" "$AGENT" "$MODEL" "${FORGE_SAMPLE:-}" "$code" "$(( $(date +%s) - start ))" "$TIMEOUT" "$RUN_ISOLATION" "$ISOLATION_VALID" <<'PYEOF'
 import json, os, re, sys
-meta, rid, arm, agent, model, sample, code, secs, cap = sys.argv[1:]
+meta, rid, arm, agent, model, sample, code, secs, cap, isolation, isolation_valid = sys.argv[1:]
 # The cap goes in the row because the judge has to tell an arm the clock killed from
 # an arm that answered badly, and an arm killed at the clock leaves the same exit and
 # the same failed verify as one that finished and got it wrong. Reading FORGE_TIMEOUT
 # at judge time instead would read whatever the environment says then, which is not
 # necessarily the cap this arm ran under.
 row = {"id": rid, "arm": arm, "agent": agent, "model": model, "sample": sample,
-       "exit": int(code), "seconds": int(secs), "timeout_s": int(cap)}
+       "exit": int(code), "seconds": int(secs), "timeout_s": int(cap),
+       "isolation": isolation, "isolation_valid": isolation_valid == "true"}
 if row["exit"] != 0:
     # keep the agent's own failure reason (quota, auth, timeout) next to the exit code
     err = ""
