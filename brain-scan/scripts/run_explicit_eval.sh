@@ -11,7 +11,7 @@ SAMPLES="${3:-3}"
 [[ -f "$BRIEF" ]] || { echo "brief not found: $BRIEF" >&2; exit 2; }
 [[ -f "$SKILL_DIR/SKILL.md" ]] || { echo "candidate has no SKILL.md: $SKILL_DIR" >&2; exit 2; }
 [[ "$SAMPLES" =~ ^[1-9][0-9]*$ ]] || { echo "samples must be a positive integer" >&2; exit 2; }
-(( SAMPLES <= 6 )) || { echo "refusing more than 6 samples" >&2; exit 2; }
+(( SAMPLES <= 20 )) || { echo "refusing more than 20 samples" >&2; exit 2; }
 
 STATE="${FORGE_ROOT:-$HOME/skill-forge}"
 HOST_CODEX_AUTH_FILE="${FORGE_CODEX_AUTH_FILE:-$HOME/.codex/auth.json}"
