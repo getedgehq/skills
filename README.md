@@ -89,6 +89,10 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`skill-battle`](skill-battle/) packages controlled comparison results without silently escalating disclosure.
 - [`skill-release-pipeline`](skill-release-pipeline/) enforces the release contract and exact package hashes.
 
+### Founder guides
+
+- [`founders-handbook`](founders-handbook/) answers founder questions (co-founders, cap tables, SAFEs, Series A, secondaries, M&A, QSBS) from 1984 Ventures' public Founders Handbook and links the chapter behind every answer.
+
 ### Partner packages
 
 - [`cv-job-match`](cv-job-match/) matches a CV to live roles from Rocketlist.
@@ -141,5 +145,7 @@ The previous install names remain as compatibility aliases. New integrations sho
 ## License and attribution
 
 Most packages are Apache-2.0 and carry their own license and provenance record. Partner-owned packages may use different terms; their package directories state those terms explicitly.
+
+`founders-handbook` summarizes the [Founders Handbook by 1984 Ventures](https://1984.vc/docs/founders-handbook) chapter by chapter, with each chapter linked and its authors credited. The handbook content belongs to 1984 Ventures, so the package is not covered by the repository's Apache-2.0 grant; see [`founders-handbook/THIRD_PARTY_NOTICES.md`](founders-handbook/THIRD_PARTY_NOTICES.md). It is not affiliated with or endorsed by 1984 Ventures.
 
 For academic citation, use [`CITATION.cff`](CITATION.cff). The benchmark identifier is `edge-skill-bench@1.0`.
