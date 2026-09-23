@@ -83,6 +83,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`reply-debt`](reply-debt/) identifies mail that is still waiting on a reply.
 - [`repo-to-launch`](repo-to-launch/) turns repository facts into a grounded launch package without inventing product claims.
 - [`strip-image-ai-metadata`](strip-image-ai-metadata/) removes C2PA and AI-generation metadata.
+- [`vlog-edit`](vlog-edit/) edits phone footage into a captioned 9:16 short with a hook, full-frame data cards, maps and b-roll, then judges the cut before anyone watches it.
 
 ### Evidence and publishing
 
