@@ -36,11 +36,26 @@ Size 1080x1920, an audio stream, length within 0.1 s of the plan, no black run o
 
 EBU R128 integrated loudness within 1 LU of the target (default -14 LUFS), peak below -0.5 dBFS.
 
+## Voice over music
+
+With a music bed, the voice stem must sit at least 10 dB over the ducked music under every kept
+word, measured on the two stems as they meet in the mix. Negative control: the same cut with the
+bed at `below_lu: 0` fails on five words. Speech is levelled (`speechnorm`) before the mix,
+because two people on one phone mic are not equally loud and a bed that sits fine under the near
+voice buries the far one.
+
 ## Speech
 
-Whisper on the final file vs the kept words as the ASR originally heard them (so a `fix` does not
-count as a loss). Replacements that are close in spelling ("claude" / "cloud") count as heard;
-deletions and unrelated replacements do not. Fails under 95% recall and lists what went missing.
+Whisper on one window per sentence (never the whole file: whole-file passes drop repeated phrases
+and drift). Two numbers, kept apart so ASR doubt cannot pose as lost audio:
+
+- **cut recall**: the voice track after cutting, before music, against the kept transcript (the
+  ASR text or the `fix`ed text, whichever matches better). A clipped syllable shows up here.
+  Fails under 85%; the missing words are listed. Words Whisper was never sure of on the source
+  also land here, which is why the bar is not 95%.
+- **mix recall** (information): the same windows on the final. On clean audio a gap means the mix
+  buried something; on noisy multi-speaker audio it is mostly ASR variance, so the voice-over-music
+  margin above is the pass/fail for the mix.
 
 ## Contact sheet
 
