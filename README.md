@@ -78,6 +78,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 
 - [`generate-image`](generate-image/) generates images through an authenticated Codex CLI.
 - [`linkedin-media-prep`](linkedin-media-prep/) prepares images and video for LinkedIn.
+- [`procedural-painter`](procedural-painter/) paints finished painterly images entirely with Python: no image model, no reference images.
 - [`product-launch-video`](product-launch-video/) turns a product brief into an editable launch film.
 - [`reply-debt`](reply-debt/) identifies mail that is still waiting on a reply.
 - [`repo-to-launch`](repo-to-launch/) turns repository facts into a grounded launch package without inventing product claims.
