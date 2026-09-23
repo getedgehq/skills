@@ -33,6 +33,9 @@ WHITE = (255, 255, 255)
 # below CAP_CLEAR empty.
 CAP_Y = 1640
 CAP_CLEAR = 1520
+# With a translation line, the band moves up to make room for it below.
+SUB_CAP_Y = 1580
+SUB_Y = 1650
 
 
 # --------------------------------------------------------------------------------------------
@@ -571,6 +574,47 @@ def caption(words, active, light, keys):
     img.alpha_composite(boxes)
     img.alpha_composite(text if light else text_shadowed(text))
     _CAP[key] = img
+    return img
+
+
+_SUB = {}
+
+
+def subtitle(text, light):
+    """The translation line under the caption: smaller, one weight lighter, whole line at once.
+    The spoken words stay the hero; this line only says what they mean."""
+    key = (text, light)
+    if key in _SUB:
+        return _SUB[key]
+    t = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(t)
+    size = 54
+    while d.textlength(text, font=font("SemiBold", size)) > W - 144 and size > 36:
+        size -= 2
+    lines = balanced(d, text, font("SemiBold", size), W - 144)
+    y = SUB_Y
+    for ln in lines[:2]:
+        centred(d, y, ln, font("SemiBold", size), INK_MID if light else WHITE, 1.0 if light else 0.95)
+        y += size + 10
+    img = t if light else text_shadowed(t, strength=0.75, blur=6, dy=3)
+    _SUB[key] = img
+    return img
+
+
+def shade():
+    """A soft dark ramp under the caption band, for footage only.
+
+    White type with a shadow reads on a face; on bright sky or a white wall it vanishes. A ramp from
+    clear to 55% black across the bottom third is what every phone app does, and it never shows on
+    a card because it is only enabled outside card windows.
+    """
+    g = Image.new("L", (1, H), 0)
+    top = CAP_CLEAR - 260
+    for y in range(H):
+        u = clamp01((y - top) / (H - top))
+        g.putpixel((0, y), int(140 * smoothstep(u)))
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    img.putalpha(g.resize((W, H)))
     return img
 
 

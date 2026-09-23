@@ -195,7 +195,9 @@ def cmd_transcribe(a):
         else:
             if model is None:
                 model = WhisperModel(a.model, device="cpu", compute_type="int8")
-            segs, _ = model.transcribe(path, word_timestamps=True, language=e.get("language"),
+            # Leave `language` unset unless you are sure: forcing "en" on German speech does not
+            # fail, it silently TRANSLATES, and the captions then say words nobody said.
+            segs, info = model.transcribe(path, word_timestamps=True, language=e.get("language"),
                                        vad_filter=False,
                                        initial_prompt=e.get("vocabulary") or None)
             words = []
@@ -207,6 +209,7 @@ def cmd_transcribe(a):
                                       "e": round(w.end, 3)})
             words = refine(words, speech_regions(path))
             json.dump(words, open(out, "w"), indent=0)
+            print(f"   detected language: {info.language} ({info.language_probability:.2f})")
         if words and "s0" not in words[0]:
             words = refine(words, speech_regions(path))
             json.dump(words, open(out, "w"), indent=0)
@@ -293,7 +296,7 @@ def snap(t, joins):
     return round(min(near, key=lambda j: abs(j - t)), 4) if near else round(t, 4)
 
 
-def span(e, item, idx, before, after, total, what, joins=()):
+def span(e, item, idx, before, after, total, what, joins=(), min_len=0.6):
     for key in ("at", "until"):
         if key not in item:
             die(f"{what} needs `at` and `until` word references.")
@@ -305,7 +308,7 @@ def span(e, item, idx, before, after, total, what, joins=()):
     s, t = snap(before[ka], joins), snap(after[ku], joins)
     if ku == len(before) - 1:
         t = total
-    if t - s < 0.6:
+    if t - s < min_len:
         die(f"{what}: {t - s:.2f}s is too short to read; widen `until`.")
     return s, t
 
@@ -429,9 +432,11 @@ def caption_lines(out_words, start_after):
     return out
 
 
-def render_captions(e, lines, light, total, keys):
+def render_captions(e, lines, light, total, keys, subs=()):
     import look
     from PIL import Image
+    if subs:
+        look.CAP_Y = look.SUB_CAP_Y
     d = os.path.join(e["_work"], "captions")
     shutil.rmtree(d, ignore_errors=True)
     os.makedirs(d)
@@ -442,17 +447,26 @@ def render_captions(e, lines, light, total, keys):
     for f in range(n):
         t = (f + 0.5) / FPS
         src = blank
+        lt = any(a <= t < b for a, b in light)
+        sub = next((x["text"] for x in subs if x["s"] <= t < x["e"]), None)
+        cap = None
         for ln in lines:
             st = next((s for s in ln["states"] if s["s"] <= t < s["e"]), None)
             if st:
-                lt = any(a <= t < b for a, b in light)
-                key = (tuple(ln["words"]), st["active"], lt)
-                if key not in made:
-                    p = os.path.join(d, f"_s{len(made):04d}.png")
-                    look.caption(ln["words"], st["active"], lt, keys).save(p)
-                    made[key] = p
-                src = made[key]
+                cap = (tuple(ln["words"]), st["active"])
                 break
+        if cap or sub:
+            key = (cap, sub, lt)
+            if key not in made:
+                img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+                if cap:
+                    img.alpha_composite(look.caption(list(cap[0]), cap[1], lt, keys))
+                if sub:
+                    img.alpha_composite(look.subtitle(sub, lt))
+                p = os.path.join(d, f"_s{len(made):04d}.png")
+                img.save(p)
+                made[key] = p
+            src = made[key]
         os.link(src, os.path.join(d, f"{f + 1:04d}.png"))
     mov = os.path.join(e["_work"], "captions.mov")
     run([FFMPEG, "-y", "-v", "error", "-framerate", str(FPS), "-i", os.path.join(d, "%04d.png"),
@@ -549,11 +563,21 @@ def cmd_render(a):
     keys = set(k.lower() for k in (e.get("captions") or {}).get("keys", []))
     lines = caption_lines(out_words, hook_end)
     light = [[c["start"], c["end"]] for c in cards]
+    # Translation lines: one per spoken sentence, shown from the gap before its first word to the
+    # gap after its last, and never under the hook.
+    subs = []
+    for k, sb in enumerate(e.get("subtitles") or []):
+        if not str(sb.get("text", "")).strip():
+            die(f"subtitle {k}: needs `text`.")
+        s0, t0 = span(e, {"at": sb["from"], "until": sb["to"]}, idx, before, after, total,
+                      f"subtitle {k}", joins, min_len=0.3)
+        if t0 > hook_end:
+            subs.append({"s": max(s0, hook_end), "e": t0, "text": sb["text"].strip()})
 
     base, voice = render_base(e, cuts)
     card_movs = [render_card(e, k, c, c["end"] - c["start"], a.jobs) for k, c in enumerate(cards)]
     broll_mp4 = [render_broll(e, k, b, b["end"] - b["start"]) for k, b in enumerate(brolls)]
-    cap_mov = render_captions(e, lines, light, total, keys)
+    cap_mov = render_captions(e, lines, light, total, keys, subs)
 
     work = e["_work"]
     inputs, fc, pre = ["-i", base], [f"[0:v]setpts=PTS-STARTPTS[s0]"], "s0"
@@ -576,6 +600,13 @@ def cmd_render(a):
         fc.append(f"[{n}:v]format=rgba,fade=t=out:st={hold:.3f}:d={HOOK_FADE}:alpha=1[hk];"
                   f"[{pre}][hk]overlay=eof_action=pass[sh]")
         pre, n = "sh", n + 1
+    if lines or subs:
+        sp = os.path.join(work, "shade.png")
+        look.shade().save(sp)
+        inputs += ["-loop", "1", "-t", f"{total:.3f}", "-i", sp]
+        off = "+".join(f"between(t,{c['start']:.3f},{c['end']:.3f})" for c in cards) or "0"
+        fc.append(f"[{n}:v]format=rgba[sd];[{pre}][sd]overlay=eof_action=pass:enable='not({off})'[ss]")
+        pre, n = "ss", n + 1
     inputs += ["-i", cap_mov]
     fc.append(f"[{n}:v]format=rgba[cp];[{pre}][cp]overlay=eof_action=pass,format=yuv420p[vout]")
     body = os.path.join(work, "body.mp4")
@@ -623,7 +654,7 @@ def cmd_render(a):
             "hook_end": hook_end, "outro": outro_dur, "cuts": cuts,
             "words": [{"w": w["w"], "raw": w["raw"], "s": w["s"], "e": w["e"]} for w in out_words],
             "cards": [{k: v for k, v in c.items()} for c in cards],
-            "broll": brolls, "captions": lines}
+            "broll": brolls, "captions": lines, "subtitles": subs}
     pp = os.path.join(out_dir, f"{name}.plan.json")
     json.dump(plan, open(pp, "w"), indent=1)
     print(f"rendered {final} ({full:.2f}s); plan {pp}")
@@ -692,21 +723,31 @@ def cmd_qa(a):
         m = WhisperModel(a.model, device="cpu", compute_type="int8")
         heard = norm(" ".join(s.text for s in m.transcribe(final, vad_filter=False,
                                                            language=e.get("language"))[0]))
-        # Compare against what the ASR heard at transcription, not the `fix`ed caption text: the
-        # question is whether the cut and the mix lost audio, not whether Whisper can spell.
-        want = norm(" ".join(w.get("raw", w["w"]) for w in plan["words"]))
-        sm = difflib.SequenceMatcher(a=want, b=heard, autojunk=False)
-        got, missing = 0, []
-        for op, a1, a2, b1, b2 in sm.get_opcodes():
-            if op == "equal":
-                got += a2 - a1
-            elif op == "replace" and difflib.SequenceMatcher(
-                    None, "".join(want[a1:a2]), "".join(heard[b1:b2])).ratio() >= 0.6:
-                got += a2 - a1          # heard, just spelled differently ("claude" / "cloud")
-            elif op in ("replace", "delete"):
-                missing.append(" ".join(want[a1:a2]))
-        recall = got / max(1, len(want))
-        report["speech"] = {"recall": round(recall, 3), "expected": len(want), "missing": missing,
+        # Score against both what the ASR heard at transcription and the `fix`ed caption text, and
+        # keep the better: the question is whether the cut and the mix lost audio, not whether
+        # Whisper can spell, and a `fix` that corrects a germanised "Guten Morgen" back to the
+        # English that was said must not count as a loss.
+        def score(want):
+            sm = difflib.SequenceMatcher(a=want, b=heard, autojunk=False)
+            got, miss = 0, []
+            for op, a1, a2, b1, b2 in sm.get_opcodes():
+                if op == "equal":
+                    got += a2 - a1
+                elif op == "replace" and difflib.SequenceMatcher(
+                        None, "".join(want[a1:a2]), "".join(heard[b1:b2])).ratio() >= 0.6:
+                    # Heard, spelled differently ("claude" / "cloud"). Never credit more words
+                    # than were heard: two expected words against one heard is one missing.
+                    k = min(a2 - a1, b2 - b1)
+                    got += k
+                    if k < a2 - a1:
+                        miss.append(" ".join(want[a1:a2]) + " (partly)")
+                elif op in ("replace", "delete"):
+                    miss.append(" ".join(want[a1:a2]))
+            return got / max(1, len(want)), miss, len(want)
+        raw = score(norm(" ".join(w.get("raw", w["w"]) for w in plan["words"])))
+        fixed = score(norm(" ".join(w["w"] for w in plan["words"])))
+        recall, missing, n_want = max(raw, fixed, key=lambda r: r[0])
+        report["speech"] = {"recall": round(recall, 3), "expected": n_want, "missing": missing,
                             "heard": " ".join(heard)}
         if recall < 0.95:
             fails.append(f"speech recall {recall:.2f}: not heard in the render: {missing}")
