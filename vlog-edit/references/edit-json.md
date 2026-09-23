@@ -5,26 +5,26 @@ default (first) clip, `14`, or `"clip:14"`. Indices come from `vlog.py transcrib
 
 ```json
 {
-  "name": "street",
+  "name": "walk",
   "language": "en",
-  "vocabulary": "Tenderloin, getedge.cc",
-  "clips": {"a": "media/street.MOV", "b": "media/walk.MOV"},
+  "vocabulary": "names or brands the speaker says",
+  "clips": {"a": "media/take1.MOV", "b": "media/take2.MOV"},
   "crop": {"a": 0.5},
   "keep": [{"clip": "a", "from": 0, "to": 36}],
   "tighten": 0.35,
-  "fix": {"a:5-7": "for AI.", "a:12": "privacy"},
-  "hook": {"text": "I didn't film the people on this street",
-           "kicker": "Tenderloin, San Francisco", "hold": 1.8},
-  "captions": {"keys": ["privacy", "street", "respect", "question"]},
+  "fix": {"a:5-7": "for AI.", "a:12": "neighbourhood"},
+  "hook": {"text": "The one line that makes people stay",
+           "kicker": "Neighbourhood, City", "hold": 1.8},
+  "captions": {"keys": ["neighbourhood", "number", "question"]},
   "cards": [
-    {"kind": "map", "at": 10, "until": 18, "title": "Tenderloin", "sub": "San Francisco",
-     "geojson": "tenderloin.geojson", "attribution": "Map: OpenStreetMap · Boundary: DataSF"},
-    {"kind": "stat", "at": 22, "until": 27, "title": "Counted homeless in San Francisco",
-     "value": "7,973", "unit": "people in the 2026 count", "total": 7973, "part": 7973,
-     "source": "San Francisco Point-in-Time Count 2026"}
+    {"kind": "map", "at": 10, "until": 18, "title": "Neighbourhood", "sub": "City",
+     "geojson": "boundary.geojson", "attribution": "Map: OpenStreetMap · Boundary: City open data"},
+    {"kind": "stat", "at": 22, "until": 27, "title": "What the figure counts",
+     "value": "1,234", "unit": "the unit it is in", "total": 1234, "part": 1234,
+     "source": "Publisher, dataset, year"}
   ],
   "broll": [{"clip": "b", "from_s": 39.0, "at": 19, "until": 21, "crop": 0.0}],
-  "outro": {"text": "would you have filmed them?", "dur": 2.0},
+  "outro": {"text": "the closing question", "dur": 2.0},
   "music": {"path": "bed.mp3", "below_lu": 12},
   "loudness": -14
 }
@@ -68,8 +68,8 @@ lights up at the end. Use it when the speaker describes asking an AI something.
 `map`: `title`, `sub`, and either `geojson` (a Feature/Polygon/MultiPolygon: draws the real
 boundary) or `lat` + `lon` (a pin). Optional `zoom_start`, `zoom_end`, `attribution`. Pushes from
 city scale to the block grid. Tiles come from OpenStreetMap and are cached; attribute them. A
-neighbourhood is a shape, not a pin: get the city's own boundary file when one exists (for San
-Francisco, DataSF dataset `gfpk-269f`); Nominatim often has only a point.
+neighbourhood is a shape, not a pin: get the city's own boundary file when one exists (most cities publish
+neighbourhood boundaries on their open-data portal); Nominatim often has only a point.
 
 ## Timing
 
