@@ -46,7 +46,7 @@ then encoded so the engine or a judge enforces it. Keep them; they are cheaper t
   fade in at their final value.
 - **Only print what you can cite.** If you are not sure of a date, a month or a scope, leave it out
   of the copy rather than infer it.
-- **A neighbourhood is a shape.** A pin on a city map does not say where the Tenderloin is; its
+- **A neighbourhood is a shape.** A pin on a city map does not say where a neighbourhood is; its
   boundary does.
 
 ## Captions
