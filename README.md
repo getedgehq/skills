@@ -27,6 +27,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 | Need | Skill |
 | --- | --- |
 | Keep long work alive across context loss | [`workplan`](workplan/) |
+| Show a plan as a scannable text diagram with decisions on top | [`plan-board`](plan-board/) |
 | Diagnose an unreliable or expensive agent | [`harness-first`](harness-first/) |
 | Decide whether another skill would help | [`skillneed`](skillneed/) |
 | Find recurring failures in agent sessions | [`skill-miner`](skill-miner/) |
@@ -57,6 +58,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`system-prompt-doctor`](system-prompt-doctor/) audits and tests user-owned agent instructions against representative tasks.
 - [`invocation-doctor`](invocation-doctor/) repairs skill descriptions using train and held-out trigger cases.
 - [`workplan`](workplan/) keeps multi-step work durable across context loss.
+- [`plan-board`](plan-board/) shows plans and status as one-line-per-item text diagrams, with decisions first and an optional board that collects approvals.
 
 ### Research and communication
 
