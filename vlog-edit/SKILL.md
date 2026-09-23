@@ -6,7 +6,7 @@ description: Edit raw selfie or talking-head footage into a captioned 9:16 short
 # vlog-edit
 
 Turn phone footage into a short that looks produced: every cut lands in a pause, captions sit in
-one band on every shot, graphics fill the frame and build while he talks, and four judges check
+one band on every shot, graphics fill the frame and build while he talks, and the judges check
 the file before you hand it over.
 
 The engine is `scripts/vlog.py` (Python, ffmpeg, Pillow, numpy, faster-whisper). You author one
@@ -32,6 +32,9 @@ Needs `ffmpeg` and `ffprobe` on PATH (or set `VLOG_EDIT_FFMPEG` / `VLOG_EDIT_FFP
    `language` unless you are sure, because forcing English on German speech silently translates.
    Accented English is often transcribed as the speaker's first language; when the speaker says
    what they said, use `fix`, and leave out any stretch you cannot transcribe with confidence.
+   `transcribe` re-hears every sentence on its own and prints `DISPUTED` where the two passes
+   disagree. The sentence-on-its-own reading is usually right; if a disputed line changes the
+   meaning ("it works" / "it doesn't work") and you still cannot tell, cut the line.
 
 2. **Find the story.** Pick `keep` ranges by word index. Drop retakes, false starts and filler;
    keep the best take of each line. Pauses longer than `tighten` (0.35 s) are cut down
@@ -77,7 +80,8 @@ Needs `ffmpeg` and `ffprobe` on PATH (or set `VLOG_EDIT_FFMPEG` / `VLOG_EDIT_FFP
 | cut | GHOST (a dissolve: both pictures at once), FLASH (a shot under 0.4 s), STROBE, FROZEN and CREEP (a card that stops moving), OFFBEAT (a cut inside a word) |
 | picture | wrong size, black frames, length off the plan |
 | loudness | integrated loudness more than 1 LU off target (-14 LUFS), peak at the ceiling |
-| speech | a kept word no longer audible in the final mix (Whisper on the render vs the plan) |
+| voice over music | the ducked bed within 10 dB of the voice under any kept word |
+| speech | a kept word clipped by the cut (Whisper per sentence on the cut voice vs the plan) |
 
 ## The rules the engine enforces for you
 

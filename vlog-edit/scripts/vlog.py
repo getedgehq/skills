@@ -22,6 +22,10 @@ FFPROBE = os.environ.get("VLOG_EDIT_FFPROBE") or shutil.which("ffprobe") or "ffp
 FPS = 30
 W, H = 1080, 1920
 HOOK_FADE = 0.35
+# Speech levelling before the mix. Two people on one phone mic are not equally loud, and a music
+# bed that sits fine under the near voice buries the far one, and the far voice's words come out
+# as different words. speechnorm lifts quiet phrases without pumping the loud ones.
+LEVEL = "speechnorm=e=6:r=0.0005:l=1"
 MIN_SHOT = 0.45      # anything shorter between two cuts reads as a glitch, not a shot
 LINE_HOLD = 0.70     # a finished caption line stays up through a breath instead of blinking out
 INTER_URL = "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip"
@@ -102,6 +106,48 @@ def words_path(e, cid):
     return os.path.join(e["_work"], f"words.{cid}.json")
 
 
+def window_text(model, path, a, b, language):
+    """Whisper on one short window of a file. On a whole file Whisper conditions every sentence
+    on the ones before it, drops phrases that repeat, and drifts; a window of one sentence does
+    not, and in testing it settled every line two full-file passes disagreed on."""
+    tmp = os.path.join(tempfile.gettempdir(), f"vlog-edit-win-{os.getpid()}.wav")
+    run([FFMPEG, "-v", "error", "-y", "-ss", f"{max(0, a):.3f}", "-t", f"{b - max(0, a):.3f}",
+         "-i", path, "-vn", "-ac", "1", "-ar", "16000", tmp], "cut a window")
+    segs, _ = model.transcribe(tmp, language=language, beam_size=5, temperature=0,
+                               vad_filter=False, condition_on_previous_text=False)
+    txt = " ".join(x.text.strip() for x in segs)
+    os.remove(tmp)
+    return txt
+
+
+def lang_path(e, cid):
+    return os.path.join(e["_work"], f"lang.{cid}.txt")
+
+
+def regions_path(e, cid):
+    return os.path.join(e["_work"], f"speech.{cid}.json")
+
+
+def voice_end(regions, t, limit):
+    """Where the voice actually stops after time t, capped at `limit`.
+
+    Whisper ends the last word of a phrase early: the stamp stops while the voice runs on, and a
+    cut at the stamped end clips the syllable. The detector's region end is the
+    real edge.
+    """
+    for a, b in regions:
+        if a <= t <= b + 0.05:
+            return min(max(t, b), limit)
+    return t
+
+
+def voice_start(regions, t, limit):
+    for a, b in regions:
+        if a - 0.05 <= t <= b:
+            return max(min(t, a), limit)
+    return t
+
+
 def load_words(e, cid):
     """The clip's words with the EDIT.json `fix` corrections applied.
 
@@ -128,7 +174,7 @@ def load_words(e, cid):
         step = (e0 - s0) / len(new)
         raw = " ".join(ws[k].get("raw", ws[k]["w"]) for k in pos)
         repl = [{"i": a, "id": str(a) if k == 0 else f"{a}.{k}", "w": t, "raw": raw if k == 0 else "",
-                 "s": round(s0 + k * step, 3), "e": round(s0 + (k + 1) * step, 3)}
+                 "rng": [a, b], "s": round(s0 + k * step, 3), "e": round(s0 + (k + 1) * step, 3)}
                 for k, t in enumerate(new)]
         ws = ws[:pos[0]] + repl + ws[pos[-1] + 1:]
     return ws
@@ -207,12 +253,45 @@ def cmd_transcribe(a):
                     if t:
                         words.append({"i": len(words), "w": t, "s": round(w.start, 3),
                                       "e": round(w.end, 3)})
-            words = refine(words, speech_regions(path))
+            regions = speech_regions(path)
+            json.dump(regions, open(regions_path(e, cid), "w"))
+            words = refine(words, regions)
             json.dump(words, open(out, "w"), indent=0)
             print(f"   detected language: {info.language} ({info.language_probability:.2f})")
+            open(lang_path(e, cid), "w").write(info.language)
+        if not os.path.isfile(regions_path(e, cid)):
+            json.dump(speech_regions(path), open(regions_path(e, cid), "w"))
         if words and "s0" not in words[0]:
-            words = refine(words, speech_regions(path))
+            words = refine(words, json.load(open(regions_path(e, cid))))
             json.dump(words, open(out, "w"), indent=0)
+        disputes = []
+        if a.check:
+            if model is None:
+                model = WhisperModel(a.model, device="cpu", compute_type="int8")
+            # Pin the window to the clip's language: auto-detecting on a one-second window guesses
+            # Polish or Danish for German and returns nonsense.
+            lang = e.get("language") or (open(lang_path(e, cid)).read().strip()
+                                         if os.path.isfile(lang_path(e, cid)) else None)
+            if not lang:
+                lang = model.transcribe(path)[1].language
+                open(lang_path(e, cid), "w").write(lang)
+            sent = []
+            for w in words:
+                sent.append(w)
+                if w["w"][-1:] in ".?!" or w is words[-1]:
+                    if sent[-1]["e"] - sent[0]["s"] < 1.0:
+                        sent = []           # too short to transcribe on its own reliably
+                        continue
+                    got = window_text(model, path, sent[0]["s"] - 0.3, sent[-1]["e"] + 0.4, lang)
+                    have = " ".join(x["w"] for x in sent)
+                    # How much of the line does the window confirm? Extra words the window caught
+                    # from the neighbouring sentences do not count against it.
+                    hv, gt = norm(have), norm(got)
+                    sm = difflib.SequenceMatcher(a=hv, b=gt, autojunk=False)
+                    confirmed = sum(m.size for m in sm.get_matching_blocks()) / max(1, len(hv))
+                    if confirmed < 0.9:
+                        disputes.append((sent[0]["i"], sent[-1]["i"], have, got))
+                    sent = []
         print(f"\n== clip {cid} ({os.path.basename(path)}), {len(words)} words")
         line = []
         for w in words:
@@ -224,6 +303,11 @@ def cmd_transcribe(a):
                 line = []
         if line:
             print(f"  [{words[-len(line)]['s']:7.2f}s] " + " ".join(line))
+        for i0, i1, have, got in disputes:
+            print(f"  DISPUTED {cid}:{i0}-{i1}\n     full pass: {have}\n     sentence : {got}")
+        if disputes:
+            print("  A sentence heard on its own is usually right. Use `fix` for what was said, or "
+                  "leave the line out if you still cannot tell.")
 
 
 # ---------------------------------------------------------------------------------------------
@@ -242,21 +326,30 @@ def build_timeline(e):
         if not sel:
             die(f"keep {cid}:{f0}-{t0} selects no words of clip {cid}.")
         ws, f, to = allw, sel[0], sel[-1]
-        lo = ws[f]["s"] - lead
-        if f > 0:
-            lo = max(lo, (ws[f - 1]["e"] + ws[f]["s"]) / 2)
+        rp = regions_path(e, cid)
+        regions = json.load(open(rp)) if os.path.isfile(rp) else []
+        floor = (ws[f - 1]["e"] + ws[f]["s"]) / 2 if f > 0 else 0.0
+        lo = max(floor, voice_start(regions, ws[f]["s"], floor) - lead)
         spans, cur = [], [max(0.0, lo), None]
         for k in range(f, to):
             gap = ws[k + 1]["s"] - ws[k]["e"]
             if gap > tighten:
-                cur[1] = ws[k]["e"] + tighten / 2
+                mid = (ws[k]["e"] + ws[k + 1]["s"]) / 2
+                end = max(ws[k]["e"] + tighten / 2, voice_end(regions, ws[k]["e"], mid) + 0.06)
+                start = min(ws[k + 1]["s"] - tighten / 2,
+                            voice_start(regions, ws[k + 1]["s"], mid) - 0.04)
+                if end - cur[0] < MIN_SHOT * 1.5 or start >= end:
+                    # A span this short is a sliver between two jump cuts: keep the pause.
+                    continue
+                cur[1] = min(end, mid)
                 spans.append(cur)
-                cur = [ws[k + 1]["s"] - tighten / 2, None]
-        hi = ws[to]["e"] + tail
-        if to + 1 < len(ws):
-            hi = min(hi, (ws[to]["e"] + ws[to + 1]["s"]) / 2)
-        cur[1] = hi
-        spans.append(cur)
+                cur = [max(start, mid), None]
+        ceil = (ws[to]["e"] + ws[to + 1]["s"]) / 2 if to + 1 < len(ws) else ws[to]["e"] + 1.0
+        cur[1] = min(ceil, max(ws[to]["e"] + tail, voice_end(regions, ws[to]["e"], ceil) + 0.08))
+        if spans and cur[1] - cur[0] < MIN_SHOT * 1.5:
+            spans[-1][1] = cur[1]          # the last sliver joins the span before it
+        else:
+            spans.append(cur)
         for a0, b0 in spans:
             nf = max(1, round((b0 - a0) * FPS))
             d = nf / FPS
@@ -265,7 +358,8 @@ def build_timeline(e):
             for k in range(f, to + 1):
                 w = ws[k]
                 if a0 - 1e-6 <= w["s"] < a0 + d:
-                    out_words.append({"ref": f"{cid}:{w['id']}", "w": w["w"],
+                    out_words.append({"ref": f"{cid}:{w['id']}", "rng": [cid, *w.get("rng", [w["i"], w["i"]])],
+                                      "w": w["w"],
                                       "raw": w.get("raw", w["w"]),
                                       "s": round(t + w["s"] - a0, 3),
                                       "e": round(min(t + d, t + w["e"] - a0), 3)})
@@ -303,6 +397,14 @@ def span(e, item, idx, before, after, total, what, joins=(), min_len=0.6):
     ca, na = ref(e, item["at"])
     cu, nu = ref(e, item["until"])
     ka, ku = idx.get(f"{ca}:{na}"), idx.get(f"{cu}:{nu}")
+    # A reference into a range that `fix` rewrote: start at its first new word, end at its last.
+    words = e["_out_words"]
+    if ka is None:
+        ka = next((k for k, w in enumerate(words)
+                   if w["rng"][0] == ca and w["rng"][1] <= na <= w["rng"][2]), None)
+    if ku is None:
+        ku = next((k for k in range(len(words) - 1, -1, -1)
+                   if words[k]["rng"][0] == cu and words[k]["rng"][1] <= nu <= words[k]["rng"][2]), None)
     if ka is None or ku is None:
         die(f"{what}: word {item['at']} or {item['until']} is not inside a `keep` range.")
     s, t = snap(before[ka], joins), snap(after[ku], joins)
@@ -423,7 +525,9 @@ def caption_lines(out_words, start_after):
         for j, w in enumerate(ln):
             s = w["s"]
             t = ln[j + 1]["s"] if j + 1 < len(ln) else end
-            if t <= start_after:
+            if t <= start_after or ln[0]["s"] < start_after - 0.05:
+                # A line that began under the hook is dropped whole: picking it up halfway puts
+                # "MAL MEHR," on screen with no start. Captions resume at a clean line.
                 continue
             states.append({"active": j, "s": round(max(s, start_after), 3), "e": round(t, 3)})
         if states:
@@ -494,15 +598,20 @@ def master_audio(e, voice, total, outro_dur):
         below = float(m.get("below_lu", 12))
         run([FFMPEG, "-y", "-v", "error", "-i", voice, "-stream_loop", "-1", "-i", mp,
              "-filter_complex",
-             f"[0:a]highpass=f=80,apad=whole_dur={total:.3f},asplit[v][sc];"
+             f"[0:a]highpass=f=80,{LEVEL},apad=whole_dur={total:.3f},asplit[v][sc];"
              f"[1:a]aformat=sample_rates=48000:channel_layouts=mono,volume=-{below + 8}dB,"
              f"atrim=duration={total:.3f},afade=t=in:d=1.2,afade=t=out:st={max(0, total - 1.5):.3f}:d=1.5[m];"
-             f"[m][sc]sidechaincompress=threshold=0.08:ratio=5:attack=12:release=380[md];"
-             f"[v][md]amix=inputs=2:duration=first:normalize=0,atrim=duration={total:.3f}[o]",
-             "-map", "[o]", "-ac", "1", "-c:a", "pcm_s16le", pre], "mix music")
+             f"[m][sc]sidechaincompress=threshold=0.02:ratio=10:attack=8:release=450,asplit[md][mo];"
+             f"[v]asplit[vm][vo];"
+             f"[vm][md]amix=inputs=2:duration=first:normalize=0,atrim=duration={total:.3f}[o]",
+             "-map", "[o]", "-ac", "1", "-c:a", "pcm_s16le", pre,
+             # The two stems as they meet in the mix, so qa can measure the voice over the music.
+             "-map", "[vo]", "-ac", "1", "-c:a", "pcm_s16le", os.path.join(work, "stem_voice.wav"),
+             "-map", "[mo]", "-ac", "1", "-c:a", "pcm_s16le", os.path.join(work, "stem_music.wav")],
+            "mix music")
     else:
         run([FFMPEG, "-y", "-v", "error", "-i", voice, "-af",
-             f"highpass=f=80,apad=whole_dur={total:.3f},atrim=duration={total:.3f}",
+             f"highpass=f=80,{LEVEL},apad=whole_dur={total:.3f},atrim=duration={total:.3f}",
              "-c:a", "pcm_s16le", pre], "pad voice")
     gain = 0.0
     out = os.path.join(work, "master.wav")
@@ -524,6 +633,7 @@ def cmd_render(a):
         look.font(w, 20)
     cuts, out_words, total = build_timeline(e)
     idx, before, after = gap_times(out_words)
+    e["_out_words"] = out_words
     joins = [c["out"] for c in cuts[1:]]
     print(f"cut: {len(cuts)} spans, {len(out_words)} words, {total:.2f}s spoken")
 
@@ -571,8 +681,8 @@ def cmd_render(a):
             die(f"subtitle {k}: needs `text`.")
         s0, t0 = span(e, {"at": sb["from"], "until": sb["to"]}, idx, before, after, total,
                       f"subtitle {k}", joins, min_len=0.3)
-        if t0 > hook_end:
-            subs.append({"s": max(s0, hook_end), "e": t0, "text": sb["text"].strip()})
+        if s0 >= hook_end - 0.05:
+            subs.append({"s": s0, "e": t0, "text": sb["text"].strip()})
 
     base, voice = render_base(e, cuts)
     card_movs = [render_card(e, k, c, c["end"] - c["start"], a.jobs) for k, c in enumerate(cards)]
@@ -702,6 +812,31 @@ def cmd_qa(a):
     i, p = loudness(final)
     target = float(e.get("loudness", -14.0))
     report["loudness"] = {"integrated": i, "peak": p}
+    # Voice over music, word by word. The eye cannot hear a bed that buries a quiet phrase and an
+    # ASR comparison is too noisy on two-person street audio to see it, so measure it: the voice
+    # stem must sit at least 10 dB over the ducked music under every kept word.
+    sv, sm_ = os.path.join(e["_work"], "stem_voice.wav"), os.path.join(e["_work"], "stem_music.wav")
+    if e.get("music") and os.path.isfile(sv) and os.path.isfile(sm_):
+        import numpy as np
+
+        def pcm(pth):
+            r = subprocess.run([FFMPEG, "-v", "error", "-i", pth, "-ac", "1", "-ar", "16000",
+                                "-f", "s16le", "-"], capture_output=True)
+            b = r.stdout[: len(r.stdout) // 2 * 2]
+            return np.frombuffer(b, dtype="<i2").astype(np.float32) / 32768.0
+        v, mu = pcm(sv), pcm(sm_)
+        low = []
+        for w in plan["words"]:
+            a0, b0 = int(w["s"] * 16000), int(max(w["e"], w["s"] + 0.08) * 16000)
+            if b0 > min(len(v), len(mu)):
+                continue
+            rv = 20 * np.log10(np.sqrt((v[a0:b0] ** 2).mean()) + 1e-9)
+            rm = 20 * np.log10(np.sqrt((mu[a0:b0] ** 2).mean()) + 1e-9)
+            if rv - rm < 10:
+                low.append(f"{w['w']} {rv - rm:.0f} dB")
+        report["voice_over_music"] = low
+        if low:
+            fails.append(f"music within 10 dB of the voice under {len(low)} word(s): {low[:8]}")
     if i is None or abs(i - target) > 1.0:
         fails.append(f"integrated loudness {i} LUFS, target {target}")
     if p is not None and p > -0.5:
@@ -721,20 +856,35 @@ def cmd_qa(a):
     if not a.no_speech:
         from faster_whisper import WhisperModel
         m = WhisperModel(a.model, device="cpu", compute_type="int8")
-        heard = norm(" ".join(s.text for s in m.transcribe(final, vad_filter=False,
-                                                           language=e.get("language"))[0]))
-        # Score against both what the ASR heard at transcription and the `fix`ed caption text, and
-        # keep the better: the question is whether the cut and the mix lost audio, not whether
-        # Whisper can spell, and a `fix` that corrects a germanised "Guten Morgen" back to the
-        # English that was said must not count as a loss.
-        def score(want):
-            sm = difflib.SequenceMatcher(a=want, b=heard, autojunk=False)
+        # One window per spoken span of the final, not one pass over the whole file: whole-file
+        # Whisper drops repeated phrases and drifts, which reads as lost audio when none was lost.
+        lang = e.get("language")
+        if not lang:
+            lang = m.transcribe(final)[1].language
+        # One window per sentence (or per 6 s), the same unit the transcribe check uses.
+        spans, cur = [], None
+        for w in plan["words"]:
+            if cur and w["s"] - cur[1] < 0.6 and w["e"] - cur[0] < 6:
+                cur[1] = w["e"]
+            else:
+                cur and spans.append(cur)
+                cur = [w["s"], w["e"]]
+            if w["w"][-1:] in ".?!":
+                spans.append(cur)
+                cur = None
+        cur and spans.append(cur)
+        voice = os.path.join(e["_work"], "voice.wav")
+        heard = norm(" ".join(window_text(m, final, x - 0.25, y + 0.35, lang) for x, y in spans))
+        heard_v = norm(" ".join(window_text(m, voice, x - 0.25, y + 0.35, lang) for x, y in spans))
+
+        def score(want, got_words):
+            sm = difflib.SequenceMatcher(a=want, b=got_words, autojunk=False)
             got, miss = 0, []
             for op, a1, a2, b1, b2 in sm.get_opcodes():
                 if op == "equal":
                     got += a2 - a1
                 elif op == "replace" and difflib.SequenceMatcher(
-                        None, "".join(want[a1:a2]), "".join(heard[b1:b2])).ratio() >= 0.6:
+                        None, "".join(want[a1:a2]), "".join(got_words[b1:b2])).ratio() >= 0.6:
                     # Heard, spelled differently ("claude" / "cloud"). Never credit more words
                     # than were heard: two expected words against one heard is one missing.
                     k = min(a2 - a1, b2 - b1)
@@ -743,14 +893,25 @@ def cmd_qa(a):
                         miss.append(" ".join(want[a1:a2]) + " (partly)")
                 elif op in ("replace", "delete"):
                     miss.append(" ".join(want[a1:a2]))
-            return got / max(1, len(want)), miss, len(want)
-        raw = score(norm(" ".join(w.get("raw", w["w"]) for w in plan["words"])))
-        fixed = score(norm(" ".join(w["w"] for w in plan["words"])))
-        recall, missing, n_want = max(raw, fixed, key=lambda r: r[0])
-        report["speech"] = {"recall": round(recall, 3), "expected": n_want, "missing": missing,
-                            "heard": " ".join(heard)}
-        if recall < 0.95:
-            fails.append(f"speech recall {recall:.2f}: not heard in the render: {missing}")
+            return got / max(1, len(want)), miss
+
+        # Two questions, measured separately so ASR doubt cannot pose as lost audio.
+        # MIX (information only): the same windows on the voice track before music and mastering,
+        # then on the final. On clean audio a gap here means the mix buried something; on noisy
+        # multi-speaker audio it is mostly ASR variance, which is why the pass/fail for the mix is
+        # the measured voice-over-music margin above, not this.
+        mix, mix_miss = score(heard_v, heard)
+        # CUT: the voice track against the kept transcript (the ASR text or the `fix`ed text,
+        # whichever it matches better). A clipped word shows up here. Words Whisper was never sure
+        # of on the source land here too, so the bar is lower and the misses are listed.
+        cut_raw = score(norm(" ".join(w.get("raw", w["w"]) for w in plan["words"])), heard_v)
+        cut_fix = score(norm(" ".join(w["w"] for w in plan["words"])), heard_v)
+        cut, cut_miss = max(cut_raw, cut_fix, key=lambda r: r[0])
+        report["speech"] = {"mix_recall": round(mix, 3), "mix_missing": mix_miss,
+                            "cut_recall": round(cut, 3), "cut_missing": cut_miss,
+                            "heard_final": " ".join(heard), "heard_voice": " ".join(heard_v)}
+        if cut < 0.85:
+            fails.append(f"cut loses speech ({cut:.2f}): kept words not heard in the cut: {cut_miss}")
 
     # contact sheet, to LOOK at
     sheet = os.path.join(out_dir, f"{name}.contact.jpg")
@@ -777,6 +938,8 @@ def main():
     t.add_argument("edit")
     t.add_argument("--model", default=os.environ.get("VLOG_EDIT_WHISPER", "medium"))
     t.add_argument("--force", action="store_true")
+    t.add_argument("--no-check", dest="check", action="store_false",
+                   help="skip the per-sentence second pass that flags disputed lines")
     r = sub.add_parser("render")
     r.add_argument("edit")
     r.add_argument("--jobs", type=int, default=max(1, min(8, (os.cpu_count() or 2) - 1)))

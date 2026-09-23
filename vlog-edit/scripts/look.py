@@ -270,18 +270,24 @@ def card_list(i, n, c):
     img = ground().copy()
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
-    tf = font("Medium", 60)
-    for k, ln in enumerate(balanced(d, c.get("title", ""), tf, 880)):
-        centred(d, 300 + k * 74, ln, tf, INK)
-
     items = c["items"][:8]
     pick = c.get("pick")
-    rh, gap, x0, x1 = 104, 22, 120, 960
-    top = 520 if len(items) <= 6 else 470
+    # Size the stack to the frame: big rows for a short list, and the whole block (title + rows)
+    # centred between the top and the caption band, so a five-item list does not leave the bottom
+    # third of the frame empty.
+    rh = 150 if len(items) <= 5 else 120 if len(items) <= 6 else 104
+    gap, x0, x1 = 26, 90, 990
+    tf = font("SemiBold", 70)
+    tlines = balanced(d, c.get("title", ""), tf, 900)
+    block = len(tlines) * 84 + 70 + len(items) * (rh + gap) - gap
+    ttop = max(160, (CAP_CLEAR - 40 - block) / 2 + 60)
+    for k, ln in enumerate(tlines):
+        centred(d, ttop + k * 84, ln, tf, INK)
+    top = ttop + len(tlines) * 84 + 70
     stagger_end = 0.55 if pick is not None else 0.88
     step = (stagger_end - 0.08) / max(1, len(items))
     pa = smoothstep(window(i, n, 0.66, 0.80)) if pick is not None else 0.0
-    itf = font("SemiBold", 44)
+    itf = font("SemiBold", 56 if rh >= 150 else 50 if rh >= 120 else 44)
     for k, text in enumerate(items):
         a = smoothstep(window(i, n, 0.08 + k * step, 0.08 + k * step + 0.14))
         if a <= 0.004:
@@ -293,17 +299,19 @@ def card_list(i, n, c):
         if pick == k and pa > 0.004:
             rd.rounded_rectangle([x0 - 3, y - 3, x1 + 3, y + rh + 3], 29,
                                  outline=(*ACCENT, int(255 * pa)), width=5)
-        rd.ellipse([x0 + 30, y + rh / 2 - 13, x0 + 56, y + rh / 2 + 13],
+        rd.ellipse([x0 + 34, y + rh / 2 - 15, x0 + 64, y + rh / 2 + 15],
                    fill=(*(ACCENT if pick == k and pa > 0.5 else HAIRLINE), int(255 * a * dim)))
-        rd.text((x0 + 80, y + rh / 2 - 27), text, font=itf, fill=(*INK, int(255 * a * dim)))
+        th = itf.getbbox("Hg")[3]
+        rd.text((x0 + 92, y + (rh - th) / 2 - 4), text, font=itf, fill=(*INK, int(255 * a * dim)))
         if pick == k and c.get("pick_label") and pa > 0.004:
-            lf = font("Bold", 36)
+            lf = font("Bold", 40)
             lw = rd.textlength(c["pick_label"], font=lf)
-            bx1, by0 = x1 - 20, y + rh / 2 - 30
-            rd.rounded_rectangle([bx1 - lw - 36, by0, bx1, by0 + 60], 30, fill=(*INK, int(255 * pa)))
-            rd.text((bx1 - lw - 18, by0 + 9), c["pick_label"], font=lf, fill=(*WHITE, int(255 * pa)))
+            bx1, by0 = x1 - 24, y + rh / 2 - 34
+            rd.rounded_rectangle([bx1 - lw - 44, by0, bx1, by0 + 68], 34, fill=(*ACCENT, int(255 * pa)))
+            rd.text((bx1 - lw - 22, by0 + 10), c["pick_label"], font=lf, fill=(*WHITE, int(255 * pa)))
         layer.alpha_composite(row)
-    img.alpha_composite(settle(layer, i, n, cy=860, amount=0.04))
+    img.alpha_composite(settle(layer, i, n, cy=(ttop + top + len(items) * (rh + gap)) / 2,
+                               amount=0.04))
     return img
 
 
