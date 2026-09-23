@@ -57,6 +57,9 @@ then encoded so the engine or a judge enforces it. Keep them; they are cheaper t
 - The finished line stays up through a breath instead of blinking out.
 - Never strand the last word of a sentence alone on a line; it flashes.
 - Trust the speaker over the ASR: fix misheard words rather than caption them.
+- Captions are what was said, in the language it was said. A translation goes on its own smaller
+  line underneath; it never replaces the spoken words.
+- White on bright sky is invisible, shadow or not. Footage gets a soft dark ramp under the band.
 
 ## Look
 

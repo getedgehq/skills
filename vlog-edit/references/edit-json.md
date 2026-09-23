@@ -6,7 +6,6 @@ default (first) clip, `14`, or `"clip:14"`. Indices come from `vlog.py transcrib
 ```json
 {
   "name": "walk",
-  "language": "en",
   "vocabulary": "names or brands the speaker says",
   "clips": {"a": "media/take1.MOV", "b": "media/take2.MOV"},
   "crop": {"a": 0.5},
@@ -36,13 +35,14 @@ default (first) clip, `14`, or `"clip:14"`. Indices come from `vlog.py transcrib
 |---|---|
 | `name` | output file stem: `renders/<name>.mp4`, `.plan.json`, `.qa.json`, `.contact.jpg` |
 | `clips` | id -> path. The first id is the default clip for bare word indices |
-| `language`, `vocabulary` | passed to Whisper; vocabulary is a spelling hint for names |
+| `language`, `vocabulary` | passed to Whisper; vocabulary is a spelling hint for names. Leave `language` unset unless certain: forcing it on speech in another language silently translates |
 | `crop` | per clip, horizontal framing 0..1 when the source is wider than 9:16 (0.5 = centre) |
 | `keep` | ordered list of `{clip, from, to}` word ranges, inclusive. This IS the story |
 | `tighten` | longest pause kept inside a range, seconds. Longer pauses are cut to this |
 | `fix` | `"clip:i"` or `"clip:i-j"` -> the words actually said. Captions use these; ids stay stable |
 | `hook` | opening line over the first `hold` s (+0.35 s fade). Captions start after it |
 | `captions.keys` | words that get the accent box once spoken. Matched case-insensitively |
+| `subtitles` | translation lines: `[{from, to, text}]` word refs. Shown whole-line under the karaoke caption, smaller, for speech in another language. Spoken words stay the hero |
 | `cards` | full-frame graphics, see below. They may not overlap each other |
 | `broll` | cutaways: `clip`, `from_s` (seconds into that clip), `at`, `until`, `crop` |
 | `outro` | the last frame held for `dur` s with a closing line pushed in; `{}` for none |

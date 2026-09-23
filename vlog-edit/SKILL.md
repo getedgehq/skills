@@ -28,7 +28,10 @@ Needs `ffmpeg` and `ffprobe` on PATH (or set `VLOG_EDIT_FFMPEG` / `VLOG_EDIT_FFP
    ```
    It prints every word with its index and marks real pauses as `|0.6s|`. Word edges are refined
    with a voice-activity detector, because Whisper closes every pause into the word before it.
-   Read the whole transcript before deciding anything.
+   Read the whole transcript before deciding anything. Check the detected language: do not set
+   `language` unless you are sure, because forcing English on German speech silently translates.
+   Accented English is often transcribed as the speaker's first language; when the speaker says
+   what they said, use `fix`, and leave out any stretch you cannot transcribe with confidence.
 
 2. **Find the story.** Pick `keep` ranges by word index. Drop retakes, false starts and filler;
    keep the best take of each line. Pauses longer than `tighten` (0.35 s) are cut down
@@ -48,11 +51,15 @@ Needs `ffmpeg` and `ffprobe` on PATH (or set `VLOG_EDIT_FFMPEG` / `VLOG_EDIT_FFP
    you can cite; if the date or scope of a figure is uncertain, leave it out of the copy rather
    than guessing (say "2026 count", not a month you inferred).
 
-6. **Fix the ASR, pick caption keys.** `fix` replaces misheard words ("for your eye" -> "for AI.").
+6. **Speech in another language?** Captions stay exactly what was said, in that language, and a
+   `subtitles` line underneath carries a faithful translation per sentence. Skip the line when
+   the sentence is already in the viewer's language.
+
+7. **Fix the ASR, pick caption keys.** `fix` replaces misheard words ("for your eye" -> "for AI.").
    `captions.keys` are the one or two words per line that carry the meaning; they get the accent
    box. Brand and product names spelled right.
 
-7. **Render and judge.**
+8. **Render and judge.**
    ```bash
    python3 scripts/vlog.py render EDIT.json
    python3 scripts/vlog.py qa EDIT.json
@@ -61,7 +68,7 @@ Needs `ffmpeg` and `ffprobe` on PATH (or set `VLOG_EDIT_FFMPEG` / `VLOG_EDIT_FFP
    Then **look at the contact sheet** (`renders/<name>.contact.jpg`). The judges catch broken
    cuts, not bad taste.
 
-8. **Deliver** the mp4, the one-line judge summary, and anything you left out and why.
+9. **Deliver** the mp4, the one-line judge summary, and anything you left out and why.
 
 ## What the judges check (`references/judges.md`)
 
@@ -83,7 +90,8 @@ These came from real cuts that looked broken; `references/editing-grammar.md` ha
 - Everything that moves moves sub-pixel, and every card keeps pushing to its last frame.
 - Figures fade in at their final value. Nothing counts up through numbers nobody counted.
 - Captions: one band, caps, spoken words full, upcoming words dim, key words boxed, navy on light
-  cards, white with a soft shadow on footage, the finished line held through a breath.
+  cards, white with a soft shadow on footage, the finished line held through a breath. On footage
+  a soft dark ramp sits under the band, because white type vanishes on sky and white walls.
 
 ## Files
 
