@@ -98,6 +98,15 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 
 - [`founders-handbook`](founders-handbook/) answers founder questions (co-founders, cap tables, SAFEs, Series A, secondaries, M&A, QSBS) from 1984 Ventures' public Founders Handbook and links the chapter behind every answer.
 
+### Web and 3D, by Meng To
+
+Four skills by [Meng To](https://github.com/MengTo), republished unchanged from [MengTo/skills](https://github.com/MengTo/skills) under his MIT licence.
+
+- [`threejs`](threejs/) builds and debugs interactive 3D scenes on the web with Three.js.
+- [`threejs-scroll-worlds`](threejs-scroll-worlds/) builds one persistent 3D world that the camera travels through as the page scrolls.
+- [`awwwards-sites`](awwwards-sites/) art-directs and builds motion-rich marketing, editorial and portfolio sites with GSAP and one smooth-scroll engine.
+- [`realistic-water`](realistic-water/) adds an ultra-realistic open ocean to a Three.js scene: waves, sun glitter, foam and a ship wake.
+
 ### Partner packages
 
 - [`cv-job-match`](cv-job-match/) matches a CV to live roles from Rocketlist.
@@ -154,3 +163,5 @@ Most packages are Apache-2.0 and carry their own license and provenance record. 
 `founders-handbook` summarizes the [Founders Handbook by 1984 Ventures](https://1984.vc/docs/founders-handbook) chapter by chapter, with each chapter linked and its authors credited. The handbook content belongs to 1984 Ventures, so the package is not covered by the repository's Apache-2.0 grant; see [`founders-handbook/THIRD_PARTY_NOTICES.md`](founders-handbook/THIRD_PARTY_NOTICES.md). It is not affiliated with or endorsed by 1984 Ventures.
 
 For academic citation, use [`CITATION.cff`](CITATION.cff). The benchmark identifier is `edge-skill-bench@1.0`.
+
+`threejs`, `threejs-scroll-worlds`, `awwwards-sites` and `realistic-water` are Meng To's work, copied from [MengTo/skills](https://github.com/MengTo/skills) at a pinned commit. They are MIT-licensed (Copyright (c) 2026 Meng To), not covered by the repository's Apache-2.0 grant, and each folder carries his LICENSE. The only change is the front-matter `name:` plus an author and source credit, recorded in each `DERIVATION.json`. They are not affiliated with or endorsed by Meng To.
