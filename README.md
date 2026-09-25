@@ -107,6 +107,12 @@ Four skills by [Meng To](https://github.com/MengTo), republished unchanged from 
 - [`awwwards-sites`](awwwards-sites/) art-directs and builds motion-rich marketing, editorial and portfolio sites with GSAP and one smooth-scroll engine.
 - [`realistic-water`](realistic-water/) adds an ultra-realistic open ocean to a Three.js scene: waves, sun glitter, foam and a ship wake.
 
+### Expressive UI, by Jakub Antalik
+
+One skill by [Jakub Antalik](https://github.com/Jakubantalik), republished unchanged from [Jakubantalik/Libraries.dev](https://github.com/Jakubantalik/Libraries.dev) under his MIT licence.
+
+- [`libraries-dev`](libraries-dev/) adds expressive UI effects (border beam, thinking orbs, gooey, voice glow, bot avatars, liquid metal, image reveal) from the Libraries.dev packages, and finds where they fit in a project.
+
 ### Partner packages
 
 - [`cv-job-match`](cv-job-match/) matches a CV to live roles from Rocketlist.
@@ -165,3 +171,5 @@ Most packages are Apache-2.0 and carry their own license and provenance record. 
 For academic citation, use [`CITATION.cff`](CITATION.cff). The benchmark identifier is `edge-skill-bench@1.0`.
 
 `threejs`, `threejs-scroll-worlds`, `awwwards-sites` and `realistic-water` are Meng To's work, copied from [MengTo/skills](https://github.com/MengTo/skills) at a pinned commit. They are MIT-licensed (Copyright (c) 2026 Meng To), not covered by the repository's Apache-2.0 grant, and each folder carries his LICENSE. The only change is the front-matter `name:` plus an author and source credit, recorded in each `DERIVATION.json`. They are not affiliated with or endorsed by Meng To.
+
+`libraries-dev` is Jakub Antalik's work, copied from [Jakubantalik/Libraries.dev](https://github.com/Jakubantalik/Libraries.dev) at a pinned commit. It is MIT-licensed (Copyright (c) 2026 Jakub Antalik), not covered by the repository's Apache-2.0 grant, and the folder carries his LICENSE. The only change is an author and source credit in the front matter, recorded in `DERIVATION.json`. It is not affiliated with or endorsed by Jakub Antalik.
