@@ -113,6 +113,16 @@ One skill by [Jakub Antalik](https://github.com/Jakubantalik), republished uncha
 
 - [`libraries-dev`](libraries-dev/) adds expressive UI effects (border beam, thinking orbs, gooey, voice glow, bot avatars, liquid metal, image reveal) from the Libraries.dev packages, and finds where they fit in a project.
 
+### Founder ideas, by Garry Tan
+
+One skill by [Garry Tan](https://github.com/garrytan), republished unchanged from [garrytan/gstack](https://github.com/garrytan/gstack) under his MIT licence.
+
+- [`office-hours`](office-hours/) runs YC-style office hours on a product idea: six forcing questions about demand, the status quo and the smallest version, then a design doc, before any code.
+
+### Web design
+
+- [`website-inspiration`](website-inspiration/) checks 17 curated design galleries (full pages, hero sections, pricing, footers, app flows, fonts) for real references before the agent designs a page.
+
 ### Partner packages
 
 - [`cv-job-match`](cv-job-match/) matches a CV to live roles from Rocketlist.
@@ -173,3 +183,5 @@ For academic citation, use [`CITATION.cff`](CITATION.cff). The benchmark identif
 `threejs`, `threejs-scroll-worlds`, `awwwards-sites` and `realistic-water` are Meng To's work, copied from [MengTo/skills](https://github.com/MengTo/skills) at a pinned commit. They are MIT-licensed (Copyright (c) 2026 Meng To), not covered by the repository's Apache-2.0 grant, and each folder carries his LICENSE. The only change is the front-matter `name:` plus an author and source credit, recorded in each `DERIVATION.json`. They are not affiliated with or endorsed by Meng To.
 
 `libraries-dev` is Jakub Antalik's work, copied from [Jakubantalik/Libraries.dev](https://github.com/Jakubantalik/Libraries.dev) at a pinned commit. It is MIT-licensed (Copyright (c) 2026 Jakub Antalik), not covered by the repository's Apache-2.0 grant, and the folder carries his LICENSE. The only change is an author and source credit in the front matter, recorded in `DERIVATION.json`. It is not affiliated with or endorsed by Jakub Antalik.
+
+`office-hours` is Garry Tan's work, copied from [garrytan/gstack](https://github.com/garrytan/gstack) at a pinned commit. It is MIT-licensed (Copyright (c) 2026 Garry Tan), not covered by the repository's Apache-2.0 grant, and the folder carries his LICENSE. The only change is an author and source credit in the front matter, recorded in `DERIVATION.json`. It is not affiliated with or endorsed by Garry Tan or Y Combinator.
