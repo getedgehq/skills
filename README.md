@@ -79,6 +79,8 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 
 ### Media and workflow
 
+- [`ai-dna`](ai-dna/) turns your own local ChatGPT, Claude Code, and Codex histories into a luminous helix still and 12-second film, with an optional portrait intro.
+
 - [`generate-image`](generate-image/) generates images through an authenticated Codex CLI.
 - [`linkedin-media-prep`](linkedin-media-prep/) prepares images and video for LinkedIn.
 - [`ai-festival-poster`](ai-festival-poster/) paints a festival lineup poster from real AI usage in local agent logs.
