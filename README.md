@@ -74,6 +74,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`http-error-triage`](http-error-triage/) separates credential failures from endpoint, CDN, and client failures.
 - [`job-board-scout`](job-board-scout/) watches public job boards against saved rules.
 - [`security-audit-checklist`](security-audit-checklist/) audits code, cloud configuration, containers, CI, and IaC.
+- [`agent-governance-gap-analysis`](agent-governance-gap-analysis/) scores AI agent governance against Cakewalk's 25 read-only checks and writes a 30/60/90 plan. By [Cakewalk](https://www.cakewalk.security/), Apache-2.0.
 - [`shadcn-first`](shadcn-first/) builds interfaces from existing shadcn components and blocks.
 
 ### Media and workflow
