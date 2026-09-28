@@ -117,7 +117,11 @@ def main():
     if not (args.chatgpt or args.claude_code or args.codex or args.conversations_jsonl):
         args.claude_code=[str(Path.home()/'.claude/projects')]
         args.codex=[str(Path.home()/'.codex/sessions')]
-    out=Path(args.output).expanduser().resolve(); out.mkdir(parents=True,exist_ok=True)
+    out=Path(args.output).expanduser().resolve()
+    marker=out/'.ai-dna-output'
+    if out.exists() and any(out.iterdir()) and not marker.is_file(): ap.error(f'output directory is not owned by AI DNA: {out}')
+    out.mkdir(parents=True,exist_ok=True)
+    marker.write_text('AI DNA local output\n')
     t0=time.monotonic(); convs=load_history(args)
     if args.conversations_jsonl:
         old=[json.loads(line) for line in open(Path(args.conversations_jsonl).expanduser())]
@@ -141,12 +145,11 @@ def main():
             if found[0] in matched: ap.error('stop entries must select distinct conversations')
             matched.append(found[0])
         env['STOPS_FILE']=str(stops_path)
-    scratch=Path(tempfile.mkdtemp(prefix='ai-dna-face-')) if args.face and not args.skip_film else None
-    if scratch: env['INTRO_DIR']=str(prepare_intro(args.face,scratch))
-    render=HERE/'film.py'; scale='0.5' if args.preview else '1'
-    subprocess.run([sys.executable,str(render),'hero',str(out/'hero.png'),'--scale',scale],env=env,check=True)
-    fps=12 if args.preview else 30
-    try:
+    with tempfile.TemporaryDirectory(prefix='ai-dna-face-') as temp_dir:
+        if args.face and not args.skip_film: env['INTRO_DIR']=str(prepare_intro(args.face,Path(temp_dir)))
+        render=HERE/'film.py'; scale='0.5' if args.preview else '1'
+        subprocess.run([sys.executable,str(render),'hero',str(out/'hero.png'),'--scale',scale],env=env,check=True)
+        fps=12 if args.preview else 30
         if not args.skip_film:
             for mode in (['pure','intro'] if args.face else ['pure']):
                 frames=out/(mode+'-frames')
@@ -160,8 +163,6 @@ def main():
                 if args.music:cmd+=['-c:a','aac','-b:a','192k']
                 cmd+=['-movflags','+faststart',str(out/(mode+'.mp4'))]
                 subprocess.run(cmd,check=True)
-    finally:
-        if scratch: shutil.rmtree(scratch)
     (out/'run.json').write_text(json.dumps({'stats':data['stats'],'preview':args.preview,'hide_titles':args.hide_titles,'seconds':round(time.monotonic()-t0,1)},indent=2))
     print('Output:',out,'elapsed:',round(time.monotonic()-t0,1),'s')
 if __name__=='__main__':main()
