@@ -1,0 +1,168 @@
+<title>Agent Governance Scorecard</title>
+<style>
+  :root {
+    --bg: #faf8f5; --surface: #ffffff; --line: #e8e2da;
+    --ink: #1d1a16; --ink-2: #6f6455; --ink-3: #a89d8d;
+    --accent: #e2c455; --good: #83bf88; --mid: #e8a04a; --bad: #e86049;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14120f; --surface: #1d1a16; --line: #302b24;
+      --ink: #f1ece4; --ink-2: #a89d8d; --ink-3: #6f6455;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14120f; --surface: #1d1a16; --line: #302b24;
+    --ink: #f1ece4; --ink-2: #a89d8d; --ink-3: #6f6455;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 ui-sans-serif, -apple-system, "Segoe UI", Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 48px 24px 80px; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-3); margin: 0 0 12px;
+  }
+  h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.15; letter-spacing: -.02em; margin: 0 0 8px; }
+  .meta { color: var(--ink-2); font-size: 14px; margin: 0 0 40px; }
+  .meta span + span::before { content: "·"; margin: 0 8px; color: var(--ink-3); }
+
+  .score-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+    padding: 32px; margin-bottom: 40px;
+  }
+  .score-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 16px; }
+  .score-num { font-size: 56px; font-weight: 600; letter-spacing: -.03em; line-height: 1; }
+  .score-num small { font-size: 22px; font-weight: 400; color: var(--ink-3); }
+  .tier {
+    font-size: 12px; letter-spacing: .1em; text-transform: uppercase; font-weight: 600;
+    padding: 6px 12px; border-radius: 999px; border: 1px solid currentColor;
+  }
+  .t-ungoverned { color: var(--bad); }
+  .t-exposed { color: var(--mid); }
+  .t-partial { color: var(--accent); }
+  .t-governed { color: var(--good); }
+  .track { height: 6px; background: var(--line); border-radius: 999px; margin: 24px 0 14px; overflow: hidden; display: flex; }
+  .track > i { display: block; height: 100%; }
+  .seg-met { background: var(--ink); }
+  .seg-partial { background: var(--mid); opacity: .55; }
+  .states { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 18px; font-size: 14px; color: var(--ink-2); }
+  .st { display: inline-flex; align-items: center; gap: 7px; font-variant-numeric: tabular-nums; }
+  .sw { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex: none; }
+  .sw-met { background: var(--ink); }
+  .sw-partial { background: var(--mid); opacity: .55; }
+  .sw-none { background: var(--line); }
+  .sw-unknown { background: transparent; border: 1px dashed var(--ink-3); }
+  .since {
+    margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--line);
+    font-size: 14px; color: var(--ink-2);
+  }
+  .since b { color: var(--good); font-weight: 500; }
+  .verdict { margin: 0; color: var(--ink-2); }
+  .headline { margin: 16px 0 0; font-size: 18px; line-height: 1.5; }
+
+  h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin: 48px 0 16px; }
+
+  .dim { padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .dim:last-child { border-bottom: 0; }
+  .dim-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .dim-name { font-weight: 500; }
+  .dim-num { color: var(--ink-3); font-variant-numeric: tabular-nums; font-size: 14px; }
+  .bar { height: 4px; background: var(--line); border-radius: 999px; margin-top: 10px; overflow: hidden; display: flex; }
+  .bar-fill { display: block; height: 100%; background: var(--ink-3); }
+  .bar-fill.good { background: var(--good); }
+  .bar-fill.mid { background: var(--mid); }
+  .bar-fill.bad { background: var(--bad); }
+  .bar-part { display: block; height: 100%; background: var(--mid); opacity: .4; }
+  .dim-note { margin: 8px 0 0; font-size: 14px; color: var(--ink-2); }
+
+  ol.gaps { list-style: none; counter-reset: g; padding: 0; margin: 0; }
+  .gap {
+    counter-increment: g; position: relative;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 20px 18px 56px; margin-bottom: 12px;
+  }
+  .gap::before {
+    content: counter(g); position: absolute; left: 20px; top: 18px;
+    font-variant-numeric: tabular-nums; color: var(--ink-3); font-size: 14px;
+  }
+  .gap-dim { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+  .gap-stmt { margin: 4px 0 8px; font-weight: 500; }
+  .gap-fix { margin: 0; font-size: 15px; color: var(--ink-2); }
+  .gap-fix b { color: var(--ink); font-weight: 500; }
+  .gap .chip {
+    display: inline-block; margin-left: 8px; vertical-align: 2px;
+    font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; font-weight: 500;
+    color: var(--mid); border: 1px solid currentColor; border-radius: 3px; padding: 2px 6px;
+  }
+
+  #unverified ul { padding-left: 20px; color: var(--ink-2); font-size: 15px; margin: 0; }
+
+  .first-move {
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 3px solid var(--accent); border-radius: 12px; padding: 20px 24px;
+  }
+  .first-move p { margin: 0; }
+
+  footer { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--line); font-size: 14px; color: var(--ink-2); }
+  footer a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--ink-3); }
+  footer a:hover { border-color: var(--ink); }
+  .disclaimer { margin-top: 12px; font-size: 13px; color: var(--ink-3); }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">AI Agent Governance Gap Analysis</p>
+  <h1>How governed is your AI agent stack?</h1>
+  <p class="meta"><span>{{DATE}}</span><span>{{SCOPE}}</span><span>{{METHOD}}</span></p>
+
+  <div class="score-card">
+    <div class="score-top">
+      <div class="score-num">{{SCORE}}<small> / 25 met</small></div>
+      <span class="tier {{TIER_CLASS}}">{{TIER}}</span>
+    </div>
+    <div class="track">
+      <i class="seg-met" style="width:{{PROGRESS_PCT}}%"></i><i class="seg-partial" style="width:{{PARTIAL_PCT}}%"></i>
+    </div>
+    <p class="states">
+      <span class="st"><i class="sw sw-met"></i>{{SCORE}} met</span>
+      <span class="st"><i class="sw sw-partial"></i>{{PARTIAL}} partial</span>
+      <span class="st"><i class="sw sw-none"></i>{{NOT_MET}} not met</span>
+      <span class="st"><i class="sw sw-unknown"></i>{{UNKNOWN}} unknown</span>
+    </p>
+    <p class="verdict">{{TIER_VERDICT}}</p>
+    <p class="headline">{{HEADLINE}}</p>
+    {{SINCE_LAST}}
+  </div>
+
+  <h2>By dimension</h2>
+  {{DIMENSION_ROWS}}
+
+  <h2>Open gaps, in the order worth closing them</h2>
+  <ol class="gaps">
+    {{GAP_ROWS}}
+  </ol>
+
+  <section id="unverified">
+    <h2>Not verified</h2>
+    <ul>{{UNVERIFIED}}</ul>
+  </section>
+
+  <h2>Start here</h2>
+  <div class="first-move"><p>{{FIRST_MOVE}}</p></div>
+
+  <footer>
+    <p>
+      Based on the <a href="https://www.cakewalk.security/gap-analysis">Cakewalk AI Agent Governance Gap Analysis</a>
+      — 25 technical checks across 7 governance dimensions.
+      Cakewalk puts every AI agent behind one identity-aware control plane, so agent access is governed, logged and revoked automatically:
+      <a href="https://www.cakewalk.security/agent-access-management">agent access management</a>.
+    </p>
+    <p class="disclaimer">
+      A self-assessment, not an audit. Answers reflect what was reported and, where noted, what was observed on one machine.
+      No credential values were recorded.
+    </p>
+  </footer>
+</div>
