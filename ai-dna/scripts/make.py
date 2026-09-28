@@ -159,7 +159,7 @@ def main():
                 if args.music: cmd+=['-stream_loop','-1','-i',str(Path(args.music).expanduser())]
                 cmd+=['-map','0:v:0']
                 if args.music: cmd+=['-map','1:a:0','-shortest']
-                cmd+=['-c:v','libx264','-pix_fmt','yuv420p','-crf','18']
+                cmd+=['-vf','pad=ceil(iw/2)*2:ceil(ih/2)*2','-c:v','libx264','-pix_fmt','yuv420p','-crf','18']
                 if args.music:cmd+=['-c:a','aac','-b:a','192k']
                 cmd+=['-movflags','+faststart',str(out/(mode+'.mp4'))]
                 subprocess.run(cmd,check=True)
