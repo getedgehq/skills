@@ -28,6 +28,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 | --- | --- |
 | Keep long work alive across context loss | [`workplan`](workplan/) |
 | Show a plan as a scannable text diagram with decisions on top | [`plan-board`](plan-board/) |
+| Draft a literature review or research paper with checkable citations | [`autonomous-research`](autonomous-research/) |
 | Diagnose an unreliable or expensive agent | [`harness-first`](harness-first/) |
 | Decide whether another skill would help | [`skillneed`](skillneed/) |
 | Find recurring failures in agent sessions | [`skill-miner`](skill-miner/) |
@@ -67,7 +68,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`client-comms`](client-comms/) drafts concise, actionable client messages and handles complaints promptly.
 - [`inbound-triage`](inbound-triage/) ranks mixed inbox threads by consequence and identifies what needs a reply, delegation, or no action.
 
-- [`autonomous-research`](autonomous-research/) produces source-grounded research with citation checks.
+- [`autonomous-research`](autonomous-research/) (formerly OpenDraft) drafts a literature review, research paper, or thesis chapter from one topic line. It finds sources at Crossref and OpenAlex, drafts each section against them, and its integrity gate checks that every printed DOI resolved at Crossref or DataCite. No API key or account. Install: `npx skills add getedgehq/skills --skill autonomous-research`.
 - [`people-search`](people-search/) plans and documents evidence-backed people searches.
 - [`top-down-comms`](top-down-comms/) structures executive and client communication around a governing thought.
 - [`decision-ledger`](decision-ledger/) converts messy notes into evidence-linked decisions, reversals, proposals, open questions, and actions.
