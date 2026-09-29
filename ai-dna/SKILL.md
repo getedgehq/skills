@@ -26,7 +26,7 @@ python3 scripts/make.py \
   --output ~/my-ai-dna
 ```
 
-With no source flags, the script scans `~/.claude/projects` and `~/.codex/sessions`. ChatGPT exports need an explicit `--chatgpt` path. Repeat any source flag to include more paths. `--preview` creates the same 12-second film at 540×675 and 12 fps for a quicker review. Full output is 1080×1350 at 30 fps. Use a new or previously generated AI DNA output folder; the script refuses a nonempty folder it does not own. The still is `hero.png`; the film is `pure.mp4`. `dna.json`, frames, and a count/timing summary also stay in the chosen output folder.
+With no source flags, the script scans `~/.claude/projects` and `~/.codex/sessions`. ChatGPT exports need an explicit `--chatgpt` path. Repeat any source flag to include more paths. `--preview` creates a 540×675 still and the same 12-second film at 540×676 and 12 fps for a quicker review. The extra film pixel keeps H.264 dimensions even. Full output is 1080×1350 at 30 fps. Use a new or previously generated AI DNA output folder; the script refuses a nonempty folder it does not own. The still is `hero.png`; the film is `pure.mp4`. `dna.json`, frames, and a count/timing summary also stay in the chosen output folder.
 
 For a quick first look:
 
