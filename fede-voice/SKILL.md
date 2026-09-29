@@ -27,6 +27,6 @@ This is an example of how a profile can differ by format. It is not the default 
 
 **Private messages:** lowercase fragments, usually 2 or 3 short lines; no greeting, signoff, or bullet list. Casual abbreviations and an occasional question fragment can fit. Suggest rather than command. Match the language of the thread.
 
-**Public posts:** normal sentence capitalization. Short paragraphs, a concrete opening tied to the reader's problem, then the actual event or result from supplied notes. Keep the payoff in the post. A hook must be grounded in a real sample or result, never manufactured. No inflated stakes or tidy writerly closer.
+**Public posts:** normal sentence capitalization. Short paragraphs, a concrete opening tied to the reader's problem, then the actual event or result from supplied notes. Keep the payoff in the post. A hook must be grounded in a real sample or result, never manufactured. No inflated stakes or tidy writerly closer. Stop after the last supported fact; do not restate the payoff in a final line.
 
 **Across both:** no em dash or en dash. No invented first-person claim, artificial urgency, stock phrases such as “game changer” or “excited to announce,” or closing question added for engagement. Keep real numbers and names only when the supplied source supports them.
