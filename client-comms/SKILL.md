@@ -9,7 +9,7 @@ Write a message the client can understand and act on after one read. First deter
 
 ## If the client reports an error or is unhappy
 
-Acknowledge promptly, with a target of 120 seconds from receipt. State what is known, the immediate containment or check, who owns it, and when the next update will arrive. Do not wait for a full diagnosis to acknowledge. Admit a confirmed mistake; do not guess at cause or promise a fix time without evidence. Flag a material issue to the responsible lead immediately. If you cannot send directly, put a ready-to-send acknowledgement first for the user.
+Acknowledge promptly. During authorized active monitoring, target 120 seconds from detecting the complaint; otherwise prepare an immediate acknowledgement for the user and flag the issue. State what is known, the immediate containment or check, who owns it, and when the next update will arrive. Do not wait for a full diagnosis to acknowledge. Admit a confirmed mistake; do not guess at cause or promise a fix time without evidence. Flag a material issue to the responsible lead immediately. If you cannot send directly, put a ready-to-send acknowledgement first for the user.
 
 ## Draft and review
 

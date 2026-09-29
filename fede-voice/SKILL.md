@@ -10,9 +10,9 @@ Use the author's own sent writing as evidence. Do not infer a voice from incomin
 ## Build the profile
 
 1. Sort samples by format: private messages, public posts, email, and so on. Recent examples and explicit corrections outrank old examples. Keep the original language of each sample.
-2. Record observable rules: typical sentence and paragraph length, capitalization, greetings, closers, punctuation, emoji, contractions, recurring words, hooks, and phrases the author rejects. Quote a short sample beside each inferred rule.
+2. Record observable rules: typical sentence and paragraph length, capitalization, greetings, closers, punctuation, emoji, contractions, recurring words, hooks, and phrases the author rejects. Keep a private source pointer beside each inferred rule; quote a sample only when the author explicitly wants it stored. Redact third-party names and confidential details.
 3. Separate facts from style. A sample's claims, people, metrics, or opinions are not reusable facts for a new draft.
-4. Write a compact profile with format-specific rules, 3 positive examples, banned patterns, and an uncertainty note. Ask the author to approve or correct it. Update rules after corrections.
+4. Write a compact profile with format-specific rules, 3 abstract pattern examples, banned patterns, and an uncertainty note. Keep the profile in the current conversation by default; save it only at the author’s request, in the destination they choose. Do not retain raw samples in the saved profile. Ask the author to approve or correct it. Update rules after corrections.
 
 ## Draft or rewrite
 
