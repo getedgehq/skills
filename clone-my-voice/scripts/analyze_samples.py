@@ -30,11 +30,14 @@ def sample_paths(args):
 def label(path, fallback_language):
     fmt = "unsorted"
     language = fallback_language
+    found_format = found_language = False
     for part in reversed(path.parts[:-1]):
-        if part.lower() in FORMATS:
+        if not found_format and part.lower() in FORMATS:
             fmt = {"message": "dm", "messages": "dm", "posts": "post", "emails": "email"}.get(part.lower(), part.lower())
-        if part.lower() in LANGUAGES:
+            found_format = True
+        if not found_language and part.lower() in LANGUAGES:
             language = part.lower()
+            found_language = True
     return f"{fmt}/{language}"
 
 
