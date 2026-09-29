@@ -1,1 +1,0 @@
-../pay-per-call-apis/THIRD_PARTY_NOTICES.md
