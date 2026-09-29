@@ -76,8 +76,8 @@ Three tiers, stated in `SKILL.md` under "Scale":
 | Tier | Word count | Stages | Sources |
 |---|---|---|---|
 | Short piece | 1,500-3,000 words | 1-7, then 9.5, 10, 11, 15, 17 (skips 8, 9, 12-14, 16, 18) | 10-15 |
-| Full paper (default) | Formatter's scaled table, ~21,000 words at full scale | All 18, plus 9.5 | 25-50 |
-| Thesis chapter or long review | Formatter's scaled table, scaled up | All 18, plus 9.5, with stage 7 (drafting) run once per subsection rather than once per section | 50+ |
+| Full paper (default) | Formatter's scaled table, ~21,000 words at full scale | All 18, plus 9.5, and 4.5 for a review | 25-50 |
+| Thesis chapter or long review | Formatter's scaled table, scaled up; a long review runs 8,000-12,000 words | All 18, plus 9.5, and 4.5 for a review, with stage 7 (drafting) run once per subsection rather than once per section | 60+ for a long review, 50+ otherwise |
 
 Stage 9.5 appears in every tier above and is never one of the skipped stages. It is `scripts/assemble.py`, and stages 10, 11 and 15 all read `full_draft.md`, which does not exist until assembly has run. A tier list that drops it is not a shorter pipeline, it is one that stops at stage 10 with nothing to read.
 

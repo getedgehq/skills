@@ -2,7 +2,7 @@
 
 Designs the paper's actual structure and argument: which sections exist, what each one has to prove, and where each piece of evidence goes. A well-sourced gap analysis with no structure just becomes a pile of citations; this is where it becomes a paper.
 
-**Reads:** `research/gaps.md`, `research/summaries.md`, `research/citations.json`
+**Reads:** `research/gaps.md`, `research/summaries.md`, `research/citations.json`, `research/index.json` (only when stage 4.5 ran)
 **Writes:** `outline.md`
 
 `research/gaps.md` carries the argument: what is missing, where sources disagree, what a contribution could be. `research/summaries.md` carries what each source actually says, including any numbers it reports, and is the only file in the pipeline that does. `research/citations.json` is bibliographic metadata, author and year and venue and DOI, and holds no findings at all. This matters here because the structure below plans a results section around specific metrics, and a metric can only be planned for if some source actually reports it.
@@ -124,6 +124,23 @@ X, Y, Z and W each get a real sentence, drawn from `research/gaps.md`, not left 
 ## Figures and tables to plan for
 
 A conceptual framework figure (introduction), a summary-of-related-work table (literature review), a research design figure (methods), a descriptive statistics table and a main-findings figure (results), and a comparative analysis figure (discussion). Number these as placeholders here; the Formatter owns the global numbering scheme.
+
+### When stage 4.5 produced an evidence base
+
+If `research/evidence.json` and `research/index.json` exist, the paper has computed evidence to show, and the outline places it with placeholder lines. Each goes on a line of its own, exactly as written here, and `scripts/export.py --template journal` replaces it with the figure, table or equations that `scripts/evidence.py` drew:
+
+| Placeholder | What it becomes | Where it goes |
+|---|---|---|
+| `{figure:evidence-profile}` | Evidence profile per outcome with the source timeline | Directly after the abstract, before the first section heading, where it becomes the page-one figure |
+| `{figure:source-flow}` | How the retrieved records were used | Methodology, after the paragraph on the search |
+| `{equations:evidence-index}` | The three evidence-index equations | Methodology, inside an "Evidence index" subsection |
+| `{figure:evidence-map}` | Direction of every finding by study and outcome | The section that first maps the evidence |
+| `{table:studies}` | Characteristics of studies with outcome data | Directly after the evidence map |
+| `{table:ledger}` | Every finding with its verbatim supporting sentence | End of the results or thematic sections, before the discussion |
+
+Plan the methodology's "Evidence index" subsection in the outline: it states the tiers, the trial sharing, the direction scores and, in one plain sentence, that the index is descriptive and not a pooled effect size. Plan one results paragraph that reports *S*, *M* and the leave-one-out range for each outcome from `research/index.json`, and says what a high *S* on a small *M* means. Plan no placeholder whose file stage 4.5 did not produce; the journal export fails on it rather than leaving a gap.
+
+Without those two files, plan none of these. They are never drawn by hand.
 
 ## Writing priorities
 

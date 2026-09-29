@@ -23,7 +23,7 @@ SKILL_MD = ROOT / "SKILL.md"
 READS_RE = re.compile(r"^\*\*Reads:\*\*\s*(.+)$", re.MULTILINE)
 WRITES_RE = re.compile(r"^\*\*Writes:\*\*\s*(.+)$", re.MULTILINE)
 BACKTICKED = re.compile(r"`([^`]+)`(\s*\(([^)]*)\))?")
-STAGE_FILE_RE = re.compile(r"^(\d+)-([a-z0-9-]+)\.md$")
+STAGE_FILE_RE = re.compile(r"^(\d+(?:\.\d+)?)-([a-z0-9-]+)\.md$")
 
 # Directories a stage may write into. Anything else has to be justified by the
 # checks below rather than by whoever typed the line.
@@ -198,7 +198,7 @@ def broken_contract():
 class ContractParsingTests(unittest.TestCase):
     def test_every_agent_declares_reads_and_writes(self):
         contract = parse_agents()
-        self.assertEqual(len(contract), 18)
+        self.assertEqual(len(contract), 19)
         for stage, entry in contract.items():
             with self.subTest(stage=stage):
                 self.assertTrue(entry["writes"], f"{entry['file']} writes nothing")

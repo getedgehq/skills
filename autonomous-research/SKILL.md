@@ -16,8 +16,9 @@ description: An 18-agent pipeline that turns one topic line into a drafted
 Turns one topic line into a finished paper with a real literature base.
 
 Ported from OpenDraft (github.com/federicodeponte/opendraft, MIT), which runs this
-as a hosted engine. Here the engine is you: eighteen stages, each one a prompt in
-`agents/`, plus five scripts that do the parts a language model must not do by hand.
+as a hosted engine. Here the engine is you: eighteen stages and one evidence
+stage, each a prompt in `agents/`, plus the scripts that do the parts a language
+model must not do by hand.
 
 **You are the model.** No key, no service, no account. The only network calls are
 Crossref, OpenAlex and DataCite, all open endpoints.
@@ -130,7 +131,7 @@ notices until a reader does.
 ## Setup
 
 ```bash
-mkdir -p research sections review
+mkdir -p research/texts sections review
 ```
 
 No API key, no account, no install step: the scripts are Python standard
@@ -148,12 +149,13 @@ wrote. The paths are the contract between stages:
 ```
 research/sources.md        research/sources.json     research/summaries.md
 research/gaps.md           research/citations.json   research/citation-notes.md
-research/brief.json
+research/brief.json        research/abstracts.json   research/evidence.json
+research/index.json        research/texts/*.txt      research/figures/*
 outline.md                 outline_formatted.md
 sections/*.md              full_draft.md             final.md
 review/thread.md           review/narrator.md        review/skeptic.md
 review/verifier.md         review/referee.md         review/voice.md
-review/entropy.md          review/polish.md
+review/entropy.md          review/polish.md          review/evidence.md
 ```
 
 Four rules about those paths, and each of them has been broken before:
@@ -186,6 +188,7 @@ which is a script you run. Do not skip a stage because the topic looks easy.
 | 2 | Read and summarise them | `agents/02-scribe.md` | `research/summaries.md` |
 | 3 | Find the gap worth writing into | `agents/03-signal.md` | `research/gaps.md` |
 | 4 | Build the citation database | `agents/04-citation-manager.md` | `research/citations.json`, `research/citation-notes.md` |
+| 4.5 | Extract the evidence (reviews) | `agents/04.5-evidence.md` | `research/abstracts.json`, `research/texts/*.txt`, `research/evidence.json`, `research/index.json`, `research/figures/*`, `review/evidence.md` |
 | 5 | Outline the argument | `agents/05-architect.md` | `outline.md` |
 | 6 | Apply venue format and word budgets | `agents/06-formatter.md` | `outline_formatted.md`, `research/brief.json` |
 | 7 | Write each section | `agents/07-crafter.md` | `sections/*.md`, appends to `research/gaps.md` |
@@ -201,6 +204,12 @@ which is a script you run. Do not skip a stage because the topic looks easy.
 | 16 | Add apparatus (optional) | `agents/16-enhancer.md` | `full_draft.md` |
 | 17 | Write the abstract | `agents/17-abstract.md` | prepended to `full_draft.md` |
 | 18 | Write the title | `agents/18-titlemaker.md` | prepended to `full_draft.md` |
+
+Stage 4.5 runs for literature reviews, scoping reviews and any paper that compares
+what several studies found about the same outcomes, and is skipped otherwise. It
+turns findings into `research/evidence.json`, one verbatim quote per finding, and
+the scripts then compute the evidence index and draw every evidence figure and
+table from that file. Its number is a half step for the same reason 9.5's is.
 
 Stage 7 runs once per section, not once per paper. Stages 10 to 12 produce issue
 lists; an issue list nobody applies is a no-op, so apply the fixes and re-run the
@@ -287,11 +296,14 @@ Match the pipeline to what was asked. The stages are the same; the depth is not.
 
 - **A short piece, 1,500 to 3,000 words.** Stages 1 to 7, then 9.5, 10, 11, 15, 17.
   Ten to fifteen sources, or the brief's own minimum wherever it asks for more.
-- **A full paper, the default.** All eighteen, plus 9.5. Twenty-five to fifty
+- **A full paper, the default.** All eighteen, plus 9.5, and 4.5 for a review. Twenty-five to fifty
   sources, or fifty and up when the paper is a literature review, whose own
   floor governs wherever it is higher (`references/paper-types.md`).
-- **A thesis chapter or long review.** All eighteen, plus 9.5, sources in the
-  fifties or more, and stage 7 once per subsection rather than per section.
+- **A thesis chapter or long review.** All eighteen, plus 9.5, and 4.5 for a review,
+  sources in the fifties or more, and stage 7 once per subsection rather than per
+  section. A long review runs 8,000 to 12,000 words on sixty sources or more; its
+  length comes from covering more of the literature and reporting more of it in the
+  evidence tables, never from restating the same findings at greater length.
 
 Stage 9.5 is in every one of those lists. There is no scale at which a paper
 assembles itself.
@@ -341,6 +353,12 @@ python3 scripts/integrity.py final.md -b research/brief.json     # the brief's o
 python3 scripts/integrity.py final.md --stats                    # count, do not check
 python3 scripts/integrity.py final.md -c research/summaries.md   # advisory number check
 python3 scripts/export.py final.md --format docx -o final.docx
+python3 scripts/export.py final.md --format pdf -o final.pdf --template journal --kind "Narrative review"
+
+python3 scripts/evidence.py abstracts research/sources.json -o research/abstracts.json
+python3 scripts/evidence.py check research/evidence.json --abstracts research/abstracts.json --texts research/texts -d research/citations.json
+python3 scripts/evidence.py index research/evidence.json -o research/index.json
+python3 scripts/evidence.py figures research -o research/figures
 ```
 
 Every one of them exits nonzero on failure. That exit code is the signal; read it
@@ -401,6 +419,26 @@ supervisor, a brief for a committee and a manuscript for a journal are all
 documents whose typography somebody is expected to have decided. Arriving in
 the word processor's default is the one outcome that says nobody did.
 
+## The journal PDF
+
+`scripts/export.py --template journal` typesets `final.md` as a two-column
+journal article through `scripts/journal.py`: a masthead, a serif title with the
+subtitle split off at the first colon, a two-column abstract, numbered sections,
+merged runs of adjacent author-year citations, and, when stage 4.5 ran, an
+at-a-glance strip, the evidence figures, the two evidence tables and the index
+equations at the draft's placeholder lines. The fonts, STIX Two Text and Source
+Sans 3, ship in `assets/fonts/` under the SIL Open Font License. It needs pandoc
+and, for the PDF, weasyprint.
+
+It invents nothing a journal page usually carries. There is no journal name,
+volume, issue, received date, affiliation or DOI unless you pass it: `--brand`
+sets the masthead name (default OpenDraft), `--kind` the article type line,
+`--byline` and `--masthead-note` the two lines of small print, and each takes
+only what is true of this paper. A placeholder whose figure was never drawn
+stops the export with the command that draws it, rather than printing the
+braces or leaving a hole. The docx, latex and plain html exports cannot place
+those figures, so they drop the placeholder lines and name each one on stderr.
+
 ## Verification, and what it does and does not prove
 
 `citations.py verify` puts every DOI into one of four states, and `unknown` is
@@ -444,6 +482,21 @@ python3 scripts/citations.py verify -d research/citations.json
 python3 scripts/citations.py compile full_draft.md -d research/citations.json --style <style> -o final.md
 python3 scripts/integrity.py final.md -d research/citations.json -b research/brief.json -c research/summaries.md
 ```
+
+When stage 4.5 ran, two more commands belong to the gate, because the figures
+are only as current as the file they were drawn from:
+
+```bash
+python3 scripts/evidence.py check research/evidence.json --abstracts research/abstracts.json --texts research/texts -d research/citations.json
+python3 scripts/evidence.py index research/evidence.json -o research/index.json
+python3 scripts/evidence.py figures research -o research/figures
+```
+
+`check` must exit 0: every quote found verbatim in its source text, every
+study's DOI in the citation database. Then compare every *S*, *M* and
+leave-one-out number in `final.md` against what `index` just printed. A number
+that differs is a stale number, and the draft is corrected to the file, never
+the other way round.
 
 `verify` runs first so that every record carries a current resolution state
 before `compile` decides what it is allowed to print. `compile` then refuses any

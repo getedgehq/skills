@@ -148,6 +148,10 @@ TABLE_ROW_RE = re.compile(r"^\s*\|")
 TABLE_RULE_RE = re.compile(r"^\s*:?-{3,}:?(?:\s*\|\s*:?-+:?)+\s*$")
 LIST_ITEM_RE = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s")
 INDENTED_CODE_RE = re.compile(r"^(?: {4}|\t)")
+# A line like {figure:evidence-map} is where the journal export places a figure,
+# table or the index equations drawn by scripts/evidence.py. It is layout, not
+# prose, so it counts toward no word total.
+EVIDENCE_PLACEHOLDER_RE = re.compile(r"^\s*\{(?:figure|table|equations):[a-z0-9-]+\}\s*$")
 
 # " ." / " ," / " ;" / " :" left where a marker used to sit. Two things look
 # like this and are not that, and both are text a paper is required to contain:
@@ -422,6 +426,8 @@ def count_prose_words(text):
             in_fence = not in_fence
             continue
         if in_fence:
+            continue
+        if EVIDENCE_PLACEHOLDER_RE.match(line):
             continue
         for token in line.split():
             if any(ch.isalnum() for ch in token):

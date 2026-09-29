@@ -591,7 +591,7 @@ class PipelineTableTests(unittest.TestCase):
 
     def test_the_table_covers_every_stage_and_assembly(self):
         rows = PIPELINE_ROW.findall(SKILL_MD.read_text(encoding="utf-8"))
-        self.assertEqual(len(rows), 19, [r[0] for r in rows])
+        self.assertEqual(len(rows), 20, [r[0] for r in rows])
 
     def test_the_check_fails_on_the_omission_it_was_written_for(self):
         mutated = SKILL_MD.read_text(encoding="utf-8").replace(
