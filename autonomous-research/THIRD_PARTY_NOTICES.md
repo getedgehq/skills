@@ -30,3 +30,21 @@ OpenDraft is licensed under the MIT License:
 > LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 > OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 > SOFTWARE.
+
+## Fonts in assets/fonts
+
+The journal export (`scripts/journal.py`) embeds two typefaces, shipped as
+unmodified static instances of the upstream variable fonts:
+
+- **STIX Two Text** (`STIX-400.ttf`, `STIX-600.ttf`, `STIX-700.ttf`,
+  `STIXi-400.ttf`, `STIXi-600.ttf`). Copyright 2001-2021 The STIX Fonts
+  Project Authors (https://github.com/stipub/stixfonts). Licensed under the
+  SIL Open Font License, Version 1.1; the full text is in
+  `assets/fonts/OFL-STIX-Two.txt`.
+- **Source Sans 3** (`SS-400.ttf`, `SS-600.ttf`, `SS-700.ttf`,
+  `SSi-400.ttf`). Copyright 2010-2024 Adobe (http://www.adobe.com/), with
+  Reserved Font Name 'Source'. Licensed under the SIL Open Font License,
+  Version 1.1; the full text is in `assets/fonts/OFL-Source-Sans-3.txt`.
+
+The three equation images in `assets/` are drawings of the evidence-index
+formulas rendered in the STIX glyphs and carry no third-party content.

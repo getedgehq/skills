@@ -10,7 +10,17 @@ than a Python traceback.
     export.py <draft.md> --format pdf  -o out.pdf  [--bibliography refs.bib --csl apa.csl]
     export.py <draft.md> --format latex -o out.tex
     export.py <draft.md> --format html -o out.html
+    export.py <draft.md> --format pdf  -o out.pdf --template journal [--brand NAME]
+    export.py <draft.md> --format html -o out.html --template journal
     export.py --check              # report what this machine can produce
+
+Journal template: `--template journal` typesets the paper as a two-column
+journal article (scripts/journal.py): masthead, serif title, two-column
+abstract, numbered sections, and the evidence figures, tables and equations
+that `scripts/evidence.py figures` drew, placed at the draft's
+{figure:...}, {table:...} and {equations:...} placeholder lines. It needs
+pandoc, and weasyprint for the PDF. The default template cannot place those
+figures, so it removes the placeholder lines and names each one on stderr.
 
 PDF strategy: pandoc with a LaTeX engine (xelatex/pdflatex) if one is
 installed, otherwise pandoc with --pdf-engine=weasyprint (needs the
@@ -45,7 +55,11 @@ import tempfile
 import zipfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import journal  # noqa: E402
+
 FORMATS = ("docx", "pdf", "latex", "html")
+TEMPLATES = ("default", "journal")
 
 # The ordinary academic manuscript setting, and the one the venue can override.
 DEFAULT_DOCX_FONT = "Times New Roman"
@@ -400,10 +414,58 @@ EXPORTERS = {
 }
 
 
-def export(src_path, out_path, fmt, bibliography=None, csl=None, typography=None):
+def export_journal(src, out, fmt, engines, options=None):
+    """The journal template: HTML from scripts/journal.py, PDF via weasyprint."""
+    options = dict(options or {})
+    if fmt not in ("pdf", "html"):
+        raise ExportError("--template journal produces pdf or html only")
+    if not engines["pandoc"]:
+        raise ExportError(_missing_pandoc_message())
+    base = Path(src).resolve().parent
+    options.setdefault("figures_dir", base / "research" / "figures")
+    options.setdefault("research_dir", base / "research")
+    try:
+        page, warnings = journal.build_html(src, **options)
+    except journal.JournalError as e:
+        raise ExportError(str(e))
+    for w in warnings:
+        print(f"Warning: {w}", file=sys.stderr)
+    if fmt == "html":
+        Path(out).write_text(page, encoding="utf-8")
+        return
+    if not engines["weasyprint"]:
+        raise ExportError("The journal PDF needs weasyprint.\n"
+                          f"Install it with:\n  {_install_hint(WEASYPRINT_INSTALL)}")
+    with tempfile.TemporaryDirectory() as tmp:
+        page_path = Path(tmp) / "journal.html"
+        page_path.write_text(page, encoding="utf-8")
+        code, _, err = _run(["weasyprint", str(page_path), str(out)], timeout=300)
+    if code != 0:
+        raise ExportError(f"weasyprint failed (exit {code}):\n{err.strip()}")
+
+
+def export(src_path, out_path, fmt, bibliography=None, csl=None, typography=None,
+           template="default", journal_options=None):
     engines = detect_engines()
     if fmt not in EXPORTERS:
         raise ExportError(f"Unsupported format '{fmt}'. Choose from: {', '.join(FORMATS)}")
+    if template == "journal":
+        if bibliography or csl:
+            raise ExportError("--template journal typesets the compiled references; "
+                              "drop --bibliography/--csl")
+        export_journal(src_path, out_path, fmt, engines, journal_options)
+        return
+    text = Path(src_path).read_text(encoding="utf-8")
+    stripped, removed = journal.strip_placeholders(text)
+    if removed:
+        for line in removed:
+            print(f"Warning: {line} dropped; only --template journal can place it",
+                  file=sys.stderr)
+        with tempfile.TemporaryDirectory() as tmp:
+            clean = Path(tmp) / Path(src_path).name
+            clean.write_text(stripped, encoding="utf-8")
+            export(clean, out_path, fmt, bibliography, csl, typography)
+        return
 
     extra = []
     if bibliography:
@@ -498,6 +560,23 @@ def _build_parser():
                               "decide the docx body font, size and margins. That default sets no "
                               "body font at all, so the paper renders in whatever the reader's "
                               "Word calls Normal.")
+    parser.add_argument("--template", choices=TEMPLATES, default="default",
+                         help="journal: two-column journal article with the evidence figures "
+                              "(pdf or html only)")
+    parser.add_argument("--figures", metavar="DIR",
+                         help="journal: directory evidence.py figures wrote "
+                              "(default: research/figures next to the draft)")
+    parser.add_argument("--research", metavar="DIR",
+                         help="journal: research/ directory for the at-a-glance numbers "
+                              "(default: research next to the draft)")
+    parser.add_argument("--brand", default="OpenDraft",
+                         help="journal: masthead name (default: OpenDraft)")
+    parser.add_argument("--kind", help='journal: article type line, e.g. "Narrative review"')
+    parser.add_argument("--byline", help="journal: byline under the title")
+    parser.add_argument("--masthead-note", help="journal: right-hand masthead text")
+    parser.add_argument("--lang", default="en", help="journal: document language, for hyphenation")
+    parser.add_argument("--no-glance", action="store_true",
+                         help="journal: leave out the at-a-glance number strip")
     parser.add_argument("--check", action="store_true",
                          help="Report what this machine can produce and exit (no conversion)")
     return parser
@@ -523,9 +602,17 @@ def main(argv=None):
     typography = (None if args.plain_docx
                   else (args.font, args.font_size, args.margin_inches))
     try:
+        options = {"brand": args.brand, "kind": args.kind, "byline": args.byline,
+                   "masthead_note": args.masthead_note, "lang": args.lang,
+                   "glance": not args.no_glance}
+        if args.figures:
+            options["figures_dir"] = Path(args.figures)
+        if args.research:
+            options["research_dir"] = Path(args.research)
         export(draft_path, Path(args.output), args.format,
                bibliography=args.bibliography, csl=args.csl,
-               typography=typography)
+               typography=typography, template=args.template,
+               journal_options=options)
     except ExportError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1

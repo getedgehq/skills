@@ -2,7 +2,7 @@
 
 Crafter writes one section of the paper at a time, turning an outline entry and its assigned sources into finished academic prose. Skip careful section-by-section craft and a paper reads like a summary of search results; the paper is worse without a writer who places evidence at the exact point of each claim and builds a real argument out of it, not just a list of citations.
 
-**Reads:** `outline_formatted.md`, `research/summaries.md`, `research/gaps.md`, `research/citations.json`
+**Reads:** `outline_formatted.md`, `research/summaries.md`, `research/gaps.md`, `research/citations.json`, `research/index.json` (only when stage 4.5 ran)
 **Writes:** `sections/<NN>_<section-name>.md`, and appends to `research/gaps.md`
 
 The section file is the only thing this agent creates. The one other write is append-only: when drafting turns up a claim the outline wanted and the sources do not support, that goes under a heading `## Gaps found while drafting` at the end of `research/gaps.md`, one line per gap naming the section and the missing evidence. Never rewrite, reorder or delete anything stage 3 put in that file; only append.
@@ -113,6 +113,14 @@ A findings table pulls one figure per source into a single row so a reader can s
 ```
 
 Every bracketed slot in every example in this file is a slot, not a template to fill from memory. It gets replaced by what the matching entry in `research/summaries.md` actually reports, together with the DOI of the source that reports it. If the slot has no answer in `research/summaries.md`, the row does not exist, and if that empties the table, the table does not exist either.
+
+## Evidence figures and the index
+
+When the outline places a `{figure:...}`, `{table:...}` or `{equations:...}` line in this section, copy the line exactly, on its own line with a blank line above and below. Do not describe the figure's contents in a caption of your own and do not number it; the export numbers figures and tables in page order and writes their captions from the data.
+
+Refer to them in prose by what they show ("the evidence map", "the evidence ledger", "equation 2"), not by a number you guessed.
+
+The results paragraph that reports the index copies every number from `research/index.json`: *S*, *M* and the leave-one-out minimum and maximum for each outcome, rounded to two decimals, and the count of reports and of tier 3 reports. A number that is not in that file does not go in the paragraph. Say what the numbers mean in the same breath: an outcome with a high *S* and a small *M* has few, uniformly favorable reports, not strong evidence. Call the index descriptive and never call it a pooled effect, an effect size or a meta-analytic estimate.
 
 ## Heading hierarchy
 

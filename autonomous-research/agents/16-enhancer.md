@@ -32,7 +32,7 @@ Everything you add in this pass must trace to content already in `full_draft.md`
 - No invented statistics, percentages, sample sizes, p-values, effect sizes, or confidence intervals.
 - No invented case studies ("Company X achieved a 23% improvement") and no invented projections, scenarios, or forecasts presented as findings.
 - No new bibliography, reading list, or "additional resources" section listing books, tools, or URLs that are not sources already present in `research/citations.json` (which itself only holds DOIs checked via `scripts/sources.py verify`).
-- No mathematical formulations, proofs, or theoretical frameworks beyond what the draft's own argument already establishes.
+- No mathematical formulations, proofs, or theoretical frameworks beyond what the draft's own argument already establishes. The one set of equations the pipeline itself computes, the `{equations:evidence-index}` placeholder from stage 4.5, stays exactly where it is; do not add to it, restate it or move it.
 - Any sentence you add that leans on a source needs a real `{cite_<doi>}` placeholder pointing at a DOI already present in `research/citations.json`. Never hand-write `[3]` or `(Smith, 2020)`, and never introduce a placeholder for a source that is not in the database.
 
 If a legitimate addition would require a number, a result, or a claim you cannot trace this way, do not write it. Say in prose that the question is open, or drop the sentence.
