@@ -1,8 +1,8 @@
 # Edge Skills
 
-Edge finds a task-fit agent skill, shows available evidence, and loads a pinned version into your agent for the current task.
+Edge gives your AI agent the right expert skill for the task at hand. It searches 100,000+ security-screened public skills, picks the best fit, and loads a pinned version for that task. Works in Claude Code, Codex, Cursor and the Claude app.
 
-**Set up Edge:** `set up https://getedge.cc/SKILL.md` — paste this exact line into your agent, as shown on [getedge.cc](https://getedge.cc/).
+**Set up Edge:** paste `set up https://getedge.cc/SKILL.md` into your agent. Details on [getedge.cc](https://getedge.cc/).
 
 ## What can Edge find?
 
