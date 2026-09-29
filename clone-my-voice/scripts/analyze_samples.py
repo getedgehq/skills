@@ -73,8 +73,11 @@ def main():
     parser.add_argument("--language", choices=sorted(LANGUAGES), help="Language for samples without a language folder")
     args = parser.parse_args()
     groups = defaultdict(list)
-    for p in sample_paths(args.paths):
-        groups[label(p, args.language or "unknown")].append(p.read_text(encoding="utf-8"))
+    try:
+        for p in sample_paths(args.paths):
+            groups[label(p, args.language or "unknown")].append(p.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError):
+        parser.exit(2, "error: could not read one or more local samples\n")
     if not groups:
         parser.error("no local .txt or .md samples found")
     print(json.dumps({kind: summarize(texts) for kind, texts in sorted(groups.items())}, ensure_ascii=False, indent=2))
