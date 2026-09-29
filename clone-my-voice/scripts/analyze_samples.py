@@ -22,20 +22,20 @@ def sample_paths(args):
     for arg in args:
         p = Path(arg).expanduser()
         if p.is_file() and p.suffix.lower() in {".txt", ".md"}:
-            yield p
+            yield p, Path(p.name)
         elif p.is_dir():
-            yield from (q for q in sorted(p.rglob("*")) if q.is_file() and not q.is_symlink() and q.suffix.lower() in {".txt", ".md"})
+            yield from ((q, Path(p.name) / q.relative_to(p)) for q in sorted(p.rglob("*")) if q.is_file() and not q.is_symlink() and q.suffix.lower() in {".txt", ".md"})
 
 
-def label(path, fallback_language):
+def label(path, explicit_language):
     fmt = "unsorted"
-    language = fallback_language
+    language = explicit_language or "unknown"
     found_format = found_language = False
     for part in reversed(path.parts[:-1]):
         if not found_format and part.lower() in FORMATS:
             fmt = {"message": "dm", "messages": "dm", "posts": "post", "emails": "email"}.get(part.lower(), part.lower())
             found_format = True
-        if not found_language and part.lower() in LANGUAGES:
+        if explicit_language is None and not found_language and part.lower() in LANGUAGES:
             language = part.lower()
             found_language = True
     return f"{fmt}/{language}"
@@ -74,8 +74,8 @@ def main():
     args = parser.parse_args()
     groups = defaultdict(list)
     try:
-        for p in sample_paths(args.paths):
-            groups[label(p, args.language or "unknown")].append(p.read_text(encoding="utf-8"))
+        for p, relative in sample_paths(args.paths):
+            groups[label(relative, args.language)].append(p.read_text(encoding="utf-8"))
     except (OSError, UnicodeError):
         parser.exit(2, "error: could not read one or more local samples\n")
     if not groups:
