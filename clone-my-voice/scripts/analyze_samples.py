@@ -6,8 +6,10 @@ from collections import Counter, defaultdict
 import json
 from pathlib import Path
 import re
+from statistics import median
 
 FORMATS = {"dm", "message", "messages", "post", "posts", "email", "emails"}
+LANGUAGES = {"en", "de", "fr", "es", "it", "pt", "nl"}
 STYLE_WORDS = {
     "actually", "also", "anyway", "basically", "could", "just", "maybe",
     "really", "still", "think", "want", "would", "yeah", "eig", "einfach",
@@ -25,11 +27,15 @@ def sample_paths(args):
             yield from (q for q in sorted(p.rglob("*")) if q.is_file() and not q.is_symlink() and q.suffix.lower() in {".txt", ".md"})
 
 
-def label(path):
+def label(path, fallback_language):
+    fmt = "unsorted"
+    language = fallback_language
     for part in reversed(path.parts[:-1]):
         if part.lower() in FORMATS:
-            return {"message": "dm", "messages": "dm", "posts": "post", "emails": "email"}.get(part.lower(), part.lower())
-    return "unsorted"
+            fmt = {"message": "dm", "messages": "dm", "posts": "post", "emails": "email"}.get(part.lower(), part.lower())
+        if part.lower() in LANGUAGES:
+            language = part.lower()
+    return f"{fmt}/{language}"
 
 
 def summarize(texts):
@@ -45,11 +51,12 @@ def summarize(texts):
     return {
         "sample_count": len(texts),
         "nonblank_lines": len(lines),
-        "median_words_per_sentence": sorted(word_lengths)[len(word_lengths)//2] if word_lengths else 0,
+        "median_words_per_sentence": median(word_lengths) if word_lengths else 0,
         "mean_words_per_line": round(len(words)/len(lines), 1) if lines else 0,
         "lowercase_line_start_percent": round(100*lower_starts/len(starts)) if starts else 0,
         "blank_lines_per_sample": round(sum(t.splitlines().count("") for t in texts)/len(texts), 1) if texts else 0,
-        "question_start_percent": round(100*sum(line.endswith("?") for line in lines)/len(lines)) if lines else 0,
+        "question_line_percent": round(100*sum(line.endswith("?") for line in lines)/len(lines)) if lines else 0,
+        "question_opening_percent": round(100*sum(next((line.strip() for line in text.splitlines() if line.strip()), "").endswith("?") for text in texts)/len(texts)) if texts else 0,
         "digit_line_percent": round(100*sum(any(c.isdigit() for c in line) for line in lines)/len(lines)) if lines else 0,
         "punctuation_counts": dict(sorted(punct.items())),
         "style_word_counts": dict(sorted(style_words.items())),
@@ -60,10 +67,11 @@ def summarize(texts):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("paths", nargs="+", help="Local .txt/.md files or directories, grouped by format folders when possible")
+    parser.add_argument("--language", choices=sorted(LANGUAGES), help="Language for samples without a language folder")
     args = parser.parse_args()
     groups = defaultdict(list)
     for p in sample_paths(args.paths):
-        groups[label(p)].append(p.read_text(encoding="utf-8"))
+        groups[label(p, args.language or "unknown")].append(p.read_text(encoding="utf-8"))
     if not groups:
         parser.error("no local .txt or .md samples found")
     print(json.dumps({kind: summarize(texts) for kind, texts in sorted(groups.items())}, ensure_ascii=False, indent=2))
