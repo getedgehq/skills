@@ -52,13 +52,15 @@ commands already wrapped in `ssh <server> '...'`.
 Replay every past block through the current hooks, and prove the guards still hold:
 
 ```bash
-python3 scripts/replay-hook-blocks.py --must-block scripts/must-block.txt [--dump DIR]
+python3 scripts/replay-hook-blocks.py --must-block /path/to/local-guard-cases.txt [--dump DIR]
 ```
 
 - `now passes`: the block no longer fires (fixed hook, or confirm it was a false positive).
 - `still blocked`: inspect each reason; keep the true positives, narrow the rest.
 - `must-block cases missed` must be 0. Verify guards negatively: loosening a pattern until
   `rm -rf ~` passes is worse than any false positive.
+Keep guard test inputs outside the installed skill. The repository's negative-test
+fixture is under `tests/agent-infra-fixer/` and is not part of this package.
 
 Fix pattern: match what is EXECUTED, not text. Anchor destructive targets (`/`, `~`,
 `$HOME`, `*` as the whole argument), allow `--force-with-lease`, parse command position
