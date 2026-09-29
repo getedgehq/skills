@@ -18,6 +18,7 @@ import time
 import zipfile
 
 HERE = Path(__file__).resolve().parent
+FFMPEG = os.environ.get('AI_DNA_FFMPEG', 'ffmpeg')
 spec = importlib.util.spec_from_file_location('dna_extract', HERE / 'extract.py')
 extract = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(extract)
@@ -93,7 +94,7 @@ def prepare_intro(path, out):
         (target/'frames.raw').write_bytes(frame)
     else:
         vf='scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350'
-        cmd=['ffmpeg','-hide_banner','-loglevel','error','-y','-i',str(p),'-t','2.8','-vf',vf,'-r','24','-f','rawvideo','-pix_fmt','rgb24',str(target/'frames.raw')]
+        cmd=[FFMPEG,'-hide_banner','-loglevel','error','-y','-i',str(p),'-t','2.8','-vf',vf,'-r','24','-f','rawvideo','-pix_fmt','rgb24',str(target/'frames.raw')]
         subprocess.run(cmd,check=True)
     mask=Image.new('L',(1080,1350)); draw=ImageDraw.Draw(mask)
     draw.ellipse((140,60,940,1160),fill=255)
@@ -155,7 +156,7 @@ def main():
                 frames=out/(mode+'-frames')
                 if frames.exists(): shutil.rmtree(frames)
                 subprocess.run([sys.executable,str(render),mode,str(frames),'--scale',scale,'--fps',str(fps),'--jobs','1'],env=env,check=True)
-                cmd=['ffmpeg','-hide_banner','-loglevel','error','-y','-framerate',str(fps),'-i',str(frames/'%04d.png')]
+                cmd=[FFMPEG,'-hide_banner','-loglevel','error','-y','-framerate',str(fps),'-i',str(frames/'%04d.png')]
                 if args.music: cmd+=['-stream_loop','-1','-i',str(Path(args.music).expanduser())]
                 cmd+=['-map','0:v:0']
                 if args.music: cmd+=['-map','1:a:0','-shortest']
