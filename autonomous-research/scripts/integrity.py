@@ -85,7 +85,7 @@ MISSING_CITE = re.compile(r"\{cite_MISSING\s*:?\s*([^}]*)\}")
 
 # One name token: unicode-aware, so "Muller" with an umlaut is a surname and not
 # a single letter "M" followed by an unmatchable remainder.
-_NAME = r"[^\W\d_][\w'\-]*"
+_NAME = r"[^\W\d_][\w'’\-]*"  # U+2019 added: typographic apostrophe, e.g. "Dall’Ora"
 # ... constrained to start with something that is not lower case, which is what
 # keeps ordinary prose parentheticals like "(approximately 2020)" from being
 # read as citation markers.
@@ -112,7 +112,7 @@ _SURNAME = r"(?:(?i:" + _PARTICLE + r")[-\s]+)*" + _NAME_UPPER
 # original code let that slot be any case (bare _NAME, not _NAME_UPPER)
 # because it is never mistaken for prose the way the marker's opening word
 # is, and this keeps that looseness while adding particle support.
-_SURNAME_LOOSE = r"(?:(?i:" + _PARTICLE + r")[-\s]+)*" + _NAME
+_SURNAME_LOOSE = r"(?:(?i:" + _PARTICLE + r")[-\s]+)*" + _NAME + r"(?:\s" + _NAME_UPPER + r")*"  # multi-word surnames, e.g. "von Thiele Schwarz"
 
 # Author-year marker: (Family, 2024) / (Family & Family, 2024) / (Family et al., 2024)
 # The year is OPTIONAL because MLA in-text markers carry no year at all: they
