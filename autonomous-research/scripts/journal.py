@@ -127,6 +127,7 @@ h2+p,h3+p,figure+p,.eqs+p{text-indent:0}
 a{color:var(--accent);text-decoration:none}
 figure{margin:9pt 0 11pt;break-inside:avoid}
 figure.wide{column-span:all}
+figure.tbl{break-inside:auto;column-span:none}
 figure.hero{margin:12pt 0 4pt}
 figure svg{width:100%;height:auto}
 figure.map svg{width:78%;margin:0 11%}
@@ -291,7 +292,7 @@ def build_html(draft_path, figures_dir=None, research_dir=None, brand="OpenDraft
         cap = f"<figcaption{' class=tcap' if role == 'table' else ''}>{head}{caption}</figcaption>"
         content = (figures_dir / fname).read_text(encoding="utf-8")
         if role == "table":
-            return f"<figure class=wide>{cap}{content}</figure>"
+            return f"</main><figure class=\"wide tbl\">{cap}{content}</figure><main class=cols>"
         cls = "hero" if hero else ("col" if name == "source-flow" else "wide")
         if name == "evidence-map":
             cls += " map"
