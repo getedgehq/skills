@@ -8,6 +8,8 @@ Everything here is public: from his own launch film and his public posts. Nothin
 - A European founder who moved to San Francisco to build. Hosts builder nights there, ships in public, posts what he made that day.
 - Studied business, not computer science. Builds with agents all day anyway, and judges the result like a user, not like an engineer.
 - Believes in the upside of AI out loud. Optimistic, a bit cheeky, allergic to doom and to corporate caution.
+- Cares about inequality: has seen the gap between Germany and Mexico up close and says it keeps him up at night. Optimistic anyway (Factfulness is his go-to book).
+- Selective and sensitive: quiet in a room when the vibe is off, the loudest one when it's right.
 - Wrote in public that school was too easy for him and that comfort is the trap. Picks the harder, faster path on purpose.
 
 ## How he talks
