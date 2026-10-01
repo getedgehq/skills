@@ -107,6 +107,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 ### Founder guides
 
 - [`founders-handbook`](founders-handbook/) answers founder questions (co-founders, cap tables, SAFEs, Series A, secondaries, M&A, QSBS) from 1984 Ventures' public Founders Handbook and links the chapter behind every answer.
+- [`pitch-lensing`](pitch-lensing/) structures and reviews an investor deck with the lensing method pitch designer Chris Laughlin presented in a public Emerson Collective talk (June 2024): a lens note per partner, a four-slide context opener instead of Problem / Solution, raise timing and a fast-rules review table. Restated in our own words with credit; not endorsed by him. Install: `npx skills add getedgehq/skills --skill pitch-lensing`.
 
 ### Web and 3D, by Meng To
 
