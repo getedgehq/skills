@@ -9,7 +9,16 @@ Use this when an agent has an authorized Buffer connection and must create, resc
 
 ## Configuration
 
-Supply the Buffer bearer token through a secret manager or process environment. Set your own approval policy, daily cadence, timezone, and media URL host. If another scheduler controls the same channel, include its queue in any collision check; an unavailable queue is an unknown state, not an empty one. Keep these choices outside this skill.
+Supply `BUFFER_TOKEN` and `BUFFER_GRAPHQL_URL` through a secret manager or process environment; set the latter to the current official Buffer GraphQL endpoint. Set your own approval policy, daily cadence, timezone, and media URL host. If another scheduler controls the same channel, include its queue in any collision check; an unavailable queue is an unknown state, not an empty one. Keep these choices outside this skill.
+
+The bundled standard-library helper supports channel listing and draft-first creation on X, LinkedIn, Instagram, and Facebook. It intentionally requires an exact channel ID and does not implement account-specific cadence or another scheduler's queue. Run that external slot check before `--armed`.
+
+```bash
+python3 scripts/buffer_api.py channels
+python3 scripts/buffer_api.py create --channel <channel-id> --text-file post.txt \
+  --at 2026-10-15T10:00:00+02:00 --video <public-media-url> --comment 'Details below'
+# For already approved exact copy, use --armed on the initial create call.
+```
 
 ## API procedure
 
@@ -27,4 +36,4 @@ Buffer may return `429 RATE_LIMIT_EXCEEDED` for a 24 hour window. Stop polling w
 
 ## Example
 
-A team needs an X video post at 10:00 with a link in a self reply. Resolve the X channel ID, confirm its slot, create a draft with the video in `thread[0]` and the link in `thread[1]`, then read it back and verify `thread[0].assets` is populated. After approval, arm the exact draft and inspect the live thread shortly after publish.
+A team needs an X video post at 10:00 with a link in a self reply. Resolve the X channel ID and confirm its slot. After approval of the exact text, create the scheduled post with `--armed`, placing the video in `thread[0]` and the link in `thread[1]`. Read it back to verify the main tweet still has its asset, then inspect the live thread shortly after publish. If approval is still pending, create a draft and arm that same draft in Buffer after approval.
