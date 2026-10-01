@@ -72,6 +72,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`people-search`](people-search/) plans and documents evidence-backed people searches.
 - [`top-down-comms`](top-down-comms/) structures executive and client communication around a governing thought.
 - [`decision-ledger`](decision-ledger/) converts messy notes into evidence-linked decisions, reversals, proposals, open questions, and actions.
+- [`negotiation-prep`](negotiation-prep/) prepares a negotiation with BATNA/ZOPA analysis, scores draft messages on six dimensions before they are sent, and keeps a concession ledger across rounds. Inspired by the negotiation preparation approach taught in the CEMS Negotiation Strategy course at Nova SBE. Install: `npx skills add getedgehq/skills --skill negotiation-prep`.
 
 ### Engineering and operations
 
