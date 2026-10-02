@@ -5,7 +5,7 @@ description: Use when writing, rewriting or reviewing the opening seconds of a s
 
 # Kallaway Layered Hook
 
-Based on Kallaway's public method. Not affiliated.
+Based on Kallaway's public method. Not affiliated with or endorsed by Kallaway.
 
 A hook has one job: make the right viewer opt in. It needs topic clarity and on-target curiosity, and curiosity comes from contrast [7][1]. Every hook has layers: what you show (visual), what you write on screen (text), what you say (spoken), plus the audio/sound effects [1][2]. The difference he names between 500 and 500,000 views is maximum alignment between those layers on ONE idea [1].
 

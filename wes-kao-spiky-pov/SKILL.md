@@ -5,11 +5,11 @@ description: Use when writing or sharpening a LinkedIn or X post, essay, opinion
 
 # Spiky Point of View
 
-Based on Wes Kao's public method. Not affiliated.
+Based on Wes Kao's public method. Not affiliated with or endorsed by Wes Kao.
 
 A spiky point of view (SPOV) is "a perspective others can disagree with", a belief you feel strongly about and will advocate for, your thesis about topics in your realm of expertise [1]. The goal is not agreement. It is to start a conversation and make the reader see their problem in a new way [1][2].
 
-Why this skill exists: by default Claude rounds edges (summaries, balanced both-sides takes, stacked qualifiers), or overcorrects into rage-bait. Wes Kao rules out both: if everyone agrees it is "too middle of the road", and a contrarian "who just wants to stir the pot" is "intellectually lazy" [1].
+Why this skill exists: by default an AI draft rounds edges (summaries, balanced both-sides takes, stacked qualifiers), or overcorrects into rage-bait. Wes Kao rules out both: if everyone agrees it is "too middle of the road", and a contrarian "who just wants to stir the pot" is "intellectually lazy" [1].
 
 ## The method
 
@@ -72,7 +72,7 @@ Why this skill exists: by default Claude rounds edges (summaries, balanced both-
 - [ ] Is every line strategy, not self-expression? [15]
 - [ ] Would a reader's eyes light up, or would they say "Hmm interesting"? [12]
 
-## Failure modes (what plain Claude does, and the fix)
+## Failure modes (what a default AI draft does, and the fix)
 - Middle-of-the-road take everyone agrees with ("AI agents need good guardrails"). Fix: find the part of it a credible peer would dispute [1].
 - Contrarian for its own sake ("X is dead", "everyone is wrong about Y") with no evidence or stake. Wes Kao calls this intellectually lazy [1]. Fix: keep the edge, add the mechanism and evidence, scope it.
 - Observation dressed up as insight ("I'm seeing more teams do X"). Fix: add the assertion and "so what" [3].
