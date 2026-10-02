@@ -4,6 +4,10 @@ Edge gives your AI agent the right expert skill for the task at hand. It searche
 
 **Set up Edge:** paste `set up https://getedge.cc/SKILL.md` into your agent. Details on [getedge.cc](https://getedge.cc/).
 
+## Benchmarks
+
+Explore [Edge's benchmark evidence](benchmarks/): published results, study protocols, task manifests and reanalysis scripts, alongside credited external research. Browse the [interactive benchmarks](https://getedge.cc/benchmarks/) for outcomes and method details.
+
 ## What can Edge find?
 
 These are examples returned by production `find_skill` on 2026-09-29; they are third-party catalog results, not packages maintained in this repository. Results can change.
