@@ -1,131 +1,48 @@
 ---
 name: braun-poke-the-bear
-description: "Create and review prospecting talk tracks and cold emails using Josh Braun's Poke the Bear method. Use when you need to surface an unexamined problem through neutral questions, lower sales resistance, and let prospects decide whether to continue."
+description: "Create and review cold-call talk tracks and cold emails using Josh Braun's Poke the Bear method. Use to examine a prospect's current process, surface a possible overlooked cost, and invite discussion without leading questions or sales pressure."
 ---
 
 # Josh Braun's Poke the Bear
+
 Based on Josh Braun's public method. Not affiliated with or endorsed by Josh Braun.
 
 ## When to use
 
-Use this skill to draft a cold call, adapt an opening to cold email, improve a question that sounds like a disguised pitch, or diagnose why prospects dismiss an offer they perceive as equivalent to what they already have. Focus on how they currently accomplish a relevant job and whether an overlooked problem deserves attention. [S1][S2][S4]
+Use this skill when drafting a prospecting call, adapting its central question to cold email, repairing a disguised pitch, or reviewing outreach that attracts reflexive dismissals. The deliverable is a prospecting brief plus a usable call or email, with response branches that preserve the prospect's choice. Begin with the job the person performs and how they accomplish it today, rather than the seller's preferred product story. [S1][S2][S3]
 
-Treat the procedure below as an operational synthesis of Braun's public examples, not a transcript or a claim that he mandates one universal script. His published openings vary, but the underlying intent remains curiosity without assuming the prospect needs the product. [S3][S7]
+The method is especially useful when a familiar supplier or workaround appears adequate but a separate exposure may remain unexamined. It does not establish that the prospect has a problem. A satisfactory current process, the wrong responsibility, and a refusal are valid discoveries. Do not convert the exercise into a meeting quota, a fear campaign, or a sequence of rebuttals. [S4][S8][S12]
 
-## Operational procedure
+Read [references/method.md](references/method.md) for the reasoning and channel decisions. The sequence below is this package's operational synthesis: Braun's public examples vary, and he explicitly emphasizes intent over a universal script. The examples and template are teaching tools, not scripts he authored. [S7]
 
-### 1. Set the intent before writing
+## Procedure
 
-Define success as discovering whether there is a relevant problem and willingness to discuss it. A prospect who is making adequate progress without the offer is a legitimate outcome. Do not build a script whose every branch forces a meeting, or treat a refusal as something to defeat. Braun connects attachment to the sale with pressure that makes people protect themselves. [S3][S8]
+1. **Define the assignment and success.** Identify the channel, intended role, job, and seller capability. Set success as learning whether a relevant gap and willingness to discuss it exist. Drafting outreach does not itself authorize sending it. Use the intake fields in [templates/output-template.md](templates/output-template.md) and the intent rules in [references/method.md](references/method.md). [S3][S8]
 
-Identify the channel, prospect's responsibility, job being done, current approach if known, and what the seller can actually change. If the role or workflow is unknown, mark it as unknown and make verification part of the opening. Distinguish ownership of the job from possession of a particular title. [S1][S5]
+2. **Separate facts from hypotheses.** Record verified role information, known workflow details, and unknowns. Mark assumed processes and possible consequences explicitly. Do not invent customers, losses, or statistics to make the opening compelling. Consult the evidence rules in [references/method.md](references/method.md) and trace any method attribution through [references/sources.md](references/sources.md). [S4][S7]
 
-### 2. Find the overlooked cost of the current approach
+3. **Map one overlooked exposure.** Describe the current approach, the concrete mechanism that could leave something unseen, and its possible consequence. Prefer a specific verification gap over generic savings language. If no defensible exposure exists, ask about the process before proposing one. See the problem map in [references/method.md](references/method.md). [S2][S4]
 
-Write a brief internal map of the job, the familiar way of doing it, a possible blind spot, and its consequence. Start from what the prospect already uses or does. A current supplier can be doing its main job well while a separate risk remains unexamined. This is why a generic promise of savings often produces an immediate dismissal. [S4]
+4. **Choose a brief, relevant opening.** For calls, identify yourself and select a direct or permission opening. Verify responsibility when unknown; use a tentative observation when research supports it. Include peer familiarity only when true. Avoid stacking introductions and qualification questions. See the opening decisions in [references/method.md](references/method.md). [S1][S5][S7][S11]
 
-Choose a concrete mechanism the prospect can investigate, such as what happens between periodic checks, what disappears from view, or how they verify that an apparently successful process really works. Ask what relevant information the seller knows that the buyer might not have considered. Do not settle for abstract efficiency language when you can name the actual exposure. [S2]
+5. **Frame the possibility without accusation.** If context is needed, describe a recognizable situation and leave room for it not to apply. Use a peer observation only when supported. Keep product explanation for the point where it helps answer the prospect's question. Follow the framing rules in [references/method.md](references/method.md). [S3][S6]
 
-Prefer a consequential cost of leaving things as they are over a generic promise of improvement. Keep it a possibility, not an accusation. Do not import the tax savings or other numerical examples in Braun's posts as evidence about a new prospect. If supporting evidence is absent, use a qualitative hypothesis instead of invented amounts or prevalence. [S4][S6]
+6. **Write one neutral process question.** Ask how or what they currently do about the job or exposure. Check whether a satisfied prospect can answer comfortably. Add a small, correctable menu only when it reduces effort. Compare the weak and improved drafts in [examples/worked-examples.md](examples/worked-examples.md). [S2][S5][S12]
 
-### 3. Open with relevance and room to decline
+7. **Create space for the answer.** Put a pause after the call question. For email, make the question the reply point and remove competing requests. Keep spoken stretches short and conversational. Use the channel fields in [templates/output-template.md](templates/output-template.md) and delivery guidance in [references/method.md](references/method.md). [S1][S2][S12]
 
-For a direct opening like the starting post, introduce the caller and company, exchange a brief greeting, then verify responsibility for the relevant job. For a permission opening, acknowledge that the contact is unexpected and ask whether a short conversation is possible. Choose the version that suits the task rather than stitching multiple openers into a long preamble. [S1][S5]
+8. **Listen and reflect before deepening.** After a response, pause briefly, then reflect or clarify what was actually said. Alternate questions with grounded observations. Explore a revealed gap rather than inventing the next admission. See the listening rules in [references/method.md](references/method.md). [S9][S11]
 
-If genuine familiarity exists through work with a similar group, state it briefly to explain why the conversation may be relevant. Do not manufacture customer relationships or a shared community. Braun's examples use familiarity to reduce the stranger barrier, then move promptly to the prospect's way of doing the job. [S7]
+9. **Write distinct response branches.** Cover an adequate process, a gap, a refusal, interest, and uncertain ownership. Accept satisfaction and stop on an explicit refusal. Clarify a dismissal only if the person remains willing to converse. Use the branch fields in [templates/output-template.md](templates/output-template.md). [S8][S12]
 
-When public research suggests ownership, a tentative observation about the person's responsibility can replace another qualification question. Leave room for correction. This avoids turning the first few seconds into a stack of questions about title, team size, and responsibilities. [S11]
+10. **Offer a conditional next step.** When interest appears, connect the capability to their described process, then ask whether a later conversation would help. Honor the promised brevity. Consult the progression rules in [references/method.md](references/method.md) and the call illustration in [examples/worked-examples.md](examples/worked-examples.md). [S1][S5][S10]
 
-### 4. Frame the possible problem without making it personal
+11. **Review and deliver.** Apply [checklists/review-checklist.md](checklists/review-checklist.md), repair every failed item, and return the brief, finished message, branches, and a short neutrality rationale. State unresolved evidence gaps rather than concealing them. [S3][S8][S12]
 
-Describe a recognizable situation among comparable people, followed by an explicit acknowledgment that it may not apply here. Use a real observation when available; otherwise identify it as a possibility. A short peer story lets the prospect consider the problem without hearing an attack on their competence or current choices. [S6]
+## Files in this skill
 
-Remove product introductions and requests centered on the seller's desire for a demo. Connect the observation to the buyer's process and potential cost of inaction. The problem should earn attention before the product enters the conversation. [S6]
-
-### 5. Ask one neutral question and pause
-
-Ask how or what the prospect currently does about the specific job or exposure. A useful question makes the existing process visible and allows the prospect to describe tools, workarounds, success, or frustration. Avoid wording that assumes the process is broken before they answer. [S1][S3]
-
-When answering from scratch would be difficult, add a short menu of plausible current approaches. Make the choices recognizable and easy to correct, including the possibility that the issue is not relevant. Braun uses menus to show understanding of the workflow and help people explain their situation. [S5][S12]
-
-Apply a neutrality check. Could someone describe a satisfactory current approach without contradicting the question? If the wording effectively asks whether they want an obvious benefit, or makes agreement the only respectable answer, rewrite it. The question should reveal their thinking rather than collect an admission you can use against them. [S2]
-
-Stop speaking after the question. Put a pause cue in the call draft and allow the prospect to think. Do not fill the silence with a solution explanation that supplies the conclusion you wanted them to reach. [S1][S9]
-
-### 6. Follow their answer rather than the planned pitch
-
-Wait two beats after they finish. Mirror a few of their final words when clarification would help, or offer a tentative label of what you heard. Invite elaboration on their experience. Aim for roughly twice as much listening as talking; avoid interrupting with your own analogous story or preparing a rebuttal while they speak. [S9]
-
-Alternate questions with observations that acknowledge the answer. If the script contains several consecutive information requests, replace one with a tentative reflection grounded in what the prospect actually said. Nervous over-questioning can make an otherwise curious call feel like an interrogation. [S11]
-
-If they describe a gap, deepen that particular thread. If they describe a satisfactory method, accept that information instead of escalating the fear. If they refuse or ask to end the conversation, stop. Do not add artificial urgency, conceal information, or keep pushing because the seller wants a meeting. [S8]
-
-For a conversational dismissal, acknowledge it first. If they remain willing to talk, a brief permission-based clarification can distinguish satisfaction with the current approach, low relevance, or lack of responsibility. Use this to learn the truth, not to reopen a refusal through a sequence of rebuttals. [S12][S8]
-
-### 7. Offer the next step when interest appears
-
-When the prospect asks about the offer, explain briefly what it changes in relation to the process they described. Ask whether learning more would be useful, with room to say it does not fit. The starting framework places this offer after the question and makes it conditional on applicability. [S1][S5]
-
-When the prospect expresses interest or starts asking substantive questions, honor the short-call promise and suggest a later conversation to review options. Do not keep extending the unexpected call. Braun's popcorn analogy warns against taking a productive moment so far that the conversation loses its appeal. [S10]
-
-For cold email, preserve the same neutral examination of the current approach. Use the process question to invite a reply; do not turn it into a leading invitation that bundles an attractive benefit with agreement to hear a pitch. [S2]
-
-### 8. Review the deliverable
-
-Check for the failure modes Braun identifies when interest is low: the wrong owner, a message that sounds like an existing solution, vague benefits, confusing language, excited sales delivery, or a monologue. Keep delivery calm and conversational. If a spoken stretch exceeds about fifteen seconds, look for a place to return the conversation to the prospect. [S12]
-
-Produce a brief containing the relevant role and job, known facts and remaining uncertainties, the current approach, and one possible unexamined cost. Then provide the usable talk track or email, its neutral question, and the pause or reply point. This output structure operationalizes Braun's progression from role to possible problem to self-diagnosis. [S1][S4][S7]
-
-Include response branches for an adequate current approach, a revealed gap, a refusal, and expressed interest. Supply a next-step invitation only for the interested branch. Finish with a short explanation of how the question allows the prospect to reach their own conclusion. Treat these deliverable requirements as this skill's packaging of the public method. [S3][S8][S10]
-
-## Worked example: invented illustration
-
-Scenario: An invented service helps operations teams check active software accounts against staff departures. The fictional buyer's responsibility is known, but their offboarding process and any waste are unknown. The possible blind spot is an account that remains active after someone leaves, not a claim that this buyer is wasting money. This illustrates examining a current process without assuming a problem. [S2][S3]
-
-Illustrative call:
-
-Caller: Hello Priya, Alex from AccessCheck. This is an unexpected call. Is there time for one quick question?
-
-Priya: Go ahead.
-
-Caller: I understand you oversee employee offboarding. One possible gap is a software account staying active after the departure checklist is complete. What do you currently use to check for those accounts?
-
-[Pause.]
-
-Priya: Our checklist covers the main tools, but individual team subscriptions are harder to see.
-
-Caller: It sounds like the centrally managed tools are covered, while team subscriptions are less visible.
-
-[Pause for Priya to elaborate.]
-
-Priya: Yes. How would your service help?
-
-Caller: AccessCheck compares the account list with departure records so your team can review anything still active. Would a short follow-up to look at that gap be useful?
-
-This invented sequence combines a permission opening, neutral process question, reflection, and conditional invitation. If Priya instead says every account is checked and the process works, the caller accepts that. If she declines, the conversation ends. [S5][S8][S9][S10]
-
-## Sources
-
-[S1] Josh Braun, Poke the Bear cold call framework. https://www.linkedin.com/posts/josh-braun_poke-the-bear-cold-call-framework-1-open-activity-7367171705728937984-0qeR
-
-[S2] Josh Braun, How to Poke the Bear. https://joshbraun.com/how-to-poke-the-bear/
-
-[S3] Josh Braun, Lowering Resistance During a Cold Call. https://joshbraun.com/lowering-resistance-during-a-cold-call/
-
-[S4] Josh Braun, 95% of Salespeople Don't Need to Overcome Objections, They Need to Poke the Bear. https://joshbraun.com/95-of-salespeople-dont-need-to-overcome-objections-they-need-to-poke-the-bear/
-
-[S5] Josh Braun, Lowering Resistance. https://joshbraun.com/lowering-resistance/
-
-[S6] Josh Braun, I Would Love To . . . https://joshbraun.com/i-would-love-to/
-
-[S7] Josh Braun, How to Approach People Who Have Little Desire to Talk With You. https://joshbraun.com/how-to-approach-people-who-have-little-desired-to-talk-with-you/
-
-[S8] Josh Braun, People Aren't Targets. https://joshbraun.com/people-arent-targets/
-
-[S9] Josh Braun, Listening, public PDF. https://joshbraun.com/?download_id=14562&sdm_process_download=1
-
-[S10] Josh Braun, Poke the Bear for Aunt Flow. https://joshbraun.com/poke-the-bear-for-aunt-flow/
-
-[S11] Josh Braun, Do Your Cold Calls Feel Like An Interrogation? https://joshbraun.com/do-your-cold-calls-feel-like-an-interrogation/
-
-[S12] Josh Braun, Defusing I'm not interested. https://joshbraun.com/defusing-im-not-interested/
+- [references/method.md](references/method.md): Detailed principles, decisions, edge cases, and expert warnings.
+- [references/sources.md](references/sources.md): The twelve fetched public sources and their contributions.
+- [examples/worked-examples.md](examples/worked-examples.md): Invented call and email illustrations with before-and-after analysis.
+- [templates/output-template.md](templates/output-template.md): Fill-in prospecting brief, channel draft, branches, and rationale.
+- [checklists/review-checklist.md](checklists/review-checklist.md): Pass/fail review criteria and common repairs.
