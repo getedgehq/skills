@@ -143,6 +143,7 @@ One skill by [Garry Tan](https://github.com/garrytan), republished unchanged fro
 - [`cv-job-match`](cv-job-match/) matches a CV to live roles from Rocketlist.
 - [`rocketlist`](rocketlist/) searches current startup jobs and hiring companies through Rocketlist's public MCP.
 - [`pay-per-call-apis`](pay-per-call-apis/) exposes Monid's paid data and scraping tools through one CLI.
+- [`radarkit-prompt-discovery`](radarkit-prompt-discovery/) finds the AI prompts a company should track for AI search visibility, by RadarKit.
 
 ## Evidence status
 
@@ -192,6 +193,8 @@ The previous install names remain as compatibility aliases. New integrations sho
 Most packages are Apache-2.0 and carry their own license and provenance record. Partner-owned packages may use different terms; their package directories state those terms explicitly.
 
 `founders-handbook` summarizes the [Founders Handbook by 1984 Ventures](https://1984.vc/docs/founders-handbook) chapter by chapter, with each chapter linked and its authors credited. The handbook content belongs to 1984 Ventures, so the package is not covered by the repository's Apache-2.0 grant; see [`founders-handbook/THIRD_PARTY_NOTICES.md`](founders-handbook/THIRD_PARTY_NOTICES.md). It is not affiliated with or endorsed by 1984 Ventures.
+
+`radarkit-prompt-discovery` is RadarKit's own Skill, provided by RadarKit for Edge and published unchanged apart from its front-matter `name:`. No licence was stated with it, so it is not covered by the repository's Apache-2.0 grant; see [`radarkit-prompt-discovery/THIRD_PARTY_NOTICES.md`](radarkit-prompt-discovery/THIRD_PARTY_NOTICES.md).
 
 For academic citation, use [`CITATION.cff`](CITATION.cff). The benchmark identifier is `edge-skill-bench@1.0`.
 
