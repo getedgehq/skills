@@ -1,101 +1,53 @@
 ---
 name: costa-negotiation-dynamics
-description: "Prepare and review negotiations using Costa's approach to evolving relationships, information, creative packages and conflict prevention. Use for supplier, client or internal bargaining, especially repeated dealings."
+description: "Prepare, review and debrief negotiations using Luís Almeida Costa's public approach to evolving relationships, critical information, linked packages and conflict prevention. Use for client, supplier or internal bargaining, especially repeated dealings."
 ---
 
 # Negotiation Strategy and Negotiation Dynamics
+
 Based on Luís Almeida Costa's public method. Not affiliated with or endorsed by Luís Almeida Costa.
 
 ## When to use
 
-Use this skill to prepare a negotiation, evaluate proposed terms, diagnose an impasse, or debrief repeated dealings with customers, suppliers or internal departments. Treat transactions as an evolving relationship when decisions change subsequent options. [S2]
+Use this skill to prepare a negotiation brief, review proposed terms, diagnose an impasse or debrief a round with clients, suppliers or internal departments. It is particularly useful when today's agreement, unilateral decisions and behavior change tomorrow's options, information or willingness to cooperate. The deliverable is an actionable brief and, after a round, an updated relationship record. [S2]
 
-This is a practical synthesis of public teaching descriptions, an interview and articles, not the proprietary simulator or its scoring model. Costa developed Negotiation Dynamics: The Game jointly with Ingemar Dierickx. The procedure below translates the published principles into agent actions; its tables, checklists and example are implementation aids rather than claimed official course templates. [S1]
+Diagnose the situation before selecting tactics. A competitive bid, a price discussion, a complex package and a repeated relationship need different analysis. Do not promise that every disagreement admits a mutually beneficial deal, or that a courteous process requires accepting unfavorable terms. [S3][S5]
 
-## Operational procedure
+This package synthesizes public articles, an interview, a syllabus and program descriptions. It does not reproduce simulator rules, scoring or private course materials. Negotiation Dynamics: The Game was developed jointly by Costa and Ingemar Dierickx; the current program describes Deal Maker, developed with Galo IT. The brief, tables and review gates here are practical adaptations, not official course templates. [S1][S7]
 
-### 1. Diagnose the situation before choosing tactics
+## Procedure
 
-Read the task and deal history. Diagnose the negotiating situation, available tactics and changes that could improve its structure. Separate competitive bidding, single-issue bargaining, packages, internal negotiations and repeated relationships. Do not apply one preferred bargaining tactic indiscriminately across these settings. [S3]
+Read the relevant sections of [references/method.md](references/method.md) as you work. Use [templates/output-template.md](templates/output-template.md) for the brief; omit only fields irrelevant to the user's task and explain consequential gaps. Keep facts, hypotheses and illustrative figures visibly separate.
 
-If the task involves an auction, identify the rules, the auctioneer's objective and circumstances before recommending a bid or format. Do not invent a universal optimal auction strategy. [S3]
+1. **Define the assignment and diagnose the setting.** Establish the decision, parties, deadline, negotiating authority and whether the task is preparation, review or debrief. Classify the setting before recommending an opening or concession. See [method: situation diagnosis](references/method.md#1-situation-diagnosis). [S3]
 
-### 2. Reconstruct the evolving relationship
+2. **Reconstruct the relationship state.** Record prior agreements, separate unilateral decisions, external changes and current constraints. Identify what each previous move changed in subsequent options, information and cooperation. See [method: relationship state](references/method.md#2-relationship-state). [S2]
 
-Create a relationship-state note covering prior agreements, unilateral decisions by both sides, external changes, current options and constraints. For each move, record immediate results and possible consequences for the next negotiation. Include information access and counterpart willingness to cooperate, not just current revenue or price. [S2]
+3. **Select the critical unknowns.** Rank unanswered questions by whether the answer could change the boundary, agenda or package. Draft genuine diagnostic questions, with a stated consequence for each answer. See [method: information](references/method.md#3-information-before-argument). [S4]
 
-Test an apparently attractive deal by asking what future choices it removes or creates. A price gain that damages the next transaction needs an explicit assessment, because the course's simulation evaluates deals through their ramifications for future dealings. Keep uncertain consequences as scenarios rather than fabricated numerical simulator scores. [S1]
+4. **Prepare distinct negotiating positions.** Separate the limit, target, opening proposal and concession responses. Explain the evidence and dependencies behind each; leave unsupported values unresolved. See [method: boundaries](references/method.md#4-boundaries-and-credibility). [S3]
 
-### 3. Find the information that changes the decision
+5. **Check credibility before proposing terms.** Test promises against capacity and authority, openings against defensibility, and offer revisions against substantive reasons. Fix foreseeable credibility damage before optimizing persuasion. See [method: boundaries](references/method.md#4-boundaries-and-credibility). [S5]
 
-List the few unknowns whose answers could change the agenda, proposed package or willingness to agree. Distinguish observed facts from hypotheses about the counterpart. Draft questions that test those hypotheses before drafting arguments defending your position. Costa's public teaching emphasizes diagnostic pattern recognition and inquisitiveness over argumentative performance. [S4]
+6. **Map interests and differences.** Distinguish demanded terms from underlying interests. Identify differences in costs, capabilities, preferences and expectations; mark counterpart priorities as hypotheses until supported. See [method: variables](references/method.md#5-interests-and-negotiable-variables). [S6]
 
-Look for information in prior dealings, available records and counterpart responses. Update the relationship-state note when something new is learned. Ask what previous commitments or decisions enabled or restricted access to that information; in The Game, information availability itself depends on earlier deals and decisions. [S2]
+7. **Build linked packages.** Connect concessions to reciprocal terms rather than settling issues independently. Show why each side might prefer the exchange, and verify the whole package against the user's boundary. See [method: packages](references/method.md#6-linked-packages-and-agreement-architecture) and [worked examples](examples/worked-examples.md). [S5][S6]
 
-### 4. Prepare the boundary, aspiration and opening
+8. **Test future consequences and uncertainty.** Compare immediate gains with later flexibility, information access, credibility and capacity. Specify plausible alternative conditions and unresolved agreement mechanics without inventing simulator scores. See [method: packages](references/method.md#6-linked-packages-and-agreement-architecture). [S2][S3]
 
-Write separate entries for the user's limit, target, opening proposal and intended concession pattern. Explain each entry; mark unsupported values unresolved. Prepare responses to likely counterpart offers and demands for concessions. Treat these as distinct preparation questions, not a single price chosen under pressure. [S3]
+9. **Prepare a response to tension.** Identify escalation signals and choose a courteous question, agenda reset or clarification that restores joint analysis. Preserve the boundary while removing threats and personal attacks. See [method: process](references/method.md#7-process-and-escalation). [S5]
 
-Before recommending an ambitious opening, check whether it could appear outrageous and undermine credibility. For every promise, check the user's ability to deliver. If changing or withdrawing an earlier offer becomes necessary, articulate the substantive reason rather than presenting unexplained retreat as clever bargaining. [S5]
+10. **Rehearse and revise.** Test the agenda and package against likely objections, new information and a refusal. Discuss with the user's team when available; revise the diagnosis when an answer changes the situation. See [method: rehearsal](references/method.md#8-rehearsal-recording-and-learning). [S7]
 
-### 5. Turn differences into negotiable variables
+11. **Deliver or record the round.** Produce the brief; after a negotiation, record agreement or non-agreement, unilateral decisions and process observations separately. Capture deadlines and unresolved commitments. See [output template](templates/output-template.md). [S7]
 
-Build an issue table with each side's interests, relative priorities and possible differences in costs, capabilities, preferences or expectations. Investigate those differences rather than trying to persuade the counterpart to value everything as you do. Costa describes differences as the source of potential mutual gain. [S6]
+12. **Review and update.** Run [checklists/review-checklist.md](checklists/review-checklist.md), repair material failures, identify the most damaging plausible mistake and set one observable improvement for the next round. Update the relationship state with feedback, not just the price achieved. [S2][S4]
 
-Expand a price-only agenda with variables connected to actual interests. Possible implementation choices include delivery timing, volume predictability, service scope or payment timing. Inventing variables is legitimate in the public description of The Game, but each added variable must change the feasible deal rather than merely decorate the offer. [S2]
+## Files in this skill
 
-### 6. Build linked packages and examine their architecture
-
-Use the issue table to construct conditional exchanges: give something relatively inexpensive to the user in return for something more valuable to them. Show the counterpart's plausible benefit too. Do not assume that adding issues automatically creates value; the potential comes from differences in priorities that the package can exploit. [S6]
-
-Avoid settling each issue independently and only then assembling the results. Costa's conflict article warns that even an expanded agenda can remain trapped in a distributive logic when topics are negotiated in isolation. Present linked terms so trade-offs remain visible. [S5]
-
-For complex or long-term arrangements, examine how the agreement handles uncertainty and differing expectations. As an implementation aid, sketch what happens under alternative future conditions and identify the terms that need adjustment. Flag unresolved architecture questions; the syllabus prescribes no single design. [S3]
-
-### 7. Interrupt destructive escalation
-
-When pressure produces counterpressure, hostility or retaliatory measures, diagnose whether the agenda and process are causing the spiral. Costa's supplier-retailer example shows escalation from shelf-space demands to pricing disputes, delisting and advertising retaliation. Restore linked trade-offs before recommending another punitive move. [S5]
-
-Replace aggressive language with courteous questions and acknowledgment of the counterpart's perspective. Confirm shared understanding when terms become ambiguous. Recheck promises, extreme openings and unexplained offer withdrawals. Evaluate how the interaction feels to the counterpart as well as what they receive; process affects satisfaction and the capacity to work constructively. [S5]
-
-### 8. Rehearse, record and debrief
-
-Rehearse the agenda, questions and package against plausible counterpart reactions. Review the strategy with the user's team where available. This adapts the published preparation cycle of studying instructions, obtaining additional information, planning the agenda and discussing team strategy. [S7]
-
-At the end of a round, record agreement or non-agreement, separate unilateral decisions, and a process evaluation. Respect the real task's deadline. Compare the outcome with the prepared analysis, then update the relationship-state note before preparing the next round. [S7]
-
-Collect feedback on behavior as well as results. Identify one consequential mistake or recurring habit and a specific adjustment for the next negotiation. Costa warns that experienced negotiators still err and that effectiveness depends heavily on avoiding major mistakes; a strong result alone does not establish a sound process. [S4]
-
-## Finished output and final checks
-
-Return a usable negotiation brief containing the situation diagnosis; limit, target and opening; concession responses; unanswered questions; issue priorities; proposed linked package; uncertainty scenarios; and escalation response. State assumptions so ambition remains tempered by judgment. [S3]
-
-Include a separate view of immediate outcomes and consequences for later dealings. After an actual round, add the recorded outcome, unilateral decisions, process observations and next-round updates. A completed brief should make the next negotiation easier to diagnose, rather than treating the current result as an isolated score. [S7]
-
-Before delivery, identify the most damaging plausible error and how the proposed approach avoids it. Check specifically for an untested counterpart assumption, premature argument, price-only framing, credibility damage or a recurring habit identified in feedback. Prioritize these consequential errors over polishing persuasive language. [S4]
-
-## Worked example: invented illustration
-
-A packaging buyer faces a supplier's request to raise unit prices from EUR 1.00 to EUR 1.08. The buyer initially wants to refuse. Earlier orders were unpredictable; the supplier is reluctant to reserve capacity.
-
-The agent asks what drives the increase and which commitments reduce costs. In this fictional scenario, the supplier values predictable production while the buyer values reliable replenishment. The agent proposes testing a package of EUR 1.04, a rolling volume commitment and reserved delivery slots. It labels the figures illustrative and subject to the buyer's actual limit. This translates Costa's principle of exploiting different priorities into a concrete exchange. [S6]
-
-The future-state assessment asks whether the volume commitment improves capacity access or restricts the buyer during a demand downturn. After the round, the agent records the decision and asks an observer whether the buyer's questions uncovered useful information or became disguised arguments. The next brief incorporates that feedback. [S7]
-
-## Sources
-
-All seven sources below were fetched with curl. The articles are public; no paid book or private simulator text was used. S4 and S5 are Nova SBE editorial accounts of Costa's teaching. S6 is an article authored by Costa.
-
-[S1] Nova SBE. Professor Luís Almeida Costa won the CEMS Course of the Year Award. 6 December 2017. https://www.novasbe.unl.pt/en/whats-happening/news/news-detail/id/30/professor-luis-almeida-costa-won-the-cems-course-of-the-year-award
-
-[S2] CEMS. Nova wins Course of the Year Award. Interview with Luís Almeida Costa. 29 November 2015. https://www.cems.org/news-events/news/nova-wins-course-year-award
-
-[S3] Luís Almeida Costa. Negotiation Strategy, CEMS MIM Programme, 2013/2014 syllabus. Public CEMS PDF. https://bo.cems.org/upload/courses/8242.pdf
-
-[S4] Nova SBE Executive Education. What does it take to be an effective negotiator? 23 January 2017. https://en.blog.exed.novasbe.pt/articles/o-que-e-preciso-para-sermos-negociadores-eficazes
-
-[S5] Nova SBE Executive Education. How to avoid escalating conflicts in a negotiation? 23 February 2022. https://en.blog.exed.novasbe.pt/articles/como-evitar-o-agravamento-de-conflitos-numa-negociacao
-
-[S6] Luís Almeida Costa. Negociação e criação de valor. Observador, 24 May 2021. https://observador.pt/opiniao/negociacao-e-criacao-de-valor/
-
-[S7] Nova SBE. Advanced Negotiation: a hands-on and effective approach. Public program description and typical negotiation cycle. https://www.novasbe.unl.pt/en/programs/executive-education/open-programs/management-strategy/advanced-negotiation-a-hands-on-and-effective-approach
+- [SKILL.md](SKILL.md): Entry point, use cases and the agent's main loop.
+- [references/method.md](references/method.md): Detailed principles, decision rules, explicit warnings and edge cases.
+- [references/sources.md](references/sources.md): Seven fetched public sources and their contributions, keyed by citation number.
+- [examples/worked-examples.md](examples/worked-examples.md): Two invented illustrations comparing weak drafts with complete improved briefs.
+- [templates/output-template.md](templates/output-template.md): Fill-in negotiation brief and round record with field guidance.
+- [checklists/review-checklist.md](checklists/review-checklist.md): Pass/fail review gates, common failures and practical fixes.
