@@ -5,13 +5,11 @@ description: Use when writing or reviewing a strategic narrative for a company o
 
 # Andy Raskin Strategic Narrative
 
-Based on Andy Raskin's public method. Not affiliated.
+Based on Andy Raskin's public method. Not affiliated with or endorsed by Andy Raskin.
 
 Raskin's core claim: "The company story is the company strategy" [23]. A strategic narrative "transforms the act of buying into the act of joining a movement" [22]. It is not storytelling used to dress up claims of superiority [8].
 
-Tags: **[2016]** = the Zuora essay. **[2017-18]** = follow-up essays. **[NEW]** = 2022 to 2026 posts and podcast, where most refinements live.
-
-## What plain Claude gets wrong (fix these first)
+## Common failure modes (check these first)
 
 - Opens with "AI is changing everything" or "the world is changing" plus two bullet lists. Raskin: "We now live in an AI world" is "already an old, non-differentiated story" [19]; a long used-to-be/now-it-is list is a known failure [5].
 - Uses "old way vs new way", which is a product before/after. Raskin wants old game vs new game, a shift in the buyer's head [6].
@@ -21,33 +19,33 @@ Tags: **[2016]** = the Zuora essay. **[2017-18]** = follow-up essays. **[NEW]** 
 
 ## Method
 
-1. **Find the shift in the buyer's world, from buyers.** Ask customers what changed in their world that made the product urgent; customers sometimes hand you the words [6][5]. **[NEW]** Start with the buyer, not your differentiators; the story then decides what you build [15]. **[NEW]**
+1. **Find the shift in the buyer's world, from buyers.** Ask customers what changed in their world that made the product urgent; customers sometimes hand you the words [6][5]. Start with the buyer, not your differentiators; the story then decides what you build [15].
 
-2. **Name the old game and the new game in a few words each.** "Software to cloud", "transactions to subscriptions", "opinions to reality" [5]. Concise naming is key even though compactness costs completeness; overstating is acceptable [5]. **[NEW]** Frame it as a mindset ("old winning mindset / new winning mindset"), not a workflow your product streamlines [6]. **[NEW]** A shift that your product brought about is old way/new way; you want a shift that creates demand for the product [6]. **[NEW]** Borrowing an existing shift name with traction is fine; coining one can waste months [3]. **[2017-18]**
+2. **Name the old game and the new game in a few words each.** "Software to cloud", "transactions to subscriptions", "opinions to reality" [5]. Concise naming is key even though compactness costs completeness; overstating is acceptable [5]. Frame it as a mindset ("old winning mindset / new winning mindset"), not a workflow your product streamlines [6]. A shift that your product brought about is old way/new way; you want a shift that creates demand for the product [6]. Borrowing an existing shift name with traction is fine; coining one can waste months [3].
 
-3. **Pass the undeniability test.** The change must be (a) undeniably happening, (b) happening independently of you, whether you exist or not, and (c) give rise to stakes; all three must be true [2]. **[2017-18]** Do not open with "the problem": asserting a prospect has a problem puts them on the defensive; a shift gets them to open up [1][3]. **[2016]** Structure the opening as news: "there's a journalist inside every buyer" looking for a simple story of a changing world [12]. **[NEW]**
+3. **Pass the undeniability test.** The change must be (a) undeniably happening, (b) happening independently of you, whether you exist or not, and (c) give rise to stakes; all three must be true [2]. Do not open with "the problem": asserting a prospect has a problem puts them on the defensive; a shift gets them to open up [1][3]. Structure the opening as news: "there's a journalist inside every buyer" looking for a simple story of a changing world [12].
 
-4. **Name the stakes: winners and losers.** Best version: show winners already playing the new game [5]. **[NEW]** "Emotional" has a definition: the buyer no longer sees the future as "sort of okay" but split between a very negative and a very positive outcome [5]. **[NEW]** Show both that adapting yields a highly positive future and not adapting an unacceptably negative one, to beat loss aversion [1]. **[2016]**
+4. **Name the stakes: winners and losers.** Best version: show winners already playing the new game [5]. "Emotional" has a definition: the buyer no longer sees the future as "sort of okay" but split between a very negative and a very positive outcome [5]. Show both that adapting yields a highly positive future and not adapting an unacceptably negative one, to beat loss aversion [1].
 
-5. **Name the enemy as the old mindset, never the competitor list.** Naming the shift already names the enemy; then show competitors perpetuate the old mindset instead of calling them "worse" [7]. **[NEW]** Position yourself as the first and only one devoted to helping buyers play the new named game, not as "better" or "different in some capability" [8]. **[NEW]** Optionally include yourself among those once seduced by the old way ("we", not "you") [2]. **[2017-18]**
+5. **Name the enemy as the old mindset, never the competitor list.** Naming the shift already names the enemy; then show competitors perpetuate the old mindset instead of calling them "worse" [7]. Position yourself as the first and only one devoted to helping buyers play the new named game, not as "better" or "different in some capability" [8]. Optionally include yourself among those once seduced by the old way ("we", not "you") [2].
 
-6. **Write the buyer mission statement (object of the new game).** Raskin renamed the "promised land" to "naming the object of the new game" / "buyer mission statement": a goal state for buyers that works as the movement's rallying cry and ideally the company mission [5][9][10]. **[NEW]** Examples he cites: "Turn customers into subscribers" (Zuora), "Unlock reality" (Gong), "Upskill from within" (360Learning), "Scale at speed" (Tech Mahindra) [9][10][16]. Rules:
-   - It differentiates via goal state, not claims: "Don't want to belong? Book a hotel." [10] **[NEW]**
-   - Cinderella tradeoff: choose between "attend the ball" (concrete), "marry royalty", "live happily ever after" (vague). Pick the highest-level thing that still defines and differentiates the movement; he lands nearer "attend the ball" than most teams like [10]. **[NEW]**
-   - Make it a disputable purpose: narrow enough that reasonable people can disagree (Gong's "Goodbye opinions, hello reality" in 2018; Turing's "Train super-intelligence"). That makes it a decision filter for product, hiring and operations [20]. **[NEW]**
-   - It can be asymptotically unachievable, like "Live there" [5]. **[NEW]**
-   - Pose it as a question: "What would it take to turn every customer into a subscriber?" [5][3]. **[NEW]**
-   - It must be desirable and hard to reach without outside help, or why do you exist [1]. **[2016]**
+6. **Write the buyer mission statement (object of the new game).** Raskin renamed the "promised land" to "naming the object of the new game" / "buyer mission statement": a goal state for buyers that works as the movement's rallying cry and ideally the company mission [5][9][10]. Examples he cites: "Turn customers into subscribers" (Zuora), "Unlock reality" (Gong), "Upskill from within" (360Learning), "Scale at speed" (Tech Mahindra) [9][10][16]. Rules:
+   - It differentiates via goal state, not claims: "Don't want to belong? Book a hotel." [10]
+   - Cinderella tradeoff: choose between "attend the ball" (concrete), "marry royalty", "live happily ever after" (vague). Pick the highest-level thing that still defines and differentiates the movement; he lands nearer "attend the ball" than most teams like [10].
+   - Make it a disputable purpose: narrow enough that reasonable people can disagree (Gong's "Goodbye opinions, hello reality" in 2018; Turing's "Train super-intelligence"). That makes it a decision filter for product, hiring and operations [20].
+   - It can be asymptotically unachievable, like "Live there" [5].
+   - Pose it as a question: "What would it take to turn every customer into a subscriber?" [5][3].
+   - It must be desirable and hard to reach without outside help, or why do you exist [1].
 
-7. **Name the obstacles.** Repackage the "problems you solve" as obstacles to the goal state already framed as life and death; often new challenges that did not exist in the old game [5]. **[NEW]** The obstacle slide must explain why reaching the goal is hard without you [3]. **[2017-18]**
+7. **Name the obstacles.** Repackage the "problems you solve" as obstacles to the goal state already framed as life and death; often new challenges that did not exist in the old game [5]. The obstacle slide must explain why reaching the goal is hard without you [3].
 
-8. **Introduce capabilities as magic gifts, one per obstacle.** Narrative does not replace features; it gives context for why features matter, and only works if the demo maps features to obstacles to the buyer mission [12]. **[NEW]** Product is "a prop for making the story come true" [5]. **[NEW]**
+8. **Introduce capabilities as magic gifts, one per obstacle.** Narrative does not replace features; it gives context for why features matter, and only works if the demo maps features to obstacles to the buyer mission [12]. Product is "a prop for making the story come true" [5].
 
-9. **Present evidence.** Best: stories of similar customers who reached the goal state, in their own voices; next: demos; if very early, dogfooding results [1][2]. Logos and investor names, if kept, go here, not at the start [3]. **[2016][2017-18]**
+9. **Present evidence.** Best: stories of similar customers who reached the goal state, in their own voices; next: demos; if very early, dogfooding results [1][2]. Logos and investor names, if kept, go here, not at the start [3]. ****
 
-10. **Tailor by audience without forking the story.** The change is the glue; add an "it's playing out across segments" slide, then a persona-specific goal state and obstacles [4]. For investors the goal state is profiting in the new world; obstacles are market size, business model and team [4]. **[2017-18]** If an AI lab ships a competing offering, do not argue "better"; show buyers a different game and a different promised land [18]. **[NEW]**
+10. **Tailor by audience without forking the story.** The change is the glue; add an "it's playing out across segments" slide, then a persona-specific goal state and obstacles [4]. For investors the goal state is profiting in the new world; obstacles are market size, business model and team [4]. If an AI lab ships a competing offering, do not argue "better"; show buyers a different game and a different promised land [18].
 
-11. **Draft compact, in slides, then test live.** Slides force the "agonizing sacrifice of completeness in favor of compactness"; prose is "too forgiving" [17]. **[NEW]** No template: slide count varies, sometimes the shift is one slide, sometimes none [5]. **[NEW]** Test in a few real sales calls; ask "Am I crazy or are you seeing this?" and watch whether buyers say how the shift plays out for them [5]. **[NEW]** Do not A/B test the top-level message; the CEO picks one and repeats it everywhere [11]. **[NEW]** Expect the first full draft to land badly; throwing out most of the team's ideas is the point [5]. Drop a piece that does not feel true to the team [21]. **[NEW]**
+11. **Draft compact, in slides, then test live.** Slides force the "agonizing sacrifice of completeness in favor of compactness"; prose is "too forgiving" [17]. No template: slide count varies, sometimes the shift is one slide, sometimes none [5]. Test in a few real sales calls; ask "Am I crazy or are you seeing this?" and watch whether buyers say how the shift plays out for them [5]. Do not A/B test the top-level message; the CEO picks one and repeats it everywhere [11]. Expect the first full draft to land badly; throwing out most of the team's ideas is the point [5]. Drop a piece that does not feel true to the team [21].
 
 ## Self-review checklist
 
@@ -77,7 +75,7 @@ Tags: **[2016]** = the Zuora essay. **[2017-18]** = follow-up essays. **[NEW]** 
 ## Worked examples (illustrative, written for this skill, not Raskin's)
 
 **A. Invoice-automation startup (illustrative).**
-Weak (plain Claude): "AI is transforming finance. Manual AP is slow and error-prone. Our AI platform automates invoices 10x faster."
+Weak (a default AI draft): "AI is transforming finance. Manual AP is slow and error-prone. Our AI platform automates invoices 10x faster."
 Raskin-shaped: Old game "close the books" (finance wins by reporting accurately after the month ends) to new game "run on live cash" (finance wins by steering spend while it happens). Undeniable and independent: the buyer's own CFO peers already get daily cash questions from the board (to be sourced from customer interviews, not invented). Winners: named customers who answer cash questions same day; losers: teams discovering overspend at month end. Enemy: the month-end mindset, not rival AP tools. Buyer mission as question: "What would it take to know where every dollar is going today?" Disputable: some CFOs will say monthly is enough. Obstacles: invoices arrive in 40 formats; approvals live in email; ERP syncs nightly. Gifts: one per obstacle. Evidence: one customer quote on a same-day board answer.
 
 **B. Investor version, same company (illustrative).** Keep slide 1 identical [4]. Goal state becomes "own the live-cash layer for mid-market finance"; obstacles become market size, model, team [4].
