@@ -98,7 +98,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`procedural-painter`](procedural-painter/) paints finished painterly images entirely with Python: no image model, no reference images.
 - [`product-launch-video`](product-launch-video/) turns a product brief into an editable launch film.
 - [`muse-gadget-setup`](muse-gadget-setup/) gets a Meta Muse gadget working from one sentence ("I have [hardware]. I want Muse to [thing]."): picks Home Link, Linux SDK or ESP32 SDK, then gives setup, flashing, pairing and debugging steps from the official muse-gadget-sdk docs. Not affiliated with Meta.
-- [`record-mac-demo`](record-mac-demo/) has your agent drive a second Mac headless and screen-record a real product demo, with a timed action log for captions.
+- [`record-mac-demo`](record-mac-demo/) has your agent screen-record a real demo on your own Mac (even overnight) or a second Mac, with zero clicks and a timed action log for captions.
 - [`reply-debt`](reply-debt/) identifies mail that is still waiting on a reply.
 - [`repo-to-launch`](repo-to-launch/) turns repository facts into a grounded launch package without inventing product claims.
 - [`strip-image-ai-metadata`](strip-image-ai-metadata/) removes C2PA and AI-generation metadata.

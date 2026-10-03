@@ -17,3 +17,5 @@ Each of these broke a real take on a headless Mac mini (macOS 26) driven over VN
 | A connector or tool asks permission mid-take | First use per account | Do one dry run first and choose "Always allow" |
 | Usage or upgrade banner covers the input | App banners return per session | Close it right before pressing Record |
 | AI chat app in the wrong language | It follows the macOS language | Change the app's own language setting, not the system's, on a shared Mac |
+| Takes stop halfway through overnight runs | The Mac slept or locked | `caffeinate -dimsu -t <seconds>` for the run; set the lock-screen delay longer than the run |
+| Same-Mac connection refused | Screen Sharing is off, or the password is not the macOS login password | Turn on Screen Sharing; connect with your macOS account password |
