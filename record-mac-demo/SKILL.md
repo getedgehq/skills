@@ -1,23 +1,37 @@
 ---
 name: record-mac-demo
-description: Record a real screen-recorded product demo on a second Mac that your agent drives by itself, headless, without taking over your own screen. Use when you need authentic footage of an app or website actually running on macOS (a launch video, an install walkthrough, feature b-roll) rather than a mocked-up animation, and you have SSH plus Screen Sharing access to a spare or shared Mac. Covers attaching a framebuffer to a headless Mac, clicking and typing over VNC, starting and stopping the macOS recorder, a timestamped action log for captions, clean-frame setup and pulling the files back.
+description: Record a real screen-recorded demo on a Mac that your agent drives by itself, with zero manual clicks, on your own Mac (for example overnight) or on a second Mac without touching your screen. Use when you need authentic footage of an app or website actually running on macOS rather than a mocked-up animation, such as a product launch video, a custom demo for one specific customer or prospect, an install walkthrough, feature b-roll or a bug repro. Covers connecting over Screen Sharing (VNC) to the same or another Mac, clicking and typing, starting and stopping the macOS recorder, a timestamped action log that becomes the captions, clean-frame setup and pulling the files back.
 ---
 
 # Record a real Mac demo
 
-Your agent sits at a second Mac and records itself using a product: it opens the app, clicks,
-types and scrolls, and macOS records the screen at 60 fps. You keep working on your own machine;
-nothing pops up on it. Every action is written to a log with its second in the video, so the
-captions for the edit are already done when the recording stops.
+Your agent sits at a Mac and records itself using a product: it opens the app, clicks, types and
+scrolls, and macOS records the screen at 60 fps. Nobody touches the mouse. Every action is written
+to a log with its second in the video, so the captions for the edit are already done when the
+recording stops.
+
+Two setups, same scripts:
+
+- **Your own Mac, while you are away.** The agent connects to your Mac's own Screen Sharing over
+  `127.0.0.1`. Start it before bed or lunch; the takes are waiting when you are back.
+- **A second Mac** (a Mac mini, a spare laptop). The agent drives it remotely and nothing appears
+  on your screen, so you keep working.
+
+What people record with it: launch demos, **a custom demo per customer** (their website, their
+use case, their name in the prompt, one script run per prospect), install guides, and bug repros.
 
 Real footage beats a rebuilt animation for one reason: viewers can tell. Use this whenever the
 claim is "this works", and use motion graphics only for what a screen cannot show.
 
 ## What you need
 
-- A target Mac with **Screen Sharing** and **Remote Login** on, reachable from where the agent
-  runs (Tailscale or the same LAN). Its user is logged in at the console.
-- An SSH login on it with passwordless `sudo` for `launchctl` (for `scripts/gui.sh`).
+- **Screen Sharing** on for the Mac that will be recorded (System Settings, General, Sharing).
+  Its user is logged in at the console.
+- **Same Mac:** run everything locally with `MACVNC_HOST=127.0.0.1`. Save your login password
+  once for it, typed at the prompt so it never lands in your shell history:
+  `security add-internet-password -s 127.0.0.1 -a "$USER" -w`
+- **Second Mac:** **Remote Login** on too, reachable from where the agent runs (Tailscale or the
+  same LAN), and an SSH login with passwordless `sudo` for `launchctl` (for `scripts/gui.sh`).
 - The Screen Sharing password, saved once in your login keychain by connecting manually with
   Screen Sharing, or injected as `MACVNC_PASSWORD` into the controller's environment only.
   Never put it in a command line, a prompt or a log.
@@ -42,6 +56,17 @@ in at the console is a human step. Do not guess a password.
 
 Do not use a Screen Sharing window on your own Mac to watch or drive the target. It takes your
 mouse and focus, and it stops updating when covered or minimized.
+
+**Same Mac, unattended:** the screen must stay awake and unlocked for the whole run, because a
+locked screen blocks clicks and recording. Keep it awake for exactly the run and no longer:
+
+```bash
+caffeinate -dimsu -t 7200 &            # 2 hours; pick the length of the script
+MACVNC_HOST=127.0.0.1 MACVNC_USER=$USER python3 scripts/macvnc.py &
+```
+
+Your own apps and windows are on camera, so close or hide everything private first, and do not
+leave the Mac unattended in a place where an unlocked screen is a risk.
 
 ### 2. Set a clean frame
 
