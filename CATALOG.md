@@ -114,6 +114,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 
 - [`founders-handbook`](founders-handbook/) answers founder questions (co-founders, cap tables, SAFEs, Series A, secondaries, M&A, QSBS) from 1984 Ventures' public Founders Handbook and links the chapter behind every answer.
 - [`pitch-lensing`](pitch-lensing/) structures and reviews an investor deck with the lensing method pitch designer Chris Laughlin presented in a public Emerson Collective talk (June 2024): a lens note per partner, a four-slide context opener instead of Problem / Solution, raise timing and a fast-rules review table. Restated in our own words with credit; not endorsed by him. Install: `npx skills add getedgehq/skills --skill pitch-lensing`.
+- [`german-taxes-elster`](german-taxes-elster/) prepares German taxes with an agent for founders and small UG/GmbH companies: UStVA and annual USt (including section 13b reverse charge on EU and US SaaS and the `DE000000000` placeholder VAT ID trap), KSt, GewSt, E-Bilanz, Einspruch with AdV and Verböserung check, Vorauszahlungen, deadlines, and certificate-based Mein ELSTER filing. The agent prepares; a human approves every submission. Not tax advice. Install: `npx skills add getedgehq/skills --skill german-taxes-elster`.
 
 ### Web and 3D, by Meng To
 
@@ -149,9 +150,9 @@ One skill by [Garry Tan](https://github.com/garrytan), republished unchanged fro
 
 ## Evidence status
 
-Thirteen skills currently publish controlled comparisons against the same agent without the skill. Six
+Fourteen skills currently publish controlled comparisons against the same agent without the skill. Six
 use the frozen `edge-skill-bench@1.0` environment; `agent-skills-gap` publishes a separate direct
-Codex A/B evaluation, `brain-scan` publishes a separate explicit-load release validation, and five packages publish isolated Harbor A/B evaluations. Each is labelled
+Codex A/B evaluation, `brain-scan` publishes a separate explicit-load release validation, five packages publish isolated Harbor A/B evaluations, and `german-taxes-elster` publishes a `skill-eval-loop` headless A/B pilot. Each is labelled
 accordingly.
 
 | Skill | Status | Record |
@@ -169,6 +170,7 @@ accordingly.
 | `skillneed` | Measured, inconclusive | [`EVALS.md`](skillneed/EVALS.md) |
 | `strip-image-ai-metadata` | Supported in the recorded benchmark | [`EVALS.md`](strip-image-ai-metadata/EVALS.md) |
 | `top-down-comms` | Supported in the recorded benchmark | [`EVALS.md`](top-down-comms/EVALS.md) |
+| `german-taxes-elster` | Measured pilot, inconclusive: 2 wins, 1 tie, 0 losses; verifier 3/3 vs 2/3 | [`EVALS.md`](german-taxes-elster/EVALS.md) |
 
 “Published,” “featured,” and “benchmarked” are different states. A benchmark result is supported only when its stated confidence interval excludes zero. An inconclusive result is not presented as a win.
 
