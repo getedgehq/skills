@@ -26,3 +26,9 @@ Edge scans packages, mirrors available third-party scanner reports, and loads pi
 ## In this repository
 
 This is the versioned source for [Edge-maintained skills](CATALOG.md). The [public database](database/edge-database.json) holds package provenance and recorded evaluations where they exist. Browse the [package catalog and evidence notes](CATALOG.md) for installation and benchmark details.
+
+## New skill in this draft
+
+| Skill | What it adds |
+| --- | --- |
+| [Remotion Lambda Render](remotion-lambda-render/) | Version-matched deployment, render retrieval, and Lambda troubleshooting. |
