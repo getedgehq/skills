@@ -1,6 +1,6 @@
 ---
 name: linkedin-media-prep
-description: Convert, crop or fit-and-pad, resize, and compress images and videos for optimal LinkedIn upload quality and file size. Use when the user wants to prepare a photo, image, or video for LinkedIn (profile picture, cover photo, banner, post image, article featured image, post video, or video ad), optimize file size for LinkedIn, crop, pad, letterbox, or resize to LinkedIn dimensions without cutting off signage, text, logos, or people at the edges, convert HEIC/RAW/PNG/MOV to LinkedIn-ready JPEG or MP4, or mentions LinkedIn media requirements, specs, or limits.
+description: Convert, crop or fit-and-pad, resize, and compress images and videos for optimal LinkedIn upload quality and file size. Use when the user wants to prepare a photo, image, or video for LinkedIn (profile picture, cover photo, banner, post image, article featured image, post video, or video ad, or a carousel / document post made from slides), optimize file size for LinkedIn, crop, pad, letterbox, or resize to LinkedIn dimensions without cutting off signage, text, logos, or people at the edges, convert HEIC/RAW/PNG/MOV to LinkedIn-ready JPEG or MP4, or mentions LinkedIn media requirements, specs, or limits.
 ---
 
 # LinkedIn Media Prep
@@ -37,6 +37,16 @@ Prepare any image or video for LinkedIn with correct dimensions, compression, an
 | **Pixel format** | yuv420p | n/a | Required for broad playback support |
 
 ---
+
+## Carousel (Document Post)
+
+A LinkedIn "carousel" is a document post: one PDF, one slide per page. Keep the user's own slides; never redesign or rewrite them unless asked.
+
+- Output a single PDF, slides in the user's order (sort by the number in the filename, not alphabetically).
+- One page size for every page: 1080x1350 (4:5) by default, or 1080x1080 (1:1) if most slides are square.
+- Fit-and-pad each slide onto the page with the Image Workflow rules: never crop text or logos off the edges, never stretch, never upscale a small slide beyond its native size; pad with the slide's own background colour.
+- LinkedIn limits: up to 100 MB and 300 pages. Compress images inside the PDF only as far as needed to stay well under the size limit.
+- Report the page count, page size and file size, and list any slide that had to be padded heavily.
 
 ## Image Workflow
 
