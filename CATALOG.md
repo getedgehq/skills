@@ -97,6 +97,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`ai-festival-poster`](ai-festival-poster/) paints a festival lineup poster from real AI usage in local agent logs.
 - [`procedural-painter`](procedural-painter/) paints finished painterly images entirely with Python: no image model, no reference images.
 - [`product-launch-video`](product-launch-video/) turns a product brief into an editable launch film.
+- [`record-mac-demo`](record-mac-demo/) has your agent drive a second Mac headless and screen-record a real product demo, with a timed action log for captions.
 - [`reply-debt`](reply-debt/) identifies mail that is still waiting on a reply.
 - [`repo-to-launch`](repo-to-launch/) turns repository facts into a grounded launch package without inventing product claims.
 - [`strip-image-ai-metadata`](strip-image-ai-metadata/) removes C2PA and AI-generation metadata.
