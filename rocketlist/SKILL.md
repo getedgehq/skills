@@ -1,11 +1,24 @@
 ---
 name: rocketlist
-description: Search current startup jobs and hiring companies through RocketList. Use for live market maps and job lists by location, role, seniority, funding stage, investor, industry, visa sponsorship, remote status, or company criteria. For matching a specific person's CV to roles, use cv-job-match instead.
+description: Search current startup jobs and hiring companies through RocketList. Use for live market maps, job lists, and lists of companies hiring right now (for example recruiting or sales leads) by location, role, seniority, funding stage, investor, industry, visa sponsorship, remote status, or company criteria. For matching a specific person's CV to roles, use cv-job-match instead.
 ---
 
 # Search RocketList
 
 Turn the user's criteria into a verified shortlist of current startup jobs or hiring companies using RocketList's public MCP at `https://rocketlist.ai/mcp`.
+
+## Calling RocketList
+
+If the RocketList MCP tools (`search_jobs`, `search_companies`, `get_job`, `get_company`) are connected, use them. If they are not, call the same public endpoint directly over HTTP. It needs no account or key:
+
+```sh
+curl -s https://rocketlist.ai/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"search_jobs","arguments":{"query":"head of sales","city":["Berlin"],"stage":["Series A"]}}}'
+```
+
+The response is a server-sent event; the JSON result is on the `data:` line. Call `tools/list` the same way to see every tool and its exact argument schema. `query` is a plain string; list filters such as `city` and `stage` are arrays of strings.
 
 ## Workflow
 
@@ -23,7 +36,7 @@ Turn the user's criteria into a verified shortlist of current startup jobs or hi
 - For remote roles, distinguish worldwide eligibility from remote work limited to specific countries or regions.
 - Do not invent missing salary, headcount, stage, investor, or sponsorship data. State when a field is unavailable.
 - If fewer credible matches exist than requested, return the smaller list and say which constraint limited it.
-- If the MCP is unavailable, say that live RocketList results could not be retrieved. Do not substitute remembered companies or jobs.
+- If neither the MCP tools nor the HTTP endpoint respond, say that live RocketList results could not be retrieved. Do not substitute remembered companies or jobs.
 
 ## Output
 
