@@ -5,7 +5,8 @@
 Pflichtveranlagung for employees (§ 46 Abs. 2 EStG) is triggered among others by: two employers at
 the same time (one on Steuerklasse VI), other income over 410 EUR, wage-replacement benefits over
 410 EUR (Progressionsvorbehalt), Steuerklassen III/V or IV with factor *(verify the full list)*.
-Self-employed income always requires a return.
+Self-employed people generally have to file (§ 25 Abs. 3 EStG with the thresholds of § 56 EStDV);
+an employee's side income of 410 EUR or less does not by itself create a duty.
 
 - Pflicht, no adviser: 31 July of the following year. With adviser: end of February of the second
   following year *(verify per year)*.

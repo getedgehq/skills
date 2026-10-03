@@ -21,7 +21,10 @@ Finanzamt accepted your declared figures (§ 168 AO).
    working day (§ 108 Abs. 3 AO).
 2. **Einspruchsfrist**: one month from Bekanntgabe (§ 355 Abs. 1 AO), ending on the same-numbered
    day of the next month; if that day is a weekend or holiday, the next working day.
-3. If the letter actually arrived later than the fiction, the later date counts, and the Finanzamt
+3. **Exception for your own Steueranmeldung** (UStVA, annual USt return): the month runs from the
+   day the filing reaches the Finanzamt, or, if it leads to a refund and needs the Finanzamt's
+   consent, from Bekanntgabe of that consent (§ 355 Abs. 1 Satz 2 AO). Do not add 4 days here.
+4. If the letter actually arrived later than the fiction, the later date counts, and the Finanzamt
    carries the burden of proof when receipt is disputed. Keep the envelope.
 
 Worked example (dates illustrative): Bescheid dated Tuesday 09.06.2026 → 4th day Saturday
@@ -80,7 +83,8 @@ Note: a claim worth a few euros is not worth reopening a file with known soft sp
 ## Herabsetzung der Vorauszahlungen
 
 - Prepayments for ESt/KSt (§ 37 Abs. 3 Satz 3 EStG, for KSt via § 31 KStG) and GewSt (§ 19 Abs. 3
-  GewStG) can be adjusted **at any time**, no Einspruch deadline. The Finanzamt wants a plausible
+  GewStG) can be adjusted on application during the year and up to the end of the 15th month after
+  the year (§ 37 Abs. 3 Satz 3 EStG); there is no Einspruch deadline. The Finanzamt wants a plausible
   forecast: revenue to date, costs to date, expected rest of year.
 - In the city states one letter to the Finanzamt covers KSt and GewSt; elsewhere the municipality
   sets GewSt prepayments from the Finanzamt's Messbetrag.

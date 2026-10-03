@@ -33,8 +33,9 @@ Each Rückstellung needs a written computation in the file. Do not invent a prov
 
 ## Körperschaftsteuer
 
-- 15 % KSt on the zu versteuerndes Einkommen rounded down to whole euros (§ 31 Abs. 1 Satz 2 KStG),
-  Soli 5.5 % of the KSt, fractions of a cent dropped (§ 4 Satz 3 SolZG).
+- 15 % KSt on the zu versteuerndes Einkommen; the resulting KSt amounts are rounded to whole euros
+  in the taxpayer's favour (§ 31 Abs. 1 Satz 2 KStG). Soli 5.5 % of the KSt, fractions of a cent
+  dropped (§ 4 Satz 3 SolZG).
 - Share-sale gains of a corporation: 95 % effectively tax-free (§ 8b Abs. 2, 3 KStG).
 - **Verlustrücktrag** exists for KSt (§ 10d EStG via § 8 Abs. 1 KStG), currently up to two years
   back *(verify amount caps per year)*. **There is no Verlustrücktrag for GewSt**, only Vortrag
@@ -44,7 +45,7 @@ Each Rückstellung needs a written computation in the file. Do not invent a prov
 ## Gewerbesteuer
 
 - Gewerbeertrag rounded **down to full 100 EUR**, Messzahl 3.5 %, times the municipal Hebesatz.
-- **No Freibetrag for corporations.** The 24,500 EUR Freibetrag (§ 11 Abs. 1 Nr. 1 GewStG) is for
+- **No Freibetrag for corporations.** The 24,500 EUR Freibetrag (§ 11 Abs. 1 Satz 3 Nr. 1 GewStG) is for
   individuals and partnerships only. A frequent model error.
 - The Finanzamt issues the Messbescheid (Grundlagenbescheid); the municipality issues the
   GewSt-Bescheid, except in the city states where the Finanzamt issues both. An Einspruch goes

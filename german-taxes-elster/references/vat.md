@@ -53,8 +53,9 @@ the invoice says "VAT - Germany (19 %)" and the customer VAT ID field holds the 
 
 - The company is still a business customer. Place of supply is with the recipient (§ 3a Abs. 2
   UStG) and the tax liability shifts to it (§ 13b Abs. 5) regardless of whether it gave a VAT ID.
-- The German VAT on the invoice is **not legally owed** (§ 14c Abs. 1 UStG, unrichtiger Ausweis),
-  so it is **not deductible** as Vorsteuer (§ 15 Abs. 1 allows only the legally owed tax).
+- The vendor owes the invoiced German VAT only because it put it on the invoice (§ 14c Abs. 1
+  UStG, unrichtiger Ausweis); it is not tax owed *for the supply*, so it is **not deductible** as
+  Vorsteuer (§ 15 Abs. 1 Satz 1 Nr. 1 UStG).
 - So: declare § 13b on the net amount (gross / 1.19 for a 19 % invoice), deduct the same in Kz 67,
   do **not** put the invoiced 19 % into Kz 66. The 19 % actually paid is a cost unless the vendor
   refunds it against a corrected invoice.
@@ -115,7 +116,8 @@ consideration. A payout in January can be the previous year's revenue.
   assessed, not what was paid; unpaid amounts are a collection matter on the Steuerkonto.
 - EU reverse charge and third-country reverse charge sit in **different lines** (2025: line 65
   Kz 846/847 vs line 67). Don't merge them.
-- Use "Ergänzende Angaben" (line 21, Kz 123 in 2025) to disclose known gaps (for example reverse
-  charge missing in earlier quarters, base still being determined). Then correct it under § 164
-  Abs. 2 AO while the assessment is still under Vorbehalt.
+- The annual return must contain the correct full-year amounts, including reverse charge that was
+  missing from earlier Voranmeldungen. Where a base is still uncertain, enter your best evidenced
+  estimate and say so in "Ergänzende Angaben" (line 21, Kz 123 in 2025); correct it under § 164
+  Abs. 2 AO once the invoices are in, while the assessment is still under Vorbehalt.
 - Before filing, confirm the Kleinunternehmer waiver and the Besteuerungsart on the source form.

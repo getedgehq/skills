@@ -100,8 +100,9 @@ founder asks about is often the cheapest item on the list.
    supplier (Cursor US, Supabase Singapore, Vercel US) → Kz 84/85. Not interchangeable.
 3. Invoice addressed to the founder privately → no Vorsteuer for the company; deduct the gross
    amount via Auslagenersatz or Einlage with an Eigenbeleg.
-4. Einspruch: 1 month from Bekanntgabe, and Bekanntgabe is the **4th** day after posting since
-   2025 (not the 3rd), rolled to the next working day.
+4. Einspruch against a Bescheid: 1 month from Bekanntgabe, and Bekanntgabe is the **4th** day
+   after posting since 2025 (not the 3rd), rolled to the next working day. Against your own
+   Steueranmeldung the month runs from its receipt (§ 355 Abs. 1 Satz 2 AO).
 5. An Einspruch reopens the whole assessment: Verböserung is possible after a warning (§ 367
    Abs. 2 AO); withdraw if warned and the downside is bigger.
 6. An Einspruch does not stop payment. Apply for Aussetzung der Vollziehung separately.

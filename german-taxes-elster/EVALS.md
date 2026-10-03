@@ -53,5 +53,11 @@ read-back and submission verification, E-Bilanz via ERiC, and the human-approval
 yet covered by a measured task. A confirmatory run needs fresh samples on more task families with
 proven baseline headroom.
 
+After the run, an adversarial review corrected wording and citations in the references (KSt
+rounding, § 11 GewStG citation, § 37 Abs. 3 EStG time limit, § 14c wording, filing duty for the
+self-employed, the § 355 Abs. 1 Satz 2 AO exception for own Steueranmeldungen, and annual-return
+completeness). No change touches what the scored task measures; the measured version is the
+first commit of this package.
+
 Reproducible artifacts (briefs, fixtures, verifiers, transcripts, outputs, verdicts) are in
 `evals/german-taxes-elster/2026-10-03/`.
