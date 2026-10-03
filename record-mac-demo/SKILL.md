@@ -1,6 +1,6 @@
 ---
 name: record-mac-demo
-description: Record a real screen-recorded demo on a Mac that your agent drives by itself, with zero manual clicks: on your own Mac (for example overnight) or on a second Mac without touching your screen. Use when you need authentic footage of an app or website actually running on macOS rather than a mocked-up animation: a product launch video, a custom demo for one specific customer or prospect, an install walkthrough, feature b-roll or a bug repro. Covers connecting over Screen Sharing (VNC) to the same or another Mac, clicking and typing, starting and stopping the macOS recorder, a timestamped action log that becomes the captions, clean-frame setup and pulling the files back.
+description: Record a real screen-recorded demo on a Mac that your agent drives by itself, with zero manual clicks, on your own Mac (for example overnight) or on a second Mac without touching your screen. Use when you need authentic footage of an app or website actually running on macOS rather than a mocked-up animation, such as a product launch video, a custom demo for one specific customer or prospect, an install walkthrough, feature b-roll or a bug repro. Covers connecting over Screen Sharing (VNC) to the same or another Mac, clicking and typing, starting and stopping the macOS recorder, a timestamped action log that becomes the captions, clean-frame setup and pulling the files back.
 ---
 
 # Record a real Mac demo
