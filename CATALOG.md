@@ -98,6 +98,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`ai-festival-poster`](ai-festival-poster/) paints a festival lineup poster from real AI usage in local agent logs.
 - [`procedural-painter`](procedural-painter/) paints finished painterly images entirely with Python: no image model, no reference images.
 - [`product-launch-video`](product-launch-video/) turns a product brief into an editable launch film.
+- [`launch-film`](launch-film/) makes a short, result-first launch film for a product, feature or skill: one object carried across beats cut on a music grid, an original synthesized score and your brand kit, rendered from HTML to MP4 with no video editor. Made the Edge skill films.
 - [`muse-gadget-setup`](muse-gadget-setup/) gets a Meta Muse gadget working from one sentence ("I have [hardware]. I want Muse to [thing]."): picks Home Link, Linux SDK or ESP32 SDK, then gives setup, flashing, pairing and debugging steps from the official muse-gadget-sdk docs. Not affiliated with Meta.
 - [`record-mac-demo`](record-mac-demo/) has your agent screen-record a real demo on your own Mac (even overnight) or a second Mac, with zero clicks and a timed action log for captions.
 - [`reply-debt`](reply-debt/) identifies mail that is still waiting on a reply.
