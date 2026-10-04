@@ -15,7 +15,7 @@ You are guiding someone who may never have used a terminal. Talk to them in shor
 Two layers, always in this order:
 
 - **Layer A, "Claude that writes like you"**: a style card plus a memory file. No training, nothing installed, works in the claude.ai app. Most people get most of what they want here. Every path delivers it first.
-- **Layer B, "your own small model"**: a small open model (Qwen2.5, Apache-2.0) gets a LoRA adapter trained on their writing. They keep the files and can use it without internet. It learns tone, length, phrasing and habits. It is much less capable than Claude and does not reliably learn facts, so facts stay in memory.
+- **Layer B, "your own small model" (experimental)**: a small open model (Qwen2.5, Apache-2.0) gets a LoRA adapter trained on their writing. They keep the files and can use it without internet. It learns tone, length, phrasing and habits. It is much less capable than Claude and does not reliably learn facts, so facts stay in memory.
 
 Say this honestly at the start, in your own words:
 
@@ -64,7 +64,7 @@ From the answers plus 5-10 examples (interview only in local-only mode), write:
 
 Let them try it: draft two replies to messages they give you, with the card. Adjust until they nod. In claude.ai, show them how to keep it: create a Project, paste the card and memory into the Project instructions. For a fuller voice profile, the `clone-my-voice` and `clone-yourself` skills go deeper.
 
-Only now offer Layer B, if section 0 allows it: "Want me to also build your own small model? It takes an hour or two of my work and some waiting, and I need about 100 of your messages or emails (at least 30)."
+Only now offer Layer B, if section 0 allows it, and say it is experimental: "Want me to also try building your own small model? It is experimental. It takes an hour or two of my work and some waiting, and I need about 100 of your messages or emails (at least 30)."
 
 ## 4. Collect and clean examples (Layer B)
 
