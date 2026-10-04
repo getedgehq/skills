@@ -7,12 +7,27 @@ Usage (from the repository root):
 Why this exists. `agent-infra-fixer` shipped with "The rule: infra failures ..." in an unquoted
 description. YAML reads ": " as a nested mapping, and `npx skills add` skipped the bundle with a
 warning while installing the rest, so the install looked successful. A strict parse in CI catches it.
+Duplicate keys fail too: PyYAML keeps the last one silently, while js-yaml (what `npx skills` reads
+front matter with) rejects the block.
 """
 import glob
 import os
 import sys
 
 import yaml
+
+
+
+class UniqueKeyLoader(yaml.SafeLoader):
+    def construct_mapping(self, node, deep=False):
+        seen = set()
+        for k, _ in node.value:
+            key = self.construct_object(k, deep=deep)
+            if key in seen:
+                raise yaml.constructor.ConstructorError(None, None, f"duplicate key {key!r}", k.start_mark)
+            seen.add(key)
+        return super().construct_mapping(node, deep)
+
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -28,7 +43,7 @@ def main():
             failed += 1
             continue
         try:
-            meta = yaml.safe_load(parts[1])
+            meta = yaml.load(parts[1], Loader=UniqueKeyLoader)
         except yaml.YAMLError as e:
             print(f"FAIL {slug}: {str(e).splitlines()[0]}")
             failed += 1

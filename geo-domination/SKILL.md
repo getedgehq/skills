@@ -1,9 +1,7 @@
 ---
-name: radarkit-prompt-discovery
+name: geo-domination
 description: Find the AI prompts a company should actually track for GEO (generative engine optimization) and AI search visibility in ChatGPT, Perplexity, Gemini, Copilot, Google AI Mode and Google AI Overviews. Use when someone asks which prompts or questions to monitor, wants to know where their brand should show up in AI answers, asks why competitors appear in ChatGPT and they don't, is starting GEO / AEO / LLM visibility work, or needs a prioritized prompt set to track against competitors. Produces a scored core set of prompts, the sub-queries AI engines fan out to, and the content and citation gaps behind each one.
 metadata:
-  internal: true
-  alias_of: geo-domination
   version: 1.0.0
   author: RadarKit
 ---
