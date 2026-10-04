@@ -23,7 +23,8 @@ absent from `copy_files` entirely, so a one-directional gate calls that bundle c
 Alias folders. A renamed Skill keeps its old install name working (`npx skills add
 getedgehq/skills --skill <old>` resolves by the front-matter `name:`, not the folder). An alias
 folder holds a SKILL.md whose front matter adds `metadata: {internal: true, alias_of: <slug>}`
-and whose `name:` is the old one, plus a relative symlink for every other entry of the
+(as the first two keys of the canonical `metadata:` block when it has one, else as a new block
+right after `name:`) and whose `name:` is the old one, plus a relative symlink for every other entry of the
 canonical bundle except .gitignore. It carries no record of its own; the gate checks instead that it is exactly
 that: same bytes as the canonical SKILL.md apart from those front-matter lines, and every other
 entry a symlink into the canonical bundle, nothing missing and nothing extra.
@@ -102,14 +103,28 @@ def audit(bundle):
     return bad
 
 
-ALIAS_RE = re.compile(r"\Aname: (?P<old>[a-z0-9-]+)\nmetadata:\n  internal: true\n  alias_of: (?P<new>[a-z0-9-]+)\n")
+ALIAS_RE = re.compile(r"\Aname: (?P<old>[a-z0-9-]+)\n(?:.*\n)*?metadata:\n  internal: true\n  alias_of: (?P<new>[a-z0-9-]+)\n")
+
+
+def front(text):
+    return text[4:text.find("\n---\n", 4) + 1] if text.startswith("---\n") else ""
 
 
 def alias_target(bundle):
     """Return the canonical slug when bundle is an alias folder, else None."""
-    text = open(os.path.join(bundle, "SKILL.md"), encoding="utf-8").read()
-    m = ALIAS_RE.match(text[4:]) if text.startswith("---\n") else None
+    m = ALIAS_RE.match(front(open(os.path.join(bundle, "SKILL.md"), encoding="utf-8").read()))
     return m.group("new") if m else None
+
+
+def alias_text(want, slug, target):
+    """The alias SKILL.md for canonical text `want`: old name, alias keys in the metadata block."""
+    head, keys = f"---\nname: {target}\n", "  internal: true\n  alias_of: " + target + "\n"
+    fm = front(want)
+    if "\nmetadata:\n" in "\n" + fm:
+        i = ("\n" + fm).index("\nmetadata:\n") + len("metadata:\n") + 4
+        want = want[:i] + keys + want[i:]
+        return want.replace(head, f"---\nname: {slug}\n", 1)
+    return want.replace(head, f"---\nname: {slug}\nmetadata:\n{keys}", 1)
 
 
 def audit_alias(bundle, target):
@@ -120,7 +135,7 @@ def audit_alias(bundle, target):
         return [f"alias_of {target} is not a canonical bundle"]
     want = open(os.path.join(canonical, "SKILL.md"), encoding="utf-8").read()
     head = f"---\nname: {target}\n"
-    expected = want.replace(head, f"---\nname: {slug}\nmetadata:\n  internal: true\n  alias_of: {target}\n", 1)
+    expected = alias_text(want, slug, target)
     if not want.startswith(head) or open(os.path.join(bundle, "SKILL.md"), encoding="utf-8").read() != expected:
         bad.append(f"SKILL.md differs from {target}/SKILL.md beyond the alias front matter")
     for entry in sorted(set(os.listdir(canonical)) | set(os.listdir(bundle))):
