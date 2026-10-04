@@ -18,7 +18,9 @@ All commands are copied from the official docs. Sources:
 Muse Code:
 
 ```sh
-curl -fsSL https://dev.meta.ai/install.sh | sh
+curl -fsSL https://dev.meta.ai/install.sh -o muse-install.sh
+less muse-install.sh     # read it first
+sh muse-install.sh
 git clone https://github.com/facebookincubator/muse-gadget-sdk
 cd muse-gadget-sdk/esp32
 muse --disable-sandbox
