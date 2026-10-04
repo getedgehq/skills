@@ -67,6 +67,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 
 - [`fede-voice`](fede-voice/) writes DMs and posts in Federico’s documented style as a finished, privacy-safe example.
 - [`clone-my-voice`](clone-my-voice/) builds a private local writing skill from the user’s own samples.
+- [`personal-model-builder`](personal-model-builder/) takes someone from "create my model" to a Claude style card and, on a capable computer, a small open model fine-tuned on their own writing that runs offline, with a blind "which sounds like you?" check.
 - [`fede-clone`](fede-clone/) works like Federico on startup tasks: how he decides, judges work and reports, as a finished, privacy-safe example. Pairs with `fede-voice` for writing.
 - [`clone-yourself`](clone-yourself/) builds a private local `<your-name>-clone` skill from the user’s own agent rules, notes and writing: their voice plus how they decide, judge and report.
 - [`client-comms`](client-comms/) drafts concise, actionable client messages and handles complaints promptly.
