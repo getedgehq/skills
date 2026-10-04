@@ -1,11 +1,13 @@
 ---
 name: personal-model-builder
 description: >-
-  Guide a non-technical person from "create my model" to a writing helper that drafts in their style: first a
-  Claude style card and memory (works everywhere, no training), then, if their computer can do it, a small open
-  model fine-tuned on their own writing that they keep and run offline, with a blind "which sounds like you?"
-  check and updates from their corrections. Use when someone asks to create, train or personalise "my model",
-  an AI that writes or answers like them, or to fine-tune a model on their own messages or emails.
+  Create your own model that writes like you. Guide a non-technical person from "create my model" or "make
+  Claude write like me" to a writing helper that drafts in their style: first a Claude style card and memory
+  (works everywhere, no training), then, if their computer can do it, a small open model fine-tuned on their
+  own writing that they keep and run offline, with a blind "which sounds like you?" check and updates from
+  their corrections. Use when someone says "write like me", "sound like me" or "learn my writing style", asks to
+  train a model on their writing, to create, train or personalise "my model", for an AI that writes or answers
+  like them, or to fine-tune a model on their own messages or emails.
 ---
 
 # Personal Model Builder
