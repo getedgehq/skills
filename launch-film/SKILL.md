@@ -1,9 +1,9 @@
 ---
 name: launch-film
-description: "Make a short, result-first launch film for a product, feature or skill: a 15 to 30 second 1920x1080 MP4 with the payoff on screen in the first seconds, one object carried across every beat, cuts on a 128 BPM grid, an original synthesized score and a locked brand kit. Renders HTML to MP4 with the bundled Playwright renderer or HyperFrames, no video editor. Use when someone asks for a launch video, product teaser, feature reveal or a short social video for a launch. Not for narrated explainers, talking heads or editing existing footage."
+description: "Make a short, result-first launch film for a product, feature or skill: a 15 to 30 second 1920x1080 MP4 with the payoff on screen in the first seconds, one object carried across every beat, cuts on a 128 BPM grid, an optional motion pass (depth field from the real UI, story camera, light scene changes) measured for pace and read time, an original synthesized score and a locked brand kit. Renders HTML to MP4 with the bundled Playwright renderer or HyperFrames, no video editor. Use when someone asks for a launch video, product teaser, feature reveal or a short social video for a launch. Not for narrated explainers, talking heads or editing existing footage."
 license: Apache-2.0
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: Floom
 ---
 
@@ -18,6 +18,8 @@ Make the viewer want the capability before explaining the mechanism. Deliver a p
 3. [Evidence rules](references/evidence.md): claims, sources, recordings, ownership and labels.
 4. [The one-stage film](references/one-stage-film.md): the HyperFrames build behind the example films, with the traps that cost re-renders.
 5. [Delivery and QA](references/delivery-qa.md): render, inspect and package.
+6. [Motion kit](references/motion-kit.md): the depth field, story camera, rack focus, flares, iris, kinetic type and odometers in `assets/motion/motion-kit.js`, and the rules that keep it readable.
+7. [Pace and digestibility](references/pace-and-digestibility.md): the pace metric, the read-time rule and our before and after numbers.
 
 Read the user's brief and available assets before asking questions. Keep decisions they already approved. Default to a 16 to 30 second, 1920×1080, 30 fps film that works with the sound off. Vertical crops need their own composition, not a centre crop.
 
@@ -58,7 +60,19 @@ If the real recording is not available, build a clearly labelled first cut, reco
 
 Cut on the beat grid. Carry one object (a card, a frame, a highlight) from beat to beat so every change is motivated. One thought per shot, no em dashes in new copy.
 
-### 5. Render
+### 5. Add motion (optional, after the flat cut works)
+
+Check every beat against the read-time rule in [pace and digestibility](references/pace-and-digestibility.md) first and cut words where a beat is short: copy density, not motion, sets the digestibility score. Then add the motion layer with `assets/motion/motion-kit.js` (see [motion kit](references/motion-kit.md)):
+
+- a depth field built from crops of the film's own UI, never stock or someone else's footage;
+- a camera on the content plane with every key on a story cue, landing in 0.65 s or less;
+- rack focus, a flare and ring at each event point, and an iris from the click into the next scene;
+- glyph springs on one or two statement lines and odometers on real, sourced values only;
+- one short sound per event from `kit.events()`, under the score.
+
+The camera rests while text is read, text never moves while it is read, and there are 0 flashes. Pilot the busiest 6 to 8 seconds first, run `python scripts/pace.py` on the flat film and on the pilot, look at stills, then render the whole film. Brand colours come from the user's tokens.
+
+### 6. Render
 
 Two paths, both HTML to MP4:
 
@@ -76,13 +90,13 @@ The template exposes `window.renderAt(seconds)` and `window.__ready`. The render
 
 **One-stage film (HyperFrames).** For product UI stories (a prompt, a document, an inbox, a result), build one live HTML stage with one GSAP timeline and render it with HyperFrames, locally or in the cloud. Follow [the one-stage film](references/one-stage-film.md). This is how the example films in `examples/README.md` were made.
 
-### 6. Inspect and correct
+### 7. Inspect and correct
 
-Render stills first, then the whole film. Look at the first frame, every transition, the result, the small print and the end card at phone-feed size. Check typography, motion continuity, frame count, audio, and that nothing flashes or goes blank. Fix what you see before adding flourishes. Check stills from the real render, not only the local browser: render machines can lack fonts and emoji.
+Render stills first, then the whole film. Look at the first frame, every transition, the result, the small print and the end card at phone-feed size. Check typography, motion continuity, frame count, audio, and that nothing flashes or goes blank. With a motion pass, report the pace numbers (mean, p50, static share, flashes) before and after. Fix what you see before adding flourishes. Check stills from the real render, not only the local browser: render machines can lack fonts and emoji.
 
 For an evidence-led release run `python scripts/preflight.py PROJECT --mode final`. It passes only with local evidence and cleared assets for the claims made. Passing preview does not make a film publication-ready.
 
-### 7. Deliver
+### 8. Deliver
 
 Return the MP4, the editable project and a short note: is it a recording-based demonstration, a creator showcase or a labelled first cut, and what evidence or rights gap remains. Do not publish, upload, post or change any account unless asked.
 
