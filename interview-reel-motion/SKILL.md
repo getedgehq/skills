@@ -11,7 +11,9 @@ platform UI. You write a beat map; the template renders it; the QA scripts prove
 The default engine is HyperFrames (`template/`): `build.py` turns three JSON files into a page (frame stacks,
 audio mix, the scene), `runtime/` holds the engine and the kit, `npx hyperframes render` (or `lambda render`)
 encodes it. `scripts/` holds the QA gates and the pre-passes, `tools/ramp.py` builds speed ramps. No app needed:
-Node 18+, Python 3 with numpy and pillow, ffmpeg.
+Node 22+ (the HyperFrames CLI requires it), Python 3 with numpy and pillow, ffmpeg and ffprobe on PATH (or set
+`IRM_FFMPEG` and `IRM_FFPROBE`). The QA gates add `pip install -r scripts/requirements.txt` and the MediaPipe
+`face_landmarker.task` model (references/qa.md).
 
 ## When to use
 
@@ -37,10 +39,13 @@ or a motion graphic with no speaker.
 6. **Pre-passes:** a speed ramp with `tools/ramp.py`; for occlusion, a person matte with `scripts/matte_rvm.py`
    (Robust Video Matting); for caption and orbit placement, face boxes with `scripts/faceboxes.py` (MediaPipe).
 7. **Build and look:** `python3 build.py --data <reel> --assets assets --out build`, then
-   `npx hyperframes lint build` and `npx hyperframes snapshot build --at <every beat's complete moment>,0 --no-end`.
-   Fix placement against the safe zones.
+   `npx hyperframes lint build` (0 errors; a warning that the file is large is expected, the page is generated)
+   and `npx hyperframes snapshot build --at <every beat's complete moment>,0 --no-end` (stills land in
+   `build/snapshots/`). Fix placement against the safe zones. For a quick test render, copy the data folder, set
+   `scene.duration` to a few seconds and build that copy to its own folder.
 8. **Render three passes** (`--qa foot`, `--qa gfx`, final) with `npx hyperframes render` or
-   `npx hyperframes lambda render`, and run the gates in references/qa.md. Place captions with the face boxes
+   `npx hyperframes lambda render` (AWS account and a one-time `npx hyperframes lambda deploy`, see
+   references/hyperframes.md), and run the gates in references/qa.md. Place captions with the face boxes
    (below faces, centre at most 1455; else above, centre at least 265), rebuild, re-render, re-run.
 9. **Hand over** the final MP4 with `frame0.jpg`, `frame0_grid.jpg` and the last-2s strip, and the gate numbers.
 

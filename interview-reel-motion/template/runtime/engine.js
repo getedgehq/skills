@@ -81,8 +81,10 @@
   /** the frame stacks: one <img> per source frame the cut needs (built here, not in markup, so a compiler that
    *  rewrites the page cannot drop them); a frame is shown by toggling display, never by seeking a <video> */
   const stackEls = {};
-  function stackEl(kind) {
-    if (stackEls[kind]) return stackEls[kind];
+  // one element per slot: the A-roll has one, each Matte beat gets its own copy (a shared element would be moved
+  // to the last Matte beat and hidden by it whenever that beat is off)
+  function stackEl(kind, slot = kind) {
+    if (stackEls[slot]) return stackEls[slot];
     const el = N.mk(`position:absolute;left:0;top:0;width:${R.W}px;height:${R.H}px;background:${kind === "aroll" ? "#09090B" : "transparent"};display:none;`);
     el.id = `${kind}-stack`;
     for (const src in D.stacks) {
@@ -96,13 +98,23 @@
         el.appendChild(im);
       }
     }
-    stackEls[kind] = el;
+    if (kind === "matte" && QA === "gfx") {
+      // gfx QA pass: the person silhouette is painted in the key colour, so it still hides the back layers but
+      // counts as background for facezone.py and safezones.py
+      const ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg");
+      svg.setAttribute("width", "0"); svg.setAttribute("height", "0"); svg.setAttribute("style", "position:absolute;");
+      const fid = `irm-key-${Object.keys(stackEls).length}`;
+      svg.innerHTML = `<filter id="${fid}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 0  0 0 0 0 1  0 0 0 1 0"/></filter>`;
+      el.appendChild(svg);
+      el.querySelectorAll("img").forEach((im) => { im.style.filter = `url(#${fid})`; });
+    }
+    stackEls[slot] = el;
     return el;
   }
   const imgsLoaded = (el) => Promise.all([...el.querySelectorAll("img")].map((im) => (im.complete && im.naturalWidth ? null : new Promise((res) => { im.addEventListener("load", res, { once: true }); im.addEventListener("error", res, { once: true }); }))));
   /** a footage layer (A-roll, or a matte copy for occlusion) that follows the Framer */
-  function framerNode(kind) {
-    const el = stackEl(kind);
+  function framerNode(kind, slot = kind) {
+    const el = stackEl(kind, slot);
     const imgs = new Map();
     el.querySelectorAll("img").forEach((im) => imgs.set(im.dataset.k, im));
     let shown = null;
@@ -181,7 +193,7 @@
     },
     ParticleText: (b, s, e) => threeNode("ParticleText", { id: `${b.id}c`, s, e, ...Pp(b) }),
     /** occlusion: the person matte (RGBA frames from scripts/matte_rvm.py) over the back layers, same framing as the A-roll */
-    Matte: (b, s, e) => { const n = framerNode("matte"); return { el: n.el, update(t) { if (N.live(t, s, e)) n.update(t); else n.el.style.display = "none"; } }; },
+    Matte: (b, s, e) => { const n = framerNode("matte", `matte:${b.id}`); return { el: n.el, update(t) { if (N.live(t, s, e)) n.update(t); else n.el.style.display = "none"; } }; },
   };
   function renderBeat(b) {
     const own = OWN[b.component];
@@ -234,7 +246,7 @@
   const weights = [500, 600, 700, 800, 900];
   const fontsReady = Promise.all(weights.map((w) => document.fonts.load(`${w} 40px Inter`))).then(() => document.fonts.ready).catch(() => null);
   const needsThree = D.beats.some((b) => ["TypeRing", "ParticleText", "Takeover"].includes(b.component));
-  const stacksReady = Promise.all([imgsLoaded(stackEl("aroll")), imgsLoaded(stackEl("matte"))]);
+  const stacksReady = Promise.all([imgsLoaded(stackEl("aroll")), ...D.beats.filter((b) => b.component === "Matte").map((b) => imgsLoaded(stackEl("matte", `matte:${b.id}`)))]);
   IRM.ready = Promise.all([fontsReady, stacksReady, needsThree ? threeLoaded : Promise.resolve()]).then(() => {
     if (!live()) assemble();
     for (const n of threeNodes) n.impl = IRM.three[n.kind](n.p, n.el);

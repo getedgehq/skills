@@ -6,6 +6,11 @@ the centre at most 1455, else above with the centre at least 265) and to feed Or
   python3 faceboxes.py foot.mp4 --model face_landmarker.task --out faceboxes.json
   -> [[t, [[y0, y1, x0, x1], ...]], ...]   one row per frame
 
+  python3 faceboxes.py foot.mp4 --model face_landmarker.task --nogo 4.0-6.5 --out orbit_nogo.json
+  -> OrbitCards `noGo` rows for that beat span, one per frame from the beat start:
+     [top, bottom, left, right, headL, headR] of the largest face (the box with margin, then the bare face span,
+     which is where a card behind the head is hidden by the matte instead of lifted)
+
 Needs: mediapipe, numpy, ffmpeg. facezone.py runs the same detector and then checks the gfx render against it.
 """
 import argparse, json
@@ -14,7 +19,7 @@ from common import frames, probe, FPS
 
 ap = argparse.ArgumentParser()
 ap.add_argument("foot"); ap.add_argument("--model", required=True); ap.add_argument("--out", default="faceboxes.json")
-ap.add_argument("--margin", type=int, default=65)
+ap.add_argument("--margin", type=int, default=65); ap.add_argument("--nogo", default="", help="t0-t1: write OrbitCards noGo rows for this span")
 a = ap.parse_args()
 import mediapipe as mp
 from mediapipe.tasks.python import vision, BaseOptions
@@ -32,5 +37,15 @@ for i, fr in frames(a.foot):
         brow = min(f[k].y * H for k in (105, 334, 66, 296, 107, 336, 70, 300))
         bx.append([round(brow - M), round(f[152].y * H + M), round(min(xs) - M), round(max(xs) + M)])
     out.append([round(i / FPS, 3), bx])
+if a.nogo:
+    t0, t1 = (float(v) for v in a.nogo.split("-"))
+    rows, last = [], [0, 0, 0, 0, 0, 0]
+    for t, bx in out:
+        if t0 - 1e-6 <= t < t1 - 1e-6:
+            if bx:
+                y0, y1, x0, x1 = max(bx, key=lambda b: b[3] - b[2])
+                last = [y0, y1, x0, x1, x0 + M, x1 - M]
+            rows.append(last)  # a frame without a face keeps the previous box
+    out = rows
 json.dump(out, open(a.out, "w"))
-print(a.out, len(out), "frames")
+print(a.out, len(out), "rows" if a.nogo else "frames")

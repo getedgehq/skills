@@ -1,7 +1,8 @@
 # HyperFrames engine (default)
 
 HyperFrames (heygen-com/hyperframes, Apache-2.0) renders an HTML page whose look is a pure function of a seek
-time. Nothing to install beyond Node and Python: `npx hyperframes` fetches the CLI, `build.py` runs the pre-passes.
+time. Nothing to install beyond Node 22+, Python 3 (numpy, pillow) and ffmpeg: `npx hyperframes` fetches the CLI,
+`build.py` runs the pre-passes (`IRM_FFMPEG` / `IRM_FFPROBE` pick the ffmpeg binaries).
 
 ## Layout of `template/`
 
@@ -82,5 +83,15 @@ reproduces it exactly), one dense brick wall where encoder noise dominates (PSNR
 takeover, whose thin streaks rasterise slightly differently. Face zone (0 px) and safe zones (0 hits) passed;
 flash events (33 against 32, lower peak) and caption sync were in line with the original render; the readability audit is a check on the data, so it
 reports the same lines for both engines. Lambda's audio path lands about 0.9 dB below
-`assets/mix.wav` (envelope correlation 0.999 with the mix); raise the bed or voice keys if loudness matters.
+`assets/mix.wav` (envelope correlation 0.999 with the mix); references/qa.md has the loudnorm fix.
+
+## Matte check (occlusion)
+
+A 6 s test over a face clip (OrbitCards then TypeRing, each as a `back` beat, a Matte beat and a `front` beat,
+matte from `scripts/matte_rvm.py`, `noGo` rows from `scripts/faceboxes.py --nogo`) rendered on Lambda: the rear
+cards and the ring's back arc pass behind the head for 61 and 85 consecutive frames, with at most 2 px of back
+layer showing over the person; face zone 0 px; no halo at the hair edge at 2x. Two things this test fixed: each
+Matte beat needs its own copy of the matte stack (one shared element was hidden by the later beat), and the
+matte RGB must be the full-resolution frame (a 720 px copy upscaled read softer than the A-roll around it).
+In the `--qa gfx` pass the matte is painted magenta, so it still hides the back layers but counts as background.
 

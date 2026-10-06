@@ -205,7 +205,9 @@
         const c = p.cards[i], sc = P / (P - z), hw = ((c.w * cs) / 2) * 1.12, hh = ((c.h * cs) / 2) * 1.12;
         const X0 = p.cx + (x - hw) * sc, X1 = p.cx + (x + hw) * sc, Y0 = p.cy + (y - hh) * sc, Y1 = p.cy + (y + hh) * sc;
         const hidden = z < 0 && X0 >= hl + 10 && X1 <= hr - 10;
-        if (!hidden && X1 > left && X0 < right && Y1 > top && Y0 < bot) { const cyS = p.cy + y * sc; g = cyS >= top ? 0 : clamp((top - cyS) / (hh * sc)); }
+        // the drop shadow (0 30px 70px) and the depth blur reach past the card: keep them out of the face box too
+        const bl = Math.min(maxBlur, Math.abs(z - focusZ) * bpp), padX = (70 * cs + 2 * bl) * sc, padB = (100 * cs + 2 * bl) * sc;
+        if (!hidden && X1 + padX > left && X0 - padX < right && Y1 + padB > top && Y0 < bot) { const cyS = p.cy + y * sc; g = cyS >= top ? 0 : clamp((top - cyS) / (hh * sc + padB)); }
       }
       const seen = k > 0 && z < P - 80 && g >= 0.3 && (lay === "all" || (lay === "back" ? z < 0 : z >= 0));
       const blur = Math.min(maxBlur, Math.abs(z - focusZ) * bpp) + ex * 10;

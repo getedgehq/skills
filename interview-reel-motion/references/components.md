@@ -36,7 +36,7 @@ are wrapped by the engine in an eased group (`exit`, `fadeIn` frames).
 | **Takeover** | `text`, `size`, `y`, `height`, `resolve`, `dissolve`, `ground` | the one full-frame moment per reel: ground + ParticleText. Put its span in `blank` and use `fadeIn: 6`, `exit: 6` |
 | **ParticleText** | `text`, `y`, `height`, `size`, `form`, `resolve`, `dissolve`, `count` | points swarm onto the word's raster, then the word resolves (three.js) |
 | **TypeRing** | `text`, `inner`, `y`, `tilt`, `roll`, `spin` | chrome type ring (three.js); only for a brand line that earns it |
-| **OrbitCards** | `cards [{kind: video, phone, stat, image, ...}]`, `cx`, `cy`, `rx`, `rz`, `every`, `layer`, `noGo` | proof cards orbiting above a head (CSS 3D perspective, as in the original); only with real, stated proof |
+| **OrbitCards** | `cards [{kind: video, phone, stat, image, ...}]`, `cx`, `cy`, `rx`, `rz`, `every`, `layer`, `noGo` | proof cards orbiting above a head (CSS 3D perspective, as in the original); only with real, stated proof. `noGo`: one row per frame from the beat start, `[top, bottom, left, right, headL, headR]`, from `scripts/faceboxes.py --nogo t0-t1` on the foot render; a card in front of the face box lifts out, a card behind the head between headL and headR stays for the matte to hide |
 | **Matte** | none (span only) | the person cut out of the A-roll (RGBA frames from `scripts/matte_rvm.py`, same framing) laid over the beats listed before it: put a TypeRing or OrbitCards with `layer: "back"` before it and the same with `layer: "front"` after it, so the far half passes behind the head |
 
 ## Footage
