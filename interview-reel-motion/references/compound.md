@@ -1,4 +1,16 @@
-# Compound specifics
+# Compound engine (optional)
+
+The same reel also renders in the Compound editor, from `template-compound/`. It reads the same `reel.json`,
+`beats.json` and `captions.json`, applies the same rules (`src/engine/rules.ts`) and passes the same QA gates;
+the HyperFrames template is the default because it needs no app. Use Compound when the editor is already in the
+loop (scrubbing, capture, an export from the app).
+
+Workflow: copy `template-compound/` into the workspace's `projects/<name>/`, run `npm i three@0.170.0 --omit=dev`
+there, put the footage under `assets/`, point the three imports in `index.tsx` at the reel folder, register the
+folder with the MCP `open` tool and run `check`. Flip `src/engine/qa.ts` to `"foot"`, `"gfx"` and `""` for the
+three QA renders, export each, trim by frame count.
+
+## Compound specifics
 
 - **MCP.** The Compound app serves MCP over streamable HTTP at `http://127.0.0.1:3284/mcp`. Initialise a session
   (`initialize`, then `notifications/initialized`), keep the `mcp-session-id` header, then call tools.

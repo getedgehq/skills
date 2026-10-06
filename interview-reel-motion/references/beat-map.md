@@ -1,6 +1,8 @@
 # Beat map and reel data
 
-A reel is three JSON files. `index.tsx` imports them and hands them to `Reel` (`src/engine/Reel.tsx`).
+A reel is three JSON files. `template/build.py --data <folder>` reads them and writes the HyperFrames page
+(`template/runtime/engine.js` assembles the scene from them). The optional Compound engine reads the same files
+(`template-compound/index.tsx`).
 All times are **output seconds** on the scene clock (30 fps), snapped to frames (`n / 30`).
 
 ## beats.json: time and phrase to component and props
@@ -61,6 +63,7 @@ The same map as a review table (write this first, then the JSON):
 | `scene` | `{ id, width: 1080, height: 1920, fill, duration }`. `duration` is the last frame of the end hold |
 | `footage` | default source for clips and voice (path under `assets/`) |
 | `clips` | the cut list: `{ start, end, sin, rate, src? }`. `sin` is the source second at `start`; `rate` the playback rate (1.2 for a tightened interview; 0.01 for a held frame: the cover and the end hold); `src` overrides the footage (a pre-rendered speed ramp) |
+| `framePhase` | optional, HyperFrames only: added to the source frame position before flooring (default 0.001, the exact frame at that time). 0.25 matched a Compound render best in the port test: its browser video seek lands one source frame later on some frames of rate 1.2 clips, and not consistently |
 | `splits` | extra cut times inside clips. Each footage piece carries at most 5 framing keys (the WGSL uniform limit), so split long clips where the framing changes |
 | `blank` | `[t0, t1]` spans with no picture (a full-frame takeover) |
 | `framings` | named boxes `[x, y, w, h]`: where the whole source frame sits in the 1080x1920 frame (a 1440x1920 source fills the height at `[-180, 0, 1440, 1920]`) |
