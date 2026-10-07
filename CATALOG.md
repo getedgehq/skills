@@ -227,3 +227,9 @@ Original tracking system and design by Falco Schneider. Apache-2.0 under the rep
 ## Data Globe
 
 Turn your location data into an interactive globe with search, filters, glowing clusters, entity drilldown and mobile sheets. [`data-globe`](data-globe/) includes the reusable template and normalization tools. Apache-2.0.
+
+## Rocketlist Job Search
+
+| Skill | Use | License |
+| --- | --- | --- |
+| [`rocketlist-job-search`](rocketlist-job-search/) | Search the latest public Rocketlist startup jobs and hiring companies; no API key required. | MIT |
