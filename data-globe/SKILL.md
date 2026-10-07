@@ -12,6 +12,8 @@ metadata:
 
 Edge turns location rows into a world you can explore: see where activity concentrates, filter it, then select a point to meet the entities behind it. Use the included starter as a working base; adapt its labels to the user's dataset while keeping the included visual system: warm light-land globe on a night ocean, ember point glow, atmosphere rim, translucent rails, location rankings and entity wall. The optional dark-land button changes contrast without changing the data.
 
+Explore [Rocketmap](https://rocketlist.ai/map), the live production reference, and read [references/rocketmap.md](references/rocketmap.md) for its relationship to this reusable starter.
+
 ## Start from data, keep the geography honest
 
 Inspect column names, row count, coordinate coverage, categories, weight distribution and date meaning. Record the source URL, licence, download date and exclusion rules. Preserve source entity IDs. Default weight is **one entity** when no meaningful metric exists; do not present invented activity or population. A modification date is not a founding/opening/event date.
