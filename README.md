@@ -25,7 +25,7 @@ Edge scans packages, mirrors available third-party scanner reports, and loads pi
 
 ## In this repository
 
-This is the versioned source for [Edge-maintained skills](CATALOG.md). The [public database](database/edge-database.json) holds package provenance and recorded evaluations where they exist. Browse the [package catalog and evidence notes](CATALOG.md) for installation and benchmark details.
+This repository contains 136 top-level skill bundles, including compatibility aliases. It is the versioned source for [Edge-maintained skills](CATALOG.md). The [public database](database/edge-database.json) holds package provenance and recorded evaluations where they exist. Browse the [package catalog and evidence notes](CATALOG.md) for installation and benchmark details.
 
 ## Tracked Deck Links
 
@@ -37,3 +37,13 @@ Original tracking system and design by Falco Schneider. Apache-2.0 under the rep
 ## Data Globe
 
 Turn your location data into an interactive globe with search, filters, glowing clusters, entity drilldown and mobile sheets. [`data-globe`](data-globe/) includes the reusable template and normalization tools. Apache-2.0.
+
+## Rocketlist Job Search
+
+Use Rocketlist’s current startup hiring data inside your agent: role, location, stage, salary and remote filters, with direct employer links. The public dataset and Python helper need no account or API key.
+
+| Need | Skill |
+| --- | --- |
+| Find current startup jobs and hiring companies | [`rocketlist-job-search`](rocketlist-job-search/) |
+
+This bundle is licensed under [Rocketlist’s MIT license](rocketlist-job-search/LICENSE); the hiring dataset has its own upstream [data terms](https://github.com/rocketlist-ai/startup-jobs/blob/main/DATA_LICENSE.md).
