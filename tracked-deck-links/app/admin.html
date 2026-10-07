@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow"><title>Deck links</title>
+<style>
+:root{--ink:#0b1020;--gray:#5b6476;--light:#9aa2b2;--line:#e4e8ef;--bg:#f7f8fa;--card:#fff;--blue:#154cff;--green:#0f8a4b;--amber:#b26a00;--red:#c2272d}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--ink);background:var(--bg)}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 60px}
+h1{font-size:22px;margin:0 0 4px;letter-spacing:-.02em}.muted{color:var(--gray)}.small{font-size:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:16px}
+input,button{font:inherit}input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer}
+button.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+form.row{display:flex;gap:8px;flex-wrap:wrap}form.row input{flex:1 1 200px}
+.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:900px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}
+th{font-size:12px;color:var(--gray);font-weight:600}td.num{font-variant-numeric:tabular-nums}
+tr.inv{cursor:pointer}tr.inv:hover{background:#fafbfc}
+.pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:600;background:#eef1f6;color:var(--gray)}
+.pill.read{background:#e3f4ea;color:var(--green)}.pill.opened{background:#e8eeff;color:var(--blue)}
+.pill.preview{background:#fff4e0;color:var(--amber)}.pill.revoked{background:#fde8e8;color:var(--red)}
+.detail td{background:#fbfcfd;white-space:normal}
+.bars{display:grid;grid-template-columns:minmax(120px,320px) 1fr 70px 50px;gap:6px 10px;align-items:center;margin:8px 0 14px}
+.bar{height:10px;background:#eef1f6;border-radius:6px;overflow:hidden}.bar>i{display:block;height:100%;background:var(--blue)}
+.bar.zero>i{background:transparent}
+.link{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.visits td,.visits th{padding:6px 6px;font-size:12px}
+#login{max-width:360px}#err{color:var(--red);margin-top:8px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+</style></head><body><div class="wrap">
+<div class="top"><div><h1>Deck links</h1><div class="muted small" id="sub">Who opened your deck, which slides, how long.</div></div>
+<div><button id="refresh" hidden>Refresh</button> <button id="logout" hidden>Log out</button></div></div>
+
+<div class="card" id="login"><form id="lf"><div style="margin-bottom:8px">Password</div>
+<input type="password" id="pw" autocomplete="current-password" style="width:100%"><div style="margin-top:10px"><button class="primary">Open dashboard</button></div>
+<div id="err"></div></form></div>
+
+<div id="app" hidden>
+  <div class="card"><form class="row" id="cf"><input id="rec" placeholder="Recipient (e.g. Jane Doe, Fund X)" required><input id="deck" placeholder="Deck name (default: deck)" style="flex:0 1 180px"><input id="note" placeholder="Note (optional)"><button class="primary">Create link</button></form>
+  <div id="created" class="small" style="margin-top:8px"></div></div>
+  <div class="card"><div class="tablewrap"><table><thead><tr><th>Recipient</th><th>Deck</th><th>Status</th><th>First opened</th><th>Last seen</th><th>Active time</th><th>Slides</th><th>Visits</th><th>Revisits</th><th>Devices</th><th>Previews</th><th></th></tr></thead><tbody id="rows"></tbody></table></div></div>
+</div>
+</div>
+<script>
+const API = location.pathname.replace(/\/admin\/?$/, '') + '/api/admin';
+let pw = ''; try { pw = sessionStorage.getItem('decklinks-admin') || ''; } catch (e) {}
+const open = new Set();
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dur = (s) => !s ? '0s' : s < 60 ? s + 's' : Math.floor(s / 60) + 'm ' + String(s % 60).padStart(2, '0') + 's';
+const when = (iso) => iso ? new Date(iso).toLocaleString(undefined, {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '–';
+
+async function api(method, body) {
+  const r = await fetch(API, { method, headers: { 'Content-Type': 'application/json', 'x-admin-password': pw }, body: body ? JSON.stringify(body) : undefined });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(d.error || r.status), { status: r.status });
+  return d;
+}
+function showApp(on) { $('login').hidden = on; $('app').hidden = !on; $('refresh').hidden = !on; $('logout').hidden = !on; }
+
+function detail(l) {
+  const max = Math.max(1, ...l.slides.map((s) => s.seconds));
+  const bars = l.slides.length ? l.slides.map((s) => `<div>${String(s.slide_index).padStart(2,'0')} · ${esc(s.title || s.slide_id)}</div>
+    <div class="bar ${s.seconds ? '' : 'zero'}"><i style="width:${(s.seconds / max * 100).toFixed(1)}%"></i></div>
+    <div class="num">${dur(s.seconds)}</div><div class="num muted">${s.visits}×</div>`).join('') : '<div class="muted">No slide data yet.</div>';
+  const visits = l.views.map((v) => `<tr><td>${when(v.opened_at)}</td><td>${when(v.last_seen_at)}</td><td>${dur(v.seconds)}</td><td>${v.slides_seen}</td>
+    <td>${v.opens}</td><td>${esc(v.kind)}${v.is_owner ? ' · you' : ''}${v.is_bot ? ' · bot' : ''}</td><td>${esc(v.device)}</td><td>${esc(v.device_id || '')}</td><td>${esc(v.ip || '')}</td><td>${esc(v.deck_version || '')}</td><td>${v.closed_at ? 'closed' : 'open/idle'}</td></tr>`).join('');
+  return `<div class="link">${esc(l.url)} <button data-copy="${esc(l.url)}">Copy</button> <button data-revoke="${esc(l.id)}" data-to="${!l.revoked}">${l.revoked ? 'Reactivate' : 'Revoke'}</button></div>
+    ${l.note ? `<div class="muted small" style="margin-top:6px">${esc(l.note)}</div>` : ''}
+    <div class="small muted" style="margin-top:12px">Active time per slide (all visits, you and bots excluded)</div><div class="bars">${bars}</div>
+    <div class="small muted">Visits (one row per browser tab; reloads count in "Opens")</div>
+    <div class="tablewrap"><table class="visits"><thead><tr><th>Opened</th><th>Last seen</th><th>Active</th><th>Slides</th><th>Opens</th><th>Kind</th><th>Device</th><th>Device id</th><th>IP</th><th>Deck</th><th>State</th></tr></thead><tbody>${visits || '<tr><td colspan=11 class="muted">No visits yet.</td></tr>'}</tbody></table></div>
+    <div class="small muted" style="margin-top:6px">Link previews / unfurls (not opens): ${l.previews} (${l.bot_previews} known bots). Page loads total: ${l.page_loads}. Your own views: ${l.own_views}.</div>`;
+}
+
+function render(d) {
+  $('sub').textContent = `Live decks: ${Object.entries(d.decks || {}).map(([n, v]) => n + ' (' + (v || 'none') + ')').join(', ') || 'none'} · ${d.links.length} links · times in your local time`;
+  $('rows').innerHTML = d.links.map((l) => {
+    const cls = l.status === 'read' ? 'read' : l.status === 'opened' ? 'opened' : l.status === 'revoked' ? 'revoked' : l.status === 'preview only' ? 'preview' : '';
+    const row = `<tr class="inv" data-id="${esc(l.id)}"><td><b>${esc(l.recipient)}</b></td><td>${esc(l.deck)}</td><td><span class="pill ${cls}">${esc(l.status)}</span></td>
+      <td>${when(l.first_open)}</td><td>${when(l.last_seen)}</td><td class="num">${dur(l.total_seconds)}</td>
+      <td class="num">${l.slides_seen}${l.deck_size ? ' / ' + l.deck_size : ''}</td><td class="num">${l.sessions}</td><td class="num">${l.revisits}</td>
+      <td class="num">${l.devices}${l.devices > 1 ? ' <span class="pill preview">opened on a second device</span>' : ''}${l.device_labels.length ? '<div class="small muted">' + esc(l.device_labels.join(', ')) + '</div>' : ''}</td><td class="num">${l.previews}</td><td>${open.has(l.id) ? '▴' : '▾'}</td></tr>`;
+    return row + (open.has(l.id) ? `<tr class="detail"><td colspan="12">${detail(l)}</td></tr>` : '');
+  }).join('') || '<tr><td colspan="12" class="muted">No links yet. Create one above.</td></tr>';
+}
+
+async function load() {
+  try { render(await api('GET')); showApp(true); try { localStorage.setItem('decklinks-owner', '1'); } catch (e) {} }
+  catch (e) { showApp(false); if (e.status === 401 || e.status === 429) { $('err').textContent = e.message; pw = ''; try { sessionStorage.removeItem('decklinks-admin'); } catch (x) {} } }
+}
+
+$('lf').addEventListener('submit', (e) => { e.preventDefault(); pw = $('pw').value; try { sessionStorage.setItem('decklinks-admin', pw); } catch (x) {} $('err').textContent = ''; load(); });
+$('logout').addEventListener('click', () => { pw = ''; try { sessionStorage.removeItem('decklinks-admin'); } catch (x) {} showApp(false); });
+$('refresh').addEventListener('click', load);
+$('cf').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try { const d = await api('POST', { recipient: $('rec').value, deck: $('deck').value || undefined, note: $('note').value });
+    $('created').innerHTML = `Link for <b>${esc(d.link.recipient)}</b>: <span class="link">${esc(d.link.url)}</span> <button data-copy="${esc(d.link.url)}">Copy</button>`;
+    $('rec').value = ''; $('note').value = ''; load();
+  } catch (err) { $('created').textContent = 'Error: ' + err.message; }
+});
+document.addEventListener('click', async (e) => {
+  const c = e.target.closest('[data-copy]'); if (c) { e.stopPropagation(); try { await navigator.clipboard.writeText(c.dataset.copy); c.textContent = 'Copied'; } catch (x) { c.textContent = 'Select & copy manually'; } return; }
+  const r = e.target.closest('[data-revoke]'); if (r) { e.stopPropagation(); await api('PATCH', { id: r.dataset.revoke, revoked: r.dataset.to === 'true' }); return load(); }
+  const tr = e.target.closest('tr.inv'); if (tr) { const id = tr.dataset.id; open.has(id) ? open.delete(id) : open.add(id); load(); }
+});
+if (pw) load();
+setInterval(() => { if (pw && document.visibilityState === 'visible') load(); }, 30000);
+</script></body></html>

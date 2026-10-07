@@ -26,6 +26,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 
 | Need | Skill |
 | --- | --- |
+| Send personal deck links and report real reading | [`tracked-deck-links`](tracked-deck-links/) |
 | Keep long work alive across context loss | [`workplan`](workplan/) |
 | Find and load the right skill for the task at hand, automatically | [`edge-find-skills`](edge-find-skills/) |
 | Show a plan as a scannable text diagram with decisions on top | [`plan-board`](plan-board/) |
@@ -215,3 +216,10 @@ For academic citation, use [`CITATION.cff`](CITATION.cff). The benchmark identif
 `libraries-dev` is Jakub Antalik's work, copied from [Jakubantalik/Libraries.dev](https://github.com/Jakubantalik/Libraries.dev) at a pinned commit. It is MIT-licensed (Copyright (c) 2026 Jakub Antalik), not covered by the repository's Apache-2.0 grant, and the folder carries his LICENSE. The only change is an author and source credit in the front matter, recorded in `DERIVATION.json`. It is not affiliated with or endorsed by Jakub Antalik.
 
 `office-hours` is Garry Tan's work, copied from [garrytan/gstack](https://github.com/garrytan/gstack) at a pinned commit. It is MIT-licensed (Copyright (c) 2026 Garry Tan), not covered by the repository's Apache-2.0 grant, and the folder carries his LICENSE. The only change is an author and source credit in the front matter, recorded in `DERIVATION.json`. It is not affiliated with or endorsed by Garry Tan or Y Combinator.
+
+## Tracked Deck Links
+
+[`tracked-deck-links`](tracked-deck-links/) publishes personal links for HTML and PDF decks and reports previews, opens, active reading, slides, visits and devices. Built from Falco Schneider’s original system and ported to Node + SQLite. Real localhost proof on a fictional sample deck: 13/13 scripted checks, 11/11 final cold agent checks, and 8/8 local ntfy-stub checks. This is functional proof, not a comparative benchmark.
+
+
+Original tracking system and design by Falco Schneider. Apache-2.0 under the repository default licence; approved 2026-10-07.
