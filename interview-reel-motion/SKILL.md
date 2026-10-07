@@ -68,6 +68,11 @@ or a motion graphic with no speaker.
   number; use only stated figures.
 - Monochrome #09090B, #FAFAFC, #A0A0A5 and white stickers; brand colour only inside an official logo asset.
   No em or en dashes on screen.
+- Handmade, not designed: every overlay should look placed by a person in a phone editor, not laid out as one
+  generated banner. Logos are separate stickers (the official logo file in its official colours, a white sticker
+  border, a 4 to 10 degree tilt, a soft shadow), never merged into a title box; stickers in a group get slightly
+  different tilts. Cover titles read best as a white box with black text. Before rendering, ask: would this pass
+  for something a creator dropped in by hand?
 - The end: hold a natural frame with a slow eased push, then a 10 to 15 frame fade. Trim the editor's outro by
   frame count, then check the last 2 s.
 
