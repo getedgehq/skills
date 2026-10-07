@@ -26,3 +26,10 @@ Edge scans packages, mirrors available third-party scanner reports, and loads pi
 ## In this repository
 
 This is the versioned source for [Edge-maintained skills](CATALOG.md). The [public database](database/edge-database.json) holds package provenance and recorded evaluations where they exist. Browse the [package catalog and evidence notes](CATALOG.md) for installation and benchmark details.
+
+## Tracked Deck Links
+
+Your agent publishes personal deck links and tells you who opened, what they actively read, and when another device appeared. Original system and design by **Falco Schneider**; Edge ports it into a Node + SQLite skill. See [`tracked-deck-links`](tracked-deck-links/) for setup and provenance.
+
+
+Original tracking system and design by Falco Schneider. Apache-2.0 under the repository default licence; approved 2026-10-07.
