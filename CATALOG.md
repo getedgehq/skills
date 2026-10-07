@@ -223,3 +223,7 @@ For academic citation, use [`CITATION.cff`](CITATION.cff). The benchmark identif
 
 
 Original tracking system and design by Falco Schneider. Apache-2.0 under the repository default licence; approved 2026-10-07.
+
+## Data Globe
+
+Turn your location data into an interactive globe with search, filters, glowing clusters, entity drilldown and mobile sheets. [`data-globe`](data-globe/) includes the reusable template and normalization tools. Apache-2.0.

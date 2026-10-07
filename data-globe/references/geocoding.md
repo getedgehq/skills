@@ -1,0 +1,11 @@
+# Offline geocoding with ambiguity guards
+
+Download `cities1000.zip` (or `cities500.zip` for wider coverage) from https://download.geonames.org/export/dump/ and unpack only the cities text. The dump is tab-separated: geonameid, name, asciiname, alternatenames, latitude, longitude, feature class, feature code, country ISO2, cc2, admin1, admin2, admin3, admin4, population, elevation, DEM, timezone, modification date. GeoNames data is CC BY; attribute GeoNames when used. The download page's README describes fields and licence.
+
+`prepare.py --geonames <cities file>` indexes populated-place class `P`, aliases and ISO2. Alias lists may point to distinct real cities: deduplicate candidates by geonameid and accept **only one** remaining ID. Require country. Require admin1 when supplied; canonicalize state/region names to codes using `admin1CodesASCII.txt`. Convert spelled-out country names using `countryInfo.txt`; do not fuzzy-match country names silently.
+
+Normalize Unicode accents and case for lookup. Preserve meaningful punctuation and exact locality names. Parse `City, ST` before lookup: state suffixes are constraints, not decorative text. An exact “Frisco” lookup must not become “San Francisco” through substring or alias collision. If aliases collide, exact official-name matches may be prioritized only with documented country/admin evidence; the bundled helper conservatively rejects all collisions. Do not choose by population alone.
+
+Missing city/country or multiple candidates stay unplaced with a reason. Maintain a reviewed overrides file keyed by original ID for cases with authoritative evidence, rather than changing the global alias rule. A source coordinate has priority over a guessed name match. Do not relabel coordinate bins as cities; city mode in the helper requires GeoNames-resolved anchors and intentionally rejects coordinate-only rows.
+
+Report counts for source exclusions, invalid rows and unresolved geography separately. Store dump date/hash and overrides with the snapshot for reproducibility. City coordinates express locality anchors, not an entity's exact building. Runtime geocoding is unnecessary and risks rate limits, account setup, unstable ambiguity decisions and exposing private location data.
