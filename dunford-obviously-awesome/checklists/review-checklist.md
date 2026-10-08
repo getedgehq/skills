@@ -1,6 +1,6 @@
 # Positioning review checklist
 
-Mark every gate Pass or Fail and record the evidence or required repair. These gates are package adaptations of the public method, not a claim about Dunford's own scoring system.
+Internal review: run it silently on your draft and fix what fails. Never put this checklist, PASS/FAIL marks, a review note or a list of limitations in the deliverable; a gap that matters to the user becomes one short open question at the end (three at most). The gates are package adaptations of the public method, not a scoring system published by the expert.
 
 A definitive handoff requires every gate to pass. A provisional canvas can be handed off with failed evidence or testing gates only when the unresolved decisions and validation plan are explicit. Do not represent provisional work as established positioning. Fabricated evidence and unsupported current capabilities must be removed before any handoff.
 

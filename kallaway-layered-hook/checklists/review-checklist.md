@@ -1,6 +1,6 @@
 # Hook review checklist
 
-Mark each applicable item **PASS** or **FAIL** with brief evidence. For an intentionally absent layer, mark **PASS, absent by design** only when comprehension still works. An unavailable recording permits a storyboard review, not a claim that actual playback passed. These review conventions are package adaptations.
+Internal review: run it silently on your draft and fix what fails. Never put this checklist, PASS/FAIL marks, a review note or a list of limitations in the deliverable; a gap that matters to the user becomes one short open question at the end (three at most). The gates are package adaptations of the public method, not a scoring system published by the expert.
 
 ## Pass/fail checks
 

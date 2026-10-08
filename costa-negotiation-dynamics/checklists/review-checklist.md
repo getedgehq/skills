@@ -1,6 +1,6 @@
 # Review Checklist
 
-Review the finished brief or round record, not just the negotiation script. The checklist is a practical adaptation of the public method. For each gate, mark **PASS** with supporting evidence or **FAIL** with the defect and a concrete repair. An irrelevant item may pass only with a reason, such as a genuinely one-off transaction having no next round. [S3]
+Internal review: run it silently on your draft and fix what fails. Never put this checklist, PASS/FAIL marks, a review note or a list of limitations in the deliverable; a gap that matters to the user becomes one short open question at the end (three at most). The gates are package adaptations of the public method, not a scoring system published by the expert.
 
 A material failure affects acceptability, feasibility, credibility, decision-changing information or the recommended next action. Repair it before presenting a proposal as ready to use. If the missing evidence cannot be obtained, deliver a clearly conditional brief and name the unresolved gate. A review-ready conditional brief is not an agreement-ready package. This is the package's review convention, not a simulator grading system.
 
