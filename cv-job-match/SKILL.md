@@ -15,19 +15,16 @@ you start; do not ask the user which one to use.
 
 1. **Rocketlist's own MCP tools**, if this host has them connected: `search_jobs` and
    `get_job` (from `https://rocketlist.ai/mcp`).
-2. **Edge's Rocketlist tools**: `rocketlist_search_jobs` and `rocketlist_get_job`. Same data,
-   same filters, reached through the Edge connector. Most hosted chats (Claude app, ChatGPT)
-   have these when Edge is connected.
-3. **Local scripts**, only when you are a local agent that can run Python and a
+2. **Local scripts**, only when you are a local agent that can run Python and a
    JavaScript-capable browser (Claude Code, Codex, a terminal). See "Local path" below.
 
 **Privacy rule for every path: send only derived search criteria.** A short job title, a few
 skill names, a city, remote, stage, investor, years of experience. Never put CV text, the
-person's name, email, phone number, employer history or links into a tool argument. Edge's
-tools reject them.
+person's name, email, phone number, employer history or links into a tool argument.
 
 **If no live source works, say so.** In a hosted chat, if the tools are missing or return an
-error, tell the user that live Rocketlist listings could not be retrieved right now and
+error, tell the user that live Rocketlist listings could not be retrieved right now, that
+adding the Rocketlist connector (https://rocketlist.ai/mcp) gives live listings, and
 suggest trying again later or browsing https://rocketlist.ai/jobs. Never fall back to roles
 you remember, companies you assume are hiring, or a browser you do not have.
 
@@ -55,7 +52,7 @@ you remember, companies you assume are hiring, or a browser you do not have.
    bare title returns too much. Use `limit` 10 to 15. Six to twelve searches is normal. A
    title that returns nothing is a dead end on this board: note it and move on.
 
-4. **Verify before you shortlist.** Call `get_job` (or `rocketlist_get_job`) with the
+4. **Verify before you shortlist.** Call `get_job` with the
    listing's `id` or `rocketlist_url` for every role you intend to recommend. Check its
    required skills, experience and location against the CV. A title that sounded right but
    asks for eight years of a skill the person does not have is not a fit; cut it. A listing
