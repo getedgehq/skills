@@ -57,8 +57,9 @@ Use an SSH app: Termius (iPhone and Android) or Blink Shell (iPhone). In the app
 
 1. Generate a new key (type ED25519) inside the app. Copy its **public** key (one line starting with
    `ssh-ed25519`). A public key is safe to copy around; the private key never leaves the phone.
-2. Add that line to the box. From the laptop:
-   `ssh agent-box 'cat >> ~/.ssh/authorized_keys'`, paste the line, press Enter, then `Ctrl-d`.
+2. Put that key on the box with the app's own export, signing in once with the `helper` password:
+   in Termius, open the key and choose **Export to host** (host `agent-box`, user `helper`); in
+   Blink Shell, run `ssh-copy-id helper@agent-box`.
 3. In the app, add a host: address `agent-box`, user `helper`, the key from step 1.
 4. With the Tailscale app on the phone connected, connect. Then attach to Claude (`claude-code-sessions.md`).
 
