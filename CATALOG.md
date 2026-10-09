@@ -33,6 +33,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 | Set up an AI team with a Chief of Staff, cross-model review and a shared second brain | [`ai-team`](ai-team/) |
 | Turn long dictated prompts into a clear brief before the agent acts | [`voice-prompting`](voice-prompting/) |
 | Move a live app between clouds without downtime, with a rollback per phase | [`zero-downtime-cloud-move`](zero-downtime-cloud-move/) |
+| Run a Mac mini as an always-on, shared Claude Code box reachable from laptop and phone | [`mac-mini-agent-box`](mac-mini-agent-box/) |
 | Draft a literature review or research paper with checkable citations | [`autonomous-research`](autonomous-research/) |
 | Diagnose an unreliable or expensive agent | [`harness-first`](harness-first/) |
 | Decide whether another skill would help | [`skillneed`](skillneed/) |
@@ -112,6 +113,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`crawler-access-audit`](crawler-access-audit/) audits crawler access from server logs and robots.txt: RFC 9309 group selection and precedence, versioned robots.txt, crawler impersonation, real client IP behind proxies and AI crawler tokens.
 - [`interview-reel-motion`](interview-reel-motion/) layers the graphic beats on an already-cut 9:16 interview short with HyperFrames (npx, no app install) from a beat map (cover frame, phrase captions, stickers, counters, a speed ramp, a clean end hold), then gates the render for face zones, safe zones, readability and caption sync.
 - [`muse-gadget-setup`](muse-gadget-setup/) gets a Meta Muse gadget working from one sentence ("I have [hardware]. I want Muse to [thing]."): picks Home Link, Linux SDK or ESP32 SDK, then gives setup, flashing, pairing and debugging steps from the official muse-gadget-sdk docs. Not affiliated with Meta.
+- [`mac-mini-agent-box`](mac-mini-agent-box/) runs a Mac mini as a shared, always-on Claude Code box: auto-login desktop user plus an SSH user for agents, Tailscale with a shared node, a `cc` tmux session with screen permissions kept alive by a LaunchAgent, logged-in Chrome profiles driven over CDP, real demo recordings, form filling from a home IP, secrets out of prompts and files, and a verification checklist.
 - [`record-mac-demo`](record-mac-demo/) has your agent screen-record a real demo on your own Mac (even overnight) or a second Mac, with zero clicks and a timed action log for captions.
 - [`reply-debt`](reply-debt/) identifies mail that is still waiting on a reply.
 - [`repo-to-launch`](repo-to-launch/) turns repository facts into a grounded launch package without inventing product claims.
