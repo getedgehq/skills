@@ -10,15 +10,19 @@ Sections 1 through 3 cover opportunity selection and product design. Sections 4 
 
 The central hypothesis is that cheaper software production makes audience understanding and efficient distribution more decisive. Kaz starts with a short video niche and builds features that belong inside its stories, rather than finishing an app and then searching for promotion. The company describes its purpose as consumer apps that solve everyday problems and spread naturally. These are strategic claims, not universal laws about every software business. [S1][S2][S3]
 
-The deliverable is a decision memo. For discovery, recommend an opportunity and a bounded test. For an existing app, identify the limiting part of its acquisition or retention system. For a portfolio, compare incremental allocation and reusable learning. Do not force an existing product into a new niche solely to follow a fixed sequence.
+The deliverable is a decision, delivered in the shape and length the user asked for. For discovery, recommend an opportunity and a bounded test. For an existing app, identify the limiting part of its acquisition or retention system. For a portfolio, compare incremental allocation and reusable learning. Do not force an existing product into a new niche solely to follow a fixed sequence.
 
-Use three evidence labels throughout:
+Keep evidence separate, but compactly. Three kinds exist:
 
-- **Observed:** Dated content examples, measured funnel data, actual quotes from creators, or other supplied evidence.
-- **Reported:** The expert's public accounts or a company's product claims, attributed to their source.
-- **Hypothesized:** Proposed causal explanations, budget estimates, thresholds, and tests still to run.
+- **Known:** facts the user supplied (their funnel data, budgets, creators) and dated observations you actually fetched.
+- **Reported:** the expert's public accounts or a company's product claims, cited to their source.
+- **Assumed:** your working values, estimates, thresholds and causal guesses.
 
-This labeling and the memo structure are package adaptations. Do not present them as a named framework invented by Kaz. Historical interviews establish the method; current niche viability needs current evidence. If live research is unavailable, deliver a provisional hypothesis and specify the observations needed to validate it.
+Mark assumptions inline with "(assumption)" and close with a short known / assumed / check-next block. Do not label every sentence or wrap the plan in caveats. This labeling and the answer shape are package adaptations, not a framework invented by Kaz.
+
+A labelled assumption is not an invented fact. When the decision needs a number the user did not give, choose a plausible value, label it, and use it, so the user gets a rule they can apply and edit. What must never appear is a guess dressed as an observation: made-up view counts, named viral posts, real creator rates or market statistics.
+
+Historical interviews establish the method; current niche viability needs current evidence. If live research is unavailable, still make the call: give the pick or verdict, then at most three quick observations that would change it.
 
 ## 2. Screen the niche
 
@@ -32,11 +36,15 @@ Use these decisions:
 - **Hold:** Emotion is clear but creator supply, customer intent, or price is unverified. Obtain those observations before building a large product.
 - **Reject or change channel:** Evidence consists of one viral outlier, generic market excitement, or formats the team cannot reproduce at sustainable cost.
 
-The three-factor screen is sourced; these labels and evidence requirements operationalize it. A one-sentence thesis should name the customer, recurring content behavior, useful app interaction, and why that interaction belongs in the story. Broad categories such as wellness or productivity are insufficient without a concrete audience tension.
+The three-factor screen is sourced; these labels and evidence requirements operationalize it. Without fetched evidence, apply the screen by reasoning, pick the strongest option, and name the one or two observations that would flip it. Do not answer with a menu when the user asked for a pick. A one-sentence thesis should name the customer, recurring content behavior, useful app interaction, and why that interaction belongs in the story. Broad categories such as wellness or productivity are insufficient without a concrete audience tension.
 
 ## 3. Design the product moment
 
 Choose one narrow problem and one action that a creator can show naturally. Specify the input, visible interaction, output, and reason the viewer wants to try it. Kaz's relationship-app example uses a shared drawing canvas: the interaction supplies entertainment while demonstrating the app's value. The feature improves the video itself. [S1]
+
+Shape matters. Before choosing, consider at least three different moment shapes: a routine or progress view, a transformation or tool result, a collaboration, a comparison, a reveal. Choose the one that matches how this niche's creators already film. A two-person blind reveal or verdict is a valid shape for pair-based niches but should not be the default answer for every brief.
+
+**Useful after the video.** The filmed action should be the same action that brings users back: a nightly routine, a streak or progress view, an episode in a series, a shared ritual between people who already use the app. If the moment only works once, it can win views and still lose: viewers install, try it, and leave. Kaz says he doubles down only on apps with network effects or another compounding advantage, and that niche-personalized apps are stickier than horizontal ones. [S1][S2] Name the day-2 and day-30 reason to open the app.
 
 A product moment passes when a viewer can recognize the problem and the useful result without a separate explanatory pitch. Suitable shapes include a collaborative interaction, a routine, a reveal, a decision, or a comparison. Record why the app is needed: if the story would work just as well without its functionality, the integration may be decorative rather than persuasive.
 
@@ -53,6 +61,8 @@ Use a small pilot with varied but interpretable test cells. A cell identifies cr
 A brief should supply audience tension, hook pattern, story beats, necessary product action, supported claims, and desired next action. Preserve the creator's own writing and performance. A test should reveal whether the underlying structure works across people, not whether everyone can recite an identical script. [S1][S2]
 
 Record sourcing cost, fees, variable payouts, usable posts, audience composition, and constraints on further supply. Creator rights and permission to reuse content as advertising must be resolved before such reuse. This rights check is a package implementation rule, not a reported part of the expert's interview.
+
+Respect the user's distribution constraints. "No paid ads" or "I won't pay creators" rules out paid placements and boosted posts; work with the founder's own accounts, friends, unpaid or revenue-share creators, and comment seeding, which Kaz describes using to drive conversions and engagement. [S1] Offer a paid step only as a labelled option when the user has not excluded it.
 
 Do not assume cheap creators will discover the strategy independently. In Kaz's Tethered account, isolated creator experimentation underperformed a centrally informed system that shared successful patterns and responded to niche changes. [S1]
 
@@ -88,6 +98,8 @@ Expect indirect journeys. Kaz says many viewers search Google or the App Store r
 
 Operationalize uncertainty with direct tracked counts, estimated ranges, background demand, overlapping posts, and the assumptions connecting them. Compare pre/post store or search lift where available, but call it association unless the design supports incrementality. Do not give every install after a post to that creator or sum overlapping estimates as independent customers. An inconclusive result calls for a more discriminating test, not a fabricated precision score.
 
+Value organic posts by reach times conversion, not conversion alone. Kaz's example: a 1M-view post with a low conversion rate beats a 10k-view post converting 10x better. [S1] Judge each post against the creator's own usual views, so a small creator's breakout counts and a large creator's routine post does not.
+
 Keep organic and paid decisions distinct. Kaz observes that organic's total reach can outweigh a lower conversion rate, whereas paid growth must account for click and conversion efficiency and customer value. Organic winners may supply paid creative candidates, but engagement alone does not establish paid profitability. Test the paid funnel and costs separately. [S1]
 
 ## 7. Set economic decision rules
@@ -102,6 +114,22 @@ The following calculations are package planning aids:
 - **Affordable cost per thousand views:** Affordable acquisition cost multiplied by plausible new paid customers per thousand views. This is a locally derived ceiling, not an expert benchmark.
 
 If attributed customers are a range, calculate a corresponding cost range. If the lower customer estimate is zero, cost may be unbounded; do not force a finite value. If retention data are immature, use conservative realized contribution and mark projected renewals as assumptions.
+
+### Numeric defaults
+
+Kaz describes the logic (short payback, weekly double-down and cuts, replication across creators) but publishes no thresholds. These defaults are package adaptations. Use them when the user gives no numbers, say they are defaults, and replace them with the user's own values.
+
+- **Post hit / miss:** hit at 2x or more of the creator's median views over recent posts; miss under 0.5x. Read at 72 hours and day 7.
+- **Format travels:** hits from at least 2 different creators and at least half of the creators tested, with at least 3 tested.
+- **Acquisition ceiling:** 0.8 x the net value of a paid user realized within the payback window (30 days when cash is tight; otherwise the user's window).
+- **Rebook:** tracked cost per paid user at or under the ceiling, or within it once a fair share of search lift is added, with views at least 1x the creator's median.
+- **Drop:** cost per paid user over 2x the ceiling even under generous attribution, or two posts under 0.5x median.
+- **Expand:** format travels, conservative cost per paid user at or under the ceiling, retention gate holds; raise spend at most 2x per round.
+- **Retention gate:** at least 25% of week-1 users who did the core action repeat it in week 2; under 10% means fix the product before buying more reach.
+- **Paid test:** start with the smaller of 10% of cash or what can be lost within the payback window; max cost per install 0.8 x value per install; stop a creative at 2x that after about 300 installs.
+- **Stop the hypothesis:** cap spent without hits on 2 creators, conservative cost per paid user over 2x the ceiling for two rounds, or retention still failing after one product fix.
+
+Show the arithmetic so the user can check it. If attributed customers are a range, give the cost range.
 
 Specify a spend cap, decision date, and conditions before expansion. Expand when repeatability, audience fit, and conservative economics support additional spend. Revise when a specific bottleneck can be tested within the remaining cap. Stop when the cap is reached without credible improvement, adequate creators cannot reproduce the format, or conservative economics exceed the user's tolerable payback. These gates implement the method; their numerical values belong to the user's situation.
 
@@ -140,7 +168,9 @@ These cautions paraphrase direct statements or retrospective lessons in the inte
 
 ## 10. Edge cases and boundaries
 
-**No niche research yet:** Offer a research plan and provisional concepts. Mark them unvalidated. Do not claim that an invented video pattern is currently popular.
+**No niche research yet or no web access:** Still make the decision the user asked for. Give the pick and plan, mark assumptions, and list at most three quick checks that could change it. Do not claim that an invented video pattern is currently popular, and do not replace the answer with a research plan.
+
+**No paid distribution allowed:** Keep the replication test with unpaid people: the founder's accounts, friends, communities, revenue-share or affiliate creators. Comment seeding is a sourced, non-paid lever. [S1] Founder content tests the demonstration, not scalable creator supply.
 
 **Tiny budget or no creator access:** Reduce pilot size and spend, but retain the question of reproduction across people. Founder-produced content can test a demonstration; it does not establish an available scalable creator supply. This distinction follows the replication constraint. [S2]
 

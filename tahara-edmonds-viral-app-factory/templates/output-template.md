@@ -1,6 +1,6 @@
 # Opportunity and distribution memo template
 
-Use this template for a new opportunity, an existing-app diagnosis, or portfolio allocation. Replace bracketed fields. Delete irrelevant rows rather than inventing answers. Label all evidence as observed, reported, or hypothesized. Cite live niche observations with their own URLs and dates; use [S1] through [S5] only for the method sources in [sources.md](../references/sources.md).
+Use this template only when the user asks for a full written memo. For normal questions, use the default answer shape in [SKILL.md](../SKILL.md): pick first, then moment, test, numeric rules, and a short known / assumed / check-next block. Use this template for a new opportunity, an existing-app diagnosis, or portfolio allocation. Replace bracketed fields. Delete irrelevant rows rather than inventing answers. Label all evidence as observed, reported, or hypothesized. Cite live niche observations with their own URLs and dates; use [S1] through [S5] only for the method sources in [sources.md](../references/sources.md).
 
 Numerical gates, owners, and operating definitions below are package adaptations. Guidance draws on the distribution-first sequence, full-funnel economics, and creator learning model. [S1][S2]
 

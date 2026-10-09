@@ -1,49 +1,70 @@
 ---
 name: tahara-edmonds-viral-app-factory
-description: "Design and assess consumer apps using Kaz Tahara-Edmonds's creator distribution method when choosing niches, shaping video-native features, testing creators, diagnosing launches, or deciding what to scale."
+description: "Turn a consumer app question into a decisive creator-distribution plan using Kaz Tahara-Edmonds's public method: pick the niche and the filmable feature, plan creator tests, and set numeric rebook, scale and kill rules."
 ---
 
 # Viral App Factory
 
 Based on Kaz Tahara-Edmonds's public method. Not affiliated with or endorsed by Kaz Tahara-Edmonds.
 
-Produce an evidence-led opportunity memo that connects an existing short video niche to a demonstrable product feature, a bounded creator pilot, and an expand, revise, or stop decision. Start with how people already watch and share content, then design a useful app that belongs inside that behavior. The distribution system should learn across creators and, where appropriate, across products. [S1][S2]
+Kaz's public method starts from distribution, not product: find a short-video niche whose formats are emotional, easy for many creators to recreate, and not crowded by brands, then build a useful app feature that makes those videos better. A network of creators tests formats, and each week spend moves to what works and away from what does not. [S1][S2]
 
-## When to use
+## How to apply this skill
 
-Use this skill to find a consumer app opportunity, shape a feature for TikTok or Instagram Reels, plan creator tests, diagnose an underperforming launch, or allocate investment across a small app portfolio. It works best when the user's problem can appear as an emotionally recognizable story and the product creates a visible action, interaction, comparison, or result. [S1]
+You are the operator the founder hired. Be decisive and concrete.
 
-For an existing app, investigate its bottleneck before proposing a replacement. If short video cannot demonstrate its value or reach its intended customer, state that limitation and consider another distribution hypothesis. Treat the interviews as a method to test, not proof of transferable revenue, creator prices, or build speed. Distinguish sourced principles from your operational recommendations and the user's evidence. [S1][S2]
+- **Answer first.** The first lines give the pick, verdict or allocation. Reasons follow. Keep the format and length the user asked for; do not print this procedure, the template or the checklist unless asked.
+- **A labelled assumption is not an invented fact.** When a number is missing (price, creator fee, retention, payback window), choose a plausible value, mark it "(assumption)", and use it so every rule has a number the user can swap. Never present guesses as observed market facts: no made-up view counts, named viral posts, real creator rates or market stats.
+- **No web access is not a reason to stall.** Decide on the reasoning you have, then list at most three quick checks that could change the decision. Do not turn the answer into a research plan, and do not postpone the requested decision behind research gates.
+- **The founder's constraints are binding.** "No paid ads" means no paid creator posts and no boosted posts unless the user says paid creators are fine. Use the founder's own accounts, friends, unpaid or revenue-share creators, and comment seeding instead. [S1] A stated budget, time or cash limit caps the plan.
 
-## Procedure
+## The rules that matter most
 
-1. **Frame the decision.** Read [the scope and evidence rules](references/method.md#1-scope-and-evidence). Record whether the assignment concerns discovery, launch diagnosis, or portfolio allocation. Capture geography, audience, budget, build capacity, cash constraints, and the decision date. Identify missing inputs without inventing evidence.
+1. **Niche screen, all three factors.** Emotional resonance of formats people already watch, ease of recreation by ordinary creators, and low brand or sponsor competition. A niche can fail on any one. [S1][S2]
+2. **Product moment that is also the habit.** One input, one visible on-screen action, one result a viewer understands without a pitch. The filmed action must be something users want again on day 2 and day 30 (a routine, progress, a series, a shared ritual), not a one-time novelty. Kaz doubles down only on apps with a compounding advantage, and argues niche-personalized apps are stickier. [S1][S2]
+3. **Do not default to one shape.** Before picking, consider at least three different moment shapes (routine or progress, transformation or tool result, collaboration, comparison, reveal) and choose the one that fits this niche's existing videos. A two-person blind "reveal" or "verdict" is one option among several, not the default.
+4. **A format must travel across people.** Test the same structure on several creators with their own voice. One great performer is not scale: LumeSkin had strong conversion but too few creators could repeat the format cheaply. [S1][S2]
+5. **Reach and value, not conversion alone.** For organic, total reach can beat conversion rate: a 1M-view post with low conversion can beat a 10k-view post converting 10x better. Judge creators by audience fit and paid users, not raw views. [S1][S2]
+6. **Attribution is partial.** Most viewers search the App Store or Google. Tracked links and codes are a floor. Search lift over baseline is a range shared by every post in the window; never hand it all to one creator or count it twice. [S2]
+7. **Organic and paid are separate tests.** An organic winner is a paid-creative candidate, not proof paid will pay back. Paid needs its own cost per install and payback check, and creator permission to run their video as an ad. [S1]
+8. **Humans own creative feedback and creator relationships.** Name who reviews whether a video feels forced and who answers creators. [S2]
 
-2. **Map actual content behavior.** Follow [the niche screen](references/method.md#2-screen-the-niche). Gather current public examples with dates and links. Record hooks, emotional tensions, narrative structures, creator types, comments, and brand integrations. Separate observed patterns from attractive ideas that still need validation. [S1]
+## Numeric decision rules (defaults)
 
-3. **Select a distribution thesis.** Use [the niche decision rules](references/method.md#2-screen-the-niche) to compare emotional resonance, ease of recreation, and brand competition. Write one sentence linking audience, repeatable format, and useful product moment. Explain why rejected alternatives fail the screen. [S1]
+Kaz's interviews give the logic (short payback, weekly double-down and cuts, replication), not thresholds. The numbers below are this package's starting defaults. State them as defaults and swap in the user's own numbers where given.
 
-4. **Shape one demonstrable feature.** Apply [the product moment test](references/method.md#3-design-the-product-moment). Specify input, visible action, result, and user value. Scope an MVP that tests this loop and payment path within actual team capacity. Check claims and output trust where the feature affects wellbeing. [S1][S4][S5]
+| Rule | Default |
+| --- | --- |
+| Post hit / miss | Hit: views at least 2x the creator's own median of recent posts. Miss: under 0.5x. Read at 72 hours and day 7. |
+| Format travels | Hits from at least 2 different creators, and at least half of the creators tested (minimum 3 tested). |
+| Value of a paid user (V) | Net revenue per paid user realized inside the payback window, after store fees and refunds. |
+| Value per install | Install-to-trial x trial-to-paid x V. Never apply install-stage rates to views. |
+| Acquisition ceiling | 0.8 x V. Payback window: 30 days if cash is tight or bootstrapped, else the user's window. |
+| Rebook a creator | Tracked cost per paid user at or under the ceiling, or within it once a fair share of search lift is added, and views at least 1x their median. |
+| Drop a creator | Cost per paid user over 2x the ceiling even with generous attribution, or two posts under 0.5x their median. |
+| Expand spend | Format travels, conservative cost per paid user at or under the ceiling, and the retention gate holds. Raise at most 2x per round. |
+| Retention gate | At least 25% of users who did the core action in week 1 do it again in week 2. Under 10%: fix the product before buying more reach. |
+| Paid test | Start with the smaller of 10% of cash or what the user can lose within the payback window. Max cost per install = 0.8 x value per install. Stop a creative at 2x that after about 300 installs. |
+| Stop the hypothesis | Cap spent with no format hit on 2 creators, or conservative cost per paid user over 2x the ceiling for two rounds, or the retention gate still fails after one product fix. |
 
-5. **Draft two or three video concepts.** Consult [the worked examples](examples/worked-examples.md). For each concept, show the opening tension, native story, product interaction, reveal, and next action. Let entertainment and usefulness carry the demonstration rather than inserting an unrelated sales segment. [S1]
+Show the arithmetic in one or two lines so the user can check it.
 
-6. **Design a bounded creator pilot.** Use [the pilot guidance](references/method.md#4-test-creators-and-formats). Choose creators by audience fit and execution ability, then record costs, posting capacity, test cells, spend cap, and review window. Test whether a format travels across people rather than depending on one exceptional performer. [S2]
+## Default answer shape
 
-7. **Create shared briefs and human feedback.** Follow [the operating model](references/method.md#5-operate-the-learning-network). Distribute current winning patterns while preserving each creator's voice. Name a human reviewer and creator contact. Automate coordination and reporting where useful; retain direct feedback about awkwardness, authenticity, and emotional fit. [S1][S2]
+1. **Pick or verdict** in one or two sentences, with the main reason.
+2. **The moment:** input, on-screen action, result, and why users come back.
+3. **The test:** creators or accounts, posts, dates, spend itemized to the user's cap.
+4. **Rules:** the numeric expand, revise and stop rules with a review date.
+5. **Known / assumed / check next:** three short lines. Known: facts from the user or the sources. Assumed: your labelled defaults. Check next: up to three checks that could change the decision.
 
-8. **Measure attention through retained payment.** Apply [the funnel and attribution plan](references/method.md#6-measure-the-whole-funnel). Define cohorts and denominators. Track views, qualified audience signals, store traffic, installs, trials, paid customers, retention, acquisition cost, and payback. Report direct measurements separately from estimated attribution. [S2]
+Mark sensitive risks briefly where they apply: health or medical claims, children, private relationship or journal data, and any claim the product cannot back. [S4]
 
-9. **Set economics and stopping rules.** Use [the economic decision rules](references/method.md#7-set-economic-decision-rules). Derive spending limits from the user's cash constraints and conservative customer value. Specify what evidence permits expansion, what merits a revision, and what stops further spending. Never substitute the expert's reported results for local thresholds. [S1][S2]
+## Deeper files (open when the task needs them)
 
-10. **Review and reallocate weekly.** Follow [the bottleneck matrix](references/method.md#8-review-bottlenecks-and-portfolio-value). Expand repeatable formats, revise weak execution or funnel stages, and stop uneconomic tests. Distinguish profitable trend exposure from durable investment, and transfer creator knowledge only where audience and storytelling fit. [S1][S2]
+- [references/method.md](references/method.md): the full method, rule sources, warnings and edge cases.
+- [examples/worked-examples.md](examples/worked-examples.md): invented before-and-after illustrations.
+- [templates/output-template.md](templates/output-template.md): long memo format, only when the user asks for a full memo.
+- [checklists/review-checklist.md](checklists/review-checklist.md): a self-check before sending.
+- [references/sources.md](references/sources.md): the numbered public sources.
 
-11. **Deliver and audit the memo.** Fill [the output template](templates/output-template.md), then run [the review checklist](checklists/review-checklist.md). Include assumptions, unresolved evidence, owners, and the next decision. Planning does not itself authorize contacting creators, publishing content, or spending money.
-
-## Files in this skill
-
-- [SKILL.md](SKILL.md): Entry point, use cases, and the agent's main loop.
-- [references/method.md](references/method.md): Detailed principles, decision rules, expert warnings, and edge cases.
-- [references/sources.md](references/sources.md): Numbered register of fetched public sources and their contributions.
-- [examples/worked-examples.md](examples/worked-examples.md): Invented before-and-after illustrations of discovery and launch diagnosis.
-- [templates/output-template.md](templates/output-template.md): Opportunity memo fields with guidance for completing each one.
-- [checklists/review-checklist.md](checklists/review-checklist.md): Pass/fail review gates, common failure modes, and repairs.
+Planning does not authorize contacting creators, publishing or spending money.

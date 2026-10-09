@@ -4,6 +4,15 @@ Review the completed [opportunity memo](../templates/output-template.md) against
 
 A recommendation is ready when all applicable gates pass. A clearly labeled provisional research plan may pass without completed market observations, but it must not claim validation or recommend scaling on invented evidence.
 
+## Version 2 gates (check these first)
+
+- [ ] **PASS / FAIL:** The first lines give the pick, verdict or allocation the user asked for; research checks do not postpone it, and there are at most three of them.
+- [ ] **PASS / FAIL:** Every expand, rebook, drop and stop rule has a number and a review date; defaults are labelled as defaults.
+- [ ] **PASS / FAIL:** The plan respects stated constraints: no paid creators or boosts when the user ruled out paid ads, and spend stays within the stated cash.
+- [ ] **PASS / FAIL:** The product moment is also a reason to return on day 2 and day 30; it is not a one-time novelty.
+- [ ] **PASS / FAIL:** The moment shape was chosen against alternatives, not defaulted to a two-person reveal or verdict.
+- [ ] **PASS / FAIL:** Known facts, assumptions and next checks are separated in a short block, not spread as caveats through the answer.
+
 ## Scope and evidence gates
 
 - [ ] **PASS / FAIL:** The recommendation addresses the actual assignment: opportunity, existing-app bottleneck, or portfolio allocation.
@@ -57,7 +66,11 @@ A recommendation is ready when all applicable gates pass. A clearly labeled prov
 | Future renewals treated as cash today | Payback declared from immature lifetime-value estimates | Separate realized contribution from projections and schedule a mature cohort review. [S1] |
 | Portfolio transfer assumed | Winning creator assigned an unrelated app | Test audience tension and demonstration fit before reusing relationships or formats. [S2] |
 | Trend profit mistaken for durability | Allocation grows without a lasting advantage | Separate controlled profit harvesting from investment in a compounding position. [S2] |
-| Research unavailable but conclusions sound certain | Invented formats or prices presented as facts | Label hypotheses and deliver an evidence collection plan before a scale conclusion. |
+| Research unavailable but conclusions sound certain | Invented formats or prices presented as facts | Label the guesses as assumptions and name the checks that could change the call. |
+| Research unavailable and the answer stalls | A research plan instead of the requested pick, prices left blank | Make the call on labelled assumptions; at most three checks. |
+| Vague gates | "Double down if it works", "set your payback window" | Use the numeric defaults and show the arithmetic. |
+| Constraint ignored | Paid creators in a plan where the user ruled out paid ads | Rebuild the test with unpaid accounts, revenue share and comment seeding. |
+| One-shot gimmick | Users have no reason to open the app after trying the filmed feature | Tie the filmed action to a routine, progress, series or shared ritual. |
 
 ## Final review record
 
