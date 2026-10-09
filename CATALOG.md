@@ -32,6 +32,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 | Show a plan as a scannable text diagram with decisions on top | [`plan-board`](plan-board/) |
 | Set up an AI team with a Chief of Staff, cross-model review and a shared second brain | [`ai-team`](ai-team/) |
 | Turn long dictated prompts into a clear brief before the agent acts | [`voice-prompting`](voice-prompting/) |
+| Move a live app between clouds without downtime, with a rollback per phase | [`zero-downtime-cloud-move`](zero-downtime-cloud-move/) |
 | Draft a literature review or research paper with checkable citations | [`autonomous-research`](autonomous-research/) |
 | Diagnose an unreliable or expensive agent | [`harness-first`](harness-first/) |
 | Decide whether another skill would help | [`skillneed`](skillneed/) |
@@ -67,6 +68,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`plan-board`](plan-board/) shows plans and status as one-line-per-item text diagrams, with decisions first and an optional board that collects approvals.
 - [`ai-team`](ai-team/) sets up role agents in Claude Code or Codex: a Chief of Staff on a board, a rule that nobody reviews their own work, human approval for anything that goes out, and a shared git second brain.
 - [`voice-prompting`](voice-prompting/) reads long, dictated prompts: repairs speech to text errors, extracts goal, constraints and deliverables, restates briefly, then executes.
+- [`zero-downtime-cloud-move`](zero-downtime-cloud-move/) is a runbook for moving a live app between clouds: verified inventory, new stack in parallel, a one-line rollback per phase, real workloads before the switch, a cutover checklist and watch window, an idempotent data copy whose second pass must report 0, and decommission last.
 
 ### Research and communication
 
