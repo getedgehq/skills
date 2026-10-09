@@ -25,7 +25,7 @@ Edge scans packages, mirrors available third-party scanner reports, and loads pi
 
 ## In this repository
 
-This repository contains 139 top-level skill bundles, including compatibility aliases. It is the versioned source for [Edge-maintained skills](CATALOG.md). The [public database](database/edge-database.json) holds package provenance and recorded evaluations where they exist. Browse the [package catalog and evidence notes](CATALOG.md) for installation and benchmark details.
+This repository contains 140 top-level skill bundles, including compatibility aliases. It is the versioned source for [Edge-maintained skills](CATALOG.md). The [public database](database/edge-database.json) holds package provenance and recorded evaluations where they exist. Browse the [package catalog and evidence notes](CATALOG.md) for installation and benchmark details.
 
 ## Tracked Deck Links
 
