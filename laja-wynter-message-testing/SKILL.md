@@ -5,45 +5,35 @@ description: "Diagnose and improve B2B page messaging using Peep Laja's Wynter m
 
 # Wynter B2B message testing
 
-Based on Peep Laja's public method. Not affiliated with or endorsed by Peep Laja.
+Based on Peep Laja's public method. Not affiliated with or endorsed by Peep Laja. Sources: [references/sources.md](references/sources.md).
 
-## When to use
+## Output contract
 
-Use this skill to find why a B2B revenue page fails to communicate its offer or persuade its intended buyers, then produce an evidence-linked revision and retest plan. It fits homepage, campaign landing page, product page, and value proposition reviews before launch or after disappointing results. It is especially useful when internal copy debates lack buyer evidence. Message testing explains interpretation and motivation; conversion measurement requires separate behavioral evidence. [S1][S6]
+Read this first. It decides what the user receives.
 
-Start with buyer research if current priorities, buying triggers, alternatives, or decision roles are unknown. Existing recent research can supply this context without another survey. Choose a preference test for two or three viable directions and a pricing page test for price comprehension. Routine message diagnostics should focus on the persuasion path, excluding blogs, careers pages, support material, and late-stage competitor comparison pages. [S4]
+- **The deliverable is a decision the team can act on:** which message (or which revision) to go with and why, the improved copy, and, when the team must still decide between options, the quickest way to settle it with real buyers. For a page review, the deliverable is the diagnosis plus the rewritten copy for the parts that fail.
+- **Length and format:** one to two pages (roughly 400 to 900 words). Lead with the recommendation in one or two sentences, marked as your provisional pick until buyers confirm it. Then the reasoning per option in a few bullets, the revised message, and, when the team must still decide or asked how to decide, a concrete test plan sized to their stated budget, timeline and channels: who to recruit and how, the exact questions, sample size, what it costs, and the decision rule that picks the winner. Check the arithmetic. If you save a file, the chat reply is two or three lines.
+- **Cover what they asked:** if the request asks both how to decide and which to pick, give both. Every option, constraint, budget and deadline in the input is addressed.
+- **What the method changes:** the judgment, not the length. Each option is judged as a target buyer would read it, in order: is it clear what this is, is it relevant to me, is the value worth it, is it different from what I use now. The earliest layer that fails decides the fix. Claims are checked against the alternatives buyers actually use, including doing nothing. Internal preference is not evidence.
+- **Facts:** use only facts from the request and the files provided. Never invent buyer responses, survey results, scores, percentages, respondent quotes or customer data. Your read of the options is an expert judgment; say so in a few words, do not dress it up as test data. Flag any claim in an option the input does not substantiate (for example a "2x faster" with no comparison) and keep it out of the copy you recommend, including test ads.
+- **Never output:** evidence-status sections, buyer-context gap tables, test records, stimulus-freeze instructions, claim-audit matrices, prioritized-change tables, review results, source tags like [S4], or the expert's name. Do that thinking silently; the page shows the decision.
+- **Open questions:** at most two, only if the answer would change the pick.
 
-The deliverable is a message diagnosis and revision brief, using [the output template](templates/output-template.md). If buyer responses are unavailable, produce a clearly labelled provisional expert review and a research plan. Never describe an untested rewrite as validated, invent respondent comments, or manufacture scores.
+## The method, as decisions
 
-## Procedure
+Detail and edge cases: [references/method.md](references/method.md).
 
-1. **Frame the decision.** Read [method: Scope and evidence](references/method.md#scope-and-evidence). Name the page, intended buyer, next action, and decision the work must inform. Record the message hypothesis and observable success condition before inspecting feedback. Keep the scope to a concrete page or message direction.
+1. **Read it as the buyer, not the team.** Messaging fails when it makes sense internally but not to someone seeing it cold. [S1] [S6]
+2. **Diagnose in order: clarity, relevance, value, differentiation.** Fix the earliest failing layer first; a clever differentiator cannot rescue a message buyers do not understand. [S1] [S3]
+3. **Compare against real alternatives,** including manual work and doing nothing; "better" is meaningless without the comparison the buyer is making. [S3]
+4. **Specific beats clever.** Concrete outcomes and mechanisms over slogans; proof next to claims; cut claims every competitor could make. [S3] [S5]
+5. **Settle disagreements with target buyers, not votes.** A small qualitative test (about 15 people from the real segment, neutral comprehension questions, ratings with reasons) beats internal debate. A preference test fits two or three viable directions. [S4]
+6. **Message tests explain interpretation, not conversion.** Do not promise lift from a rewrite. [S1] [S6]
 
-2. **Check buyer context.** Use [method: Buyer context](references/method.md#buyer-context) to distinguish known facts from assumptions about pains, priorities, triggers, buying roles, and alternatives. Reuse credible recent evidence. Where gaps would change the message, plan focused buyer research before writing the promise. [S2][S4]
+## Shape that works
 
-3. **Choose the study.** Follow [method: Study selection](references/method.md#study-selection). Match the question to a message, campaign landing page, pricing, preference, or buyer-context study. If research cannot run, preserve the expert-review label and identify exactly what buyer evidence remains missing.
+Skeleton in [templates/output-template.md](templates/output-template.md). Illustrations in [examples/worked-examples.md](examples/worked-examples.md) show the reasoning, not the format to hand over.
 
-4. **Freeze the stimulus.** Follow [method: Stimulus and audience](references/method.md#stimulus-and-audience). Record the URL or faithful image, version, hero, important sections, and campaign context. Keep enough of the page experience to detect an explanation that arrives too late. Specify respondent criteria and separate prospects from knowledgeable customers. [S5][S6]
+## Before you hand it over (silent)
 
-5. **Plan the sample and questions.** Use [method: Questions and sampling](references/method.md#questions-and-sampling) for neutral comprehension prompts and ratings with explanations. Start with the playbook's 15-person qualitative default where appropriate. Treat sample counts as planning guidance, never a guarantee of saturation or statistical significance. [S4][S6]
-
-6. **Collect and organize evidence.** Use [the evidence fields](templates/output-template.md) to retain respondent IDs, segment, page location, rating scale, and feedback. Cluster underlying questions, preserve meaningful disagreement, and distinguish observed interpretation from the agent's explanation. AI summaries must remain traceable to the actual responses.
-
-7. **Find the earliest failed layer.** Apply [method: Ordered diagnosis](references/method.md#ordered-diagnosis): clarity, relevance, value, then differentiation. Record the primary failure, evidence, causal hypothesis, and proposed revision. Do not let a favorable downstream score override basic category confusion. [S1]
-
-8. **Audit proof and alternatives.** Read [method: Proof, friction, and sameness](references/method.md#proof-friction-and-sameness). Compare claims with alternatives buyers actually use, including manual work or inaction. Identify unsupported promises and consequential doubts. Distinguish defensible differences from unusual wording. [S1][S3]
-
-9. **Rewrite around the diagnosis.** Follow [method: Revision rules](references/method.md#revision-rules) and consult [the worked illustrations](examples/worked-examples.md). Revise the failed buyer question first, connect capabilities to desired outcomes, place proof beside claims, and simplify repeated sections. Preserve strategic tradeoffs instead of implementing every suggestion. [S3][S5]
-
-10. **Review the complete brief.** Run [the pass/fail checklist](checklists/review-checklist.md). Confirm evidence supports the diagnosis, every priority change has a reason, and copy claims are verified or visibly provisional. Correct failed items or record the evidence needed to resolve them.
-
-11. **Retest and decide.** Apply [method: Retest and maintenance](references/method.md#retest-and-maintenance). Compare buyer interpretations using a comparable audience, stimulus scope, and questions. Recommend ship, revise, or gather context against the declared decision rule. Specify a follow-up trigger; avoid spending on another message test for typos or design-only changes. [S4]
-
-## Files in this skill
-
-- [SKILL.md](SKILL.md): Entry point, applicability, and the agent's operating loop.
-- [references/method.md](references/method.md): Detailed principles, decisions, exceptions, and explicit source warnings.
-- [references/sources.md](references/sources.md): Fetched public sources and the contribution of each numbered citation.
-- [examples/worked-examples.md](examples/worked-examples.md): Two invented before-and-after illustrations with diagnosis and retest criteria.
-- [templates/output-template.md](templates/output-template.md): Fill-in message diagnosis and revision brief with field guidance.
-- [checklists/review-checklist.md](checklists/review-checklist.md): Pass/fail output review and common failure modes with fixes.
+Check without writing it down: the recommendation is in the first lines; every claim about the product is in the input; no invented buyer data; the revised copy fixes the earliest failing layer; nothing the team would delete before acting on it. Fuller gates: [checklists/review-checklist.md](checklists/review-checklist.md).

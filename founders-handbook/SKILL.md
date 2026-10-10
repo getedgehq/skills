@@ -13,6 +13,17 @@ link the chapter, and do not present the material as original. Every figure in t
 files comes from the chapter text; do not invent numbers or fill gaps with market
 averages.
 
+## Output contract
+
+Read this first. It decides what the founder receives.
+
+- **The deliverable is the answer or document they asked for:** the ownership table, the dilution answer, the edited memo, the investor update, the deck feedback. Use the handbook to make its numbers and judgments right, not to add a handbook summary on top.
+- **Length and format:** as short as the job allows and in the format asked for. A numeric question gets the table and the few sentences that interpret it. An edited document keeps the founder's structure, voice and length unless they asked for a rewrite; return the finished text, then a short list of what you changed and why (five bullets at most).
+- **Facts:** every number comes from the founder's input or is computed from it, with the arithmetic shown in the table; never fill gaps with market averages, typical valuations or invented traction. If a number the answer needs is missing, say which one and show the result under the stated assumption in one line. A document meant to be sent (memo, update, email) contains no [placeholders] and no new claims or statistics: write around what is missing and list it in the chat reply instead. Never import handbook figures, examples or market statistics into the founder's document, never add or sharpen claims about their product, models or traction, and keep every qualification the founder wrote on a number (pilot, sample, preliminary) exactly as strong as they wrote it.
+- **Never output:** a recap of handbook chapters or concepts the founder did not ask about, generic best-practice checklists, review results, or a disclaimer paragraph. One short line about counsel is enough when a real transaction, separation or tax question is involved.
+- **Attribution:** put the "Source:" line with the chapter link in your chat reply. Never put it, or any mention of the handbook, inside a document the founder will send to someone else (memo, update, deck, email).
+- **Outside the handbook:** if the ask is not covered (for example an angel memo), do the task to this contract and use only the chapters that genuinely apply (SAFE terms, round math, investor updates); do not stretch the handbook or announce that it does not cover the topic.
+
 ## Route the question first
 
 Match the ask to a row, load that reference file, answer from it, and cite the chapter
@@ -101,8 +112,9 @@ dilute further; the full mechanics and the pool tables are in
 
 ## What to produce per ask
 
-- **Always:** answer, then end with "Source:" and the chapter link or links you used,
-  naming 1984 Ventures and the author when the table names one.
+- **Always:** answer, then end your chat reply (not a document meant for others) with
+  "Source:" and the chapter link or links you used, naming 1984 Ventures and the author
+  when the table names one.
 - **Cap table or dilution:** compute with the procedure above, show a before and after
   table (holder, shares, percent), state the dilution in points, and explain that pool
   grants move shares out of the pool rather than issuing new ones.
@@ -126,9 +138,9 @@ dilute further; the full mechanics and the pool tables are in
 
 ## Boundaries
 
-- The handbook's disclaimer applies: general education, not legal or tax advice. Say so
-  whenever the answer touches a real transaction, a separation, or taxes, and point to
-  counsel. QSBS figures are the chapter's as of its writing; tell the founder to confirm
+- The handbook's disclaimer applies: general education, not legal or tax advice. When the
+  answer touches a real transaction, a separation, or taxes, say so in one line and point
+  to counsel. QSBS figures are the chapter's as of its writing; tell the founder to confirm
   current law.
 - Every number must come from the reference files. If the handbook gives no figure,
   say so.
