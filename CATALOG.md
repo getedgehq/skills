@@ -36,6 +36,10 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 | Run a Mac mini as an always-on, shared Claude Code box reachable from laptop and phone | [`mac-mini-agent-box`](mac-mini-agent-box/) |
 | Write recruiter LinkedIn invites and messages that fit the limits and pass send checks | [`rocketlist-linkedin-outreach`](rocketlist-linkedin-outreach/) |
 | Classify and answer candidate replies from the thread and approved facts only | [`rocketlist-reply-handling`](rocketlist-reply-handling/) |
+| Check whether a product line lets the reader picture what they get | [`jobs-lens`](jobs-lens/) |
+| Check whether an ambitious claim shows the breakthrough and why it works | [`musk-lens`](musk-lens/) |
+| Test a moat, market definition and "why won't the incumbent eat us" answer | [`thiel-lens`](thiel-lens/) |
+| Pressure-test a career or business choice on ownership, leverage and freedom | [`naval-thinking`](naval-thinking/) |
 | Draft a literature review or research paper with checkable citations | [`autonomous-research`](autonomous-research/) |
 | Diagnose an unreliable or expensive agent | [`harness-first`](harness-first/) |
 | Decide whether another skill would help | [`skillneed`](skillneed/) |
@@ -134,6 +138,10 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 
 - [`founders-handbook`](founders-handbook/) answers founder questions (co-founders, cap tables, SAFEs, Series A, secondaries, M&A, QSBS) from 1984 Ventures' public Founders Handbook and links the chapter behind every answer.
 - [`pitch-lensing`](pitch-lensing/) structures and reviews an investor deck with the lensing method pitch designer Chris Laughlin presented in a public Emerson Collective talk (June 2024): a lens note per partner, a four-slide context opener instead of Problem / Solution, raise timing and a fast-rules review table. Restated in our own words with credit; not endorsed by him. Install: `npx skills add getedgehq/skills --skill pitch-lensing`.
+- [`jobs-lens`](jobs-lens/) reviews pitch and product copy with eleven checks drawn from how Steve Jobs communicated in public launches, interviews and letters, and returns pass or fail per check plus a rewrite. Short cited excerpts only; independent framework, not affiliated with or endorsed by Steve Jobs, his estate or Apple. Install: `npx skills add getedgehq/skills --skill jobs-lens`.
+- [`musk-lens`](musk-lens/) reviews mission, market, cost and roadmap lines with eleven checks drawn from how Elon Musk communicates in public essays, presentations and interviews, and labels targets as targets. Short cited excerpts only; independent framework, not affiliated with or endorsed by Elon Musk or his companies. Install: `npx skills add getedgehq/skills --skill musk-lens`.
+- [`thiel-lens`](thiel-lens/) tests strategy, moat, market definition and first-market choice with eleven checks drawn from Peter Thiel's public essay, Stanford lecture, interviews and Zero to One. Short cited excerpts only; independent framework, not affiliated with or endorsed by Peter Thiel. Install: `npx skills add getedgehq/skills --skill thiel-lens`.
+- [`naval-thinking`](naval-thinking/) pressure-tests career and business choices, ownership, leverage, partnerships and ambition versus freedom with ideas associated with Naval Ravikant and Eric Jorgenson's Almanack, and ends in a recommendation and a bounded experiment. Idea-level paraphrase with sources; independent framework, not affiliated with or endorsed by either. Install: `npx skills add getedgehq/skills --skill naval-thinking`.
 - [`german-taxes-elster`](german-taxes-elster/) prepares German taxes with an agent for founders and small UG/GmbH companies: UStVA and annual USt (including section 13b reverse charge on EU and US SaaS and the `DE000000000` placeholder VAT ID trap), KSt, GewSt, E-Bilanz, Einspruch with AdV and Verböserung check, Vorauszahlungen, deadlines, and certificate-based Mein ELSTER filing. The agent prepares; a human approves every submission. Not tax advice. Install: `npx skills add getedgehq/skills --skill german-taxes-elster`.
 
 ### Web and 3D, by Meng To
