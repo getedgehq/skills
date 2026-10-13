@@ -127,6 +127,9 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`repo-to-launch`](repo-to-launch/) turns repository facts into a grounded launch package without inventing product claims.
 - [`strip-image-ai-metadata`](strip-image-ai-metadata/) removes C2PA and AI-generation metadata.
 - [`vlog-edit`](vlog-edit/) edits phone footage into a captioned 9:16 short with a hook, full-frame data cards, maps and b-roll, then judges the cut before anyone watches it.
+- [`icloud-photos-bridge`](icloud-photos-bridge/) gives an agent read-only access to the Mac's iCloud Photos library: a catalog with Apple's own aesthetic scores, faces, scene labels and places, owner identification by face cluster, contact sheets, and full-quality originals downloaded from iCloud on demand. Install: `npx skills add getedgehq/skills --skill icloud-photos-bridge`.
+- [`selfie-picker`](selfie-picker/) picks your best selfies from iCloud Photos by Apple's aesthetic and face scores (sharp, well framed, eyes open, smile), keeps one shot per moment, and has the agent look at a montage before it shows a contact sheet. Needs `icloud-photos-bridge`. Install: `npx skills add getedgehq/skills --skill selfie-picker`.
+- [`broll-picker`](broll-picker/) finds B-roll clips and stills in iCloud Photos without you or close-up people in them, filtered by length, place and scene labels and spread across moments. Needs `icloud-photos-bridge`. Install: `npx skills add getedgehq/skills --skill broll-picker`.
 
 ### Evidence and publishing
 
