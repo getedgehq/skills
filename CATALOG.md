@@ -35,6 +35,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 | Move a live app between clouds without downtime, with a rollback per phase | [`zero-downtime-cloud-move`](zero-downtime-cloud-move/) |
 | Run a Mac mini as an always-on, shared Claude Code box reachable from laptop and phone | [`mac-mini-agent-box`](mac-mini-agent-box/) |
 | Write recruiter LinkedIn invites and messages that fit the limits and pass send checks | [`rocketlist-linkedin-outreach`](rocketlist-linkedin-outreach/) |
+| Turn a week of real work into posts and short-video scripts, every line sourced | [`startup-content-machine`](startup-content-machine/) |
 | Classify and answer candidate replies from the thread and approved facts only | [`rocketlist-reply-handling`](rocketlist-reply-handling/) |
 | Check whether a product line lets the reader picture what they get | [`jobs-lens`](jobs-lens/) |
 | Check whether an ambitious claim shows the breakthrough and why it works | [`musk-lens`](musk-lens/) |
@@ -114,6 +115,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`product-launch-video`](product-launch-video/) turns a product brief into an editable launch film.
 - [`launch-film`](launch-film/) makes a short, result-first launch film for a product, feature or skill: one object carried across beats cut on a music grid, an original synthesized score and your brand kit, rendered from HTML to MP4 with no video editor. Made the Edge skill films.
 - [`linkedin-year-audit`](linkedin-year-audit/) reads your own LinkedIn analytics export and tells you what worked over the year: totals, follower growth, how much a few posts carried, and which kinds of posts reached people versus which got reactions, with the number behind every claim. Runs on your computer; nothing is uploaded.
+- [`startup-content-machine`](startup-content-machine/) turns a founder's last week of real work (Claude Code and Codex sessions, commits, company docs) into LinkedIn posts, X posts and 30 to 60 second video scripts, each with a source map back to what actually happened. `scripts/collect.py` runs locally, reads only and redacts keys, tokens, emails and phone numbers. Built with [Compound](https://compound.mov), which turns the scripts into edited videos. Never posts.
 - [`subscription-billing-reconciliation`](subscription-billing-reconciliation/) reconciles what a subscription contract says should have been billed for a period against what invoices actually billed: proration, invoice-export revisions, credit notes, merged and parent/child accounts, FX and one-time rounding.
 - [`ar-aging-and-cash-application`](ar-aging-and-cash-application/) builds an accounts receivable aging report and applies incoming cash to invoices: due dates from terms, allocation order, settlement discounts, partial payments, credit memos, disputes and unapplied cash.
 - [`crawler-access-audit`](crawler-access-audit/) audits crawler access from server logs and robots.txt: RFC 9309 group selection and precedence, versioned robots.txt, crawler impersonation, real client IP behind proxies and AI crawler tokens.
