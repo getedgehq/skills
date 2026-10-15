@@ -43,6 +43,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 | Pressure-test a career or business choice on ownership, leverage and freedom | [`naval-thinking`](naval-thinking/) |
 | Draft a literature review or research paper with checkable citations | [`autonomous-research`](autonomous-research/) |
 | Diagnose an unreliable or expensive agent | [`harness-first`](harness-first/) |
+| Give each subagent the cheapest model that still gets its task right | [`subagent-model-picker`](subagent-model-picker/) |
 | Decide whether another skill would help | [`skillneed`](skillneed/) |
 | Find recurring failures in agent sessions | [`skill-miner`](skill-miner/) |
 | Test a Skill on tasks recovered from your own sessions | [`brain-scan`](brain-scan/) |
@@ -63,6 +64,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`skill-evals`](skill-evals/) builds repeatable agent evaluations and verifiers.
 - [`agent-infra-fixer`](agent-infra-fixer/) diagnoses and repairs broken agent guardrails.
 - [`harness-first`](harness-first/) audits the harness before recommending a model change.
+- [`subagent-model-picker`](subagent-model-picker/) picks Haiku, Sonnet, Opus or Fable for each Claude Code subagent before it is spawned, with a one-line reason per task, and pins what each alias resolves to. Measured against the same four tasks with every subagent on Opus in [`EVALS.md`](subagent-model-picker/EVALS.md).
 - [`skill-cockpit`](skill-cockpit/) provides a local view of mined failures and evaluation runs.
 - [`skill-eval-loop`](skill-eval-loop/) runs controlled with-skill and without-skill comparisons.
 - [`skill-release-pipeline`](skill-release-pipeline/) takes a concrete failure through package creation, evaluation, evidence binding, and publication.
