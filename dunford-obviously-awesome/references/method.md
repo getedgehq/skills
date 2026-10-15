@@ -111,7 +111,7 @@ Changing the frame can change expectations for pricing, channels, partnerships, 
 
 ## Document and translate
 
-Document the five components, their reasoning, evidence gaps, chosen frame, and rejected candidate. Date the canvas so future reviews have a reference point. This template is an analytical record completed after investigation, not the traditional positioning-statement exercise Dunford criticizes for assuming the answers in advance. [S2] [S4]
+Document the five components and the chosen frame, with a one-line reason for the frame. Keep evidence gaps and rejected candidates in your working notes unless the user asks for them; the deliverable is the positioning, not the analysis behind it. Date the canvas so future reviews have a reference point. This template is an analytical record completed after investigation, not the traditional positioning-statement exercise Dunford criticizes for assuming the answers in advance. [S2] [S4]
 
 Only then write a short buyer-facing explanation. It should identify what the offering is, whom it helps, and why its distinct value matters relative to a real alternative. Build messaging, sales narratives, and demos from the canvas without treating any sentence as the positioning itself. [S4] [S7]
 

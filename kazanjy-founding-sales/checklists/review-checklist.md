@@ -1,6 +1,6 @@
 # Review Checklist
 
-Review the finished sales working packet, not just its prose. Mark each applicable item PASS or FAIL and record the evidence. Use N/A only with a scope or stage reason. A polished asset cannot compensate for a failed stage assessment or unsupported customer claim.
+Internal review: run it silently on your draft and fix what fails. Never put this checklist, PASS/FAIL marks, a review note or a list of limitations in the deliverable; a gap that matters to the user becomes one short open question at the end (three at most). The gates are package adaptations of the public method, not a scoring system published by the expert.
 
 This checklist is a package review instrument derived from the public method. The exact labels and fields are not an expert-published scoring system.
 

@@ -5,44 +5,35 @@ description: "Create and review cold-call talk tracks and cold emails using Josh
 
 # Josh Braun's Poke the Bear
 
-Based on Josh Braun's public method. Not affiliated with or endorsed by Josh Braun.
+Based on Josh Braun's public method. Not affiliated with or endorsed by Josh Braun. Sources: [references/sources.md](references/sources.md).
 
-## When to use
+## Output contract
 
-Use this skill when drafting a prospecting call, adapting its central question to cold email, repairing a disguised pitch, or reviewing outreach that attracts reflexive dismissals. The deliverable is a prospecting brief plus a usable call or email, with response branches that preserve the prospect's choice. Begin with the job the person performs and how they accomplish it today, rather than the seller's preferred product story. [S1][S2][S3]
+Read this first. It decides what the user receives.
 
-The method is especially useful when a familiar supplier or workaround appears adequate but a separate exposure may remain unexamined. It does not establish that the prospect has a problem. A satisfactory current process, the wrong responsibility, and a refusal are valid discoveries. Do not convert the exercise into a meeting quota, a fear campaign, or a sequence of rebuttals. [S4][S8][S12]
+- **The deliverable is the message, ready to send:** a cold email (subject + body), or a cold-call talk track if they asked for a call. If they asked to review a draft, the deliverable is the rewritten draft plus a few lines on what changed.
+- **Length and format:** an email body of 70 to 140 words, a subject under seven words, plain text, no bullet lists in the body. A call track fits on half a page. One email only: no alternate versions, no follow-up sequence unless asked. If you save a file, the chat reply is two or three lines.
+- **The user's goal is the ask.** If the user says what the email is for (try the product with their team, book a call, start a pilot), the email ends with exactly that ask, phrased as an easy, low-pressure yes/no ("Worth trying with your team?"). Do not swap their goal for a discovery-only question.
+- **What the method changes:** how the email earns that ask. It opens on the prospect's current process, not your product: one specific, credible blind spot in how teams like theirs do the job today, framed as a possibility they can disagree with. Then one or two plain sentences on what the product does about it, carrying the strongest concrete proof from the input (a result, a number, a pilot) with its limits intact, and the practical facts an operator needs to say yes (what it takes to start, cost if the input gives it). No hype, no stacked benefits, no pressure, no fake urgency, one reply point.
+- **Facts:** use only facts from the request and the files provided. Never invent customer names, peer stories, statistics, results, incidents or familiarity with the prospect. Keep every qualification on a number (pilot size, timeframe). Personalize only with what you actually know; keep [placeholders] to the recipient's name and the sender's signature.
+- **Never output:** a prospecting brief, facts-vs-assumptions table, exposure map, response-branch tables, a neutrality rationale, review results, method explanations, open questions, source tags like [S2], or the expert's name.
 
-Read [references/method.md](references/method.md) for the reasoning and channel decisions. The sequence below is this package's operational synthesis: Braun's public examples vary, and he explicitly emphasizes intent over a universal script. The examples and template are teaching tools, not scripts he authored. [S7]
+## The method, as decisions
 
-## Procedure
+Detail and edge cases: [references/method.md](references/method.md).
 
-1. **Define the assignment and success.** Identify the channel, intended role, job, and seller capability. Set success as learning whether a relevant gap and willingness to discuss it exist. Drafting outreach does not itself authorize sending it. Use the intake fields in [templates/output-template.md](templates/output-template.md) and the intent rules in [references/method.md](references/method.md). [S3][S8]
+1. **Discover, do not pitch.** Pressure triggers resistance; a prospect who senses where the email is going stops reading. The goal of the first message is to learn whether a gap exists and whether they want to talk about it. [S2] [S3] [S5]
+2. **Make the blind spot specific.** Their current provider or workflow probably does its main job fine. Pick one concrete mechanism it can miss (coverage between checks, records that do not reconcile, a success that is not verified) and its plausible consequence. Specific beats dramatic; generic "save time / cut costs" makes you interchangeable. [S2] [S4]
+3. **Frame the problem as a neutral question, not a trap.** "How do you currently check X?" or "teams often only find out when..." not "Would you like to reduce X?". Test: can a prospect whose process works answer without disputing your premise? If not, remove the accusation. [S2] [S3]
+4. **Keep it impersonal and correctable.** Describe a situation similar people run into, leave room for it not to apply, and allow for "that's not my area". Use a peer pattern only if it is real. [S6] [S7]
+5. **One reply point.** One ask at the end: the user's goal as an interest-based yes/no, or, if they named none, the process question. No second ask, no calendar link, no list of features. [S2]
+6. **Respect no.** A satisfied answer ends the thread unless they raise something; never stack rebuttals or manufactured deadlines. [S8] [S12]
+7. **Calls:** short identity, a permission or direct opener, the observation, the question, then stop talking. Spoken stretches under about fifteen seconds. [S1] [S5] [S12]
 
-2. **Separate facts from hypotheses.** Record verified role information, known workflow details, and unknowns. Mark assumed processes and possible consequences explicitly. Do not invent customers, losses, or statistics to make the opening compelling. Consult the evidence rules in [references/method.md](references/method.md) and trace any method attribution through [references/sources.md](references/sources.md). [S4][S7]
+## Shape that works
 
-3. **Map one overlooked exposure.** Describe the current approach, the concrete mechanism that could leave something unseen, and its possible consequence. Prefer a specific verification gap over generic savings language. If no defensible exposure exists, ask about the process before proposing one. See the problem map in [references/method.md](references/method.md). [S2][S4]
+Skeletons are in [templates/output-template.md](templates/output-template.md). Before-and-after illustrations are in [examples/worked-examples.md](examples/worked-examples.md); they show the reasoning, not the format to hand over.
 
-4. **Choose a brief, relevant opening.** For calls, identify yourself and select a direct or permission opening. Verify responsibility when unknown; use a tentative observation when research supports it. Include peer familiarity only when true. Avoid stacking introductions and qualification questions. See the opening decisions in [references/method.md](references/method.md). [S1][S5][S7][S11]
+## Before you hand it over (silent)
 
-5. **Frame the possibility without accusation.** If context is needed, describe a recognizable situation and leave room for it not to apply. Use a peer observation only when supported. Keep product explanation for the point where it helps answer the prospect's question. Follow the framing rules in [references/method.md](references/method.md). [S3][S6]
-
-6. **Write one neutral process question.** Ask how or what they currently do about the job or exposure. Check whether a satisfied prospect can answer comfortably. Add a small, correctable menu only when it reduces effort. Compare the weak and improved drafts in [examples/worked-examples.md](examples/worked-examples.md). [S2][S5][S12]
-
-7. **Create space for the answer.** Put a pause after the call question. For email, make the question the reply point and remove competing requests. Keep spoken stretches short and conversational. Use the channel fields in [templates/output-template.md](templates/output-template.md) and delivery guidance in [references/method.md](references/method.md). [S1][S2][S12]
-
-8. **Listen and reflect before deepening.** After a response, pause briefly, then reflect or clarify what was actually said. Alternate questions with grounded observations. Explore a revealed gap rather than inventing the next admission. See the listening rules in [references/method.md](references/method.md). [S9][S11]
-
-9. **Write distinct response branches.** Cover an adequate process, a gap, a refusal, interest, and uncertain ownership. Accept satisfaction and stop on an explicit refusal. Clarify a dismissal only if the person remains willing to converse. Use the branch fields in [templates/output-template.md](templates/output-template.md). [S8][S12]
-
-10. **Offer a conditional next step.** When interest appears, connect the capability to their described process, then ask whether a later conversation would help. Honor the promised brevity. Consult the progression rules in [references/method.md](references/method.md) and the call illustration in [examples/worked-examples.md](examples/worked-examples.md). [S1][S5][S10]
-
-11. **Review and deliver.** Apply [checklists/review-checklist.md](checklists/review-checklist.md), repair every failed item, and return the brief, finished message, branches, and a short neutrality rationale. State unresolved evidence gaps rather than concealing them. [S3][S8][S12]
-
-## Files in this skill
-
-- [references/method.md](references/method.md): Detailed principles, decisions, edge cases, and expert warnings.
-- [references/sources.md](references/sources.md): The twelve fetched public sources and their contributions.
-- [examples/worked-examples.md](examples/worked-examples.md): Invented call and email illustrations with before-and-after analysis.
-- [templates/output-template.md](templates/output-template.md): Fill-in prospecting brief, channel draft, branches, and rationale.
-- [checklists/review-checklist.md](checklists/review-checklist.md): Pass/fail review criteria and common repairs.
+Check without writing it down: every claim is in the input; the question is answerable by a satisfied prospect; one question, one reply point; no pitch paragraph; body length within range; nothing the sender would have to delete. Fuller criteria: [checklists/review-checklist.md](checklists/review-checklist.md).

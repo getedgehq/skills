@@ -1,6 +1,6 @@
 # Finished-output review
 
-Mark each applicable item PASS or FAIL. Use N/A only for a channel-specific item and explain why it does not apply. A failed item requires a revision or an explicit unresolved limitation before delivery. This review format is the package's synthesis, not a checklist published by Braun.
+Internal review: run it silently on your draft and fix what fails. Never put this checklist, PASS/FAIL marks, a review note or a list of limitations in the deliverable; a gap that matters to the user becomes one short open question at the end (three at most). The gates are package adaptations of the public method, not a scoring system published by the expert.
 
 ## Pass/fail criteria
 

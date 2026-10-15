@@ -5,47 +5,36 @@ description: "Choose evidence-based B2B software positioning and draft a homepag
 
 # B2B Homepage Positioning and Messaging
 
-Based on Anthony Pierri's public method. Not affiliated with or endorsed by Anthony Pierri.
+Based on Anthony Pierri's public method. Not affiliated with or endorsed by Anthony Pierri. Sources: [references/sources.md](references/sources.md).
 
-## When to use
+## Output contract
 
-Use this skill when a B2B software team needs to choose its primary audience, explain what the product is, distinguish it from the current alternative, and express that strategy on a homepage. It supports a new page, repositioning, and a critique of existing messaging. Confusing copy can expose an unresolved positioning decision; changing adjectives cannot resolve competing audiences or an unclear product reference point. [S1] [S2]
+Read this first. It decides what the user receives.
 
-The deliverable is a positioning and homepage brief: an evidence summary, ranked strategic options, a selected position, an internal alignment record, and a section-by-section wireframe with usable copy. For a review, preserve an established position when evidence supports it and focus the output on diagnosed problems and revisions. This adapts public guidance for agent use; it does not reproduce a paid engagement or promise conversion gains. [S1] [S9]
+- **The deliverable is the homepage copy, ready to paste:** hero (headline, subheadline, primary CTA), then the sections below it in page order, each with its heading and copy. If they asked only for the hero, give one hero. If they asked for a review, return the rewritten copy plus a few lines on what changed.
+- **Length and format:** what a real page holds. Hero headline under about 10 words, subheadline one or two sentences. A full homepage is usually five to seven sections and roughly 300 to 700 words of copy. Mark sections with simple labels (Hero, Problem, How it works, ...). A one-line note above the copy may name the audience it is written for. If you save a file, the chat reply is two or three lines.
+- **What the method changes:** the strategic choices that make copy clear, not more words. One primary champion the page speaks to. A hero that lets the visitor place the product instantly: a familiar category plus the real difference, or the exact job plus how the product changes the current way. Sections that follow the argument (current problem, solution, two to four value sections each saying what the user can now do and what makes it possible, proof, CTA) and that show how the product works. Secondary audiences stay out of the main argument.
+- **Facts:** use only facts from the request and the files provided. Never invent customer logos, testimonials, quotes, metrics, integrations, pricing, awards or features. Proof sections use only proof the input contains; if there is none, leave the section out. No [placeholders] in the copy. No superlatives the input cannot back. Use the strongest proof the input has, with its qualifications intact: never round a mixed or partial result into a clean win.
+- **Never output:** positioning briefs, evidence inventories, M1/M2/M3 labels or market-state explanations, value-scoring tables, lists of positioning bets, alignment records, wireframe specs beyond section labels, review results, source tags like [S2], or the expert's name. Do that thinking silently; the copy shows the decision.
+- **One version, no extras:** no alternate headlines, no open questions, no notes on what to test, unless the user asks. Include every section the request names (for example a security or trust section if the input covers it).
 
-Read the relevant sections of the method as decisions arise. Keep methodology citations in working notes and rationale; customer evidence must come from the user's materials. These sources cannot substantiate claims about a new product. Mark missing inputs and provisional decisions visibly, and deliver a useful draft without disguising uncertainty as customer research.
+## The method, as decisions
 
-## Procedure
+Each rule is sourced in [references/method.md](references/method.md), which also covers detail and edge cases.
 
-1. **Set the assignment.** Establish whether this is strategy development, a rewrite, or a review, and identify the intended visitor and decision owner. Open [the output template](templates/output-template.md), then read [method section 1](references/method.md#1-evidence-before-expression) for the intake boundaries.
+1. **Confusing copy is usually an unmade positioning decision,** not a wording problem. Decide audience and reference point before polishing adjectives.
+2. **Pick the reachable champion:** the person who feels the workflow problem and can start a purchase, not automatically the most senior signer. Write to them.
+3. **Match the argument to where that audience is.** If they want the outcome but are not doing the activity yet, show a feasible way to start. If they do it manually or with an inferior method, show how the product improves that workflow. If they already use this kind of product, say why this one is better for their segment. Do not lead with vendor comparison to people who have never bought the category.
+4. **Lead with the strongest credible value:** where the problem is most severe for the champion and the product is strongest. Leave weaker features out of the page rather than listing everything.
+5. **Hero = reference point + difference.** A familiar category plus how this one differs, or the exact job plus how it changes the current way. The visitor should know what it is in five seconds; clarity is not the same as hype.
+6. **Each value section answers three things:** what the user can now do, what makes that possible, what limitation it removes. Show the product working where possible.
+7. **CTA fits the sales motion:** self-serve products invite a trial, sales-led products invite a demo or conversation.
+8. **Several products:** choose a lead product, a real shared job, or an explicit suite; do not pretend one buyer owns them all.
 
-2. **Inventory evidence.** Collect available website copy, demos, sales conversations, customer language, competitors, and team input. Separate observed facts, interpretations, and assumptions. Map actual product scope before drafting. Follow [method section 1](references/method.md#1-evidence-before-expression) and populate the template's evidence table.
+## Shape that works
 
-3. **Select the reachable champion.** Identify who notices the workflow problem and can initiate a purchase. Check reach, product fit, sales motion, and adoption evidence rather than choosing the most senior signer by default. Use [method section 2](references/method.md#2-champion-and-segment).
+Skeleton in [templates/output-template.md](templates/output-template.md). Illustrations in [examples/worked-examples.md](examples/worked-examples.md) show the reasoning, not the format to hand over.
 
-4. **Classify the audience's market state.** Choose M1, M2, or M3 from observed activity and solution familiarity, then add useful firmographics. Specify the matching starting, replacing, or switching argument. Do not equate audience state with category maturity. Use [method section 3](references/method.md#3-market-state-and-category-route).
+## Before you hand it over (silent)
 
-5. **Map the current workflow.** List the champion's tasks, current tools, and failure points. Mark unsupported steps. Connect each relevant problem to a capability, enabling feature, and direct benefit. Use [method section 4](references/method.md#4-workflow-and-value-map).
-
-6. **Prioritize value.** Score problem severity and product strength separately, justify each score, and elevate their strongest credible intersections. Treat scores as discussion aids. Read [method section 4](references/method.md#4-workflow-and-value-map) and [the worked examples](examples/worked-examples.md) for contrasting applications.
-
-7. **Develop distinct bets.** Generate four to six viable options when evidence supports them; use fewer with an explanation when it does not. Vary meaningful strategic choices, record category route, and rank risk with downstream implications. Follow [method section 5](references/method.md#5-positioning-bets-and-selection).
-
-8. **Choose and document a position.** Recommend one bet, name excluded priorities, explain the tradeoff, and record what evidence would change it. Distinguish the recommendation from a stakeholder decision. Complete the alignment record using [method section 5](references/method.md#5-positioning-bets-and-selection) and [the template](templates/output-template.md).
-
-9. **Write the hero.** Anchor it in a familiar category plus differentiation, or an exact job plus improvement over the current way. Check whether a multi-product offer needs a lead product, shared job, or suite presentation. Use [method section 6](references/method.md#6-hero-and-homepage-argument).
-
-10. **Build the page argument.** Draft hero, current problem, solution introduction, prioritized value sections, relevant proof, and a suitable action. Show how the product works. Keep secondary audiences subordinate. Follow [method section 6](references/method.md#6-hero-and-homepage-argument) and the template's wireframe fields.
-
-11. **Review and revise.** Apply [the review checklist](checklists/review-checklist.md). Test comprehension, workflow accuracy, evidence, and strategic consistency before polishing tone. If a failure changes the champion, comparator, or anchor, return to that decision and update strategy and copy together. Use [method section 7](references/method.md#7-review-and-iteration).
-
-12. **Deliver with clear status.** Return the completed brief, unresolved assumptions, proof gaps, and review results. Identify provisional copy and the next validation task. Consult [method section 7](references/method.md#7-review-and-iteration) and [the source register](references/sources.md) when explaining the method's limits.
-
-## Files in this skill
-
-- [SKILL.md](SKILL.md): Entry point, scope, and the agent's decision loop.
-- [references/method.md](references/method.md): Detailed principles, decision rules, warnings, and edge cases.
-- [references/sources.md](references/sources.md): Numbered register of fetched public sources and their contributions.
-- [examples/worked-examples.md](examples/worked-examples.md): Invented before-and-after applications for workflow replacement and vendor switching.
-- [templates/output-template.md](templates/output-template.md): Fill-in positioning brief and homepage wireframe with field guidance.
-- [checklists/review-checklist.md](checklists/review-checklist.md): Pass/fail review gates and practical failure fixes.
+Check without writing it down: a stranger could say what the product is after the hero; every claim and number is in the input; no invented proof; one audience throughout; no section the user would delete before pasting it in. Fuller gates: [checklists/review-checklist.md](checklists/review-checklist.md).

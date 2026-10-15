@@ -1,6 +1,6 @@
 # Homepage Positioning Review Checklist
 
-Use this after completing the brief and wireframe. Record Pass or Fail for each applicable row and give supporting evidence or a concrete correction. Conditional rows can be marked Not applicable with a reason. Missing customer review is a pending validation task, never a reported pass.
+Internal review: run it silently on your draft and fix what fails. Never put this checklist, PASS/FAIL marks, a review note or a list of limitations in the deliverable; a gap that matters to the user becomes one short open question at the end (three at most). The gates are package adaptations of the public method, not a scoring system published by the expert.
 
 These review gates operationalize the public method; they are not a published certification rubric. Method citations explain the rule. Product evidence must come from the assignment's E records.
 
