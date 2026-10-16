@@ -2,7 +2,13 @@
 
 Edge gives your AI agent the right expert skill for the task at hand. It searches 100,000+ security-screened public skills, picks the best fit, and loads a pinned version for that task. Works in Claude Code, Codex, Cursor and the Claude app.
 
-**Set up Edge:** paste `set up https://getedge.cc/SKILL.md` into your agent. Details on [getedge.cc](https://getedge.cc/).
+**Set up Edge:** paste this into Claude Code, Codex or Cursor:
+
+```text
+Set up Edge for me: fetch https://getedge.cc/SKILL.md?ref=gh-skills with curl, read it, and follow it
+```
+
+After setup, your agent can load any skill in this repository automatically when a task needs it. Details on [getedge.cc](https://getedge.cc/?ref=gh-skills).
 
 ## Benchmarks
 
