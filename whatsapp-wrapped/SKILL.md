@@ -3,7 +3,7 @@ name: whatsapp-wrapped
 description: Turn a WhatsApp "Export chat" file (.txt or .zip, iOS or Android, any date locale) into a Spotify-Wrapped-style recap, with a self-contained HTML page and 9:16 PNG story cards ready to post. Everything runs on this device and no chat content is uploaded. Use when someone wants a WhatsApp Wrapped, a recap or stats of a group chat or a chat with one person, who texts the most, chat awards, or shareable story cards from a chat export.
 license: Apache-2.0
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
 ---
 
 # WhatsApp Wrapped
@@ -64,7 +64,7 @@ Brave. Without either, the HTML page still has every card; suggest `pip install 
 - Top emojis (skin tones, flags and joined emojis count as one).
 - Top words: the words this chat keeps coming back to, not the most common ones. Stopwords and chat filler in
   EN, DE, IT and ES (plus short PT and FR lists) are removed, words need 4 or more letters, names of people in the
-  chat never count, and the rest are ranked by TF-IDF against the chat's own baseline (each conversation is a
+  chat never count, a long message pasted or forwarded again and again counts once, and the rest are ranked by TF-IDF against the chat's own baseline (each conversation is a
   document), so a word that shows up in most conversations is dropped and a word the chat returns to in bursts wins.
 - Typical reply time: the median time a person takes to answer someone else, counting gaps up to 6 hours.
 - Who starts conversations: a conversation starts after 4 hours of silence.

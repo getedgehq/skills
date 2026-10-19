@@ -144,6 +144,17 @@ class EndToEnd(unittest.TestCase):
         self.assertNotIn("gelato", words)    # one conversation only
         self.assertNotIn("ana", words)       # participant names never count
 
+    def test_repeated_paste_counts_once(self):
+        lines = []
+        for day in range(1, 25):
+            lines.append(f"{day:02d}/05/2024, 09:00 - Bot: Unipile check failed again today, please display the native application type")
+            lines.append(f"{day:02d}/05/2024, 12:00 - Ana: tennis later?" if day % 3 == 0 else f"{day:02d}/05/2024, 12:00 - Ana: hello")
+            lines.append(f"{day:02d}/05/2024, 12:05 - Ben: tennis tennis" if day % 3 == 0 else f"{day:02d}/05/2024, 12:05 - Ben: hi")
+        s = compute(parse_text("\n".join(lines)))
+        words = [w for w, _ in s["top_words"]]
+        self.assertEqual(words[0], "tennis", words)
+        self.assertNotIn("unipile", words)
+
     def test_no_banned_copy(self):
         s = compute(parse_file(self.dir / "ios_en_us.txt"))
         page = build_page(s, build_cards(s), None)

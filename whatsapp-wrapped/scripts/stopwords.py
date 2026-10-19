@@ -68,6 +68,7 @@ ding dinge sache sachen leute mensch nummer
 machen mache macht gemacht gehen geht gehe ging kommen komme kommt kam sehen sieh sehe sagen sage sagt gesagt
 wissen weiß weißt denke denkst glaube finde brauche brauchst gibt geben
 nachricht gruppe
+schön schöne leider sieht siehst gleich bisschen vielleicht wirklich irgendwie trotzdem wieder sowas eher ganz ganze
 """
 
 IT = """
@@ -88,6 +89,7 @@ primo prima ultimo ultima prossimo prossima nuovo nuova
 cosa cose gente persone numero
 fare faccio fai fatto vado vai andare vieni venire vedere visto dire detto dico sapere so sai penso credo devo
 messaggio gruppo
+bello bella peccato sembra davvero proprio magari forse insomma
 """
 
 ES = """
@@ -106,6 +108,7 @@ primero primera último última próximo próxima nuevo nueva
 cosa cosas gente número
 hacer hago hace hecho voy vas ir ver visto decir dicho digo saber sé sabes creo pienso puedo puedes quiero
 mensaje grupo
+bonito bonita lástima parece verdad quizás todavía
 """
 
 PT = """

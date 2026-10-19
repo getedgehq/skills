@@ -95,6 +95,7 @@ def compute(chat: Chat, gap_hours: float = 4.0, reply_window_hours: float = 6.0,
     emoji_by = {p: Counter() for p in order}
     word_counter = Counter()
     word_convs = defaultdict(set)  # word -> conversations it appears in
+    seen_texts = set()
     emoji_counter = Counter()
     name_tokens = {w for p in order for w in WORD.findall(p.lower())}
     conv = 0
@@ -128,7 +129,11 @@ def compute(chat: Chat, gap_hours: float = 4.0, reply_window_hours: float = 6.0,
                 s["laughs"] += 1
             if "?" in t:
                 s["questions"] += 1
-            kept = [w for w in ws if _content_word(w) and w not in name_tokens]
+            # A long text (8+ words) pasted or forwarded again and again (a bot alert, a copied template) counts once.
+            key = " ".join(ws)
+            repeat = len(ws) >= 8 and key in seen_texts
+            kept = [] if repeat else [w for w in ws if _content_word(w) and w not in name_tokens]
+            seen_texts.add(key)
             word_counter.update(kept)
             for w in kept:
                 word_convs[w].add(conv)
