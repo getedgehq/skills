@@ -27,6 +27,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 | Need | Skill |
 | --- | --- |
 | Send personal deck links and report real reading | [`tracked-deck-links`](tracked-deck-links/) |
+| Turn a WhatsApp chat export into a Wrapped recap with story cards | [`whatsapp-wrapped`](whatsapp-wrapped/) |
 | Keep long work alive across context loss | [`workplan`](workplan/) |
 | Find and load the right skill for the task at hand, automatically | [`edge-find-skills`](edge-find-skills/) |
 | Show a plan as a scannable text diagram with decisions on top | [`plan-board`](plan-board/) |
@@ -117,6 +118,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`product-launch-video`](product-launch-video/) turns a product brief into an editable launch film.
 - [`launch-film`](launch-film/) makes a short, result-first launch film for a product, feature or skill: one object carried across beats cut on a music grid, an original synthesized score and your brand kit, rendered from HTML to MP4 with no video editor. Made the Edge skill films.
 - [`linkedin-year-audit`](linkedin-year-audit/) reads your own LinkedIn analytics export and tells you what worked over the year: totals, follower growth, how much a few posts carried, and which kinds of posts reached people versus which got reactions, with the number behind every claim. Runs on your computer; nothing is uploaded.
+- [`whatsapp-wrapped`](whatsapp-wrapped/) turns a WhatsApp chat export (iOS or Android, .txt or .zip, any date locale) into a Wrapped-style recap: a self-contained page and 9:16 story cards with who talks most, when the chat comes alive, streaks, emojis, the words the chat keeps coming back to, reply speed and one award per person. Everything runs on your device; no chat content is uploaded.
 - [`startup-content-machine`](startup-content-machine/) turns a founder's last week of real work (Claude Code and Codex sessions, commits, company docs) into LinkedIn posts, X posts and 30 to 60 second video scripts, each with a source map back to what actually happened. `scripts/collect.py` runs locally, reads only and redacts keys, tokens, emails and phone numbers. Built with [Compound](https://compound.mov), which turns the scripts into edited videos. Never posts.
 - [`subscription-billing-reconciliation`](subscription-billing-reconciliation/) reconciles what a subscription contract says should have been billed for a period against what invoices actually billed: proration, invoice-export revisions, credit notes, merged and parent/child accounts, FX and one-time rounding.
 - [`ar-aging-and-cash-application`](ar-aging-and-cash-application/) builds an accounts receivable aging report and applies incoming cash to invoices: due dates from terms, allocation order, settlement discounts, partial payments, credit memos, disputes and unapplied cash.
