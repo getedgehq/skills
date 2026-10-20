@@ -119,6 +119,53 @@ class SchemaRejects(unittest.TestCase):
         self.assertIsNone(canonical_emoji("🇵🇹"))
 
 
+class PersonalityMatchesPeak(unittest.TestCase):
+    """The personality frame must never contradict the peak-hour frame (9pm peak + "Night owls" shipped once)."""
+
+    @staticmethod
+    def hours(peak: int, night: int = 0) -> list:
+        h = [10] * 24
+        for x in range(5):
+            h[x] += night
+        h[peak] = 1000
+        return h
+
+    def test_label_follows_peak_hour(self):
+        from share_schema import archetype
+        wd = [100] * 7
+        for peak in range(24):
+            # heavy after-midnight traffic must not make a 9pm-peak chat "night owls"
+            label = archetype(5000, self.hours(peak, night=150), wd, 0, 0, 0, 10)
+            with self.subTest(peak=peak):
+                if peak <= 4:
+                    self.assertEqual(label, "night_owls")
+                elif peak <= 8:
+                    self.assertEqual(label, "early_birds")
+                elif peak >= 18:
+                    self.assertEqual(label, "evening_people")
+                else:
+                    self.assertNotIn(label, ("night_owls", "early_birds", "evening_people"))
+
+    def test_built_payloads_agree(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            for f in (canary.write_group(tmp / "g.txt"), canary.write_duo(tmp / "d.txt")):
+                argv = [str(f)] + (["--me", "Zebulon Quixtarr"] if f.name == "d.txt" else [])
+                p = share.build_payload(share.parser().parse_args(argv))
+                cards = {c["t"]: c for c in p["cards"]}
+                peak, label = cards["peak"]["hour"], cards["archetype"]["id"]
+                self.assertEqual(label == "night_owls", peak <= 4, (peak, label))
+                self.assertEqual(label == "early_birds", 5 <= peak <= 8, (peak, label))
+                self.assertEqual(label == "evening_people", peak >= 18, (peak, label))
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_viewer_has_copy_for_every_label(self):
+        js = VIEWER.read_text(encoding="utf-8")
+        for a in SCHEMA["archetypes"]:
+            self.assertIn(f"  {a}: [", js)
+
+
 class BuiltFromSyntheticChats(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

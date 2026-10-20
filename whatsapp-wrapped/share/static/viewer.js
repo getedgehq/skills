@@ -86,7 +86,8 @@ var ARCH = {
   weekend_crew: ["Weekend crew.", "Weekend texter.", "Quiet all week, loud on Saturday."],
   streak_keepers: ["Streak keepers.", "Streak keeper.", "Not a day goes by without a message."],
   rapid_fire: ["Rapid fire.", "Rapid fire.", "More than 50 messages on an average day."],
-  slow_burners: ["Slow burners.", "Slow burner.", "Few messages, every one counts."]
+  slow_burners: ["Slow burners.", "Slow burner.", "Few messages, every one counts."],
+  evening_people: ["Evening people.", "Evening person.", "Most alive after dinner."]
 };
 function fmt(n) { return n.toLocaleString("en-US"); }
 function month(m) { var p = m.split("-"); return MONTHS[+p[1] - 1] + " " + p[0]; }

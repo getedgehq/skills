@@ -143,17 +143,26 @@ def _busiest_month(day_counts: dict) -> tuple[str, int]:
     return m, n
 
 
+def peak_hour(hours: list) -> int:
+    """The hour the peak card shows. The personality label must use this same value, so the two never disagree."""
+    return max(range(24), key=lambda h: hours[h])
+
+
 def archetype(n: int, hours: list, weekdays: list, voice: int, emojis: int, streak: int, per_day: float) -> str:
-    """One label from group or self aggregates only, first rule that fits."""
+    """One label from group or self aggregates only. Time-of-day labels come from the peak hour on the peak card:
+    night owls only when the peak is midnight to 4am, early birds only 5am to 8am, evening people 6pm to 11pm."""
     n = max(1, n)
-    if sum(hours[0:5]) / n >= 0.12:
+    peak = peak_hour(hours)
+    if peak <= 4:
         return "night_owls"
+    if peak <= 8:
+        return "early_birds"
+    if peak >= 18:
+        return "evening_people"
     if voice / n >= 0.08:
         return "voice_note_crew"
     if emojis / n >= 0.6:
         return "emoji_storm"
-    if sum(hours[5:9]) / n >= 0.15:
-        return "early_birds"
     if (weekdays[5] + weekdays[6]) / n >= 0.4:
         return "weekend_crew"
     if per_day >= 50:
@@ -168,7 +177,7 @@ def _assemble(kind, first, last, n, active_days, span_days, people, chats, hours
     per_day = n / max(1, span_days)
     cards = [{"t": "messages", "n": n, "per_day": round(per_day), "active_days": active_days,
               "span_days": span_days, "people": people, "chats": chats},
-             {"t": "peak", "hour": max(range(24), key=lambda h: hours[h]),
+             {"t": "peak", "hour": peak_hour(hours),
               "weekday": max(range(7), key=lambda d: weekdays[d]), "hist": _hist(hours)}]
     if streak_days >= 1 and day_counts:
         bm, bn = _busiest_month(day_counts)
