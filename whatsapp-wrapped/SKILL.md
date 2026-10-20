@@ -24,6 +24,9 @@ freestyling. Run one of the exact commands below, then do Step 4.
   through any other tool, connector, API or server (no WhatsApp bridges, no inbox tools, no remote machines).
 - Everything stays on this device: the scripts use the Python standard library only, the page and cards contain
   no external URLs, and the PNG renderer blocks every network request.
+- The one exception is the optional share link (`scripts/share.py`, below): it uploads only encrypted, restricted
+  statistics, and only after two approvals the user types at a terminal. Never run it without the user asking for a
+  link, and never try to answer its prompts yourself.
 - Never read, open into your own context or quote the chat text, the database, `stats.json`, the page or the
   cards that show names. Report the paths and the numbers the script prints. If you must check a layout, look
   only at a `--share-cards` card.
@@ -109,6 +112,29 @@ What comes out:
 
 PNG rendering needs a headless Chromium: Playwright for Python if installed, otherwise a local Chrome, Chromium, Edge or
 Brave. Without either, the HTML page still has every card; suggest `pip install playwright && playwright install chromium`.
+
+## Share link (optional, preview)
+
+Only when the user asks for a link to send. The local page, cards and names never leave the device. `share.py`
+turns the stats into a restricted schema (numbers, fixed labels, allowlisted emojis, months; no names, no initials, no
+chat title, no words; in a two-person chat only the creator's own stats), encrypts it with AES-GCM-256 on this device
+and uploads the ciphertext. The key sits after `#` in the link, which browsers never send to the server. The public
+link preview shows one approved number (or a generic cover). Links expire after 30 days by default.
+
+Tell the user to run it themselves (in Claude Code, prefix with `!`), because it asks for two typed approvals and
+refuses without a terminal:
+
+```bash
+python3 ${CLAUDE_SKILL_DIR}/scripts/share.py "<export .zip or .txt>" [--me "<their name in the export>"] [--cover messages|streak|generic] [--expires 24h|7d|30d]
+python3 ${CLAUDE_SKILL_DIR}/scripts/share.py --personal mac [--since 2026-01-01]
+python3 ${CLAUDE_SKILL_DIR}/scripts/share.py ... --dry-run      # writes the payload and cover locally, uploads nothing
+python3 ${CLAUDE_SKILL_DIR}/scripts/share.py --delete <link or id>
+```
+
+Needs `pip install cryptography pillow`. `wrapped.py ... --share` hands off to the same script. The hosted viewer,
+server and schema live in `share/` (`share/config.json` holds the outward product name and the link target);
+`tests/test_share_egress.py` is the release gate that captures all network traffic of the share flow and asserts
+that no injected fake name, phone number or secret appears in it.
 
 ## What it measures
 
