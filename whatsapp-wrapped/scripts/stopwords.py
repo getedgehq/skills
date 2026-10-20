@@ -69,6 +69,7 @@ machen mache macht gemacht gehen geht gehe ging kommen komme kommt kam sehen sie
 wissen weiß weißt denke denkst glaube finde brauche brauchst gibt geben
 nachricht gruppe
 schön schöne natürlich richtig wäre wären hätte seid immer nochmal noch mal eigentlich ganz bald gute guten guter lieber liebe leider sieht siehst gleich bisschen vielleicht wirklich irgendwie trotzdem wieder sowas eher ganz ganze
+mehr weniger lass lassen passt mega krass geil
 """
 
 IT = """
