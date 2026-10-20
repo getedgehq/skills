@@ -14,12 +14,38 @@ from stats import fmt_duration
 ASSETS = Path(__file__).resolve().parent.parent / "assets"
 
 PAPER, SURFACE, INK, MUTED, LINE = "#f5f3eb", "#fbfaf6", "#16251e", "#59685f", "#d3d9cf"
+# Themes. The names BLUE* are the accent roles (kept for compatibility); in the green theme they hold greens.
+# green (default): Edge's own artwork greens (design system 1.0: meadow #465b35, success #315f43, dark success
+# #7cc29a) on cream. Deliberately not WhatsApp's brand green, so nothing suggests the cards come from WhatsApp.
+# edge: the Edge blue palette.
+THEMES = {
+    "green": {"BLUE": "#315f43", "BLUE_BASE": "#24472f", "BLUE_SOFT": "#e6ecdc", "BLUE_LIGHT": "#465b35",
+              "BLUE_DETAIL": "#7cc29a", "STRIP_ON": "#b7d3bd", "WORD": "dark green"},
+    "edge": {"BLUE": "#154cff", "BLUE_BASE": "#0c35ba", "BLUE_SOFT": "#e9efff", "BLUE_LIGHT": "#527eff",
+             "BLUE_DETAIL": "#82a2ff", "STRIP_ON": "#b4c6ff", "WORD": "blue"},
+}
 BLUE, BLUE_BASE, BLUE_SOFT, BLUE_LIGHT, BLUE_DETAIL = "#154cff", "#0c35ba", "#e9efff", "#527eff", "#82a2ff"
+STRIP_ON = "#b4c6ff"
+THEME = "edge"
 
 ARCH = ('<svg class="arch" viewBox="0 0 64 40" aria-hidden="true"><path fill="currentColor" '
         'd="M0 40V36C0 16.1 14.3 0 32 0s32 16.1 32 36v4z"/></svg>')
 
 e = html.escape
+
+# The WhatsApp glyph, unaltered (simple-icons 13.21.0, CC0), in WhatsApp green. It only says where the data comes
+# from: WhatsApp is a trademark of WhatsApp LLC, and nothing here is made, affiliated with or endorsed by WhatsApp.
+WA_GREEN = "#25D366"
+WA_GLYPH = ('<svg class="wa" viewBox="0 0 24 24" role="img" aria-label="WhatsApp"><path fill="%s" d="%s"/></svg>'
+            % (WA_GREEN, "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"))
+NOT_AFFILIATED = "WhatsApp is a trademark of WhatsApp LLC. This recap is not made by, affiliated with or endorsed by WhatsApp."
+
+
+def wa_kicker(text: str, style: str = "") -> str:
+    """Cover kicker with the small WhatsApp glyph in front of it."""
+    # Opacity goes on the text only: the glyph keeps its true colour (brand rule: never altered).
+    return (f'<div class="kicker" style="display:flex;align-items:center;gap:16px;opacity:1;{style}">{WA_GLYPH}'
+            f'<span style="opacity:.72">{e(text)}</span></div>')
 
 
 def _b64(name: str) -> str:
@@ -63,7 +89,7 @@ def fit(text: str, base: int, max_chars: int, floor: int) -> int:
     return max(floor, int(base * max_chars / n))
 
 
-CARD_CSS = """
+CARD_CSS_T = """
 *{box-sizing:border-box;margin:0;padding:0}
 .card{width:1080px;height:1920px;position:relative;overflow:hidden;display:flex;flex-direction:column;
   padding:120px 96px 190px;font-family:'Inter W','Inter Display','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif,
@@ -81,6 +107,7 @@ CARD_CSS = """
 .foot{position:absolute;left:96px;right:96px;bottom:56px;height:80px;display:flex;align-items:center;gap:16px;font-size:30px;letter-spacing:-.01em;opacity:.62}
 .foot .arch{width:40px;height:25px}
 .foot b{font-weight:560}
+.kicker .wa{width:46px;height:46px;flex:none}
 .rows{display:flex;flex-direction:column;gap:46px;margin-top:96px}
 .row{display:grid;grid-template-columns:64px 1fr auto;align-items:baseline;gap:20px}
 .row .rk{font-size:44px;opacity:.6}
@@ -123,7 +150,7 @@ CARD_CSS = """
 .sum .v{font-size:64px;letter-spacing:-.045em;line-height:1.08;margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sum .s,.awl{font-size:34px;opacity:.75;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .awl{font-size:40px;opacity:.92;margin-top:10px}
-""" % dict(PAPER=PAPER, INK=INK, BLUE=BLUE, BLUE_SOFT=BLUE_SOFT, LINE=LINE)
+"""
 
 
 def day_strip(s: dict) -> str:
@@ -145,7 +172,7 @@ def day_strip(s: dict) -> str:
         elif st_start <= d <= st_end:
             col = BLUE
         elif c:
-            col = "#b4c6ff"
+            col = STRIP_ON
         else:
             col = LINE
         cells.append(f'<i style="background:{col}"></i>')
@@ -153,7 +180,7 @@ def day_strip(s: dict) -> str:
     weeks = (len(cells) + 6) // 7
     cell = max(6, min(44, (888 - 4 * (weeks - 1)) // weeks))
     return (f'<div class="strip" style="grid-template-columns:repeat({weeks},{cell}px);grid-template-rows:repeat(7,{cell}px)">{"".join(cells)}</div>'
-            f'<div style="font-size:32px;opacity:.6;margin-top:18px">Each square is a day. The streak is in blue.</div>')
+            f'<div style="font-size:32px;opacity:.6;margin-top:18px">Each square is a day. The streak is in {THEMES[THEME]["WORD"]}.</div>')
 
 
 def duel(s: dict, names: dict) -> str:
@@ -197,7 +224,7 @@ def build_cards(s: dict, show_words: bool = True) -> list[tuple[str, str]]:
     sky = f'<img class="sky" src="data:image/png;base64,{_b64("sky.png")}" alt="">'
     people_line = f"{s['people_count']} people" if s["is_group"] else " and ".join(names[p["name"]] for p in s["people"][:2])
     body = f"""
-      <div class="kicker" style="margin-top:820px">Your chat, wrapped</div>
+      {wa_kicker("Your chat, wrapped", "margin-top:820px")}
       <div class="h1" style="font-size:{tsize}px;max-width:900px">{e(title)}</div>
       <div class="lead muted" style="margin-top:40px">{e(span)}</div>
       <div style="margin-top:auto;margin-bottom:40px">
@@ -365,7 +392,7 @@ def card_document(card_html: str) -> str:
             "html,body{width:1080px;height:1920px;overflow:hidden}</style></head><body>" + card_html + "</body></html>")
 
 
-PAGE_CSS = """
+PAGE_CSS_T = """
 :root{--paper:%(PAPER)s;--ink:%(INK)s;--muted:%(MUTED)s;--line:%(LINE)s;--blue:%(BLUE)s;--surface:%(SURFACE)s}
 @media (prefers-color-scheme:dark){:root{--paper:#111914;--ink:#eceee6;--muted:#a4b1a8;--line:#2d3b33;--surface:#18221c}}
 html{background:var(--paper);color:var(--ink)}
@@ -389,7 +416,21 @@ th{color:var(--muted);font-weight:500}
 tr:last-child td{border-bottom:0}
 .note{color:var(--muted);font-size:14px;margin-top:40px;line-height:1.6}
 .note a{color:inherit}
-""" % dict(PAPER=PAPER, INK=INK, MUTED=MUTED, LINE=LINE, BLUE=BLUE, SURFACE=SURFACE)
+"""
+
+
+def set_theme(name: str) -> None:
+    """Switch the accent palette for every card and page built after this call: 'green' (default) or 'edge'."""
+    global BLUE, BLUE_BASE, BLUE_SOFT, BLUE_LIGHT, BLUE_DETAIL, STRIP_ON, THEME, CARD_CSS, PAGE_CSS
+    t = THEMES[name]
+    BLUE, BLUE_BASE, BLUE_SOFT, BLUE_LIGHT, BLUE_DETAIL, STRIP_ON = (
+        t["BLUE"], t["BLUE_BASE"], t["BLUE_SOFT"], t["BLUE_LIGHT"], t["BLUE_DETAIL"], t["STRIP_ON"])
+    THEME = name
+    CARD_CSS = CARD_CSS_T % dict(PAPER=PAPER, INK=INK, BLUE=BLUE, BLUE_SOFT=BLUE_SOFT, LINE=LINE)
+    PAGE_CSS = PAGE_CSS_T % dict(PAPER=PAPER, INK=INK, MUTED=MUTED, LINE=LINE, BLUE=BLUE, SURFACE=SURFACE)
+
+
+set_theme("green")
 
 
 def build_page(s: dict, cards: list[tuple[str, str]], png_names: list[str] | None) -> str:
@@ -418,7 +459,7 @@ def build_page(s: dict, cards: list[tuple[str, str]], png_names: list[str] | Non
 <div class="deck">{''.join(slots)}</div>
 <h2>Everyone, in numbers</h2>
 <div class="tbl"><table><thead><tr>{''.join(f'<th>{h}</th>' for h in head)}</tr></thead><tbody>{rows}</tbody></table></div>
-<p class="note">Made with Edge · <a href="https://getedge.cc">getedge.cc</a>. Typical reply = median time to answer someone else within 6 hours. A conversation starts after 4 hours of silence.</p>
+<p class="note">Made with Edge · <a href="https://getedge.cc">getedge.cc</a>. {NOT_AFFILIATED} Typical reply = median time to answer someone else within 6 hours. A conversation starts after 4 hours of silence.</p>
 </div>
 <script>
 function fitCards(){{document.querySelectorAll('.slot').forEach(function(s){{var c=s.querySelector('.card');c.style.transform='scale('+(s.clientWidth/1080)+')';}});}}

@@ -26,6 +26,28 @@ WORD = re.compile(r"[^\W\d_]+(?:'[^\W\d_]+)?", re.U)
 LAUGH = re.compile(r"\b(a?ha(ha)+h?|he(he)+|lol+|lmao+|xd+|jaja(ja)*|kkkk+|mdr+|ahah(ah)*)\b|😂|🤣", re.I)
 
 MIN_WORD_LEN = 4
+EMAIL = re.compile(r"\S+@\S+\.\S+")
+
+
+def case_update(text: str, mid: Counter, cap: Counter) -> None:
+    """Count how often each word is written with a capital letter when it is not the first word of a message."""
+    for j, w in enumerate(WORD.findall(EMOJI.sub(" ", EMAIL.sub(" ", URL.sub(" ", text))))):
+        if j:
+            lw = w.lower()
+            mid[lw] += 1
+            if w[0].isupper():
+                cap[lw] += 1
+
+
+def proper_nouns(mid: Counter, cap: Counter) -> list[str]:
+    """Words written capitalised most of the time mid-sentence: names of people, places, companies."""
+    return sorted(w for w, n in mid.items() if n >= 2 and cap[w] / n > 0.5)
+
+
+def share_safe_words(top_words: list, proper) -> list:
+    """Word chips that are safe to post: no proper nouns (names, places), nothing with digits, @ or dots."""
+    proper = set(proper)
+    return [(w, c) for w, c in top_words if w not in proper and w.isalpha()]
 
 
 
@@ -98,6 +120,7 @@ def compute(chat: Chat, gap_hours: float = 4.0, reply_window_hours: float = 6.0,
     seen_texts = set()
     emoji_counter = Counter()
     name_tokens = {w for p in order for w in WORD.findall(p.lower())}
+    case_mid, case_cap = Counter(), Counter()
     conv = 0
     gap = timedelta(hours=gap_hours)
     for i, m in enumerate(msgs):
@@ -123,6 +146,8 @@ def compute(chat: Chat, gap_hours: float = 4.0, reply_window_hours: float = 6.0,
             emoji_by[m.sender].update(es)
             emoji_counter.update(es)
             s["emojis"] += len(es)
+            t = EMAIL.sub(" ", t)
+            case_update(t, case_mid, case_cap)
             ws = WORD.findall(EMOJI.sub(" ", t).lower())
             s["words"] += len(ws)
             if LAUGH.search(t):
@@ -205,6 +230,7 @@ def compute(chat: Chat, gap_hours: float = 4.0, reply_window_hours: float = 6.0,
         "streak": streak,
         "top_emojis": emoji_counter.most_common(top_n),
         "top_words": distinctive_words(word_counter, word_convs, conv + 1, top_n + 4),
+        "proper_words": proper_nouns(case_mid, case_cap),
         "conversations": conversations,
         "starters": starts.most_common(),
         "fastest": [(p, v["median_s"]) for p, v in fastest],
