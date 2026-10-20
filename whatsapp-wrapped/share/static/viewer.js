@@ -93,6 +93,15 @@ function fmt(n) { return n.toLocaleString("en-US"); }
 function month(m) { var p = m.split("-"); return MONTHS[+p[1] - 1] + " " + p[0]; }
 function hour(h) { return h === 0 ? "midnight" : h === 12 ? "noon" : (h % 12) + (h < 12 ? "am" : "pm"); }
 function plural(n, one, many) { return fmt(n) + " " + (n === 1 ? one : many); }
+function duration(sec) {
+  if (sec < 60) return sec + " sec";
+  if (sec < 3600) return Math.round(sec / 60) + " min";
+  return (Math.round(sec / 360) / 10).toString().replace(/\.0$/, "") + " h";
+}
+function bookLine(words) {
+  if (words >= 90000) return "That is " + (Math.round(words / 9000) / 10).toString().replace(/\.0$/, "") + " novels.";
+  return "That is about " + plural(Math.max(1, Math.round(words / 250)), "book page", "book pages") + ".";
+}
 
 /* ------------------------------------------------------------------ DOM helpers */
 function el(tag, cls, text) {
@@ -126,6 +135,35 @@ function buildFrames(p, ctx) {
       var img = el("img", "meadow"); img.src = ctx.base + "/static/meadow.webp"; img.alt = "";
       f.appendChild(img);
       f.dataset.dark = "";
+    } else if (c.t === "words") {
+      f = el("section", "frame t-green");
+      add(f, el("p", "kicker", solo ? "Words I wrote" : "Words written"), el("p", "big", fmt(c.n)),
+        el("p", "line", "words. " + bookLine(c.n)), el("p", "sub", solo ? "Every one of them typed by me." : "Every one of them typed by thumbs."),
+        el("div", "grow"));
+      f.dataset.dark = "1";
+    } else if (c.t === "busiest_day") {
+      f = el("section", "frame t-paper");
+      add(f, el("p", "kicker", "Busiest day ever"), el("p", "big", fmt(c.n)),
+        el("p", "line", (c.n === 1 ? "message" : "messages") + " on one " + WEEKDAYS[c.weekday] + " in " + month(c.month) + "."),
+        el("p", "sub", "Something happened that day."), el("div", "grow"));
+    } else if (c.t === "reply") {
+      f = el("section", "frame t-green");
+      add(f, el("p", "kicker", solo ? "My reply speed" : "Reply speed"), el("p", "big mid", duration(c.median_s)),
+        el("p", "line", solo ? "is how fast I typically answer." : "is the typical time to get an answer here."),
+        el("p", "sub", c.median_s <= 180 ? "Phones never leave hands." : "Good things take time."), el("div", "grow"));
+      f.dataset.dark = "1";
+    } else if (c.t === "laughs") {
+      f = el("section", "frame t-paper");
+      add(f, el("p", "kicker", "Laugh counter"), el("p", "big", fmt(c.n)),
+        el("p", "line", (c.n === 1 ? "message" : "messages") + " with a haha, lol or 😂."),
+        el("p", "sub", solo ? "Easily entertained." : "Somebody in here is funny."), el("div", "grow"));
+    } else if (c.t === "silence") {
+      f = el("section", "frame t-green");
+      add(f, el("p", "kicker", "The longest silence"), el("p", "big", fmt(c.days)),
+        el("p", "line", "days without a single message."),
+        el("p", "sub", "Then the comeback in " + month(c.comeback_month) + ": " + plural(c.comeback_n, "message", "messages") + " in one day."),
+        el("div", "grow"));
+      f.dataset.dark = "1";
     } else if (c.t === "peak") {
       f = el("section", "frame t-deep");
       var h = el("div", "hist"); h.setAttribute("aria-hidden", "true");
@@ -140,7 +178,7 @@ function buildFrames(p, ctx) {
       add(st, stat(fmt(m.active_days), "days with messages"), stat(fmt(m.per_day), "messages on an average day"),
         stat(month(c.busiest_month), "busiest month, " + plural(c.busiest_n, "message", "messages"), true));
       add(f, el("p", "kicker", "Longest streak"), el("p", "big", fmt(c.days)), el("p", "line", c.days === 1 ? "day in a row." : "days in a row."),
-        el("p", "sub", solo ? "Not a single day without a message." : "Nobody let the chat go quiet."), st, el("div", "grow"));
+        el("p", "sub", "The longest run without a quiet day."), st, el("div", "grow"));
     } else if (c.t === "emojis") {
       f = el("section", "frame t-green");
       var row = el("div", "emoji-row");
@@ -157,12 +195,17 @@ function buildFrames(p, ctx) {
         el("p", "line", c.voice === 1 ? "voice note." : "voice notes. Podcast when?"), g, el("div", "grow"));
       f.dataset.dark = "1";
     } else if (c.t === "archetype") {
-      f = el("section", "frame t-paper");
+      f = el("section", "frame t-deep");
+      f.dataset.dark = "1";
       var a = ARCH[c.id];
       add(f, el("p", "kicker", solo ? "Texting personality" : "Chat personality"), el("p", "headline big mid", solo ? a[1] : a[0]),
         el("p", "line", a[2]), el("div", "grow"));
     }
-    if (f) frames.push(f);
+    if (f) {
+      // Long numbers (31,652 and up) drop to the smaller display size so they never overflow a 390px screen.
+      f.querySelectorAll(".big").forEach(function (b) { if (b.textContent.length >= 6) b.classList.add("mid"); });
+      frames.push(f);
+    }
   });
   frames.push(finalFrame(ctx));
   return frames;

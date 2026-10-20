@@ -73,8 +73,11 @@ def build_payload(a) -> dict:
     if not a.me or a.me not in senders:
         raise SystemExit('error: this is a two-person chat. Pass --me "<your name as it appears in the export>"; '
                          "the link then shows only your own stats.")
+    my_reply = next(r["reply_median_s"] for r in compute(chat)["people"] if r["name"] == a.me)
     chat.messages = [m for m in chat.messages if m.sender == a.me]
-    return from_chat_stats(compute(chat), "duo")
+    s = compute(chat)
+    s["reply_median_s"] = my_reply  # how fast the creator answers; nothing about the other person
+    return from_chat_stats(s, "duo")
 
 
 def make_teaser(payload: dict, cover: str) -> dict:

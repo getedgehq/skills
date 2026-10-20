@@ -172,21 +172,51 @@ def archetype(n: int, hours: list, weekdays: list, voice: int, emojis: int, stre
     return "slow_burners"
 
 
+def _silence(day_counts: dict):
+    """Longest run of silent days between two active days, and the size of the comeback day."""
+    from datetime import date as _d
+    days = sorted(_d.fromisoformat(d) for d in day_counts)
+    best = None
+    for prev, nxt in zip(days, days[1:]):
+        gap = (nxt - prev).days - 1
+        if gap >= 2 and (best is None or gap > best[0]):
+            best = (gap, nxt)
+    if not best:
+        return None
+    return {"t": "silence", "days": best[0], "comeback_month": best[1].isoformat()[:7],
+            "comeback_n": day_counts[best[1].isoformat()]}
+
+
 def _assemble(kind, first, last, n, active_days, span_days, people, chats, hours, weekdays, streak_days,
-              day_counts, top_emojis, voice, photos, stickers, emoji_total) -> dict:
+              day_counts, top_emojis, voice, photos, stickers, emoji_total, words=0, busiest=None, reply_s=None,
+              laughs=0) -> dict:
+    """Cards in story order (schema card_order). Every optional card is left out when its number is missing."""
+    from datetime import date as _d
     per_day = n / max(1, span_days)
     cards = [{"t": "messages", "n": n, "per_day": round(per_day), "active_days": active_days,
-              "span_days": span_days, "people": people, "chats": chats},
-             {"t": "peak", "hour": peak_hour(hours),
-              "weekday": max(range(7), key=lambda d: weekdays[d]), "hist": _hist(hours)}]
-    if streak_days >= 1 and day_counts:
-        bm, bn = _busiest_month(day_counts)
-        cards.append({"t": "streak", "days": streak_days, "busiest_month": bm, "busiest_n": bn})
+              "span_days": span_days, "people": people, "chats": chats}]
+    if words >= 1:
+        cards.append({"t": "words", "n": words})
+    cards.append({"t": "peak", "hour": peak_hour(hours),
+                  "weekday": max(range(7), key=lambda d: weekdays[d]), "hist": _hist(hours)})
+    if busiest and busiest[1] >= 1:
+        bd = _d.fromisoformat(busiest[0][:10])
+        cards.append({"t": "busiest_day", "weekday": bd.weekday(), "month": bd.isoformat()[:7], "n": busiest[1]})
+    if reply_s is not None and 1 <= round(reply_s) <= 21600:
+        cards.append({"t": "reply", "median_s": max(1, round(reply_s))})
+    if laughs >= 1:
+        cards.append({"t": "laughs", "n": laughs})
     em = _emojis(top_emojis)
     if em:
         cards.append({"t": "emojis", "top": em})
     if voice + photos + stickers > 0:
         cards.append({"t": "media", "voice": voice, "photos": photos, "stickers": stickers})
+    sil = _silence(day_counts) if day_counts else None
+    if sil:
+        cards.append(sil)
+    if streak_days >= 1 and day_counts:
+        bm, bn = _busiest_month(day_counts)
+        cards.append({"t": "streak", "days": streak_days, "busiest_month": bm, "busiest_n": bn})
     cards.append({"t": "archetype", "id": archetype(n, hours, weekdays, voice, emoji_total, streak_days, per_day)})
     payload = {"v": 1, "kind": kind, "from": first[:7], "to": last[:7], "cards": cards}
     return validate(payload)
@@ -200,8 +230,10 @@ def from_chat_stats(s: dict, kind: str) -> dict:
     emoji_total = sum(p["emojis"] for p in s["people"])
     return _assemble(kind, s["first"], s["last"], s["total_messages"], s["active_days"], s["span_days"],
                      s["people_count"] if kind == "group" else 0, 0, s["hours"], s["weekdays"], s["streak"]["days"],
-                     s["day_counts"], s["top_emojis"], m["voice"], m["photo"] + m["video"] + m["media"], m["sticker"] + m["gif"],
-                     emoji_total)
+                     s["day_counts"], s["top_emojis"], m["voice"], m["photo"] + m["video"] + m["media"],
+                     m["sticker"] + m["gif"], emoji_total, words=s["total_words"],
+                     busiest=(s["busiest_day"]["date"], s["busiest_day"]["messages"]),
+                     reply_s=s.get("reply_median_s"), laughs=sum(p["laughs"] for p in s["people"]))
 
 
 def from_personal_stats(s: dict) -> dict:
@@ -210,7 +242,9 @@ def from_personal_stats(s: dict) -> dict:
     return _assemble("personal", s["first"], s["last"], s["sent"], s["active_days"], s["span_days"], 0, s["chats"],
                      s["hours"], s["weekdays"], s["streak"]["days"], s["day_counts"], s["top_emojis"],
                      s["voice_sent"], ms["photo"] + ms["video"] + ms["media"], ms["sticker"] + ms["gif"],
-                     sum(c for _, c in s["top_emojis"]))
+                     sum(c for _, c in s["top_emojis"]), words=s["words_sent"],
+                     busiest=(s["busiest_day"]["date"], s["busiest_day"]["sent"]),
+                     reply_s=s.get("my_reply_median_s"))
 
 
 # ---------------------------------------------------------------- what the creator sees before publishing
@@ -246,6 +280,18 @@ def describe(payload: dict) -> list[str]:
         elif t == "media":
             out.append(f"media: {c['voice']:,} voice notes, {c['photos']:,} photos, videos and other media, "
                        f"{c['stickers']:,} stickers and GIFs")
+        elif t == "words":
+            out.append(f"words: {c['n']:,} written")
+        elif t == "busiest_day":
+            out.append(f"busiest day: a {WEEKDAY_NAMES[c['weekday']]} in {month_label(c['month'])}, "
+                       f"{c['n']:,} messages")
+        elif t == "reply":
+            out.append(f"reply speed: typical reply in {c['median_s']:,} seconds")
+        elif t == "laughs":
+            out.append(f"laughs: {c['n']:,} messages with a haha, lol or laughing emoji")
+        elif t == "silence":
+            out.append(f"longest silence: {c['days']} days; comeback in {month_label(c['comeback_month'])} "
+                       f"with {c['comeback_n']:,} messages")
         elif t == "archetype":
             out.append(f"personality: {c['id'].replace('_', ' ')}")
     return out

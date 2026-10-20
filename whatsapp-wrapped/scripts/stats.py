@@ -234,6 +234,8 @@ def compute(chat: Chat, gap_hours: float = 4.0, reply_window_hours: float = 6.0,
         "conversations": conversations,
         "starters": starts.most_common(),
         "fastest": [(p, v["median_s"]) for p, v in fastest],
+        "reply_median_s": (statistics.median([x for r in reply_secs.values() for x in r])
+                           if sum(len(r) for r in reply_secs.values()) >= 3 else None),
         "media": media_totals,
         "deleted_total": sum(r["deleted"] for r in person_rows),
     }

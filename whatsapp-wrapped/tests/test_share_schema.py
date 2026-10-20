@@ -28,10 +28,14 @@ def good() -> dict:
     return {"v": 1, "kind": "group", "from": "2025-04", "to": "2025-10", "cards": [
         {"t": "messages", "n": 5849, "per_day": 29, "active_days": 189, "span_days": 201, "people": 6, "chats": 0},
         {"t": "peak", "hour": 21, "weekday": 6, "hist": [50] * 23 + [100]},
-        {"t": "streak", "days": 87, "busiest_month": "2025-06", "busiest_n": 1010},
         {"t": "emojis", "top": [["😂", 176], ["🔥", 120]]},
         {"t": "media", "voice": 323, "photos": 219, "stickers": 115},
+        {"t": "streak", "days": 87, "busiest_month": "2025-06", "busiest_n": 1010},
         {"t": "archetype", "id": "night_owls"}]}
+
+
+def card(p, t):
+    return next(c for c in p["cards"] if c["t"] == t)
 
 
 def mutate(fn):
@@ -49,29 +53,43 @@ BAD = {
     "day-precise date": mutate(lambda p: p.update({"from": "2025-04-12"})),
     "month 13": mutate(lambda p: p.update(to="2025-13")),
     "from after to": mutate(lambda p: p.update({"from": "2026-01"})),
-    "name smuggled as extra card field": mutate(lambda p: p["cards"][0].update(name="Maya Lindqvist")),
-    "phone number as a number field string": mutate(lambda p: p["cards"][0].update(n="+4915123456789")),
-    "float instead of int": mutate(lambda p: p["cards"][0].update(n=12.5)),
-    "bool instead of int": mutate(lambda p: p["cards"][0].update(people=True)),
-    "negative count": mutate(lambda p: p["cards"][4].update(voice=-1)),
-    "count over cap": mutate(lambda p: p["cards"][0].update(n=10 ** 9)),
-    "hour 24": mutate(lambda p: p["cards"][1].update(hour=24)),
-    "histogram with 23 bars": mutate(lambda p: p["cards"][1].update(hist=[1] * 23)),
-    "histogram value over 100": mutate(lambda p: p["cards"][1].update(hist=[101] + [1] * 23)),
-    "free text in emoji slot": mutate(lambda p: p["cards"][3].update(top=[["Maya", 3]])),
-    "flag emoji (not allowlisted)": mutate(lambda p: p["cards"][3].update(top=[["🇵🇹", 3]])),
-    "emoji with skin tone": mutate(lambda p: p["cards"][3].update(top=[["👍🏽", 3]])),
-    "duplicate emoji": mutate(lambda p: p["cards"][3].update(top=[["😂", 3], ["😂", 2]])),
-    "six emojis": mutate(lambda p: p["cards"][3].update(top=[[e, 1] for e in SCHEMA["emoji"][:6]])),
-    "unknown archetype": mutate(lambda p: p["cards"][5].update(id="Maya's crew")),
+    "name smuggled as extra card field": mutate(lambda p: card(p, "messages").update(name="Maya Lindqvist")),
+    "phone number as a number field string": mutate(lambda p: card(p, "messages").update(n="+4915123456789")),
+    "float instead of int": mutate(lambda p: card(p, "messages").update(n=12.5)),
+    "bool instead of int": mutate(lambda p: card(p, "messages").update(people=True)),
+    "negative count": mutate(lambda p: card(p, "media").update(voice=-1)),
+    "count over cap": mutate(lambda p: card(p, "messages").update(n=10 ** 9)),
+    "hour 24": mutate(lambda p: card(p, "peak").update(hour=24)),
+    "histogram with 23 bars": mutate(lambda p: card(p, "peak").update(hist=[1] * 23)),
+    "histogram value over 100": mutate(lambda p: card(p, "peak").update(hist=[101] + [1] * 23)),
+    "free text in emoji slot": mutate(lambda p: card(p, "emojis").update(top=[["Maya", 3]])),
+    "flag emoji (not allowlisted)": mutate(lambda p: card(p, "emojis").update(top=[["🇵🇹", 3]])),
+    "emoji with skin tone": mutate(lambda p: card(p, "emojis").update(top=[["👍🏽", 3]])),
+    "duplicate emoji": mutate(lambda p: card(p, "emojis").update(top=[["😂", 3], ["😂", 2]])),
+    "six emojis": mutate(lambda p: card(p, "emojis").update(top=[[e, 1] for e in SCHEMA["emoji"][:6]])),
+    "unknown archetype": mutate(lambda p: card(p, "archetype").update(id="Maya's crew")),
     "unknown card type": mutate(lambda p: p["cards"].insert(2, {"t": "names", "list": ["Maya"]})),
     "duplicate card": mutate(lambda p: p["cards"].insert(1, copy.deepcopy(p["cards"][0]))),
     "cards out of order": mutate(lambda p: p["cards"].reverse()),
     "missing required peak card": mutate(lambda p: p["cards"].pop(1)),
     "too few cards": mutate(lambda p: p.update(cards=p["cards"][:3])),
-    "html in a month": mutate(lambda p: p["cards"][2].update(busiest_month="<img src=x>")),
+    "html in a month": mutate(lambda p: card(p, "streak").update(busiest_month="<img src=x>")),
     "cards not a list": mutate(lambda p: p.update(cards={"0": p["cards"][0]})),
     "payload is a list": [good()],
+    "busiest day with a day-precise date": mutate(lambda p: p["cards"].insert(2, {"t": "busiest_day", "weekday": 6,
+                                                                             "month": "2025-08-10", "n": 193})),
+    "busiest day weekday 7": mutate(lambda p: p["cards"].insert(2, {"t": "busiest_day", "weekday": 7,
+                                                                   "month": "2025-08", "n": 193})),
+    "words as text": mutate(lambda p: p["cards"].insert(1, {"t": "words", "n": "pizza"})),
+    "a top word smuggled into words": mutate(lambda p: p["cards"].insert(1, {"t": "words", "n": 3, "top": "pizza"})),
+    "reply speed zero": mutate(lambda p: p["cards"].insert(2, {"t": "reply", "median_s": 0})),
+    "reply speed over 6 hours": mutate(lambda p: p["cards"].insert(2, {"t": "reply", "median_s": 21601})),
+    "laughs negative": mutate(lambda p: p["cards"].insert(2, {"t": "laughs", "n": -3})),
+    "silence of one day": mutate(lambda p: p["cards"].insert(4, {"t": "silence", "days": 1, "comeback_month": "2025-07",
+                                                                "comeback_n": 9})),
+    "silence with a day date": mutate(lambda p: p["cards"].insert(4, {"t": "silence", "days": 9,
+                                                                     "comeback_month": "2025-07-02", "comeback_n": 9})),
+    "new card out of order": mutate(lambda p: p["cards"].append({"t": "laughs", "n": 5})),
 }
 
 BAD_TEASERS = [
@@ -166,6 +184,39 @@ class PersonalityMatchesPeak(unittest.TestCase):
             self.assertIn(f"  {a}: [", js)
 
 
+class TwelveFrameStory(unittest.TestCase):
+    """The group demo is a 12-frame story: 11 cards plus the final frame, all group-level numbers."""
+
+    def test_group_story_has_eleven_cards_and_both_validators_accept(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            p = share.build_payload(share.parser().parse_args([str(canary.write_group(tmp / "g.txt"))]))
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        self.assertEqual([c["t"] for c in p["cards"]], SCHEMA["card_order"])
+        if shutil.which("node"):
+            self.assertEqual(run_node([p]), [None])
+        cards = {c["t"]: c for c in p["cards"]}
+        self.assertRegex(cards["busiest_day"]["month"], r"^\d{4}-\d{2}$")
+        self.assertGreaterEqual(cards["silence"]["days"], 2)
+
+    def test_silence_and_comeback(self):
+        from share_schema import _silence
+        days = {"2025-01-01": 5, "2025-01-02": 3, "2025-01-10": 40, "2025-01-11": 2, "2025-01-15": 1}
+        self.assertEqual(_silence(days), {"t": "silence", "days": 7, "comeback_month": "2025-01", "comeback_n": 40})
+        self.assertIsNone(_silence({"2025-01-01": 1, "2025-01-03": 1}))  # one quiet day is not a silence
+
+    def test_group_reply_median_is_one_number(self):
+        from parse import parse_file
+        from stats import compute
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            s = compute(parse_file(str(canary.write_group(tmp / "g.txt"))))
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        self.assertIsInstance(s["reply_median_s"], (int, float))
+
+
 class BuiltFromSyntheticChats(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -187,7 +238,7 @@ class BuiltFromSyntheticChats(unittest.TestCase):
         blob = json.dumps(p, ensure_ascii=False).encode()
         self.assertEqual(canary.leaks(blob), [])
         self.assertEqual(canary.leaks("\n".join(describe(p)).encode()), [])
-        self.assertTrue(4 <= len(p["cards"]) <= 6)
+        self.assertTrue(4 <= len(p["cards"]) <= SCHEMA["max_cards"])
 
     def test_duo_needs_me_and_shows_only_the_creator(self):
         with self.assertRaises(SystemExit):

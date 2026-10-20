@@ -175,7 +175,7 @@ def gate() -> dict:
             page.on("request", lambda r: requests.append({"url": r.url, "headers": r.headers}))
             page.goto(link)
             page.wait_for_selector(".frame.on.frame-cover", timeout=15000)
-            for _ in range(10):
+            for _ in range(20):
                 frames_seen += 1
                 if page.locator(".frame.on.frame-final").count():
                     break
