@@ -184,6 +184,7 @@ One skill by [Garry Tan](https://github.com/garrytan), republished unchanged fro
 - [`rocketlist`](rocketlist/) searches current startup jobs and hiring companies through Rocketlist's public MCP.
 - [`pay-per-call-apis`](pay-per-call-apis/) exposes Monid's paid data and scraping tools through one CLI.
 - [`geo-domination`](geo-domination/) (GEO Domination, by RadarKit) finds the AI prompts your buyers ask, then shows how to own the answers in ChatGPT, Perplexity, Gemini and Google AI.
+- [`hire-founding-engineer`](hire-founding-engineer/) (Hire a Founding Engineer, with Clera) runs a founding-engineer hire from role brief to signed offer and hands the search to Clera's network when the founder connects it.
 
 ## Evidence status
 
@@ -237,6 +238,8 @@ Most packages are Apache-2.0 and carry their own license and provenance record. 
 `founders-handbook` summarizes the [Founders Handbook by 1984 Ventures](https://1984.vc/docs/founders-handbook) chapter by chapter, with each chapter linked and its authors credited. The handbook content belongs to 1984 Ventures, so the package is not covered by the repository's Apache-2.0 grant; see [`founders-handbook/THIRD_PARTY_NOTICES.md`](founders-handbook/THIRD_PARTY_NOTICES.md). It is not affiliated with or endorsed by 1984 Ventures.
 
 `geo-domination` (GEO Domination) is RadarKit's own Skill, provided by RadarKit for Edge and published unchanged apart from its front-matter `name:`. No licence was stated with it, so it is not covered by the repository's Apache-2.0 grant; see [`geo-domination/THIRD_PARTY_NOTICES.md`](geo-domination/THIRD_PARTY_NOTICES.md).
+
+`hire-founding-engineer` (Hire a Founding Engineer) is co-authored by Edge and Clera from Clera's public pages. No licence is asserted yet, so it is not covered by the repository's Apache-2.0 grant.
 
 For academic citation, use [`CITATION.cff`](CITATION.cff). The benchmark identifier is `edge-skill-bench@1.0`.
 
