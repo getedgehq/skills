@@ -31,7 +31,7 @@ Edge scans packages, mirrors available third-party scanner reports, and loads pi
 
 ## In this repository
 
-This repository contains 154 top-level skill bundles, including compatibility aliases. It is the versioned source for [Edge-maintained skills](CATALOG.md). The [public database](database/edge-database.json) holds package provenance and recorded evaluations where they exist. Browse the [package catalog and evidence notes](CATALOG.md) for installation and benchmark details.
+This repository contains 156 top-level skill bundles, including compatibility aliases. It is the versioned source for [Edge-maintained skills](CATALOG.md). The [public database](database/edge-database.json) holds package provenance and recorded evaluations where they exist. Browse the [package catalog and evidence notes](CATALOG.md) for installation and benchmark details.
 
 ## Tracked Deck Links
 
@@ -53,3 +53,12 @@ Use Rocketlist’s current startup hiring data inside your agent: role, location
 | Find current startup jobs and hiring companies | [`rocketlist-job-search`](rocketlist-job-search/) |
 
 This bundle is licensed under [Rocketlist’s MIT license](rocketlist-job-search/LICENSE); the hiring dataset has its own upstream [data terms](https://github.com/rocketlist-ai/startup-jobs/blob/main/DATA_LICENSE.md).
+
+## PDF forms and short answers
+
+| Need | Skill |
+| --- | --- |
+| Fill an AcroForm and check that saved checkboxes are visibly marked | [`pdf-form-fill-verified`](pdf-form-fill-verified/) |
+| Give a plain-language answer in at most five short lines, with one ask | [`short-answers`](short-answers/) |
+
+Both bundles include Apache-2.0 licences and derivation records. Read their `EVALS.md` files for source evidence and limits; neither claims to meet the catalog's controlled evaluation bar. PDF filling requires Python dependencies and system Poppler; dependencies retain their own licences.
