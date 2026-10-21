@@ -26,6 +26,8 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 
 | Need | Skill |
 | --- | --- |
+| Fill PDF forms and verify saved checkbox marks | [`pdf-form-fill-verified`](pdf-form-fill-verified/) |
+| Give a short answer with the outcome first and one ask | [`short-answers`](short-answers/) |
 | Send personal deck links and report real reading | [`tracked-deck-links`](tracked-deck-links/) |
 | Turn a WhatsApp chat export into a Wrapped recap with story cards | [`whatsapp-wrapped`](whatsapp-wrapped/) |
 | Keep long work alive across context loss | [`workplan`](workplan/) |
