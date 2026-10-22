@@ -174,6 +174,12 @@ One skill by [Garry Tan](https://github.com/garrytan), republished unchanged fro
 
 - [`office-hours`](office-hours/) runs YC-style office hours on a product idea: six forcing questions about demand, the status quo and the smallest version, then a design doc, before any code.
 
+### Isometric machines, by @wheresryan22
+
+One skill by [@wheresryan22](https://x.com/wheresryan22), republished from [wheresryan22/anatomy](https://github.com/wheresryan22/anatomy) under his MIT licence.
+
+- [`anatomy`](anatomy/) turns a one-sentence idea into a crafted, interactive isometric machine whose working is the explanation, with optional true-3D turning and WebGL effects.
+
 ### Web design
 
 - [`website-inspiration`](website-inspiration/) checks 17 curated design galleries (full pages, hero sections, pricing, footers, app flows, fonts) for real references before the agent designs a page.
@@ -248,6 +254,8 @@ For academic citation, use [`CITATION.cff`](CITATION.cff). The benchmark identif
 `libraries-dev` is Jakub Antalik's work, copied from [Jakubantalik/Libraries.dev](https://github.com/Jakubantalik/Libraries.dev) at a pinned commit. It is MIT-licensed (Copyright (c) 2026 Jakub Antalik), not covered by the repository's Apache-2.0 grant, and the folder carries his LICENSE. The only change is an author and source credit in the front matter, recorded in `DERIVATION.json`. It is not affiliated with or endorsed by Jakub Antalik.
 
 `office-hours` is Garry Tan's work, copied from [garrytan/gstack](https://github.com/garrytan/gstack) at a pinned commit. It is MIT-licensed (Copyright (c) 2026 Garry Tan), not covered by the repository's Apache-2.0 grant, and the folder carries his LICENSE. The only change is an author and source credit in the front matter, recorded in `DERIVATION.json`. It is not affiliated with or endorsed by Garry Tan or Y Combinator.
+
+`anatomy` is @wheresryan22's work, copied from [wheresryan22/anatomy](https://github.com/wheresryan22/anatomy) at a pinned commit. It is MIT-licensed (Copyright (c) 2026 Ryan), not covered by the repository's Apache-2.0 grant, and the folder carries his LICENSE. The only change is an author and source credit in the front matter; repository housekeeping, tests and the built example pages are left out. Both are recorded in `DERIVATION.json`. It is not affiliated with or endorsed by @wheresryan22.
 
 ## Tracked Deck Links
 
