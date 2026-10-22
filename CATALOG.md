@@ -180,6 +180,30 @@ One skill by [@wheresryan22](https://x.com/wheresryan22), republished from [wher
 
 - [`anatomy`](anatomy/) turns a one-sentence idea into a crafted, interactive isometric machine whose working is the explanation, with optional true-3D turning and WebGL effects.
 
+### Frontend design, by Paul Bakaus
+
+One skill by [Paul Bakaus](https://github.com/pbakaus), republished from [pbakaus/impeccable](https://github.com/pbakaus/impeccable) under his Apache-2.0 licence.
+
+- [`impeccable`](impeccable/) gives the agent one design language and a playbook per command (shape, audit, critique, polish, typeset, layout, animate and more) for websites, dashboards, product UI and native apps.
+
+### Clear writing, by Addy Osmani
+
+One skill by [Addy Osmani](https://github.com/addyosmani), republished from [addyosmani/clarity](https://github.com/addyosmani/clarity) under his MIT licence.
+
+- [`clarity`](clarity/) drafts, rewrites, reviews or lints reader-facing prose so it is specific, useful and recognizably the author's, without inventing facts.
+
+### Typography, by Jakub Krehel
+
+One skill by [Jakub Krehel](https://github.com/jakubkrehel), republished from [jakubkrehel/skills](https://github.com/jakubkrehel/skills) under his MIT licence.
+
+- [`better-typography`](better-typography/) covers type scale, spacing, sizing, variable fonts, OpenType features, wrapping and truncation so typography feels great across a product.
+
+### Humanizer, by Siqi Chen
+
+One skill by [Siqi Chen](https://github.com/blader), republished from [blader/humanizer](https://github.com/blader/humanizer) under his MIT licence.
+
+- [`humanizer`](humanizer/) rewrites text that reads machine-written so it sounds like the writer without changing what it says.
+
 ### Web design
 
 - [`website-inspiration`](website-inspiration/) checks 17 curated design galleries (full pages, hero sections, pricing, footers, app flows, fonts) for real references before the agent designs a page.
@@ -256,6 +280,14 @@ For academic citation, use [`CITATION.cff`](CITATION.cff). The benchmark identif
 `office-hours` is Garry Tan's work, copied from [garrytan/gstack](https://github.com/garrytan/gstack) at a pinned commit. It is MIT-licensed (Copyright (c) 2026 Garry Tan), not covered by the repository's Apache-2.0 grant, and the folder carries his LICENSE. The only change is an author and source credit in the front matter, recorded in `DERIVATION.json`. It is not affiliated with or endorsed by Garry Tan or Y Combinator.
 
 `anatomy` is @wheresryan22's work, copied from [wheresryan22/anatomy](https://github.com/wheresryan22/anatomy) at a pinned commit. It is MIT-licensed (Copyright (c) 2026 Ryan), not covered by the repository's Apache-2.0 grant, and the folder carries his LICENSE. The only change is an author and source credit in the front matter; repository housekeeping, tests and the built example pages are left out. Both are recorded in `DERIVATION.json`. It is not affiliated with or endorsed by @wheresryan22.
+
+`impeccable` is Paul Bakaus's work, copied from [pbakaus/impeccable](https://github.com/pbakaus/impeccable) at a pinned commit. It is licensed under Apache-2.0 (Copyright 2025 Paul Bakaus) and the folder carries his LICENSE and NOTICE.md. The only change is an author and source credit in the front matter, recorded in `DERIVATION.json`. It is not affiliated with or endorsed by Paul Bakaus.
+
+`clarity` is Addy Osmani's work, copied from [addyosmani/clarity](https://github.com/addyosmani/clarity) at a pinned commit. It is MIT-licensed (Copyright (c) 2026 Addy Osmani), not covered by the repository's Apache-2.0 grant, and the folder carries his LICENSE. The only change is an author and source credit in the front matter; repository housekeeping, the project site, evals and samples are left out. Both are recorded in `DERIVATION.json`. It is not affiliated with or endorsed by Addy Osmani.
+
+`better-typography` is Jakub Krehel's work, copied from [jakubkrehel/skills](https://github.com/jakubkrehel/skills) at a pinned commit. It is MIT-licensed (Copyright (c) 2026 Jakub Krehel), not covered by the repository's Apache-2.0 grant, and the folder carries his LICENSE. The only change is an author and source credit in the front matter, recorded in `DERIVATION.json`. It is not affiliated with or endorsed by Jakub Krehel.
+
+`humanizer` is Siqi Chen's work, copied from [blader/humanizer](https://github.com/blader/humanizer) at a pinned commit. It is MIT-licensed (Copyright (c) 2025 Siqi Chen), not covered by the repository's Apache-2.0 grant, and the folder carries his LICENSE. The only change is an author and source credit in the front matter; repository housekeeping is left out. Both are recorded in `DERIVATION.json`. It is not affiliated with or endorsed by Siqi Chen.
 
 ## Tracked Deck Links
 
