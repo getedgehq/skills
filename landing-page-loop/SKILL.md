@@ -1,6 +1,6 @@
 ---
 name: landing-page-loop
-description: "Build a fast, distinctive landing page with coding agents, the way the getedge.cc homepage was built: one design-token file that generates the CSS, black-and-white wireframes before any styling, a small static site generator instead of a framework, variants side by side, a blind second-model review loop with screenshots at desktop and phone width, a post-release roast, an idle CPU and GPU memory cost check, and an atomic release folder plus symlink deploy with one-command rollback. Use when someone wants a landing page or homepage that looks designed rather than generated, wants to redesign an existing site with an agent, or wants a repeatable build, review and ship loop for marketing pages."
+description: "Build a fast, distinctive landing page with coding agents, the way the getedge.cc homepage was built: one design-token file that generates the CSS, black-and-white wireframes before any styling, a small static site generator instead of a framework, variants side by side, a blind second-model review loop with screenshots at desktop and phone width, a post-release roast, an idle CPU and GPU memory cost check, and an atomic release folder plus symlink deploy with one-command rollback. Use when someone wants a landing page or homepage that looks designed rather than generated, styled from their own example sites or Pinterest images, wants to redesign an existing site with an agent, or wants a repeatable build, review and ship loop for marketing pages."
 ---
 
 # landing-page-loop
@@ -17,9 +17,11 @@ was reproduced before it was fixed, idle CPU is ~0 at 10 s and 45 s, and the liv
 
 ## 0. Before anything: read what exists
 
-Collect the current page, brand assets, copy the owner already approved, and 3 to 5 reference
-sites the owner likes. Put them in one folder the agent reads before every design task. Never
-invent positioning copy; use the owner's words.
+Collect the current page, brand assets, copy the owner already approved, and the owner's
+visual input: 3 to 5 example websites they like and/or a Pinterest moodboard (roughly 10 to 20
+images). Put it all in one folder the agent reads before every design task. Those examples are
+the taste reference for wireframes and styling; without them, stop and ask, do not invent a
+style. Never invent positioning copy either; use the owner's words.
 
 ## 1. Design system first, then the page
 
@@ -81,7 +83,7 @@ saying what the idea is. No styling, no colour, real copy.`
 Every round:
 
 1. Screenshots at 1440 px and 390 px wide, full page, plus a scroll recording turned into a
-   contact sheet. Put the reference sites next to them.
+   contact sheet. Put the owner's example sites or moodboard next to them.
 2. A second model reviews **blind**: it gets the images and the goal, not your reasoning or
    the previous scores. It returns a score out of 10 and the top fixes.
 3. Fix, rebuild, repeat until 9.5/10 or the reviewer says "agreed".
@@ -130,6 +132,7 @@ Record the numbers in the commit message (before and after).
 
 ## Checklist
 
+- [ ] owner's example sites and/or Pinterest moodboard in the reference folder before any design
 - [ ] tokens.json -> tokens.css by script; rules and forbidden list written down
 - [ ] owner picked a black-and-white wireframe before styling
 - [ ] assets WebP at display size, hashed URLs
