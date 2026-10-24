@@ -2,6 +2,12 @@
 
 Edge gives your AI agent the right expert skill for the task at hand. It searches 100,000+ security-screened public skills, picks the best fit, and loads a pinned version for that task. Works in Claude Code, Codex, Cursor and the Claude app.
 
+**Using Claude Code or Codex? Add skill discovery:**
+
+```bash
+npx skills add getedgehq/skills --skill edge-find-skills
+```
+
 **Set up Edge:** paste this into Claude Code, Codex or Cursor:
 
 ```text
