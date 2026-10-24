@@ -11,6 +11,8 @@ Writes:
   DIR/wrapped.html        self-contained page (all cards + table), no network requests
   DIR/cards/NN-*.png      1080x1920 story cards (needs Playwright or a local Chrome/Chromium)
   DIR/stats.json          only with --json (contains names and top words)
+
+Hosted share link (optional, the only network use): wrapped.py <export> --share, or scripts/share.py directly.
 """
 from __future__ import annotations
 
@@ -98,6 +100,11 @@ def render_pngs(docs: list[tuple[str, str]], out_dir: Path) -> str:
 
 
 def main(argv=None) -> int:
+    args = sys.argv[1:] if argv is None else list(argv)
+    if "--share" in args:
+        # Hosted link: handled ONLY by share.py, the single auditable file that uses the network.
+        share_py = str(Path(__file__).resolve().with_name("share.py"))
+        os.execv(sys.executable, [sys.executable, share_py, *[x for x in args if x != "--share"]])
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("export", nargs="?", help="WhatsApp export: the .txt or the .zip from 'Export chat'")
     ap.add_argument("--personal", metavar="SOURCE", help="personal edition across all your chats: 'mac' (finds the "
@@ -125,6 +132,8 @@ def main(argv=None) -> int:
     ap.add_argument("--date-order", choices=["dmy", "mdy", "ymd"], help="override day/month order detection")
     ap.add_argument("--title", help="chat name to show (default: from the file name)")
     ap.add_argument("--json", action="store_true", help="also write stats.json")
+    ap.add_argument("--share", action="store_true", help="make an encrypted share link instead (runs share.py: "
+                    "two approvals at the terminal, restricted stats only); see share.py --help")
     a = ap.parse_args(argv)
     render.set_theme(a.theme)
     if a.share_cards:
