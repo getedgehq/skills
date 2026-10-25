@@ -173,7 +173,8 @@ if os.environ.get("CAPTIONS_JSON"):
 # render caption PNGs (drop shadow only, Helvetica Neue Bold 44, wide margins)
 CAP_FONT = os.environ["CAPTION_FONT"]
 CAP_IDX = int(os.environ.get("CAPTION_FONT_INDEX", "0"))
-cf = ImageFont.truetype(CAP_FONT, 44, index=CAP_IDX)
+# CAP_SIZE default 55: captions read at phone size (44 was too small on a phone)
+cf = ImageFont.truetype(CAP_FONT, int(os.environ.get("CAP_SIZE", "55")), index=CAP_IDX)
 try:
     cf.set_variation_by_name("Bold")
 except Exception:
@@ -214,7 +215,9 @@ for idx, c in enumerate(caps):
     dd, sd = ImageDraw.Draw(img), ImageDraw.Draw(sh)
     lines = wrapc(c["text"], W - 260)
     en_lines = wrapc(c["en"], W - 300, cf_en) if c.get("en") else []
-    y = H - int(os.environ.get("CAP_BOTTOM", "330")) - clh * len(lines)
+    # CAP_BOTTOM default 495: the caption block ends at y~1425 of 1920, under the chin and above the
+    # bottom ~420 px that Instagram and TikTok cover with their UI (330 sat inside it, 600 sat on the lips)
+    y = H - int(os.environ.get("CAP_BOTTOM", "495")) - clh * len(lines)
     placed = []
     for ln in lines:
         x = (W - dd.textlength(ln, font=cf)) / 2
@@ -355,8 +358,12 @@ def build_insert_png(spec, path):
 
 # 5) compose: base + hook(0-5s) [+ logo] [+ inserts] + caption track (LAST) + 1.1x + HQ
 final_dur = DUR / SPEED
-AUD_FADE = 0.12
+AUD_FADE = float(os.environ.get("AUD_FADE", "0.12"))
 afade_st = max(0.0, final_dur - AUD_FADE)
+# AUD_END (edited seconds, before speed-up): the spoken part ends here; audio fades out over AUD_FADE
+# from this point and stays silent while the footage keeps playing under the closer (ending rule).
+if os.environ.get("AUD_END"):
+    afade_st = float(os.environ["AUD_END"]) / SPEED
 out = str(ROOT / "data/final" / f"{OUT}.mp4")
 inputs = ["-i", str(base), "-i", str(audio), "-i", str(captrack),
           "-loop", "1", "-t", f"{HOOK_DUR + 1}", "-i", str(hookpng)]
@@ -395,9 +402,10 @@ for k, spec in enumerate(INSERTS):
         e0 = to_edited(float(spec["start"]))
         e1 = to_edited(float(spec["end"]))
     inputs += ["-loop", "1", "-t", f"{DUR + 1}", "-i", str(ins_png)]
-    fout = "" if spec.get("at_end") else f",fade=t=out:st={max(e0, e1 - 0.3):.2f}:d=0.3:alpha=1"
-    fc.append(f"[{nidx}:v]setpts=PTS-STARTPTS,"
-              f"fade=t=in:st={e0:.2f}:d=0.3:alpha=1{fout}[ins{k}]")
+    fout = "" if spec.get("at_end") or spec.get("hard") else f",fade=t=out:st={max(e0, e1 - 0.3):.2f}:d=0.3:alpha=1"
+    fin = "" if spec.get("hard") else f"fade=t=in:st={e0:.2f}:d=0.3:alpha=1"  # hard: full-frame cutaway, hard cut in and out
+    fc.append(f"[{nidx}:v]setpts=PTS-STARTPTS"
+              f"{',' + fin if fin else ''}{fout}[ins{k}]")
     fc.append(f"[{last}][ins{k}]overlay=0:0:enable='between(t,{e0:.2f},{e1:.2f})'[vi{k}]")
     last = f"vi{k}"
     nidx += 1

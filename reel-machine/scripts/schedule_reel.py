@@ -3,7 +3,8 @@
 
   schedule_reel.py channels
   schedule_reel.py schedule (--url URL | --file reel.mp4) --at 2026-11-02T12:00:00-08:00 \\
-        --caption "post caption" --title "YouTube title" [--platforms instagram,tiktok,youtube] [--armed]
+        --caption "post caption" --title "YouTube title" [--platforms instagram,tiktok,youtube] \\
+        [--story] [--link https://your.landing/page] [--credits bundle/credits.txt] [--armed]
   schedule_reel.py swap --caption-start "first words of the caption" (--url URL | --file F) --title "YT title" [--days 35]
 
 Auth: BUFFER_TOKEN in the environment (Buffer's GraphQL API at https://api.buffer.com/).
@@ -19,6 +20,13 @@ Platform requirements (Buffer rejects the post otherwise):
   Instagram: metadata.instagram = {type: "reel", shouldShareToFeed: true}
   YouTube:   metadata.youtube   = {title (<= 100 chars), categoryId, privacy, madeForKids, notifySubscribers}
   TikTok:    no metadata needed
+
+Story: --story also creates an Instagram Story with the same video REEL_STORY_DELAY_MIN (60)
+minutes after the reel (metadata.instagram.type = "story"): the reel gets a second push to
+followers who watch Stories but not the feed.
+Pace gate: --armed runs vadgaps.py on the exact file first (downloaded from the URL when only
+--url is given) and refuses to arm a reel with dead air. --skip-pace-gate "reason" for a reel
+without speech.
 
 Safety: `schedule` creates DRAFTS unless --armed. Arm only after the owner approved the exact
 file and caption. `swap` re-points already scheduled posts to a new file (same caption, time,
@@ -90,11 +98,11 @@ def channel_id(platform):
     return hits[0]["id"]
 
 
-def metadata(platform, title):
+def metadata(platform, title, story=False):
     if platform == "instagram":
-        m = {"type": "reel", "shouldShareToFeed": True}
+        m = {"type": "story" if story else "reel", "shouldShareToFeed": True}
         collab = [c.strip().lstrip("@") for c in rmconf.get("BUFFER_IG_COLLAB").split(",") if c.strip()]
-        if collab:
+        if collab and not story:
             m["collaborators"] = collab  # shows on both profiles once the collaborator accepts in the app
         return {"instagram": m}
     if platform == "youtube":
@@ -144,20 +152,50 @@ def cmd_channels(_a):
             print(f"{c['service']:10s} {c['name']:30s} {c['id']}")
 
 
+def pace_gate(a, url):
+    """vadgaps.py on the exact file that will be posted; exits on FAIL."""
+    if a.skip_pace_gate:
+        print("pace gate skipped:", a.skip_pace_gate); return
+    import tempfile
+    f = a.file
+    if not f:
+        f = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
+        urllib.request.urlretrieve(url, f)
+    r = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "vadgaps.py"), f], capture_output=True, text=True)
+    if not a.file:
+        os.unlink(f)
+    print(r.stdout.strip() or r.stderr.strip()[-300:])
+    if r.returncode:
+        sys.exit("pace gate FAILED: jump-cut it with pcut.py (or finish.sh) before arming")
+
+
 def cmd_schedule(a):
-    check_text(a.caption, a.title)
+    from datetime import datetime, timedelta
+    caption = a.caption
+    if a.link and a.link not in caption:
+        caption = caption.rstrip() + "\n\n" + a.link
+    if a.credits:
+        caption = caption.rstrip() + "\n\n" + Path(a.credits).read_text().strip()
+    check_text(caption, a.title)
     url = public_url(a)
-    for p in a.platforms.split(","):
-        inp = {"channelId": channel_id(p), "text": a.caption, "assets": [{"video": {"url": url}}],
-               "schedulingType": "automatic", "mode": "customScheduled", "dueAt": a.at}
+    if a.armed:
+        pace_gate(a, url)
+    jobs = [(p, a.at, False) for p in a.platforms.split(",")]
+    if a.story:
+        later = (datetime.fromisoformat(a.at) + timedelta(minutes=int(rmconf.get("REEL_STORY_DELAY_MIN")))).isoformat()
+        jobs.append(("instagram", later, True))
+    for p, due, story in jobs:
+        inp = {"channelId": channel_id(p), "text": caption, "assets": [{"video": {"url": url}}],
+               "schedulingType": "automatic", "mode": "customScheduled", "dueAt": due}
         if not a.armed:
             inp["saveToDraft"] = True
-        md = metadata(p, a.title)
+        md = metadata(p, a.title, story)
         if md:
             inp["metadata"] = md
         r = call(p, CP, {"input": inp})["createPost"]
         post = r.get("post") or {}
-        print(p, r["__typename"], post.get("id", ""), post.get("status", ""), post.get("dueAt", ""), r.get("message", ""))
+        print(p + (" story" if story else ""), r["__typename"], post.get("id", ""), post.get("status", ""),
+              post.get("dueAt", ""), r.get("message", ""))
     if not a.armed:
         print("Created as drafts. Re-run with --armed once the owner approved this exact file and caption.")
 
@@ -182,13 +220,16 @@ def cmd_swap(a):
             if not pg["pageInfo"]["hasNextPage"]:
                 break
             after = pg["pageInfo"]["endCursor"]
-        for post in posts:
-            if post.get("status") not in (None, "scheduled") or not (post.get("text") or "").startswith(a.caption_start):
-                continue
+        hits = [q for q in posts if q.get("status") in (None, "scheduled") and (q.get("text") or "").startswith(a.caption_start)]
+        # the Story reshare sits REEL_STORY_DELAY_MIN after its reel with the same caption: keep it a story
+        due = {datetime.fromisoformat(q["dueAt"].replace("Z", "+00:00")) for q in hits}
+        delay = timedelta(minutes=int(rmconf.get("REEL_STORY_DELAY_MIN")))
+        for post in hits:
+            story = p == "instagram" and datetime.fromisoformat(post["dueAt"].replace("Z", "+00:00")) - delay in due
             # editPost is a full replace: re-pass text, time and the platform metadata or they are lost
             e = {"id": post["id"], "text": post["text"], "assets": [{"video": {"url": url}}],
                  "dueAt": post["dueAt"], "mode": "customScheduled", "saveToDraft": False}
-            md = metadata(p, a.title)
+            md = metadata(p, a.title, story)
             if md:
                 e["metadata"] = md
             r = call(p, EP, {"input": e})["editPost"]
@@ -210,6 +251,10 @@ for name in ("schedule", "swap"):
         s.add_argument("--caption", required=True)
         s.add_argument("--platforms", default=",".join(PLATFORMS))
         s.add_argument("--armed", action="store_true")
+        s.add_argument("--story", action="store_true", help="also an Instagram Story, REEL_STORY_DELAY_MIN after the reel")
+        s.add_argument("--link", help="landing page URL appended to the caption (product reels)")
+        s.add_argument("--credits", help="credits.txt from the bundle (photo credits for cutaways)")
+        s.add_argument("--skip-pace-gate", metavar="REASON", help="only for a reel without speech")
     else:
         s.add_argument("--caption-start", required=True)
         s.add_argument("--days", type=int, default=35)

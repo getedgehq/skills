@@ -31,6 +31,17 @@ DEFAULTS = {
     "BUFFER_YOUTUBE_CHANNEL": "",
     "BUFFER_IG_COLLAB": "",                 # optional Instagram collaborator username(s), comma list
     "YOUTUBE_CATEGORY_ID": "28",            # 28 = Science & Technology
+    "REEL_CAP_SIZE": "55",                  # caption px on 1080x1920
+    "REEL_CAP_BOTTOM": "495",               # caption block ends 495 px above the bottom (y~1425), above the app UI
+    # voice: raw voice + gentle EQ + loudness. No voice isolation (it makes voices sound robotic).
+    "REEL_VOICE_EQ": "highpass=f=90,equalizer=f=220:t=q:w=1.0:g=-3,equalizer=f=3300:t=q:w=1.0:g=2",
+    "REEL_LOUDNORM": "I=-15:TP=-2:LRA=7",
+    "REEL_MAX_GAP": "0.35",                 # pace gate: longest pause allowed between speech, seconds
+    "REEL_MAX_DEAD": "0.08",                # pace gate: dead-air share allowed
+    "REEL_MIN_WPS": "2.6",                  # jump cuts: below this many words per second, speed up a little
+    "REEL_MAX_TEMPO": "1.15",               # jump cuts: speed-up ceiling
+    "REEL_STORY_DELAY_MIN": "60",           # Instagram Story reshare this many minutes after the reel
+    "REEL_HTTP_CONTACT": "",                # contact for the Wikimedia User-Agent (URL or email), required by their API policy
 }
 
 
