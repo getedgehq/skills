@@ -33,3 +33,8 @@ used under the MIT License:
 Fonts are not bundled. setup.sh downloads Funnel Display (SIL Open Font License 1.1) from the
 Google Fonts repository. Logos rendered by logo_png.py come from Simple Icons (CC0); the marks
 themselves remain their owners' trademarks.
+
+Not bundled, installed by the user from PyPI (scripts/requirements.txt): faster-whisper (MIT), which
+ships the Silero VAD model (MIT) used by pcut.py and vadgaps.py, and OpenCV (Apache-2.0), whose Haar
+cascade files are used by facecheck.py. Photos fetched by commons.py stay under their own Wikimedia
+Commons licences; commons.py records each author and licence so the post can credit them.

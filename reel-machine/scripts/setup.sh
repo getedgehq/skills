@@ -13,7 +13,9 @@ for t in ffmpeg ffprobe python3; do
   command -v "$t" >/dev/null || { echo "MISSING: $t"; ok=0; }
 done
 command -v rsvg-convert >/dev/null || echo "optional: rsvg-convert (librsvg) for logo_png.py"
-python3 -m pip install -q -r "$HERE/requirements.txt" || python3 -m pip install -q --user -r "$HERE/requirements.txt"
+python3 -m pip install -q -r "$HERE/requirements.txt" || python3 -m pip install -q --user -r "$HERE/requirements.txt" \
+  || echo "pip could not install (managed Python?): use a venv, then pip install -r scripts/requirements.txt"
+python3 -c "import PIL, numpy, av, faster_whisper, cv2" 2>/dev/null || { echo "MISSING Python deps (see scripts/requirements.txt)"; ok=0; }
 
 F="$WORK/fonts/FunnelDisplay.ttf"
 if [ ! -s "$F" ]; then
