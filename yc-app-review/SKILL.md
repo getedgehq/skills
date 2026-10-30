@@ -1,18 +1,20 @@
 ---
-name: application-review
+name: yc-app-review
 description: >-
-  Get a YC or a16z Speedrun application reviewed. Use when a founder wants
-  friends, mentors or alumni to review their accelerator application, asks to
-  share their YC or Speedrun draft for feedback, or wants their answers scored
-  or rewritten ("what would a YC partner think"). Builds a shareable review page
-  (one HTML file, application-portal look) where reviewers leave notes per
-  question and send them back as text, roasts every answer first against public
-  advice from YC and Speedrun partners, and turns the notes into rewrites.
+  YC App Review: get a YC or a16z Speedrun application reviewed. Use when a
+  founder wants friends, mentors or alumni to review their YC or Speedrun
+  application, asks to share their draft for feedback, or wants their answers
+  scored or rewritten ("what would a YC partner think"). Builds a shareable
+  review page (one HTML file, application-portal look) where reviewers leave
+  notes per question and send them back as text, roasts every answer first
+  against public advice from YC and Speedrun partners, and turns the notes into
+  rewrites. Works for YC and a16z Speedrun. Not affiliated with Y Combinator or
+  a16z.
 ---
 
-# Get your application reviewed
+# YC App Review
 
-You give a founder a review page they can send to people they trust: their YC or Speedrun answers in the application-portal look, a note button on every answer, a general note, and a "Send my notes" button that turns the reviewer's notes into clean text. It is one HTML file. No account, no server: the founder opens it locally, drops it on any static host or a gist, or attaches it to a message.
+You give a founder a review page they can send to people they trust: their YC or a16z Speedrun answers in the application-portal look, a note button on every answer, a general note, and a "Send my notes" button that turns the reviewer's notes into clean text. It is one HTML file. No account, no server: the founder opens it locally, drops it on any static host or a gist, or attaches it to a message.
 
 Before you build the page, you roast the draft yourself, so reviewers read the improved version. When notes come back, you parse them and propose rewrites.
 
