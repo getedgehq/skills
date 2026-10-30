@@ -130,7 +130,7 @@ Offer it once, in one line, after the page is built:
 
 If they say no, keep working with the file. If yes, use the hosted review service (same page design, plus versions: reviewers get a link back to the draft they saw):
 
-Base URL: `BASE=${EDGE_REVIEW_URL:-https://appreview-preview.91.99.110.206.nip.io}` (preview).
+Base URL: `BASE=${EDGE_REVIEW_URL:-https://getedge.cc/review}`.
 
 ### 6a. Create the application
 
