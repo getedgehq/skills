@@ -1,28 +1,34 @@
 ---
 name: application-review
 description: >-
-  Review a YC or a16z Speedrun application before the founder submits it. Use
-  when a founder asks to review, score, cut or rewrite their accelerator
-  application answers, asks "what would a YC partner think", or wants friends,
-  mentors or alumni to review the draft. Scores every answer against public
-  advice from YC and Speedrun partners, names the top issue, writes a rewrite,
-  and drafts short review asks. Optionally creates one private link per
-  reviewer that collects notes per question.
+  Get a YC or a16z Speedrun application reviewed. Use when a founder wants
+  friends, mentors or alumni to review their accelerator application, asks to
+  share their YC or Speedrun draft for feedback, or wants their answers scored
+  or rewritten ("what would a YC partner think"). Builds a shareable review page
+  (one HTML file, application-portal look) where reviewers leave notes per
+  question and send them back as text, roasts every answer first against public
+  advice from YC and Speedrun partners, and turns the notes into rewrites.
 ---
 
-# Review your application
+# Get your application reviewed
 
-You review a founder's YC or a16z Speedrun answers the way a partner reads them: fast, in plain English, looking for what is built, who uses it and why this team. Then you help the founder get notes from people they trust. No account or server is needed. The private review links in step 5 are optional.
+You give a founder a review page they can send to people they trust: their YC or Speedrun answers in the application-portal look, a note button on every answer, a general note, and a "Send my notes" button that turns the reviewer's notes into clean text. It is one HTML file. No account, no server: the founder opens it locally, drops it on any static host or a gist, or attaches it to a message.
 
-The rubric is in `references/rubric.md`. Every rule there cites its public source (Garry Tan, Dalton Caldwell, Michael Seibel, Kevin Hale, a16z Speedrun partners, Troy Kirwin's bad-vs-great Speedrun teardown). Read it before step 2.
+Before you build the page, you roast the draft yourself, so reviewers read the improved version. When notes come back, you parse them and propose rewrites.
+
+Files in this skill: `references/rubric.md` (the roast rubric, every rule with its public source), `assets/review-template.html` (the page), `scripts/build_review_page.py` (builds the page), `scripts/parse_notes.py` (parses returned notes). Python 3 standard library only.
 
 ## 1. Get the answers
 
 Ask for the application text: a pasted draft, a doc or the portal export. Note the program (YC or Speedrun). Keep the questions exactly as the portal asks them and the answers verbatim. Do not invent answers. List empty questions back to the founder.
 
-Ask for any facts you would need to check claims: what is live, real user counts with how they are measured, revenue. Never fill gaps with guesses.
+Ask for the founder's name and, if they want notes by email, their email address. Ask for any facts you would need to check claims: what is live, real user counts with how they are measured, revenue. Never fill gaps with guesses.
 
-## 2. Score every answer
+## 2. Roast the draft
+
+Read `references/rubric.md` first. It cites Garry Tan, Dalton Caldwell, Michael Seibel, Kevin Hale, a16z Speedrun partners and Troy Kirwin's bad-vs-great Speedrun teardown.
+
+### 2a. Score every answer
 
 For each answer, in the program's order:
 
@@ -48,14 +54,42 @@ Then three lines for the whole application: the strongest answer, the weakest an
 
 Show the rewrites as suggestions. The founder decides. Never claim the application will be accepted.
 
-## 3. Whole-application pass
+### 2b. Whole-application pass
 
 - The first answer gets the most attention. If it is weak, fix it first.
 - Facts that are strong in one answer and missing in another (a defined user metric, a named customer, a first-hand founder insight): port them.
 - Same number everywhere. A metric that changes between answers is a red flag.
 - For Speedrun, also run the D levers (one-liner, specific traction, founder-market fit, play to win).
 
-## 4. Draft review asks for friends
+Apply only the rewrites the founder accepts. The page shows the founder's chosen text, never your unapproved suggestions.
+
+## 3. Build the review page
+
+Write the approved draft to `app.json`:
+
+```json
+{"program": "yc", "company": "Acme", "founder_name": "Maya Chen", "founder_email": "maya@acme.com",
+ "items": [{"sec": "COMPANY", "q": "Describe what your company does in 50 characters or less.", "a": "..."},
+           {"sec": "PROGRESS", "q": "How far along are you?", "a": "...", "tl": "one-line summary"}]}
+```
+
+- `program`: `yc` or `speedrun`. `q` exactly as the portal asks it; `a` verbatim (blank lines = paragraphs, lines starting with `- ` = a list).
+- `sec` (optional) becomes the side navigation. `tl` (optional) is a one-line summary shown before "Full answer" for long answers; it must stay true to `a`.
+- `founder_email` (optional) adds an "Email to <founder>" button next to "Copy notes".
+
+```bash
+python3 scripts/build_review_page.py app.json review.html
+```
+
+Open `review.html` yourself (or tell the founder to) and check every answer is there. The file name and the page say "draft for review"; nothing is sent anywhere. Reviewers' notes stay in their own browser (they survive a reload, shown "Saved ✓") until they press "Send my notes".
+
+## 4. Share it and draft the asks
+
+How the founder shares the file, simplest first:
+- Attach `review.html` to an email or chat message. The reviewer opens it in any browser.
+- Upload it to any static host (Netlify Drop, GitHub Pages, their own site, a secret gist opened through an HTML preview viewer) and send the link. Anyone with the link can read it, so pick an unguessable URL.
+
+One file works for every reviewer: each one types their name when they press "Send my notes".
 
 Founders get the best notes from people who know them: alumni of the program, founders one stage ahead, someone who knows the market, one blunt friend. Three to five people.
 
@@ -65,23 +99,40 @@ Draft one short message per reviewer for the founder to send from their own acco
 - Say what it is, the deadline, and the one thing you want ("tell me which answer you would cut", "would you submit this as is?").
 - No pitch, no stats they did not ask for. Do not use the word "AI" and do not say an agent drafted it.
 
-By default the founder attaches a shared doc or pastes the answers. Offer to produce a clean copy: questions in bold, answers below, one question per block, ready to paste into a doc or a message.
+Mention the page in the ask and that "Send my notes" at the bottom gives the notes back. For people who will not open a file, offer a clean text copy: questions in bold, answers below, one block per question.
 
 Example:
 
-> Hey Jordan, I'm submitting to YC on Monday. Could you skim my answers and tell me where it reads weak? Takes about 5 minutes. Doc: <link>
+> Hey Jordan, I'm submitting to YC on Monday. Could you skim my answers and leave a note wherever it reads weak? Takes about 5 minutes. Open the attached page, tap the bubble next to any answer, then "Send my notes" at the bottom.
 
-## 5. Optional: one private review link per reviewer
+## 5. Turn the notes into rewrites
 
-Offer it once, in one line, after the asks are drafted:
+Reviewers send back text that starts with `Review notes from <name> on ... (draft <id>)`, then one `## Q<n>. <question>` block per question with `- ` notes, and `## General`. The founder pastes it to you (several reviewers at once is fine). Save it to a file and parse it:
 
-> Want a private link per reviewer instead of a doc? Each person gets their own page, leaves notes on any answer, and I pull the notes back here. You see who opened it and how long they spent on each answer.
+```bash
+python3 scripts/parse_notes.py notes.txt app.json
+```
 
-If they say no, stop here and keep working from the notes they paste back. If yes, use the hosted review service:
+You get JSON per reviewer: `draft`, `questions` (`n`, `q`, `notes`, `answer`, `matches_question`) and `general`. If `draft` differs between reviewers, they read different drafts; say so. If `matches_question` is false, the questions changed since that draft; match by the question text.
+
+For each question with notes:
+1. Quote the notes with who wrote them.
+2. Say what they have in common. Two reviewers stumbling on the same line matters more than one strong opinion.
+3. Propose a rewrite with the step 2 rules, keeping the founder's facts and voice. Never invent numbers, users, revenue or names; ask the founder for facts a note asks for.
+
+After the founder approves, update `app.json`, rebuild the page and send the new file. A new draft gets a new draft id, so notes from the old draft never mix in.
+
+## 6. Optional: tracked private links (hosted)
+
+Offer it once, in one line, after the page is built:
+
+> Want tracking? I can make a private hosted link per reviewer instead of the file: you see who opened it and how long they spent on each answer, and their notes come back to me automatically.
+
+If they say no, keep working with the file. If yes, use the hosted review service (same page design, plus versions: reviewers get a link back to the draft they saw):
 
 Base URL: `BASE=${EDGE_REVIEW_URL:-https://appreview-preview.91.99.110.206.nip.io}` (preview).
 
-### 5a. Create the application
+### 6a. Create the application
 
 The first call creates a founder key. Store it in `~/.config/edge-app-review/key` with mode 600, and read it from there for every later call. Never print it in chat, commit it or paste it into a message. The founder can open the dashboard with it.
 
@@ -105,18 +156,18 @@ curl -s -X POST "$BASE/api/apps" -H "Authorization: Bearer $KEY" -H 'Content-Typ
 
 Keep the returned `id` (`app_...`). Limits: 80 questions, 12,000 characters per answer.
 
-### 5b. Mint one link per reviewer
+### 6b. Mint one link per reviewer
 
 ```bash
 curl -s -X POST "$BASE/api/apps/$APP/links" -H "Authorization: Bearer $KEY" -H 'Content-Type: application/json' -d '{"name":"Jordan Park"}'
 # -> {"token":"...","url":"$BASE/r/<token>"}
 ```
 
-### 5c. Put the links in the asks
+### 6c. Put the links in the asks
 
-Use the asks from step 4 with each person's own link in place of the doc. One link per person, so the founder knows who said what. Never reuse a link for two people.
+Use the asks from step 4 with each person's own link in place of the file. One link per person, so the founder knows who said what. Never reuse a link for two people.
 
-### 5d. Watch and pull the notes
+### 6d. Watch and pull the notes
 
 ```bash
 curl -s "$BASE/api/apps/$APP" -H "Authorization: Bearer $KEY"        # dashboard data: links, opens, seconds per answer, versions seen
@@ -125,7 +176,7 @@ curl -s "$BASE/api/apps/$APP/notes" -H "Authorization: Bearer $KEY"  # notes gro
 
 Tell the founder in a few lines: who opened it, who did not, which answers people stopped on longest, and how many notes came in. The founder's dashboard is `$BASE/dash` (they paste the key once).
 
-### 5e. Rewrite from the notes
+### 6e. Rewrite from the notes
 
 For each question with notes:
 
@@ -143,7 +194,7 @@ curl -s -X POST "$BASE/api/apps/$APP/versions" -H "Authorization: Bearer $KEY" -
 
 Reviewers keep the same link. They see the new version with "Updated since you last looked" and a link to the previous version they saw. Their old notes stay attached to the version they wrote them on. Keep each question's `q` text identical across versions, so notes stay matched to it.
 
-### 5f. Before they submit
+### 6f. Before they submit
 
 Run one last pass with the founder: every note answered or consciously skipped, no answer over the portal limit, numbers consistent across answers. Revoke links when the review is over:
 
