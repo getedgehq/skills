@@ -1,36 +1,87 @@
 ---
 name: application-review
 description: >-
-  Get a YC or a16z Speedrun application reviewed by people the founder trusts.
-  Use when a founder wants feedback on their accelerator application answers,
-  asks to send their YC or Speedrun draft to friends, mentors or alumni, wants
-  to know who read it, or wants to rewrite answers from reviewer notes. Turns
-  the answers into one private tracked link per reviewer, drafts the ask, pulls
-  the notes back per question and proposes rewrites as a new version.
+  Review a YC or a16z Speedrun application before the founder submits it. Use
+  when a founder asks to review, score, cut or rewrite their accelerator
+  application answers, asks "what would a YC partner think", or wants friends,
+  mentors or alumni to review the draft. Scores every answer against public
+  advice from YC and Speedrun partners, names the top issue, writes a rewrite,
+  and drafts short review asks. Optionally creates one private link per
+  reviewer that collects notes per question.
 ---
 
-# Get your application reviewed
+# Review your application
 
-You help a founder get honest notes on their YC or a16z Speedrun answers before they submit. Every reviewer gets their own private link. The page greets them by first name, shows each answer cut to one line with the full text one click away, and lets them leave a note on any answer or a general note. The founder sees who opened it, how long they spent on each answer and every note. You pull the notes back and rewrite.
+You review a founder's YC or a16z Speedrun answers the way a partner reads them: fast, in plain English, looking for what is built, who uses it and why this team. Then you help the founder get notes from people they trust. No account or server is needed. The private review links in step 5 are optional.
 
-Base URL: `BASE=${EDGE_REVIEW_URL:-https://appreview-preview.91.99.110.206.nip.io}` (preview).
-
-Work in this order.
+The rubric is in `references/rubric.md`. Every rule there cites its public source (Garry Tan, Dalton Caldwell, Michael Seibel, Kevin Hale, a16z Speedrun partners, Troy Kirwin's bad-vs-great Speedrun teardown). Read it before step 2.
 
 ## 1. Get the answers
 
-Ask the founder for their application text: a pasted draft, a file, or the portal export. Do not invent answers. If a question has no answer yet, leave `a` as an empty string and tell the founder which ones are empty.
+Ask for the application text: a pasted draft, a doc or the portal export. Note the program (YC or Speedrun). Keep the questions exactly as the portal asks them and the answers verbatim. Do not invent answers. List empty questions back to the founder.
 
-Build `items` in the program's order. One item per question:
+Ask for any facts you would need to check claims: what is live, real user counts with how they are measured, revenue. Never fill gaps with guesses.
 
-- `q`: the question exactly as the portal asks it.
-- `a`: the founder's answer, verbatim. Keep their line breaks; lines starting with `- ` render as a list.
-- `sec` (optional): the portal section, for example `FOUNDERS`, `PROGRESS`, `IDEA`. It becomes the side navigation.
-- `tl` (optional): a one-line summary shown before the full answer, for answers longer than about two lines. It must stay true to `a`. Never add a claim that is not in the answer.
+## 2. Score every answer
 
-Show the founder the list of questions and the one-liners before you post. Fix anything they object to.
+For each answer, in the program's order:
 
-## 2. Create the application
+1. **Score 0-10** against the rubric. The weakest critical rule caps the score (honesty B6, clarity A1-A3, the 20-second rule E1). It is not an average.
+2. **Top issue:** one line, quoting the exact words that cost points, with the rule id (for example `A1: "AI-powered platform"`).
+3. **Rewrite:** uses only facts from the founder's text or answers to your questions. Keeps their voice. Leads with the strongest fact. About 20 seconds to read (60-80 words) unless the question needs less. Things not built yet are in future tense.
+4. **Word count** of the rewrite (character count for the 50-character YC description).
+
+Checks to run on every answer:
+- What it is, in the first sentence. No problem setup before the "what".
+- Plain English, no jargon or "platform". Would they say it to a friend?
+- Active metrics (DAU, WAU, retention, revenue) lead; cumulative totals only as support; each metric defined.
+- Nothing reads as live that is not live. Every number defensible in the interview.
+- No volunteered weakness the question did not ask for.
+- The YC "describe in 50 characters" line: name what it does, concrete nouns, count the characters.
+
+Output a table, one row per question:
+
+| # | Question | Score | Top issue | Rewrite | Words |
+|---|---|---|---|---|---|
+
+Then three lines for the whole application: the strongest answer, the weakest answer, and whether the numbers agree across answers.
+
+Show the rewrites as suggestions. The founder decides. Never claim the application will be accepted.
+
+## 3. Whole-application pass
+
+- The first answer gets the most attention. If it is weak, fix it first.
+- Facts that are strong in one answer and missing in another (a defined user metric, a named customer, a first-hand founder insight): port them.
+- Same number everywhere. A metric that changes between answers is a red flag.
+- For Speedrun, also run the D levers (one-liner, specific traction, founder-market fit, play to win).
+
+## 4. Draft review asks for friends
+
+Founders get the best notes from people who know them: alumni of the program, founders one stage ahead, someone who knows the market, one blunt friend. Three to five people.
+
+Draft one short message per reviewer for the founder to send from their own account. You never send it. Rules:
+
+- Two to four lines, plain, in the founder's voice and the language they use with that person.
+- Say what it is, the deadline, and the one thing you want ("tell me which answer you would cut", "would you submit this as is?").
+- No pitch, no stats they did not ask for. Do not use the word "AI" and do not say an agent drafted it.
+
+By default the founder attaches a shared doc or pastes the answers. Offer to produce a clean copy: questions in bold, answers below, one question per block, ready to paste into a doc or a message.
+
+Example:
+
+> Hey Jordan, I'm submitting to YC on Monday. Could you skim my answers and tell me where it reads weak? Takes about 5 minutes. Doc: <link>
+
+## 5. Optional: one private review link per reviewer
+
+Offer it once, in one line, after the asks are drafted:
+
+> Want a private link per reviewer instead of a doc? Each person gets their own page, leaves notes on any answer, and I pull the notes back here. You see who opened it and how long they spent on each answer.
+
+If they say no, stop here and keep working from the notes they paste back. If yes, use the hosted review service:
+
+Base URL: `BASE=${EDGE_REVIEW_URL:-https://appreview-preview.91.99.110.206.nip.io}` (preview).
+
+### 5a. Create the application
 
 The first call creates a founder key. Store it in `~/.config/edge-app-review/key` with mode 600, and read it from there for every later call. Never print it in chat, commit it or paste it into a message. The founder can open the dashboard with it.
 
@@ -43,6 +94,8 @@ KEY=$(cat ~/.config/edge-app-review/key)
 
 If the founder is signed in to Edge and you have their Edge access token, you can send that as the Bearer token instead of a key.
 
+Use the answers the founder approved in step 2 as `a`. For long answers, a one-line `tl` (shown before the full text) must stay true to `a`.
+
 Write the application JSON to a file, then post it:
 
 ```bash
@@ -52,31 +105,18 @@ curl -s -X POST "$BASE/api/apps" -H "Authorization: Bearer $KEY" -H 'Content-Typ
 
 Keep the returned `id` (`app_...`). Limits: 80 questions, 12,000 characters per answer.
 
-## 3. Mint one link per reviewer
-
-Ask who should review it. Good reviewers: alumni of the program, founders one stage ahead, someone who knows the market, one blunt friend. Three to five is enough. One link per person, so the founder knows who said what. Never reuse a link for two people.
+### 5b. Mint one link per reviewer
 
 ```bash
 curl -s -X POST "$BASE/api/apps/$APP/links" -H "Authorization: Bearer $KEY" -H 'Content-Type: application/json' -d '{"name":"Jordan Park"}'
 # -> {"token":"...","url":"$BASE/r/<token>"}
 ```
 
-## 4. Draft the ask
+### 5c. Put the links in the asks
 
-Draft one short message per reviewer for the founder to send from their own account. You never send it yourself. Rules:
+Use the asks from step 4 with each person's own link in place of the doc. One link per person, so the founder knows who said what. Never reuse a link for two people.
 
-- Two to four lines, plain, in the founder's voice and the language they use with that person.
-- Say what it is, the deadline, and the one thing you want from them ("tell me which answer you'd cut", "would you submit this as is?").
-- Their link only. No pitch, no stats they didn't ask for.
-- Do not use the word "AI" and do not mention that an agent drafted it.
-
-Example:
-
-> Hey Jordan, I'm submitting to YC on Monday. Would you skim my answers and leave a note wherever something reads weak? Takes about 5 minutes: <link>
-
-Show every draft to the founder and let them edit before they send.
-
-## 5. Watch and pull the notes
+### 5d. Watch and pull the notes
 
 ```bash
 curl -s "$BASE/api/apps/$APP" -H "Authorization: Bearer $KEY"        # dashboard data: links, opens, seconds per answer, versions seen
@@ -85,13 +125,13 @@ curl -s "$BASE/api/apps/$APP/notes" -H "Authorization: Bearer $KEY"  # notes gro
 
 Tell the founder in a few lines: who opened it, who did not, which answers people stopped on longest, and how many notes came in. The founder's dashboard is `$BASE/dash` (they paste the key once).
 
-## 6. Propose rewrites
+### 5e. Rewrite from the notes
 
 For each question with notes:
 
 1. Quote the notes, with who wrote them and on which version (`on_version`; `answer_then` holds the answer they actually read when it differs).
 2. Say what the notes have in common. Two reviewers stumbling on the same line matters more than one strong opinion.
-3. Propose a rewrite that keeps the founder's facts and voice. Never invent numbers, users, revenue or names. If a note asks for a fact you do not have, ask the founder.
+3. Propose a rewrite with the step 2 rules that keeps the founder's facts and voice. Never invent numbers, users, revenue or names. If a note asks for a fact you do not have, ask the founder.
 4. Shorter usually wins. Portal answers are read fast.
 
 Get the founder's OK per answer, then post the whole set as a new version with a one-line change note:
@@ -103,7 +143,7 @@ curl -s -X POST "$BASE/api/apps/$APP/versions" -H "Authorization: Bearer $KEY" -
 
 Reviewers keep the same link. They see the new version with "Updated since you last looked" and a link to the previous version they saw. Their old notes stay attached to the version they wrote them on. Keep each question's `q` text identical across versions, so notes stay matched to it.
 
-## 7. Before they submit
+### 5f. Before they submit
 
 Run one last pass with the founder: every note answered or consciously skipped, no answer over the portal limit, numbers consistent across answers. Revoke links when the review is over:
 
@@ -111,7 +151,7 @@ Run one last pass with the founder: every note answered or consciously skipped, 
 curl -s -X DELETE "$BASE/api/apps/$APP/links/$TOKEN" -H "Authorization: Bearer $KEY"
 ```
 
-## API reference
+### Hosted API reference
 
 | Call | Body | Returns |
 |---|---|---|
