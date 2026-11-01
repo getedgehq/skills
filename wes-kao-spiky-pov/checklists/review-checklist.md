@@ -1,6 +1,6 @@
 # Finished-output review
 
-Mark every applicable item PASS or FAIL. Add a short reason for each failure. A provisional draft may be returned with unresolved evidence gaps clearly identified; do not call it ready to publish if those gaps undermine the claim. Audience testing can be NOT TESTED rather than fabricated.
+Internal review: run it silently on your draft and fix what fails. Never put this checklist, PASS/FAIL marks, a review note or a list of limitations in the deliverable; a gap that matters to the user becomes one short open question at the end (three at most). The gates are package adaptations of the public method, not a scoring system published by the expert.
 
 ## Pass/fail gates
 

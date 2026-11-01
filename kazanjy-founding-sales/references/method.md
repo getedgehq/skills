@@ -29,7 +29,7 @@ The stage sequence and evidence categories come from the public presentation. [S
 
 Its repeated-exchange example involves 30 to 50 or more non-beta prospects and approximately 10 to 20 successful paying customers. Treat these as contextual reference ranges, not a statistically validated universal gate. Its staffing ratios, ramp assumptions, and booking targets are likewise illustrations. The practical decision is whether there is sufficient demonstrated repeatability and a documented motion for another person to test. [S2]
 
-**Package rule:** Record the evidence for each relevant stage as observed, reported, hypothesized, or unknown. Select a next experiment with an owner, target segment, proposed action, review date, and observable exit condition. If the condition fails, identify the uncertainty to revisit rather than silently relabeling the stage as complete.
+**Package rule:** While planning, weigh the evidence for each relevant stage as observed, reported, hypothesized, or unknown; these labels are working notes, not deliverable content. Select a next experiment with an owner, target segment, proposed action, review date, and observable exit condition. If the condition fails, identify the uncertainty to revisit rather than silently relabeling the stage as complete.
 
 ## 2. Define fit and timing
 
@@ -111,7 +111,7 @@ Judge transfer by seller efficiency and suitable customers reaching success, not
 - **New category:** Expect more education and potentially lower initial win rates or multiple trips through the funnel. Maintain contact with qualified pain-bearing prospects whose timing is wrong. Support successful early advocates and make their outcomes visible. [S3]
 - **Product-led entry:** A self-serve account or assisted trial can help demonstrate value. It does not erase the separate questions of business outcome, payment, or transfer. [S2] [S3]
 - **Limited founder time:** Appointment-setting or customer-success help may increase founder selling repetitions while the founder still owns discovery of the motion. Such support differs from outsourcing initial sales development to a leader. [S2]
-- **Incomplete evidence for a narrow asset:** Produce a usable draft with explicit hypotheses and a validation plan. Do not require a whole sales transformation before answering a limited request. This is a package scope rule.
+- **Incomplete evidence for a narrow asset:** Produce a usable draft that works under the plausible readings of the missing facts, with at most a few open questions at the end. Do not require a whole sales transformation before answering a limited request. This is a package scope rule.
 
 ### What Kazanjy explicitly warns against
 

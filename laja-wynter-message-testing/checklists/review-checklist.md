@@ -1,6 +1,6 @@
 # Review checklist
 
-Mark each applicable item **PASS** or **FAIL**, with evidence or a corrective action. Mark an item **N/A** only with a reason. Missing evidence fails a validation claim, but a provisional review can pass as a provisional deliverable if it clearly identifies the gap and the required study.
+Internal review: run it silently on your draft and fix what fails. Never put this checklist, PASS/FAIL marks, a review note or a list of limitations in the deliverable; a gap that matters to the user becomes one short open question at the end (three at most). The gates are package adaptations of the public method, not a scoring system published by the expert.
 
 ## Pass/fail gates
 

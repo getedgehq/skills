@@ -5,49 +5,34 @@ description: "Develop defensible, debatable points of view using Wes Kao's publi
 
 # Spiky Point of View
 
-Based on Wes Kao's public method. Not affiliated with or endorsed by Wes Kao.
+Based on Wes Kao's public method. Not affiliated with or endorsed by Wes Kao. Sources: [references/sources.md](references/sources.md).
 
-Turn an observation into a claim the author can defend, a credible peer can dispute, and the intended audience can use. Deliver a finished piece in the requested format, supported by reasoning and a clear consequence for the reader. The objective is a useful conversation and changed thinking, rather than unanimous approval. [S1]
+## Output contract
 
-## When to use
+Read this first. It decides what the user receives.
 
-Use for LinkedIn or X posts, opinion essays, thought leadership, founder perspectives, talk theses, and positioning lines. Apply it when a draft summarizes familiar advice, substitutes questions for a position, buries its recommendation under qualifiers, or seeks attention through unsupported provocation.
+- **The deliverable is the piece, ready to publish:** the post, essay, talk thesis or line they asked for, in their voice. Not a brief, not a menu of candidate takes.
+- **Length and format:** native to the channel. A LinkedIn post is roughly 120 to 250 words with short paragraphs; an X post fits the limit; an essay keeps the length asked for. If you save a file, the chat reply is two or three lines.
+- **What the method changes:** the claim, not the length. The piece takes one clear position a smart peer could disagree with, grounded in the author's own experience from the input, shows the reasoning or a concrete example, answers the obvious objection in a sentence or two, and leaves the reader with something to do or think differently. No hedging filler, no rage-bait without substance. When the author wants discussion, end with one or two specific, answerable questions that invite readers' own experience or a line they would draw differently, never a generic "What do you think?".
+- **Facts:** use only experiences, numbers, stories and opinions present in the input. Never invent anecdotes, clients, results, quotes or convictions the author has not expressed. Do not embellish the author's story either: no added timelines, outcomes, team reactions or roadmap details beyond the notes. If the notes support only a narrower claim, make the narrower claim.
+- **Never output:** working briefs, candidate-position lists, five-trait scorecards, reasoning records, "opposing view" analyses, review results, audience-testing plans, source tags like [S2], or the expert's name. Do that thinking silently; the post shows the result.
 
-Work within the author's actual domain and experience. Preserve their intended audience, purpose, format, and voice. A factual update or neutral research summary does not automatically need a debatable claim. If the author has no defensible position yet, develop a scoped hypothesis and identify the evidence needed before publication. Never manufacture personal conviction, customer stories, or results. [S1][S5]
+## The method, as decisions
 
-## Procedure
+Each rule is sourced in [references/method.md](references/method.md), which also covers detail and edge cases.
 
-Use the following loop. Read [references/method.md](references/method.md) for the underlying decisions, then open the template, examples, or checklist when that step requires them. Source citations document the method; they do not substantiate the author's industry claims.
+1. **Spiky = debatable and defensible.** A smart peer could reasonably disagree, and the author can back it up from real experience. Consensus advice is not a point of view; provocation without support is not either.
+2. **Mine the author's own friction.** The best candidates come from where the author's experience contradicts common practice. Pick the one with the strongest support in the notes; consider several silently, deliver one.
+3. **Go from observation to assertion.** Not just "I noticed X" but "so do Y instead of Z". Name the situation, the practice you dispute, and the alternative.
+4. **Show the mechanism.** A concrete example, script or decision rule makes the claim credible and useful.
+5. **Calibrate certainty to evidence.** Cut defensive qualifiers; keep a real exception when it matters. Confident tone does not replace evidence.
+6. **Handle the obvious objection** briefly and honestly; it is what makes the post invite discussion instead of dismissal.
+7. **Lead with what the reader gets,** then the how.
 
-1. **Define the brief.** Identify the author, credible domain, audience, desired change in belief or behavior, and channel constraints. Inventory supplied evidence and missing information using the brief fields in [templates/output-template.md](templates/output-template.md). Ask only for gaps that materially affect the claim.
+## Shape that works
 
-2. **Mine candidate positions.** Use the prompts in [references/method.md](references/method.md#candidate-discovery). Start with three to five candidates for a single piece; explore ten or more for a broader position inventory. Draw from the author's frustrations, recurring explanations, and experience with accepted practices. [S1][S2]
+Skeleton in [templates/output-template.md](templates/output-template.md). Illustrations in [examples/worked-examples.md](examples/worked-examples.md) show the reasoning, not the format to hand over.
 
-3. **Separate facts from interpretation.** For each candidate, identify what was observed, what it might mean, and what the author recommends. Follow [references/method.md](references/method.md#observation-to-assertion) to move beyond an interesting fact toward an owned conclusion. [S3][S6]
+## Before you hand it over (silent)
 
-4. **Apply the five traits.** Check debatability, useful purpose, audience learning, defensibility, and conviction against [references/method.md](references/method.md#the-five-traits). Reject a candidate that merely attracts attention or repeats consensus. Repair a promising candidate before discarding it. [S1]
-
-5. **Write a credible opposing view.** Use the disagreement test in [references/method.md](references/method.md#disagreement-and-selection). Explain why a knowledgeable peer would choose differently. Select the candidate with the strongest combination of author credibility, evidence, and reader relevance; briefly explain the choice when comparing supplied drafts.
-
-6. **Sharpen the claim.** Name the situation, disputed practice or frame, and recommended alternative. Use [references/method.md](references/method.md#specificity-and-mechanism) and [examples/worked-examples.md](examples/worked-examples.md) to replace broad slogans with bounded, meaningful assertions. Add numbers only when supported.
-
-7. **Build the reasoning.** Connect evidence to interpretation and action. Show a concrete example, script, or decision rule, following [references/method.md](references/method.md#specificity-and-mechanism). Distinguish firsthand evidence from assumptions and proposed tests. Never treat an invented illustration as the author's history. [S9][S13]
-
-8. **Calibrate certainty.** Match wording to evidence, stakes, and the author's authority. Use [references/method.md](references/method.md#confidence-and-language) to preserve necessary uncertainty while removing defensive filler. A confident style does not convert a hypothesis into a fact. [S5][S8]
-
-9. **Handle the obvious objection.** Anticipate the most likely substantive challenge and answer it in a proportionate passage. Follow [references/method.md](references/method.md#objections-and-reader-motivation). Keep a material exception even when it requires more explanation than a short post allows. [S8]
-
-10. **Assemble the deliverable.** Fill the publishable section of [templates/output-template.md](templates/output-template.md): claim, evidence or mechanism, objection, and reader consequence. Lead with reader value before detailed instructions when buy-in is missing. Answer substantive questions before inviting discussion. [S3][S4][S14]
-
-11. **Review and revise.** Run [checklists/review-checklist.md](checklists/review-checklist.md). Resolve failures by changing the claim, evidence, scope, or wording. Keep necessary reasoning; cut material that serves venting or distracts from the reader's next decision. [S7][S15]
-
-12. **Return and test.** Return the requested piece, with a short rationale or evidence gaps only when useful. Use [references/method.md](references/method.md#feedback-and-iteration) to propose audience testing when appropriate. Report resonance as untested until real feedback exists, then revise the exact passages that create interest, confusion, or disagreement. [S12]
-
-## Files in this skill
-
-- [SKILL.md](SKILL.md): Entry point, usage boundaries, and the agent's working loop.
-- [references/method.md](references/method.md): Detailed principles, decision rules, warnings, and edge cases.
-- [references/sources.md](references/sources.md): Numbered register of fetched public sources and their contributions.
-- [examples/worked-examples.md](examples/worked-examples.md): Invented illustrations with weak drafts, revisions, and rule notes.
-- [templates/output-template.md](templates/output-template.md): Fill-in brief, reasoning record, and finished-piece template.
-- [checklists/review-checklist.md](checklists/review-checklist.md): Pass/fail review, recurring failures, and practical fixes.
+Check without writing it down: one claim a peer could dispute; every story and number is in the notes; the objection is addressed; it reads in the author's voice; nothing the author would delete before posting. Fuller gates: [checklists/review-checklist.md](checklists/review-checklist.md).
