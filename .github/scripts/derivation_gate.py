@@ -143,11 +143,18 @@ def audit_alias(bundle, target):
         if entry in ("SKILL.md", ".gitignore") or entry in SKIP_DIRS:
             continue
         p = os.path.join(bundle, entry)
+        c = os.path.join(canonical, entry)
         if not os.path.lexists(p):
             bad.append(f"missing symlink: {entry}")
-        elif not os.path.islink(p) or os.readlink(p) != f"../{target}/{entry}":
+        elif not os.path.islink(p):
+            # A byte-identical regular file is also an exact alias. Edge's catalog scanner
+            # refuses bundles that contain symlinks (scripts/audit/fetch_one.py), so a
+            # scannable alias must carry real copies of plain files.
+            if not (os.path.isfile(p) and os.path.isfile(c) and open(p, "rb").read() == open(c, "rb").read()):
+                bad.append(f"not a symlink to ../{target}/{entry} nor a byte-identical copy: {entry}")
+        elif os.readlink(p) != f"../{target}/{entry}":
             bad.append(f"not a symlink to ../{target}/{entry}: {entry}")
-        elif not os.path.exists(os.path.join(canonical, entry)):
+        elif not os.path.exists(c):
             bad.append(f"symlink to nothing: {entry}")
     return bad
 
