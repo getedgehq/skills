@@ -27,7 +27,8 @@ folder holds a SKILL.md whose front matter adds `metadata: {internal: true, alia
 right after `name:`) and whose `name:` is the old one, plus a relative symlink for every other entry of the
 canonical bundle except .gitignore. It carries no record of its own; the gate checks instead that it is exactly
 that: same bytes as the canonical SKILL.md apart from those front-matter lines, and every other
-entry a symlink into the canonical bundle, nothing missing and nothing extra.
+entry a symlink into the canonical bundle or a byte-identical real copy of it (a file, or a
+directory tree with no symlinks inside), nothing missing and nothing extra.
 
 `source_files` is deliberately not checked. It records the private original at
 the author's private skills directory, which is historical provenance about where a file came from, not a
@@ -127,6 +128,22 @@ def alias_text(want, slug, target):
     return want.replace(head, f"---\nname: {slug}\nmetadata:\n{keys}", 1)
 
 
+def same_copy(p, c):
+    """True when p is a real (symlink-free) byte-identical copy of c: a file with the same
+    bytes, or a directory whose entries (minus SKIP_DIRS) match one for one, recursively."""
+    if os.path.islink(p) or os.path.islink(c):
+        return False
+    if os.path.isfile(p) and os.path.isfile(c):
+        with open(p, "rb") as a, open(c, "rb") as b:
+            return a.read() == b.read()
+    if os.path.isdir(p) and os.path.isdir(c):
+        names = set(os.listdir(p)) - SKIP_DIRS
+        if names != set(os.listdir(c)) - SKIP_DIRS:
+            return False
+        return all(same_copy(os.path.join(p, n), os.path.join(c, n)) for n in sorted(names))
+    return False
+
+
 def audit_alias(bundle, target):
     bad = []
     slug = os.path.basename(bundle)
@@ -150,7 +167,7 @@ def audit_alias(bundle, target):
             # A byte-identical regular file is also an exact alias. Edge's catalog scanner
             # refuses bundles that contain symlinks (scripts/audit/fetch_one.py), so a
             # scannable alias must carry real copies of plain files.
-            if not (os.path.isfile(p) and os.path.isfile(c) and open(p, "rb").read() == open(c, "rb").read()):
+            if not same_copy(p, c):
                 bad.append(f"not a symlink to ../{target}/{entry} nor a byte-identical copy: {entry}")
         elif os.readlink(p) != f"../{target}/{entry}":
             bad.append(f"not a symlink to ../{target}/{entry}: {entry}")
