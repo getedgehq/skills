@@ -223,6 +223,7 @@ One skill by [Siqi Chen](https://github.com/blader), republished from [blader/hu
 - [`pay-per-call-apis`](pay-per-call-apis/) exposes Monid's paid data and scraping tools through one CLI.
 - [`geo-domination`](geo-domination/) (GEO Domination, by RadarKit) finds the AI prompts your buyers ask, then shows how to own the answers in ChatGPT, Perplexity, Gemini and Google AI.
 - [`hire-founding-engineer`](hire-founding-engineer/) (Hire a Founding Engineer, with Clera) runs a founding-engineer hire from role brief to signed offer and hands the search to Clera's network when the founder connects it.
+- [`hubspot-crm-cleanup`](hubspot-crm-cleanup/) (HubSpot CRM Cleanup, by [Nex](https://nex.ai)) audits a HubSpot CRM read-only (duplicates with match evidence, protected look-alikes, broken associations, departed owners, lifecycle and consent conflicts), then applies only the fix classes you approved and leaves a change log. Apache-2.0, approved by Nex. Install: `npx skills add getedgehq/skills --skill hubspot-crm-cleanup`.
 
 ## Evidence status
 
