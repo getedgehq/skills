@@ -58,10 +58,11 @@ Hidden, deleted and screenshots are left out. A few thousand items take under a 
 ## 3. Look at candidates
 
 ```bash
-$PY $B/sheet.py picks.json sheet_dir --title "Selfies"   # HTML contact sheet for the user
-$PY $B/montage.py picks.json m.jpg --n 24                 # one numbered JPEG for the agent to Read
+$PY $B/montage.py picks.json m.jpg --n 24 --title "Selfies"   # m.jpg for you to Read + m.html for the user
+$PY $B/sheet.py final.json final.html --title "Selfies"        # HTML sheet alone, for a final set
 ```
-Always look at the montage yourself before presenting picks. Scores miss things a glance catches.
+The `.html` is one self-contained file (photos embedded, filename, date and caption under each) that opens
+in any browser: hand that to the user. Always look at the JPG yourself first; scores miss what a glance catches.
 
 ## 4. Download originals
 

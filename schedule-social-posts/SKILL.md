@@ -1,6 +1,6 @@
 ---
 name: schedule-social-posts
-description: Schedule Social Posts. Queue approved LinkedIn, X, Threads, Bluesky, Instagram, TikTok and YouTube posts through Buffer, with a first comment on LinkedIn and Instagram or a reply thread on X, a per-channel daily cap, and drafts by default so nothing fires until the owner approves the exact text. Also lists the queue, shows open days and pulls post analytics. Use when the user wants to schedule or queue a post, add a link or hashtags as a first comment or X reply, check what is scheduled, find a free slot, or see how scheduled posts did. Needs the user's own Buffer account and token.
+description: Schedule Social Posts. Queue approved LinkedIn, X, Threads, Bluesky, Instagram, TikTok and YouTube posts through Buffer, with a first comment on LinkedIn and Instagram or a reply thread on X, a per-channel daily cap, and drafts by default so nothing fires until the owner approves the exact text. Also lists the queue, shows open days and pulls post analytics. Use when the user wants to schedule or queue a post, add a link or hashtags as a first comment or X reply, check what is scheduled, find a free slot, or see how scheduled posts did. Buffer is optional. Without a Buffer token it hands over each approved post ready to paste by hand, free.
 ---
 
 # Schedule Social Posts
@@ -9,8 +9,11 @@ Method by Federico De Ponte.
 
 The scheduler is the last step of the content machine: a post reaches it only after it passed `post-draft-gate` and the owner approved the exact text. For finished vertical reels, `reel-machine` has its own scheduler with a pace check; this skill is for text, image, carousel and link posts.
 
-## Setup (once, by the user)
+## Setup (optional, once, by the user)
 
+No Buffer? Skip setup. `schedule` then sends nothing and prints the post (channel, time, text, first comment) for the user to paste by hand. Never stop or ask for a token because Buffer is missing.
+
+With Buffer:
 1. Connect the channels in Buffer (buffer.com).
 2. Create an API token in Buffer's settings and export it in the user's own terminal or secret manager as `BUFFER_TOKEN`. Never ask for the token in chat, never put it in a command argument, a file in the repo or a log.
 3. `python3 scripts/buffer_posts.py channels` lists the connected channels with handle and id.

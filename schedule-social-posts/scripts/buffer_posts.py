@@ -10,6 +10,9 @@
   buffer_posts.py delete --id <postId>
   buffer_posts.py analytics [--days 30]
 
+Buffer is optional. Without BUFFER_TOKEN, `schedule` sends nothing and prints the post ready to
+paste by hand (channel, time, text, first comment); the other commands say Buffer is not set up.
+
 Auth: BUFFER_TOKEN in the environment (create it in Buffer's settings; https://api.buffer.com/ only).
 Never pass the token as an argument or print it.
 Approval: schedule saves a DRAFT unless --armed. Arm only the exact text the owner approved.
@@ -143,6 +146,17 @@ def main():
     d = sub.add_parser("delete"); d.add_argument("--id", required=True)
     an = sub.add_parser("analytics"); an.add_argument("--days", type=int, default=30)
     a = ap.parse_args()
+
+    if not os.environ.get("BUFFER_TOKEN"):
+        if a.cmd != "schedule":
+            print("Buffer is not set up (optional). Without it, `schedule` prints the post to paste by hand."); return
+        text = open(a.text_file).read().strip()
+        print(f"No Buffer token: nothing scheduled. Post this by hand on {a.channel} at {a.at}:\n\n{text}")
+        for i, cm in enumerate(a.comment, 1):
+            print(f"\nFirst comment / reply {i}:\n{cm}")
+        for m in filter(None, (a.image, a.video)):
+            print(f"\nMedia: {m}")
+        return
 
     if a.cmd == "channels":
         for c in channels():

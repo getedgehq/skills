@@ -1,5 +1,6 @@
-"""Tile the first N thumbnails of a picks JSON into one JPEG so an agent can look at them in a single image read.
-Usage: python montage.py picks.json out.jpg [--n 24] [--cols 6]"""
+"""Tile the first N thumbnails of a picks JSON into one JPEG so an agent can look at them in a single image read,
+and write the same picks as a self-contained HTML contact sheet next to it (out.html) for the user.
+Usage: python montage.py picks.json out.jpg [--n 24] [--cols 6] [--title "Selfies"]"""
 import sys, json
 from PIL import Image, ImageDraw
 picks, out = json.load(open(sys.argv[1])), sys.argv[2]
@@ -13,3 +14,6 @@ for i, r in enumerate(picks):
     x, y = (i % cols) * W, (i // cols) * H; M.paste(im, (x, y))
     d.rectangle([x, y, x + 34, y + 20], fill="black"); d.text((x + 4, y + 4), f"#{i+1}", fill="white")
 M.save(out, quality=72); print(out, len(picks))
+import os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import sheet
+title = sys.argv[sys.argv.index("--title") + 1] if "--title" in sys.argv else "Picks"
+print(sheet.write(picks, os.path.splitext(out)[0] + ".html", title))

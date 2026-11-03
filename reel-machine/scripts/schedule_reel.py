@@ -7,6 +7,10 @@
         [--story] [--link https://your.landing/page] [--credits bundle/credits.txt] [--armed]
   schedule_reel.py swap --caption-start "first words of the caption" (--url URL | --file F) --title "YT title" [--days 35]
 
+No Buffer? Buffer is optional. Without a token, `schedule` schedules nothing and hands over the
+finished file: it writes <reel>.post.txt (caption, YouTube title, time) next to the reel and
+prints both paths, ready to post by hand in each app. Free, and nothing ever fails on a missing key.
+
 Auth: BUFFER_TOKEN in the environment (Buffer's GraphQL API at https://api.buffer.com/).
 If different platforms sit in different Buffer accounts, set BUFFER_TOKEN_INSTAGRAM /
 BUFFER_TOKEN_TIKTOK / BUFFER_TOKEN_YOUTUBE; each falls back to BUFFER_TOKEN.
@@ -150,6 +154,8 @@ def cmd_channels(_a):
         seen.add(t)
         for c in channels(p):
             print(f"{c['service']:10s} {c['name']:30s} {c['id']}")
+    if not seen:
+        print("no Buffer token (optional): `schedule` hands over the finished file to post by hand")
 
 
 def pace_gate(a, url):
@@ -169,6 +175,27 @@ def pace_gate(a, url):
         sys.exit("pace gate FAILED: jump-cut it with pcut.py (or finish.sh) before arming")
 
 
+def has_token(platforms):
+    return any(os.environ.get(f"BUFFER_TOKEN_{p.upper()}") or os.environ.get("BUFFER_TOKEN") for p in platforms)
+
+
+def handoff(a, caption):
+    """No Buffer token: hand the finished reel over to post by hand."""
+    src = a.file or a.url
+    lines = [f"Reel: {src}", f"Post on: {a.platforms.replace(',', ', ')}"]
+    if a.at:
+        lines.append(f"Planned time: {a.at}")
+    if a.title:
+        lines.append(f"YouTube title: {a.title}")
+    lines += ["", "Caption:", caption]
+    txt = "\n".join(lines) + "\n"
+    if a.file:
+        out = Path(a.file).with_suffix(".post.txt"); out.write_text(txt)
+        print(f"no Buffer token: nothing scheduled. Post it by hand: {a.file} with the caption in {out}")
+    else:
+        print("no Buffer token: nothing scheduled. Post it by hand:\n" + txt)
+
+
 def cmd_schedule(a):
     from datetime import datetime, timedelta
     caption = a.caption
@@ -177,6 +204,10 @@ def cmd_schedule(a):
     if a.credits:
         caption = caption.rstrip() + "\n\n" + Path(a.credits).read_text().strip()
     check_text(caption, a.title)
+    if not has_token(a.platforms.split(",")):
+        return handoff(a, caption)
+    if not a.at:
+        sys.exit("--at is required to schedule in Buffer (ISO time with offset)")
     url = public_url(a)
     if a.armed:
         pace_gate(a, url)
@@ -247,7 +278,7 @@ for name in ("schedule", "swap"):
     g.add_argument("--url"); g.add_argument("--file")
     s.add_argument("--title", help="YouTube title, max 100 chars")
     if name == "schedule":
-        s.add_argument("--at", required=True, help="ISO time with offset")
+        s.add_argument("--at", help="ISO time with offset (needed for Buffer)")
         s.add_argument("--caption", required=True)
         s.add_argument("--platforms", default=",".join(PLATFORMS))
         s.add_argument("--armed", action="store_true")
