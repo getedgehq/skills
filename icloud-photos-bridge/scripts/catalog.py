@@ -28,7 +28,7 @@ with open(a.out, "w") as f:
                           "smile": d.get("has_smile"), "yaw": d.get("yaw")})
         e = p.exif_info
         sc = p.score.asdict() if p.score else {}
-        rec = {"uuid": p.uuid, "date": p.date.isoformat(), "kind": "video" if p.ismovie else "photo",
+        rec = {"uuid": p.uuid, "filename": p.original_filename, "date": p.date.isoformat(), "kind": "video" if p.ismovie else "photo",
                "selfie": bool(p.selfie), "front_camera": "front" in ((e.lens_model or "") if e else "").lower(),
                "favorite": p.favorite, "burst": p.burst, "burst_selected": p.burst_selected, "live": p.live_photo,
                "portrait": p.portrait, "w": p.width, "h": p.height,

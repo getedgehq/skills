@@ -27,5 +27,5 @@ PY=$(cat ~/.config/icloud-photos/python 2>/dev/null); B=$(cat ~/.config/icloud-p
 3. **Look before you pick.** `$PY $B/montage.py broll_picks.json m.jpg --n 48` (videos show their poster frame).
    Drop: tilted horizons, blown-out sky, screens or documents showing private info, license plates up close,
    anything where a person ends up as the subject. Keep a mix: wide establishing shots, details, motion.
-4. **Show the user** `$PY $B/sheet.py final.json broll_sheet --title "B-roll"` with duration and labels per item.
+4. **Show the user** `$PY $B/sheet.py final.json broll.html --title "B-roll"` with duration and labels per item.
 5. **Download originals:** `$PY $B/fetch.py ./broll-<date> --from uuids.txt`. Videos can be large; check free disk first.

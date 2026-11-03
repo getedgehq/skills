@@ -1,17 +1,17 @@
 ---
 name: reel-machine
-description: "Turn raw phone clips into scheduled vertical reels with no editor in the loop: iCloud Photos clips, word-level transcription (ElevenLabs Scribe), segment picking across one or more clips, a drift-free precut, hook text with a logo or flag on frame 0, bare stat cards, full-screen cutaways for named places and products, captions above the app UI, a handle closer or a product CTA, natural voice EQ, VAD jump cuts with a pace gate, a face check on the first and last frames, a lip-sync check, written sensitivity rules, a second-model caption review, then Instagram Reels (plus a Story reshare), TikTok and YouTube Shorts through Buffer. Use when someone wants their selfie or talking clips turned into finished, posted shorts, or wants a daily reel cadence run by an agent."
+description: "Turn raw phone clips into scheduled vertical reels with no editor in the loop: iCloud Photos clips, word-level transcription (free local faster-whisper, or ElevenLabs Scribe with a key), segment picking across one or more clips, a drift-free precut, hook text with a logo or flag on frame 0, bare stat cards, full-screen cutaways for named places and products, captions above the app UI, a handle closer or a product CTA, natural voice EQ, VAD jump cuts with a pace gate, a face check on the first and last frames, a lip-sync check, written sensitivity rules, a second-model caption review, then a finished 9:16 file to post by hand, or Instagram Reels (plus a Story reshare), TikTok and YouTube Shorts scheduled through Buffer when a Buffer token is set. Runs free with no API keys. Use when someone wants their selfie or talking clips turned into finished, posted shorts, or wants a daily reel cadence run by an agent."
 ---
 
 # reel-machine
 
-Raw clips in, scheduled reels out. You make the editorial calls (which moment, which words,
+Raw clips in, finished reels out. Runs free: no API key is required at any step. You make the editorial calls (which moment, which words,
 which hook); the scripts do the cutting, drawing, rendering, checking and scheduling. A reel
 is one JSON spec, so every render is reproducible and a fix is a one-line change.
 
 **Done means:** the render exists, `finish.sh` passed (voice EQ, jump cuts, pace gate, face check),
-`avsync.py` passed, the sensitivity pass and the second-model caption review both cleared, the owner approved anything on the show-first list, and the three
-posts exist in Buffer (drafts until the owner arms them).
+`avsync.py` passed, the sensitivity pass and the second-model caption review both cleared, the owner approved anything on the show-first list, and the reel is handed over: the 9:16 file plus
+its caption to post by hand, or, with Buffer set up, the three posts exist in Buffer (drafts until the owner arms them).
 
 ## Setup (once per machine)
 
@@ -24,9 +24,10 @@ cascades from the main package).
 bash scripts/setup.sh        # Python deps, Funnel Display hook font (SIL OFL), work dirs, config file
 ```
 Then edit `~/.config/reel-machine/config.env` (template: `config.example.env`): your handle,
-language, Buffer channels, where rendered files get hosted. Secrets stay in the environment:
-`ELEVENLABS_API_KEY` for transcription, `BUFFER_TOKEN` for scheduling. Inject them from your
-secrets manager for the one command that needs them; never write them to the config file.
+language. Both keys are optional upgrades, never a reason to stop:
+- No `ELEVENLABS_API_KEY`: transcription runs locally with faster-whisper (free). Tell the user in one line.
+- No `BUFFER_TOKEN`: step 7 hands over the finished file and caption to post by hand.
+If the user has a key, it stays in the environment (never in chat, a command argument or the config file).
 
 For iCloud Photos as the clip source, install the `icloud-photos-bridge` skill and run its
 setup. `selfie-picker` and `broll-picker` find the moments worth cutting; this skill starts
@@ -43,7 +44,7 @@ Clips from anywhere else: drop the files in `$REEL_WORK/clips/`.
 
 ### 2. Transcribe
 ```bash
-python3 scripts/transcribe.py $REEL_WORK/clips/<clip>.mov     # or --watch to follow the folder
+python3 scripts/transcribe.py $REEL_WORK/clips/<clip>.mov     # or --watch; local + free unless ELEVENLABS_API_KEY is set
 python3 scripts/words.py <clip>                                # sentences with times
 python3 scripts/words.py <clip> 12-30                          # every word with start-end
 ```
@@ -153,7 +154,9 @@ Runs in this order and stops at the first failed gate:
 4. **Look at it:** one frame per second (`references/sensitivity-rules.md`, frame pass) plus
    the first frame, which is the thumbnail.
 
-### 7. Schedule
+### 7. Hand over or schedule
+No Buffer token: `schedule` writes `<reel>.post.txt` (caption, title, time) next to the reel and
+schedules nothing. Give the user the file and the caption to post by hand. With Buffer:
 ```bash
 python3 scripts/schedule_reel.py channels
 python3 scripts/schedule_reel.py schedule --file renders/reel_<name>.mp4 \

@@ -28,7 +28,7 @@ PY=$(cat ~/.config/icloud-photos/python 2>/dev/null); B=$(cat ~/.config/icloud-p
    - anything stuck on the face or a stray object in front of it (a patch, a straw, a hand covering it)
    - near-duplicates of a shot already chosen, other people's faces up close, private screens or documents
    Prefer: natural smile, eye contact, soft light, a background that says where they are (city, office, nature).
-4. **Show the user** the HTML sheet of the final set: `$PY $B/sheet.py final.json final_sheet --title "Best selfies"`.
+4. **Show the user** the HTML sheet of the final set: `$PY $B/sheet.py final.json final.html --title "Best selfies"`.
 5. **Download originals** of the ones they keep: `$PY $B/fetch.py ./selfies-<date> --from uuids.txt`.
 
 Say how many photos were looked at and the date range. Never post or share anything; hand over the files.
