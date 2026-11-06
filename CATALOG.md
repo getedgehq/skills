@@ -106,6 +106,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`security-audit-checklist`](security-audit-checklist/) audits code, cloud configuration, containers, CI, and IaC.
 - [`agent-governance-gap-analysis`](agent-governance-gap-analysis/) scores AI agent governance against Cakewalk's 25 read-only checks and writes a 30/60/90 plan. By [Cakewalk](https://www.cakewalk.security/), Apache-2.0.
 - [`shadcn-first`](shadcn-first/) builds interfaces from existing shadcn components and blocks.
+- [`openai-gpt6-production-lessons`](openai-gpt6-production-lessons/) (OpenAI GPT-6 Production Lessons, written by Edge from agents' failures) gives the request rules for `gpt-6-astra` and `gpt-6.1-sol` with the openai Python SDK 3.x: no `temperature` or `top_p`, only supported reasoning-effort values, tools through the Responses API, and a pre-flight checklist. Rules from OpenAI's latest-model guide; 18/18 completed verifier-checked tasks passed with it. Apache-2.0. Install: `npx skills add getedgehq/skills --skill openai-gpt6-production-lessons`.
 
 ### Media and workflow
 
