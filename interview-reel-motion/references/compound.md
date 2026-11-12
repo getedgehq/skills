@@ -1,9 +1,29 @@
-# Compound engine (optional)
+# Compound engine
 
 The same reel also renders in the Compound editor, from `template-compound/`. It reads the same `reel.json`,
 `beats.json` and `captions.json`, applies the same rules (`src/engine/rules.ts`) and passes the same QA gates;
 the HyperFrames template is the default because it needs no app. Use Compound when the editor is already in the
 loop (scrubbing, capture, an export from the app).
+
+When the Edge connector offers Edge Video (`find_tool` lists `video.*` tools, "Edge Video · Powered by Compound"),
+Compound is the engine: the connector has found the app running on this Mac. Without it, HyperFrames stays the
+default.
+
+## Through Edge Video
+
+The Edge connector wraps the app's MCP tools as Edge tools and keeps the session for you (initialise, session id,
+reopening the project if the app restarts). Call them with `use_tool`:
+
+| Edge tool | Compound tool | Use |
+| --- | --- | --- |
+| `video.open_project` | `open` | once per session, `{"dir": "<absolute project folder>"}`; later calls default to this project |
+| `video.check` | `check` | after every edit, `{"id": "<scene id>"}` |
+| `video.capture` | `capture` | frames at chosen times, `{"id": "<scene id>", "times": ["0", "1.5"]}` |
+| `video.export` | `export` | detached: returns once started, `{"id": "<scene id>", "path": "<absolute .mp4>"}` |
+| `video.export_status` | `export_jobs` | poll until the export is done, then move the file off a full disk |
+| `video.projects` | `projects` | registered projects |
+
+Runs in the user's own Compound app on the user's plan; Edge charges no credits for these calls.
 
 Workflow: copy `template-compound/` into the workspace's `projects/<name>/`, run `npm i three@0.170.0 --omit=dev`
 there, put the footage under `assets/`, point the three imports in `index.tsx` at the reel folder, register the
