@@ -1,6 +1,6 @@
 ---
 name: interview-reel-motion
-description: "Layer motion graphics on an already-cut 9:16 interview, vlog or talking-head short with HyperFrames (npx hyperframes, no app install): a cover frame for the feed grid, phrase captions, stickers, lower thirds, stat counters, typed prompts, a one-off particle takeover, eased framing pushes and card morphs, an interpolated speed ramp and a clean end hold, all driven by a beat map (beats.json), then gate the render with face-zone, safe-zone, readability, flash and caption checks in Python. Use when the cut and the voice are locked and the job is the graphic layer. Compound is an optional second engine for the same data. Not for cutting raw footage into a short (use vlog-edit), recutting a talking head with overlays from a script (use talking-head-recut), generating video from nothing, or motion graphics without a speaker."
+description: "Layer motion graphics on an already-cut 9:16 interview, vlog or talking-head short with HyperFrames (npx hyperframes, no app install): a cover frame for the feed grid, phrase captions, stickers, lower thirds, stat counters, typed prompts, a one-off particle takeover, eased framing pushes and card morphs, an interpolated speed ramp and a clean end hold, all driven by a beat map (beats.json), then gate the render with face-zone, safe-zone, readability, flash and caption checks in Python. Use when the cut and the voice are locked and the job is the graphic layer. With Edge Video (the Edge connector, powered by Compound) available, Compound is the edit engine for the same data; HyperFrames otherwise. Not for cutting raw footage into a short (use vlog-edit), recutting a talking head with overlays from a script (use talking-head-recut), generating video from nothing, or motion graphics without a speaker."
 ---
 
 # interview-reel-motion
@@ -93,10 +93,18 @@ Never report a gate you did not run.
 
 ## Engines
 
-- **HyperFrames (default):** references/hyperframes.md (the clock, frame stacks, Framer as CSS transform and
-  clip-path, audio mix, Lambda, pitfalls).
-- **Compound (optional):** `template-compound/` renders the same three files in the Compound editor with the same
-  rules and gates. Details in references/compound.md.
+Pick the engine before step 1:
+
+- **Edge Video available -> Compound.** If the Edge connector's `find_tool` lists `video.*` tools ("Edge Video ·
+  Powered by Compound", which means the Compound app is running on this Mac), route every edit through Compound:
+  copy `template-compound/`, then `video.open_project` once per session, `video.check` after every edit,
+  `video.capture` to look at frames, and `video.export` (detached; poll `video.export_status`) for the three QA
+  passes. Follow references/compound.md for the mechanics. The same rules and gates apply.
+- **Otherwise -> HyperFrames (default):** references/hyperframes.md (the clock, frame stacks, Framer as CSS
+  transform and clip-path, audio mix, Lambda, pitfalls). If `find_tool` offers "Install Compound" instead, mention
+  it to the user once and carry on with HyperFrames; never wait for an install.
+- **Compound without Edge:** an agent already connected to the app's own MCP server (`http://127.0.0.1:3284/mcp`)
+  uses `template-compound/` the same way, calling `open`, `check`, `capture` and `export` directly.
 
 ## References
 
@@ -104,5 +112,5 @@ Never report a gate you did not run.
 - references/components.md: every component and its props.
 - references/qa.md: the three renders and each gate.
 - references/hyperframes.md: the default engine.
-- references/compound.md: the optional Compound engine (MCP, registration, WebGPU, html layers, the outro).
+- references/compound.md: the Compound engine, direct or through Edge Video (MCP, registration, WebGPU, html layers, the outro).
 - template/examples/starter: a complete small reel to copy.
