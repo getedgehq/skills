@@ -28,6 +28,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 | --- | --- |
 | Send personal deck links and report real reading | [`tracked-deck-links`](tracked-deck-links/) |
 | Turn a WhatsApp chat export into a Wrapped recap with story cards | [`whatsapp-wrapped`](whatsapp-wrapped/) |
+| Connect WhatsApp, LinkedIn, Instagram and email to Edge, one link at a time | [`connect-inbox`](connect-inbox/) |
 | Keep long work alive across context loss | [`workplan`](workplan/) |
 | Find and load the right skill for the task at hand, automatically | [`edge-find-skills`](edge-find-skills/) |
 | Show a plan as a scannable text diagram with decisions on top | [`plan-board`](plan-board/) |
@@ -90,6 +91,7 @@ The Edge catalog is the primary place to discover, compare, and inspect skills. 
 - [`clone-yourself`](clone-yourself/) builds a private local `<your-name>-clone` skill from the user’s own agent rules, notes and writing: their voice plus how they decide, judge and report.
 - [`client-comms`](client-comms/) drafts concise, actionable client messages and handles complaints promptly.
 - [`inbound-triage`](inbound-triage/) ranks mixed inbox threads by consequence and identifies what needs a reply, delegation, or no action.
+- [`connect-inbox`](connect-inbox/) connects WhatsApp, LinkedIn, Instagram and email to Edge, one sign-in link at a time, then shows the latest chats. Sending always needs the user's tap on a getedge.cc page. Invite-only beta. Apache-2.0. Install: `npx skills add getedgehq/skills --skill connect-inbox`.
 
 - [`autonomous-research`](autonomous-research/) (formerly OpenDraft) drafts a literature review, research paper, or thesis chapter from one topic line. It finds sources at Crossref and OpenAlex, drafts each section against them, and its integrity gate checks that every printed DOI resolved at Crossref or DataCite. No API key or account. Install: `npx skills add getedgehq/skills --skill autonomous-research`.
 - [`people-search`](people-search/) plans and documents evidence-backed people searches.
