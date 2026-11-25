@@ -3,7 +3,7 @@
 
   python3 build.py --data examples/proof --assets assets [--qa gfx|foot] [--out .] [--reuse]
 
-What it does (all pre-passes; the render itself is `npx hyperframes render` or `hyperframes lambda render`):
+What it does (all pre-passes; the render itself is `npx hyperframes@0.9.31 render` or `hyperframes lambda render`):
   1. cuts the clips into pieces (same rule as the engine) and lists the source frame every output frame shows
   2. extracts exactly those frames as JPEG stacks (stacks/<key>/<n>.jpe) with ffmpeg; the page swaps them
      per frame, so the render never depends on <video> seeking (HyperFrames Lambda does not wait for seeks)

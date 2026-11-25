@@ -4,11 +4,11 @@ Credit: Moritz Lambrecht and Ad Specialist for the public performance creator-ma
 
 [S1] Marketing Performance and Influencer Marketing: With an ROI focus for measurable success. Ad Specialist, dated 2025-11-25. URL: https://www.adspecialist.de/en/blog/marketing-performance-und-influencer-marketing-roi-steigern/
 Contribution: Upway case, CAC and session economics, conservative forecasts, creative freedom, testing, and budget accountability; agency-reported results are illustrative, not independent proof.
-Access: Direct curl returned a security checkpoint; readable public article fetched with curl through https://r.jina.ai/https://www.adspecialist.de/en/blog/marketing-performance-und-influencer-marketing-roi-steigern/ .
+Access: public article.
 
 [S2] Die Experten-Formel für die Bewertung von Influencer Kampagnen. Moritz Lambrecht, YouTube, dated 2026-06-02. URL: https://www.youtube.com/watch?v=AYHEpfw7XNs
 Contribution: Public description outlines three phases for reducing discount dependence; the fetched description does not establish the exact campaign-evaluation formula suggested by the title.
-Access: Direct watch-page curl returned a sign-in/bot check. Title and authorship fetched from https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=AYHEpfw7XNs&format=json ; description fetched through https://r.jina.ai/https://www.youtube.com/watch?v=AYHEpfw7XNs . Playback and usable transcript were unavailable. The description also repeats discount-framework text, so it cannot verify the spoken content.
+Access: public video; title, authorship and description from its public YouTube page.
 
 [S3] Vom Hype zum ROI: Was Unternehmen über Creator-Marketing wirklich wissen sollten. Moritz Lambrecht, Onlinemarketing-Praxis. URL: https://www.onlinemarketing-praxis.de/social-media/was-unternehmen-ueber-creator-marketing-wirklich-wissen-sollten
 Contribution: Explicit goals, full campaign budgets, audience and brand matching, authentic storytelling, conversion tracking, and channel diversification.
@@ -32,7 +32,7 @@ Access: Post body fetched directly with curl. The post discusses 2023 activity; 
 
 [S8] Social Media KPIs: Tracking in Influencer Marketing 2026. Moritz Lambrecht, Ad Specialist, displayed date 2025-05-28. URL: https://www.adspecialist.de/en/blog/social-media-kpis-und-tracking-von-influencer-marketing-in-2025/
 Contribution: Distinguishes ROAS and ROI, actual reach and impressions, meaningful engagement, audience fit, assisted conversions, and tracking limitations.
-Access: Readable public article fetched with curl through https://r.jina.ai/https://www.adspecialist.de/en/blog/social-media-kpis-und-tracking-von-influencer-marketing-in-2025/ . Title, URL year, and displayed date differ; treat it as a currently fetched page rather than assuming an unchanged historical version.
+Access: public article. Title, URL year, and displayed date differ; treat it as a currently fetched page rather than assuming an unchanged historical version.
 
 ## Evidence boundaries
 

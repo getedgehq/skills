@@ -1,7 +1,7 @@
 # HyperFrames engine (default)
 
 HyperFrames (heygen-com/hyperframes, Apache-2.0) renders an HTML page whose look is a pure function of a seek
-time. Nothing to install beyond Node 22+, Python 3 (numpy, pillow) and ffmpeg: `npx hyperframes` fetches the CLI,
+time. Nothing to install beyond Node 22+, Python 3 (numpy, pillow) and ffmpeg: `npx hyperframes@0.9.31` fetches the CLI,
 `build.py` runs the pre-passes (`IRM_FFMPEG` / `IRM_FFPROBE` pick the ffmpeg binaries).
 
 ## Layout of `template/`
@@ -53,10 +53,10 @@ music bed (rate, dB keys in source seconds, linear fade over `fadeOut` s at the 
 
 ```bash
 python3 build.py --data examples/starter --assets assets --out build          # pre-passes + index.html
-npx hyperframes lint build && npx hyperframes validate build                    # 0 errors
-npx hyperframes snapshot build --at 0,3.5,9.2 --no-end                          # stills at chosen times
-npx hyperframes render build --output final.mp4 --quality high                  # local render
-npx hyperframes lambda render build --width 1080 --height 1920 --fps 30 --wait  # AWS Lambda render
+npx hyperframes@0.9.31 lint build && npx hyperframes@0.9.31 validate build                    # 0 errors
+npx hyperframes@0.9.31 snapshot build --at 0,3.5,9.2 --no-end                          # stills at chosen times
+npx hyperframes@0.9.31 render build --output final.mp4 --quality high                  # local render
+npx hyperframes@0.9.31 lambda render build --width 1080 --height 1920 --fps 30 --wait  # AWS Lambda render
 python3 build.py ... --qa gfx --out build_gfx  &&  python3 build.py ... --qa foot --out build_foot
 ```
 
