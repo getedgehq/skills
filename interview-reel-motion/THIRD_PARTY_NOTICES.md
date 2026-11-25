@@ -72,7 +72,8 @@ THE SOFTWARE.
 
 ## Not shipped, used at run time
 
-- HyperFrames (Apache-2.0, https://github.com/heygen-com/hyperframes) is fetched by `npx hyperframes`.
+- HyperFrames (Apache-2.0, https://github.com/heygen-com/hyperframes) is fetched by `npx hyperframes@0.9.31` (pinned).
 - Robust Video Matting (GPL-3.0 code, https://github.com/PeterL1n/RobustVideoMatting) is loaded by
-  `scripts/matte_rvm.py` through torch.hub on the user's machine; no part of it is included here.
+  `scripts/matte_rvm.py` from a local checkout the user makes, pinned to commit
+  53d74c6826735f01f4406b5ca9075eee27bec094 (`--rvm-repo`); no part of it is included here.
 - MediaPipe (Apache-2.0) is a pip dependency of `scripts/faceboxes.py` and `scripts/facezone.py`.

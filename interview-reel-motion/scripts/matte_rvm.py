@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Pre-pass: person matte with Robust Video Matting (PeterL1n/RobustVideoMatting, mobilenetv3, GPL-3.0 model code
-fetched by torch.hub at run time, not shipped here). Writes an RGBA PNG sequence whose alpha is the person, one
+"""Pre-pass: person matte with Robust Video Matting (PeterL1n/RobustVideoMatting, mobilenetv3, GPL-3.0 model code,
+not shipped here). It loads only from a local checkout you make yourself, pinned to the reviewed commit:
+  git clone https://github.com/PeterL1n/RobustVideoMatting rvm && git -C rvm checkout 53d74c6826735f01f4406b5ca9075eee27bec094
+and passes it with --rvm-repo (or IRM_RVM_REPO). Nothing is downloaded or executed from the network at run time
+except the model weights that checkout's hubconf names. Writes an RGBA PNG sequence whose alpha is the person, one
 file per SOURCE frame, named like the A-roll stack (<frame index>.png), so the engine's Matte beat can lay the
 person back over the far half of a TypeRing or OrbitCards (layer "back" under the matte, layer "front" over it).
 
-  python3 matte_rvm.py footage/interview.mp4 --first 1650 --last 1990 --out stacks/matte/s0 [--width 720]
+  python3 matte_rvm.py footage/interview.mp4 --first 1650 --last 1990 --out stacks/matte/s0 --rvm-repo rvm [--width 720]
 
 Then add a beat {"component": "Matte", "t0": ..., "t1": ...} between the "back" and "front" beats and pass
 --matte stacks/matte to build.py. CPU is fine; it decodes from the start of the file to the last frame, so run it detached.
@@ -13,11 +16,16 @@ Needs: torch, numpy, pillow, ffmpeg.
 import argparse, json, os, subprocess
 import numpy as np
 
+RVM_COMMIT = "53d74c6826735f01f4406b5ca9075eee27bec094"
+
 ap = argparse.ArgumentParser()
 ap.add_argument("src"); ap.add_argument("--first", type=int, required=True); ap.add_argument("--last", type=int, required=True)
 ap.add_argument("--out", required=True); ap.add_argument("--width", type=int, default=720)
 ap.add_argument("--fps", type=float, default=30)
+ap.add_argument("--rvm-repo", default=os.environ.get("IRM_RVM_REPO"), help="local RobustVideoMatting checkout at commit " + RVM_COMMIT)
 a = ap.parse_args()
+if not a.rvm_repo or not os.path.isfile(os.path.join(a.rvm_repo, "hubconf.py")):
+    raise SystemExit("matte_rvm.py: pass --rvm-repo <local RobustVideoMatting checkout at " + RVM_COMMIT + "> (see the docstring)")
 import torch
 from PIL import Image
 
@@ -33,7 +41,7 @@ os.makedirs(a.out, exist_ok=True)
 cmd = [FF, "-nostdin", "-v", "error", "-i", a.src, "-frames:v", str(a.last + 1), "-vsync", "passthrough", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"]
 pr = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 torch.set_num_threads(os.cpu_count() or 4)
-model = torch.hub.load("PeterL1n/RobustVideoMatting", "mobilenetv3", trust_repo=True).eval()
+model = torch.hub.load(a.rvm_repo, "mobilenetv3", source="local").eval()
 rec, n, size = [None] * 4, 0, w0 * h0 * 3  # full-resolution frames: the model sees a W-wide copy
 # the recurrent state needs a short warm-up before the first wanted frame
 warm = max(0, a.first - 15)
